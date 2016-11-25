@@ -22,6 +22,7 @@ int winh = 480;
 int g_xDim = XDIM;
 int g_yDim = YDIM;
 float rotate_x = 45.f;
+float translate_z = 1.f;
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -48,8 +49,10 @@ Obstruction* g_obst_d;
 void Init()
 {
 	glEnable(GL_LIGHT0);
-
 	glewInit();
+	glViewport(0,0,winw, winh);
+
+
 }
 
 void SetUpWindow()
@@ -126,6 +129,16 @@ void CleanUpGLInterop()
 {
 	CleanUpIndexList();
 	DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
+}
+
+
+void timerEvent(int value)
+{
+	if (glutGetWindow())
+	{
+		glutPostRedisplay();
+		glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
+	}
 }
 
 /*----------------------------------------------------------------------------------------
@@ -261,15 +274,25 @@ void MouseMotion(int x, int y)
 }
 
 
+void MouseWheel(int button, int dir, int x, int y)
+{
+	if (dir > 0){
+		translate_z += 1.f;
+	}
+	else
+		translate_z -= 1.f;
+	
+}
 
 void Draw()
 {
+	std::cout << "drawing" << std::endl;
 	RunCuda(&g_cudaSolutionField);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHTING);
 
 	/*
 	 *	Set perspective viewing transformation
@@ -277,11 +300,11 @@ void Draw()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	//gluPerspective(45,(winh==0)?(1):((float)winw/winh),1,100);
-	glOrtho(-10,10,-10,10,0,100);
+	glOrtho(-1,1,-1,1,-100,20);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	glTranslatef(0.f, 0.f, translate_z);
 
-	glTranslatef(0.0, 0.0, -1.0);
 	// render from the vbo
 	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
 	//glVertexPointer(4, GL_FLOAT, 0, 0);
@@ -308,14 +331,14 @@ void Draw()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 
-	/*
-	 *	Set the orthographic viewing transformation
-	 */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	//glOrtho(0,winw,winh,0,-1,1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+//	/*
+//	 *	Set the orthographic viewing transformation
+//	 */
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	//glOrtho(0,winw,winh,0,-1,1);
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
 
 	/*
 	 *	Draw the 2D overlay
@@ -345,6 +368,8 @@ int main(int argc,char **argv)
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMotion);
 //	glutPassiveMotionFunc(MousePassiveMotion);
+	glutMouseWheelFunc(MouseWheel);
+	glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
 	Init();
 

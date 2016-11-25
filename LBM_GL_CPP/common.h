@@ -6,6 +6,7 @@
 #define UMAX 0.06f
 #define BLOCKSIZEX 64
 #define BLOCKSIZEY 1
+#define REFRESH_DELAY 10
 
 enum ContourVariable{VEL_U,VEL_V,PRESSURE,STRAIN_RATE};
 

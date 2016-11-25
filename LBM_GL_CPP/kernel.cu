@@ -389,7 +389,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float minValue;
 
 	//change min/max contour values based on contour variable
-	if (contourVar == 1)
+	if (contourVar == ContourVariable::VEL_U)
 	{
 		variableValue = sqrt(u*u+v*v);
 		maxValue = UMAX*1.8f;
@@ -419,8 +419,8 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 
 	////Blue to white color scheme
 	signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	signed char G = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	signed char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	signed char G = 0;// 255 * ((variableValue - minValue) / (maxValue - minValue));
+	signed char B = 0;//255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
 	signed char A = 255;
 
 	////Rainbow color scheme
