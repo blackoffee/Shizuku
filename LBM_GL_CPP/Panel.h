@@ -35,14 +35,14 @@ public:
 	Color m_backgroundColor;
 
 	Panel();
-	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Panel* parent = NULL);
-	Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Panel* parent = NULL);
+	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+	Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
-	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name);
-	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name);
+	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
-	void CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name);
-	void CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name);
+	void CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	void CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();
@@ -56,9 +56,9 @@ public:
 	std::string m_secondName;
 	
 
-	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Panel* parent = NULL) : Panel(rectFloat, sizeDefinition, name, parent)
-	{
-	}
+	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+	Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+
 
 	//	Button(std::string name1, std::string name2)
 //	{

@@ -7,22 +7,15 @@
 #include "kernel.h"
 #include "Mouse.h"
 #include "Panel.h"
-//#include "Window.h"
-//#include "Frame.h"
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
 
-
 int winw = 640;
 int winh = 480;
 
-
-//Window theWindow(winw, winh);
 Panel theWindow;
-
-//Button myButton;
 
 float rotate_x = 45.f;
 
@@ -31,6 +24,8 @@ Mouse theMouse;
 void Init()
 {
 	glEnable(GL_LIGHT0);
+
+	runCUDA();
 }
 
 void SetUpWindow()
@@ -39,20 +34,10 @@ void SetUpWindow()
 	theWindow.m_rectInt_abs = RectInt(100, 100, winw, winh);
 	theWindow.RectIntAbsToRectFloatAbs();
 
-	theWindow.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV");
-	theWindow.m_subPanels[0]->m_backgroundColor = Color(Color::LIGHT_GRAY);
-	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1");
-	theWindow.m_subPanels[0]->m_buttons[0]->m_backgroundColor = Color(Color::RED);
+	theWindow.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV", Color(Color::LIGHT_GRAY));
+	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
+	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
 
-
-	//theWindow.CreateFrame(RectInt(0, 0, leftPanelWidth, winh),"LeftPanel");
-	//theWindow.GetFrameByID(0).CreateButton(RectFloat(0.0, 0.1, 0.1, 0.2), "button");
-	//std::cout<<theWindow.GetFrameByID(0).m_buttons.size();
-	//theWindow.GetFrameByID(0).GetButtonByID(0);
-
-
-	//myButton = { &(theWindow.GetFrameByID(0)), theWindow.GetFrameByID(0).GetRectFloat()*RectFloat(0.0, 0.1, 0.1, 0.2), "button" };
-	//theWindow.CreateFrame(RectInt(leftPanelWidth, 0, winw-leftPanelWidth, winh),"GraphicsPanel");
 }
 
 /*----------------------------------------------------------------------------------------
@@ -75,27 +60,11 @@ void DrawRectangle(RectInt rect)
 }
 
 
-void DrawPanel(Panel panel)
-{
-//	RectInt rect = frame.GetRectInt();
-//	DrawRectangle(rect);
-}
-
-
 void Draw2D()
 {
 	theWindow.m_subPanels[0]->Draw();
 	theWindow.m_subPanels[0]->m_buttons[0]->Draw();
-	//theWindow.GetFrameByID(0).Draw2D();
-	//theWindow.GetFrameByID(0).GetButtonByID(0).Draw2D();
-	//myButton.Draw2D();
-
-//	glBegin(GL_QUADS);
-//	glVertex2f(0.f , 1.f);
-//	glVertex2f(1.f, 1.f);
-//	glVertex2f(1.f, 0.f );
-//	glVertex2f(0.f , 0.f );
-//	glEnd();
+	theWindow.m_subPanels[0]->m_buttons[1]->Draw();
 }
 
 

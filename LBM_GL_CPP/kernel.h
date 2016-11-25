@@ -1,1 +1,2 @@
+extern "C"
 int runCUDA();

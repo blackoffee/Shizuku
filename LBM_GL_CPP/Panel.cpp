@@ -37,9 +37,10 @@ Panel::Panel()
 	m_name = "None";
 }
 
-Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Panel* parent)
+Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent)
 {
 	m_name = name;
+	m_backgroundColor = color;
 	if (parent != NULL)
 	{
 		m_parent = parent;
@@ -56,9 +57,10 @@ Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string n
 	}
 }
 
-Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Panel* parent)
+Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent)
 {
 	m_name = name;
+	m_backgroundColor = color;
 	if (parent != NULL)
 	{
 		m_parent = parent;
@@ -74,15 +76,15 @@ Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::stri
 	}
 }
 
-void Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name)
+void Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
-	Panel* subPanel = new Panel(rectFloat, sizeDefinition, name, this);
+	Panel* subPanel = new Panel(rectFloat, sizeDefinition, name, color, this);
 	m_subPanels.push_back(subPanel);
 }
 
-void Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name)
+void Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
-	Panel* subPanel = new Panel(rectInt, sizeDefinition, name, this);
+	Panel* subPanel = new Panel(rectInt, sizeDefinition, name, color, this);
 	m_subPanels.push_back(subPanel);
 }
 
@@ -137,9 +139,9 @@ void Panel::Draw()
 	glEnd();
 }
 
-void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name)
+void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
-	Button* button = new Button(rectFloat, sizeDefinition, name, this);
+	Button* button = new Button(rectFloat, sizeDefinition, name, color, this);
 	m_buttons.push_back(button);
 }
 
@@ -148,4 +150,12 @@ void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinitio
 //	Button* button = new Button(rectInt, sizeDefinition, name, this);
 //	m_buttons.push_back(button);
 //}
+
+Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) : Panel(rectFloat, sizeDefinition, name, color, parent)
+{
+}
+
+Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) : Panel(rectInt, sizeDefinition, name, color, parent)
+{
+}
 

@@ -172,8 +172,8 @@ namespace utest_LBM_GL_CPP
 			RectFloat rectFloat(0.04, 0.16, 0.6, 0.5);
 
 			Panel myPanel = Panel();
-			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "my Int Panel");
-			Panel myPanelFloat = Panel(rectInt, Panel::DEF_ABS, "my Float Panel");
+			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "my Int Panel", Color(Color::RED));
+			Panel myPanelFloat = Panel(rectInt, Panel::DEF_ABS, "my Float Panel", Color(Color::RED));
 
 		}
 
@@ -181,8 +181,8 @@ namespace utest_LBM_GL_CPP
 		{
 			RectInt rectInt(10, 20, 1000, 500);
 			RectFloat rectFloat(-0.5, -0.9, 0.6, 0.8);
-			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "Base Panel");
-			myPanelInt.CreateSubPanel(RectInt(100,50,300,200), Panel::DEF_ABS, "absolute subpanel1");
+			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "Base Panel", Color(Color::RED));
+			myPanelInt.CreateSubPanel(RectInt(100,50,300,200), Panel::DEF_ABS, "absolute subpanel1", Color(Color::RED));
 			Assert::IsTrue(myPanelInt.m_subPanels[0]->m_parent->m_rectInt_abs == rectInt);
 
 		}
@@ -191,10 +191,10 @@ namespace utest_LBM_GL_CPP
 		{
 			RectInt rectInt(10, 20, 1000, 500);
 			RectFloat rectFloat(-0.5, -0.9, 0.6, 0.8);
-			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "Base Panel");
-			myPanelInt.CreateSubPanel(RectInt(100,50,300,200), Panel::DEF_ABS, "absolute subpanel1");
-			myPanelInt.CreateSubPanel(RectFloat(0.2,-0.9,0.7,1.6), Panel::DEF_REL, "relative subpanel2");
-			myPanelInt.m_subPanels[1]->CreateSubPanel(RectFloat(-0.8, -0.5, 1.6, 0.5), Panel::DEF_REL, "relative subpanel of 2");
+			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "Base Panel", Color(Color::RED));
+			myPanelInt.CreateSubPanel(RectInt(100,50,300,200), Panel::DEF_ABS, "absolute subpanel1", Color(Color::RED));
+			myPanelInt.CreateSubPanel(RectFloat(0.2,-0.9,0.7,1.6), Panel::DEF_REL, "relative subpanel2", Color(Color::RED));
+			myPanelInt.m_subPanels[1]->CreateSubPanel(RectFloat(-0.8, -0.5, 1.6, 0.5), Panel::DEF_REL, "relative subpanel of 2", Color(Color::RED));
 
 			Assert::IsTrue(myPanelInt.m_subPanels[0]->m_rectFloat_abs == RectFloat(-0.8, -0.8, 0.6, 0.8));
 			Assert::IsTrue(myPanelInt.m_subPanels[1]->m_rectFloat_abs == RectFloat(0.2, -0.9, 0.7, 1.6));
@@ -206,7 +206,7 @@ namespace utest_LBM_GL_CPP
 			RectInt rectInt(10, 20, 300, 125);
 			//RectFloat rectFloat(-0.93333333, -0.68, 2.0, 2.0);
 			RectFloat rectFloat(-1, -1, 2.0, 2.0);
-			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "my Int Panel");
+			Panel myPanelInt = Panel(rectInt, Panel::DEF_ABS, "my Int Panel", Color(Color::RED));
 
 			// ensure auto generated absFloat coordinates are correct
 			Assert::IsTrue(myPanelInt.m_rectFloat_abs == rectFloat);
