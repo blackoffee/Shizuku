@@ -8,11 +8,11 @@ extern "C"
 int runCUDA();
 
 extern "C"
-void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim);
+void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax);
 
 extern "C"
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
-						ContourVariable contVar, int xDim, int yDim, int tStep);
+						ContourVariable contVar, int xDim, int yDim, float uMax, int tStep);
 
 extern "C"
 void UpdateObstructions(Obstruction* obst_d, int targetObstID);

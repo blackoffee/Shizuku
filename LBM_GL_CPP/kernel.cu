@@ -5,7 +5,7 @@
 extern int g_xDim;
 extern int g_yDim;
 
-float uMax = 0.06f;
+//float uMax = 0.06f;
 float omega = 1.9f;
 
 //int BLOCKSIZEX = 64;
@@ -82,21 +82,21 @@ __device__ int dmax(int a)
 	if (a>-1) return a;
 	else return 0;
 }
-inline __device__ int f_mem(int f_num, int x, int y, size_t pitch)
+inline __device__ int f_mem(int f_num, int x, int y, size_t pitch, int yDim)
 {
 
-	return (x + y*pitch) + f_num*pitch*YDIM;
+	return (x + y*pitch) + f_num*pitch*yDim;
 }
 
 // Initialize domain using constant velocity
-__global__ void initialize_single(float *f, int *Im, int xDim, int yDim) //obstruction* obstruction)//pitch in elements
+__global__ void initialize_single(float *f, int *Im, int xDim, int yDim, float uMax) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
 	int j = x + y*xDim;//index on padded mem (pitch in elements)
 	float u, v, rho, usqr;
 	rho = 1.f;
-	u = UMAX;// u_max;// UMAX;
+	u = uMax;// u_max;// UMAX;
 	v = 0.0f;
 	usqr = u*u + v*v;
 
@@ -138,7 +138,7 @@ __device__ void NeumannEast(float &f0, float &f1, float &f2,
 // u=uMax BC for east side
 __device__ void DirichletWest(float &f0, float &f1, float &f2,
 	float &f3, float &f4, float &f5,
-	float &f6, float &f7, float &f8, int y, int xDim, int yDim)
+	float &f6, float &f7, float &f8, int y, int xDim, int yDim, float uMax)
 {
 	if (y == 0){
 		f2 = f4;
@@ -149,7 +149,7 @@ __device__ void DirichletWest(float &f0, float &f1, float &f2,
 		f7 = f6;
 	}
 	float u, v;//,rho;
-	u = UMAX;//*PoisProf(float(y));
+	u = uMax;//*PoisProf(float(y));
 	v = 0.0f;//0.0;
 	f1 = f3 + u*0.66666667f;
 	f5 = f7 - 0.5f*(f2 - f4) + v*0.5f + u*0.166666667f;
@@ -160,7 +160,7 @@ __device__ void DirichletWest(float &f0, float &f1, float &f2,
 __device__ void boundaries(float& f0, float& f1, float& f2,
 	float& f3, float& f4, float& f5,
 	float& f6, float& f7, float& f8,
-	int y, int im, int xDim, int yDim)
+	int y, int im, int xDim, int yDim, float uMax)
 {
 	if (im == 2)//NeumannEast
 	{
@@ -168,7 +168,7 @@ __device__ void boundaries(float& f0, float& f1, float& f2,
 	}
 	else if (im == 3)//DirichletWest
 	{
-		DirichletWest(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, xDim, yDim);
+		DirichletWest(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, xDim, yDim, uMax);
 	}
 	else if (im == 11)//xsymmetry
 	{
@@ -258,7 +258,7 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 
 // main LBM function including streaming and colliding
 __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
-	float omega, int *Im, Obstruction *obstructions, int contourVar, int xDim, int yDim)//pitch in elements
+	float omega, int *Im, Obstruction *obstructions, int contourVar, int xDim, int yDim, float uMax)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -267,14 +267,14 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	if (isInsideObstruction(x, y, obstructions)) im = 1;
 	float f0, f1, f2, f3, f4, f5, f6, f7, f8;
 	f0 = fA[j];
-	f1 = fA[f_mem(1, dmax(x - 1), y, xDim)];
-	f3 = fA[f_mem(3, dmin(x + 1, xDim), y, xDim)];
-	f2 = fA[f_mem(2, x, y - 1, xDim)];
-	f5 = fA[f_mem(5, dmax(x - 1), y - 1, xDim)];
-	f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1, xDim)];
-	f4 = fA[f_mem(4, x, y + 1, xDim)];
-	f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1, xDim)];
-	f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim), xDim)];
+	f1 = fA[f_mem(1, dmax(x - 1), y, xDim, yDim)];
+	f3 = fA[f_mem(3, dmin(x + 1, xDim), y, xDim, yDim)];
+	f2 = fA[f_mem(2, x, y - 1, xDim, yDim)];
+	f5 = fA[f_mem(5, dmax(x - 1), y - 1, xDim, yDim)];
+	f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1, xDim, yDim)];
+	f4 = fA[f_mem(4, x, y + 1, xDim, yDim)];
+	f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1, xDim, yDim)];
+	f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim), xDim, yDim)];
 
 
 	float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
@@ -304,29 +304,29 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 
 	if (im == 1 || im == 10){//bounce-back condition
 		//atomicAdd();   //will need this if force is to be computed
-		fB[f_mem(1, x, y, xDim)] = f3;
-		fB[f_mem(2, x, y, xDim)] = f4;
-		fB[f_mem(3, x, y, xDim)] = f1;
-		fB[f_mem(4, x, y, xDim)] = f2;
-		fB[f_mem(5, x, y, xDim)] = f7;
-		fB[f_mem(6, x, y, xDim)] = f8;
-		fB[f_mem(7, x, y, xDim)] = f5;
-		fB[f_mem(8, x, y, xDim)] = f6;
+		fB[f_mem(1, x, y, xDim, yDim)] = f3;
+		fB[f_mem(2, x, y, xDim, yDim)] = f4;
+		fB[f_mem(3, x, y, xDim, yDim)] = f1;
+		fB[f_mem(4, x, y, xDim, yDim)] = f2;
+		fB[f_mem(5, x, y, xDim, yDim)] = f7;
+		fB[f_mem(6, x, y, xDim, yDim)] = f8;
+		fB[f_mem(7, x, y, xDim, yDim)] = f5;
+		fB[f_mem(8, x, y, xDim, yDim)] = f6;
 	}
 	else{
-		boundaries(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim);
+		boundaries(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
 		mrt_collide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega);
 
-		fB[f_mem(0, x, y, xDim)] = f0;
-		fB[f_mem(1, x, y, xDim)] = f1;
-		fB[f_mem(2, x, y, xDim)] = f2;
-		fB[f_mem(3, x, y, xDim)] = f3;
-		fB[f_mem(4, x, y, xDim)] = f4;
-		fB[f_mem(5, x, y, xDim)] = f5;
-		fB[f_mem(6, x, y, xDim)] = f6;
-		fB[f_mem(7, x, y, xDim)] = f7;
-		fB[f_mem(8, x, y, xDim)] = f8;
+		fB[f_mem(0, x, y, xDim, yDim)] = f0;
+		fB[f_mem(1, x, y, xDim, yDim)] = f1;
+		fB[f_mem(2, x, y, xDim, yDim)] = f2;
+		fB[f_mem(3, x, y, xDim, yDim)] = f3;
+		fB[f_mem(4, x, y, xDim, yDim)] = f4;
+		fB[f_mem(5, x, y, xDim, yDim)] = f5;
+		fB[f_mem(6, x, y, xDim, yDim)] = f6;
+		fB[f_mem(7, x, y, xDim, yDim)] = f7;
+		fB[f_mem(8, x, y, xDim, yDim)] = f8;
 	}
 
 	//Prepare data for visualization
@@ -392,25 +392,25 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	if (contourVar == ContourVariable::VEL_U)
 	{
 		variableValue = sqrt(u*u+v*v);
-		maxValue = UMAX*1.8f;
+		maxValue = uMax*1.8f;
 		minValue = 0.0f;
 	}	
 	else if (contourVar == 2)
 	{
 		variableValue = u;
-		maxValue = UMAX*1.8f;
-		minValue = -UMAX*0.5f;
+		maxValue = uMax*1.8f;
+		minValue = -uMax*0.5f;
 	}	
 	else if (contourVar == 3)
 	{
 		variableValue = v;
-		maxValue = UMAX;
-		minValue = -UMAX;
+		maxValue = uMax;
+		minValue = -uMax;
 	}	
 	else if (contourVar == 4)
 	{
 		variableValue = rho;
-		maxValue = 0.03f*UMAX;// 0.002f;// 1.01f;
+		maxValue = 0.03f*uMax;// 0.002f;// 1.01f;
 		minValue = 0.f;// 0.99f;
 	}
 
@@ -460,18 +460,18 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
  * End of device functions
  */
 
-void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim)
+void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax)
 {
-	initialize_single << <grid, threads >> >(f_d, im_d, xDim, yDim);
+	initialize_single << <grid, threads >> >(f_d, im_d, xDim, yDim, uMax);
 }
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-	ContourVariable contVar, int xDim, int yDim, int tStep)
+	ContourVariable contVar, int xDim, int yDim, float uMax, int tStep)
 {
 	for (int i = 0; i < tStep; i++)
 	{
-		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, xDim, yDim);
-		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, xDim, yDim);
+		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, xDim, yDim, uMax);
+		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, xDim, yDim, uMax);
 	}
 }
 

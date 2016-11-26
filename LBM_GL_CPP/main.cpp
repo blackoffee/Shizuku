@@ -21,6 +21,7 @@ int winw = 640;
 int winh = 480;
 int g_xDim = XDIM;
 int g_yDim = YDIM;
+float g_uMax = 0.06f;
 float rotate_x = 45.f;
 float translate_z = 1.f;
 
@@ -162,6 +163,7 @@ int ImageFcn_h(int x, int y, Obstruction* obstructions){
 void SetUpCUDA()
 {
 	size_t memsize, memsize_int, memsize_inputs;
+	g_uMax = 0.06f;
 
 	int domainSize = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY)
 						*BLOCKSIZEX*BLOCKSIZEY;
@@ -209,8 +211,8 @@ void SetUpCUDA()
 	cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
 
 	//writeInputs();
-	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim);
-	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim);
+	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, g_uMax);
+	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, g_uMax);
 }
 
 void RunCuda(struct cudaGraphicsResource **vbo_resource)
@@ -221,7 +223,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 	size_t num_bytes,num_bytes2;
 	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
 
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, ContourVariable::VEL_U, g_xDim, g_yDim, 5);
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, ContourVariable::VEL_U, g_xDim, g_yDim, g_uMax, 5);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, vbo_resource, 0);
@@ -286,7 +288,6 @@ void MouseWheel(int button, int dir, int x, int y)
 
 void Draw()
 {
-	std::cout << "drawing" << std::endl;
 	RunCuda(&g_cudaSolutionField);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
