@@ -4,15 +4,15 @@
 #include <cstring>
 #include "common.h"
 
-extern "C"
+//extern "C"
 int runCUDA();
 
-extern "C"
+//extern "C"
 void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax);
 
-extern "C"
+//extern "C"
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
 						ContourVariable contVar, int xDim, int yDim, float uMax, int tStep);
 
-extern "C"
+//extern "C"
 void UpdateObstructions(Obstruction* obst_d, int targetObstID);

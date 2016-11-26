@@ -139,10 +139,33 @@ void Panel::Draw()
 	glEnd();
 }
 
+void Panel::DrawAll()
+{
+	Draw();
+	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+	{
+		(*it)->DrawAll();
+	}
+	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
+	{
+		(*it)->DrawAll();
+	}
+	for (std::vector<Slider*>::iterator it = m_sliders.begin(); it != m_sliders.end(); ++it)
+	{
+		(*it)->DrawAll();
+	}
+}
+
 void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	Button* button = new Button(rectFloat, sizeDefinition, name, color, this);
 	m_buttons.push_back(button);
+}
+
+void Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+{
+	Slider* slider = new Slider(rectFloat, sizeDefinition, name, color, this);
+	m_sliders.push_back(slider);
 }
 
 //void Panel::CreateButton(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name)
@@ -151,11 +174,41 @@ void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinitio
 //	m_buttons.push_back(button);
 //}
 
-Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) : Panel(rectFloat, sizeDefinition, name, color, parent)
+Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
+		: Panel(rectFloat, sizeDefinition, name, color, parent)
 {
 }
 
-Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) : Panel(rectInt, sizeDefinition, name, color, parent)
+Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
+		: Panel(rectInt, sizeDefinition, name, color, parent)
 {
 }
 
+SliderBar::SliderBar()
+{
+}
+
+SliderBar::SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent)
+		: Panel(rectFloat, sizeDefinition, name, color, parent)
+{
+}
+
+
+
+Slider::Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, 
+		Color color, Panel* parent) 
+		: Panel(rectFloat, sizeDefinition, name, color, parent)
+{
+}
+
+Slider::Slider(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, 
+		Color color, Panel* parent) 
+		: Panel(rectInt, sizeDefinition, name, color, parent)
+{
+}
+
+void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+{
+	SliderBar* slider = new SliderBar(rectFloat, sizeDefinition, name, color, this);
+	m_sliderBar = slider;
+}

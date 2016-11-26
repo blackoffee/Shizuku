@@ -19,6 +19,8 @@ public:
 	Color(ColorName color);
 };
 
+class Button;
+class Slider;
 
 class Panel
 {
@@ -26,7 +28,8 @@ public:
 	enum SizeDefinitionMethod {DEF_ABS, DEF_REL};
 	std::string m_name;
 	std::vector<Panel*> m_subPanels;
-	std::vector<Panel*> m_buttons;
+	std::vector<Button*> m_buttons;
+	std::vector<Slider*> m_sliders;
 	Panel* m_parent = NULL; //pointer to parent frame
 	RectInt m_rectInt_abs; //absolute coordinates in Window
 	RectInt m_rectInt_rel; //relative coordinates wrt to parent
@@ -44,10 +47,13 @@ public:
 	void CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 	void CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
+	void CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();
 
-	void Draw();
+	void Draw(); //draw current panel only
+	void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 };
 
 class Button : public Panel
@@ -55,18 +61,35 @@ class Button : public Panel
 public:
 	std::string m_secondName;
 	
-
+	using Panel::Panel;
 	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
+};
 
-	//	Button(std::string name1, std::string name2)
-//	{
-//		m_name = name1;
-//		m_secondName = name2;
-//	}
-//	Button(std::string name1)
-//	{
-//		m_name = name1;
-//	}
+class Slider;
+
+class SliderBar : public Panel
+{
+public:
+	Slider* m_parent;
+	SliderBar();
+	SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
+	SliderBar(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
+
+};
+
+class Slider : public Panel
+{
+public:
+	float m_minValue;
+	float m_maxValue;
+	float m_currentValue;
+	SliderBar* m_sliderBar;
+
+	Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+	Slider(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+
+	void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+
 };

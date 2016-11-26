@@ -19,9 +19,13 @@
 
 int winw = 640;
 int winh = 480;
-int g_xDim = XDIM;
-int g_yDim = YDIM;
+
+//simulation inputs
+int g_xDim = 512;
+int g_yDim = 384;
 float g_uMax = 0.06f;
+
+//view transformations
 float rotate_x = 45.f;
 float translate_z = 1.f;
 
@@ -66,6 +70,8 @@ void SetUpWindow()
 	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
 	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
 
+	theWindow.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
+	theWindow.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-0.9f, 0.5f, 1.8f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
 }
 
 
@@ -253,9 +259,12 @@ void DrawRectangle(RectInt rect)
 
 void Draw2D()
 {
-	theWindow.m_subPanels[0]->Draw();
-	theWindow.m_subPanels[0]->m_buttons[0]->Draw();
-	theWindow.m_subPanels[0]->m_buttons[1]->Draw();
+	theWindow.DrawAll();
+//	theWindow.m_subPanels[0]->Draw();
+//	theWindow.m_subPanels[0]->m_buttons[0]->Draw();
+//	theWindow.m_subPanels[0]->m_buttons[1]->Draw();
+//	theWindow.m_subPanels[0]->m_sliders[0]->Draw();
+//	theWindow.m_subPanels[0]->m_sliders[0]->m_sliderBar->Draw();
 }
 
 

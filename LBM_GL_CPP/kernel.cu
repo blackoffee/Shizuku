@@ -14,8 +14,14 @@ float omega = 1.9f;
 //grid and threads for CUDA
 dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
-int nBlocks = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY);
-int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
+//int nBlocks = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY);
+//int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
+
+
+class testFcn
+{
+	testFcn();
+};
 
 
 /*----------------------------------------------------------------------------------------
