@@ -42,7 +42,9 @@ public:
 	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
-	
+	Panel* GetPanel(std::string name);
+	Button* GetButton(std::string name);
+	Slider* GetSlider(std::string name);
 
 	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);

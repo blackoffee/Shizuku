@@ -129,10 +129,10 @@ void Panel::Draw()
 {
 	glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
 	glBegin(GL_QUADS);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-		glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-		glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
 	glEnd();
 }
 
@@ -151,6 +151,64 @@ void Panel::DrawAll()
 	{
 		(*it)->DrawAll();
 	}
+}
+
+
+Panel* Panel::GetPanel(std::string name)
+{
+	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+	{
+		if ((*it)->m_name == name)
+		{
+			return *it;
+		}
+		Panel* panelSearchResult = (*it)->GetPanel(name);
+		if (panelSearchResult != NULL)
+		{
+			return panelSearchResult;
+		}
+	}
+	return NULL;
+}
+
+Button* Panel::GetButton(std::string name)
+{
+	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+	{
+		Button* buttonSearchResult = (*it)->GetButton(name);
+		if (buttonSearchResult != NULL)
+		{
+			return buttonSearchResult;
+		}
+	}
+	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
+	{
+		if ((*it)->m_name == name)
+		{
+			return *it;
+		}
+	}
+	return NULL;
+}
+
+Slider* Panel::GetSlider(std::string name)
+{
+	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+	{
+		Slider* sliderSearchResult = (*it)->GetSlider(name);
+		if (sliderSearchResult != NULL)
+		{
+			return sliderSearchResult;
+		}
+	}
+	for (std::vector<Slider*>::iterator it = m_sliders.begin(); it != m_sliders.end(); ++it)
+	{
+		if ((*it)->m_name == name)
+		{
+			return *it;
+		}
+	}
+	return NULL;
 }
 
 void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
