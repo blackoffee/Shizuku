@@ -31,7 +31,7 @@ float translate_z = 1.f;
 
 Obstruction g_obstructions[MAXOBSTS];
 
-Panel theWindow;
+Panel Window;
 Mouse theMouse;
 
 GLuint g_vboSolutionField;
@@ -63,20 +63,20 @@ void Init()
 void SetUpWindow()
 {
 	int leftPanelWidth(100);
-	theWindow.m_rectInt_abs = RectInt(100, 100, winw, winh);
-	theWindow.m_rectFloat_abs = theWindow.RectIntAbsToRectFloatAbs();
-	theWindow.m_draw = false;
-	theWindow.m_name = "Main Window";
-	theMouse.SetBasePanel(&theWindow);
+	Window.m_rectInt_abs = RectInt(100, 100, winw, winh);
+	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
+	Window.m_draw = false;
+	Window.m_name = "Main Window";
+	theMouse.SetBasePanel(&Window);
 
-	theWindow.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV", Color(Color::LIGHT_GRAY));
-	theWindow.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
-	//theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
-	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
+	Window.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV", Color(Color::LIGHT_GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
+	//Window.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
+	Window.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
 
-	theWindow.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
-	theWindow.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
-	//theWindow.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	Window.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
+	Window.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	//Window.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
 
 	SetUpButtons();
 }
@@ -87,15 +87,15 @@ void SetUpWindow()
 
 void ButtonCallBack()
 {
-	theWindow.m_subPanels[0]->m_buttons[0]->m_backgroundColor = Color::GREEN;
+	Window.m_subPanels[0]->m_buttons[0]->m_backgroundColor = Color::GREEN;
 	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, g_uMax);
 	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, g_uMax);
 }
 
 void SetUpButtons()
 {
-	theWindow.GetButton("Button1")->m_callBack = ButtonCallBack;
-	//theWindow.m_subPanels[0]->m_buttons[0]->m_callBack = ButtonCallBack;
+	Window.GetButton("Button1")->m_callBack = ButtonCallBack;
+	//Window.m_subPanels[0]->m_buttons[0]->m_callBack = ButtonCallBack;
 }
 
 
@@ -284,12 +284,12 @@ void DrawRectangle(RectInt rect)
 
 void Draw2D()
 {
-	theWindow.DrawAll();
-//	theWindow.m_subPanels[0]->Draw();
-//	theWindow.m_subPanels[0]->m_buttons[0]->Draw();
-//	theWindow.m_subPanels[0]->m_buttons[1]->Draw();
-//	theWindow.m_subPanels[0]->m_sliders[0]->Draw();
-//	theWindow.m_subPanels[0]->m_sliders[0]->m_sliderBar->Draw();
+	Window.DrawAll();
+//	Window.m_subPanels[0]->Draw();
+//	Window.m_subPanels[0]->m_buttons[0]->Draw();
+//	Window.m_subPanels[0]->m_buttons[1]->Draw();
+//	Window.m_subPanels[0]->m_sliders[0]->Draw();
+//	Window.m_subPanels[0]->m_sliders[0]->m_sliderBar->Draw();
 }
 
 
@@ -312,7 +312,7 @@ void MouseMotion(int x, int y)
 
 	//theMouse.Update(x, y);
 
-	//theWindow.m_subPanels[0]->m_sliders[0]->m_sliderBar->Slide(theMouse.)
+	//Window.m_subPanels[0]->m_sliders[0]->m_sliderBar->Slide(theMouse.)
 }
 
 

@@ -41,17 +41,13 @@ void Mouse::Move(int x, int y)
 {
 	float dx = intCoordToFloatCoord(x, m_winW) - intCoordToFloatCoord(m_xprev, m_winW);
 	float dy = intCoordToFloatCoord(y, m_winH) - intCoordToFloatCoord(m_yprev, m_winH);
-	m_x = x;
-	m_y = y;
+	m_xprev = x;
+	m_yprev = y;
 
-//	if (m_currentlySelectedPanel != NULL)
-//	{
-		if (m_lmb == GLUT_DOWN)
-		{
-			Panel* panelMouseIsOn = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
-			panelMouseIsOn->Drag(dx, dy);
-		}
-//	}
+	if (m_lmb == GLUT_DOWN)
+	{
+		m_currentlySelectedPanel->Drag(dx, dy);
+	}
 
 }
 
