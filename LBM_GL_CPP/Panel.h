@@ -36,17 +36,18 @@ public:
 	RectFloat m_rectFloat_rel;
 	Color m_backgroundColor;
 	bool m_draw = true;
+	void(*m_callBack)();
 
 	Panel();
 	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
+	
+
 	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-
 	void CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 	void CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-
 	void CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
 	RectFloat RectIntAbsToRectFloatAbs();
@@ -56,6 +57,7 @@ public:
 	void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
 	virtual void Drag(float dx, float dy);
+	virtual void Click();
 };
 
 class Button : public Panel
@@ -67,6 +69,7 @@ public:
 	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
+	virtual void Click();
 };
 
 class Slider;

@@ -49,6 +49,7 @@ int* g_im_d;
 Obstruction* g_obst_d;
 
 
+void SetUpButtons();
 
 
 void Init()
@@ -73,6 +74,23 @@ void SetUpWindow()
 
 	theWindow.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
 	theWindow.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+
+	SetUpButtons();
+}
+
+/*----------------------------------------------------------------------------------------
+ *	Button setup
+ */
+
+void ButtonCallBack()
+{
+	theWindow.m_subPanels[0]->m_buttons[0]->m_backgroundColor = Color::GREEN;
+
+}
+
+void SetUpButtons()
+{
+	theWindow.m_subPanels[0]->m_buttons[0]->m_callBack = ButtonCallBack;
 }
 
 
@@ -238,6 +256,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 
 
 
+
 /*----------------------------------------------------------------------------------------
  *	This function will be used to draw the 3D scene
  */
@@ -268,6 +287,10 @@ void Draw2D()
 //	theWindow.m_subPanels[0]->m_sliders[0]->m_sliderBar->Draw();
 }
 
+
+/*----------------------------------------------------------------------------------------
+ *	Mouse interactions
+ */
 
 void MouseButton(int button, int state, int x, int y)
 {

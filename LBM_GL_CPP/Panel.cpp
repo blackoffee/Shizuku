@@ -18,6 +18,8 @@ Color::Color(ColorName color)
 		r = 1.f; g = 0.f; b = 0.f; break;
 	case BLUE:
 		r = 0.f; g = 0.f; b = 1.f; break;
+	case GREEN:
+		r = 0.f; g = 1.f; b = 0.f; break;
 	case DARK_GRAY:
 		r = 0.1f; g = 0.1f; b = 0.1f; break;
 	case GRAY:
@@ -167,6 +169,11 @@ void Panel::Drag(float dx, float dy)
 {
 }
 
+void Panel::Click()
+{
+}
+
+
 Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
 		: Panel(rectFloat, sizeDefinition, name, color, parent)
 {
@@ -175,6 +182,15 @@ Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::st
 Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
 		: Panel(rectInt, sizeDefinition, name, color, parent)
 {
+}
+
+void Button::Click()
+{
+//	if (m_callBack != NULL)
+//	{
+		m_callBack();
+//	}
+
 }
 
 SliderBar::SliderBar()
@@ -238,8 +254,7 @@ bool IsPointInRect(float x, float y, RectFloat rect)
 
 Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 {
-	//prevent function from returning NULL. Return parent-most panel instead.	
-	Panel* panelThatPointIsIn = parentPanel;// NULL; 
+	Panel* panelThatPointIsIn = NULL; 
 	if (IsPointInRect(x, y, parentPanel->m_rectFloat_abs))
 	{
 		panelThatPointIsIn = parentPanel;
