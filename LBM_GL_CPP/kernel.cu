@@ -18,12 +18,6 @@ dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 //int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
 
 
-class testFcn
-{
-	testFcn();
-};
-
-
 /*----------------------------------------------------------------------------------------
  *	Device functions
  */

@@ -1,11 +1,4 @@
-
-#include <string>
-#include <iostream>
-#include <vector>
-#include "RectFloat.h"
-#include "RectInt.h"
 #include "Panel.h"
-
 
 Color::Color()
 {
@@ -23,6 +16,8 @@ Color::Color(ColorName color)
 		r = 0.f; g = 0.f; b = 0.f; break;
 	case RED:
 		r = 1.f; g = 0.f; b = 0.f; break;
+	case BLUE:
+		r = 0.f; g = 0.f; b = 1.f; break;
 	case DARK_GRAY:
 		r = 0.1f; g = 0.1f; b = 0.1f; break;
 	case GRAY:
@@ -141,7 +136,7 @@ void Panel::Draw()
 
 void Panel::DrawAll()
 {
-	Draw();
+	if (m_draw == true) Draw();
 	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
 	{
 		(*it)->DrawAll();
@@ -168,11 +163,9 @@ void Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinitio
 	m_sliders.push_back(slider);
 }
 
-//void Panel::CreateButton(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name)
-//{
-//	Button* button = new Button(rectInt, sizeDefinition, name, this);
-//	m_buttons.push_back(button);
-//}
+void Panel::Drag(float dx, float dy)
+{
+}
 
 Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
 		: Panel(rectFloat, sizeDefinition, name, color, parent)
@@ -193,7 +186,19 @@ SliderBar::SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, s
 {
 }
 
-
+void SliderBar::Drag(float dx, float dy)
+{
+	if (m_orientation == VERTICAL)
+	{
+		m_rectFloat_abs.m_y = max(m_parent->m_rectFloat_abs.m_y, 
+							min(m_parent->m_rectFloat_abs.m_y + m_parent->m_rectFloat_abs.m_h - m_rectFloat_abs.m_h, m_rectFloat_abs.m_y + dy));
+	}
+	else
+	{ 
+		m_rectFloat_abs.m_x = min(m_parent->m_rectFloat_abs.m_x, 
+							max(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
+	}
+}
 
 Slider::Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, 
 		Color color, Panel* parent) 
@@ -212,3 +217,68 @@ void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefin
 	SliderBar* slider = new SliderBar(rectFloat, sizeDefinition, name, color, this);
 	m_sliderBar = slider;
 }
+
+void Slider::DrawAll()
+{
+	if (m_draw == true) Draw();
+	if (m_sliderBar != NULL)
+	{
+		m_sliderBar->Draw();
+	}
+}
+
+
+bool IsPointInRect(float x, float y, RectFloat rect)
+{
+	if (x > rect.m_x && x<rect.m_x + rect.m_w && y>rect.m_y && y < rect.m_y + rect.m_h)
+		return true;
+	return false;
+}
+
+
+Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
+{
+	//prevent function from returning NULL. Return parent-most panel instead.	
+	Panel* panelThatPointIsIn = parentPanel;// NULL; 
+	if (IsPointInRect(x, y, parentPanel->m_rectFloat_abs))
+	{
+		panelThatPointIsIn = parentPanel;
+		Panel* temp;
+		for (std::vector<Panel*>::iterator it = parentPanel->m_subPanels.begin(); it != parentPanel->m_subPanels.end(); ++it)
+		{
+			temp = GetPanelThatPointIsIn(*it, x, y);
+			if (temp != NULL)
+			{
+				panelThatPointIsIn = temp;
+			}
+		}
+		for (std::vector<Button*>::iterator it = parentPanel->m_buttons.begin(); it != parentPanel->m_buttons.end(); ++it)
+		{
+			temp = GetPanelThatPointIsIn(*it, x, y);
+			if (temp != NULL)
+			{
+				panelThatPointIsIn = temp;
+			}
+		}
+		for (std::vector<Slider*>::iterator it = parentPanel->m_sliders.begin(); it != parentPanel->m_sliders.end(); ++it)
+		{
+			temp = GetPanelThatPointIsIn(*it, x, y);
+			if (temp != NULL)
+			{
+				panelThatPointIsIn = temp;
+				if ((*it)->m_sliderBar != NULL)
+				{
+					panelThatPointIsIn = (*it)->m_sliderBar;
+				}
+			}
+		}
+	}
+	return panelThatPointIsIn;
+}
+
+//SliderBar* GetSliderThatPointIsIn(SliderBar* parentPanel, float x, float y);
+//{
+
+//}
+
+

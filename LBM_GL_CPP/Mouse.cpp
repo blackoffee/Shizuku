@@ -1,5 +1,13 @@
-#include <GL/freeglut.h>
 #include "Mouse.h"
+
+void Mouse::SetBasePanel(Panel* basePanel)
+{
+	m_basePanel = basePanel;
+	m_winW = m_basePanel->m_rectInt_abs.m_w;
+	m_winH = m_basePanel->m_rectInt_abs.m_h;
+	m_x = 0;
+	m_y = 0;
+}
 
 void Mouse::Update(int x, int y, int button, int state)
 {
@@ -27,4 +35,46 @@ int Mouse::GetX()
 int Mouse::GetY()
 {
 	return m_y;
+}
+
+void Mouse::Move(int x, int y)
+{
+	float dx = intCoordToFloatCoord(x, m_winW) - intCoordToFloatCoord(m_xprev, m_winW);
+	float dy = intCoordToFloatCoord(y, m_winH) - intCoordToFloatCoord(m_yprev, m_winH);
+	m_x = x;
+	m_y = y;
+
+//	if (m_currentlySelectedPanel != NULL)
+//	{
+		if (m_lmb == GLUT_DOWN)
+		{
+			Panel* panelMouseIsOn = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
+			panelMouseIsOn->Drag(dx, dy);
+		}
+//	}
+
+}
+
+
+void Mouse::Click(int x, int y, int button, int state)
+{
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		m_xprev = x;
+		m_yprev = y;
+		m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
+	}
+}
+
+void Mouse::LeftClickDown(int x, int y)
+{
+
+}
+
+
+
+
+float intCoordToFloatCoord(int x, int xDim)
+{
+	return (static_cast<float> (x) / xDim)*2.f - 1.f;
 }

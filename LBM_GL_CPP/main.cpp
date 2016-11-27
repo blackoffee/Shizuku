@@ -57,21 +57,22 @@ void Init()
 	glewInit();
 	glViewport(0,0,winw, winh);
 
-
 }
 
 void SetUpWindow()
 {
 	int leftPanelWidth(100);
 	theWindow.m_rectInt_abs = RectInt(100, 100, winw, winh);
-	theWindow.RectIntAbsToRectFloatAbs();
+	theWindow.m_rectFloat_abs = theWindow.RectIntAbsToRectFloatAbs();
+	theWindow.m_draw = false;
+	theMouse.SetBasePanel(&theWindow);
 
 	theWindow.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV", Color(Color::LIGHT_GRAY));
 	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
 	theWindow.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
 
 	theWindow.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
-	theWindow.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-0.9f, 0.5f, 1.8f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	theWindow.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
 }
 
 
@@ -270,18 +271,20 @@ void Draw2D()
 
 void MouseButton(int button, int state, int x, int y)
 {
-	theMouse.Update(x, y, button, state);
-
+	//theMouse.Update(x, y, button, state);
+	theMouse.Click(x, theMouse.m_winH-y, button, state);
 }
 
 void MouseMotion(int x, int y)
 {
 	int dx, dy;
 
-	theMouse.GetChange(x, y);
+	theMouse.Move(x, theMouse.m_winH-y);
+	//theMouse.GetChange(x, y);
 
-	theMouse.Update(x, y);
+	//theMouse.Update(x, y);
 
+	//theWindow.m_subPanels[0]->m_sliders[0]->m_sliderBar->Slide(theMouse.)
 }
 
 

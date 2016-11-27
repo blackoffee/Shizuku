@@ -1,10 +1,9 @@
 #pragma once 
-
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 #include <string>
 #include <iostream>
 #include <vector>
-#include <GL/glew.h>
-#include <GL/freeglut.h>
 #include "RectFloat.h"
 #include "RectInt.h"
 
@@ -36,6 +35,7 @@ public:
 	RectFloat m_rectFloat_abs; //absolute coordinates in window. this is the one used for drawing, so always want to keep this up-to-date.
 	RectFloat m_rectFloat_rel;
 	Color m_backgroundColor;
+	bool m_draw = true;
 
 	Panel();
 	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
@@ -54,6 +54,8 @@ public:
 
 	void Draw(); //draw current panel only
 	void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
+
+	virtual void Drag(float dx, float dy);
 };
 
 class Button : public Panel
@@ -72,11 +74,13 @@ class Slider;
 class SliderBar : public Panel
 {
 public:
-	Slider* m_parent;
+	enum Orientation {VERTICAL, HORIZONTAL};
+	Orientation m_orientation = VERTICAL;
 	SliderBar();
 	SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 	SliderBar(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 
+	virtual void Drag(float dx, float dy);
 };
 
 class Slider : public Panel
@@ -92,4 +96,10 @@ public:
 
 	void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
+	void DrawAll();
 };
+
+Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);
+//Button* GetButtonThatPointIsIn(Button* parentPanel, float x, float y);
+//SliderBar* GetSliderBarThatPointIsIn(SliderBar* parentPanel, float x, float y);
+
