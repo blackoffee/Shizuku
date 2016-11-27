@@ -94,7 +94,8 @@ public:
 	float m_minValue;
 	float m_maxValue;
 	float m_currentValue;
-	SliderBar* m_sliderBar;
+	SliderBar* m_sliderBar1 = NULL;
+	SliderBar* m_sliderBar2 = NULL;
 
 	Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Slider(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);

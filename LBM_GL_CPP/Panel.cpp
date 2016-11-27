@@ -289,15 +289,26 @@ Slider::Slider(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string
 void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	SliderBar* slider = new SliderBar(rectFloat, sizeDefinition, name, color, this);
-	m_sliderBar = slider;
+	if (m_sliderBar1 == NULL)
+	{
+		m_sliderBar1 = slider;
+	}
+	else if (m_sliderBar2 == NULL)
+	{
+		m_sliderBar2 = slider;
+	}
 }
 
 void Slider::DrawAll()
 {
 	if (m_draw == true) Draw();
-	if (m_sliderBar != NULL)
+	if (m_sliderBar1 != NULL)
 	{
-		m_sliderBar->Draw();
+		m_sliderBar1->Draw();
+	}
+	if (m_sliderBar2 != NULL)
+	{
+		m_sliderBar2->Draw();
 	}
 }
 
@@ -339,9 +350,19 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 			if (temp != NULL)
 			{
 				panelThatPointIsIn = temp;
-				if ((*it)->m_sliderBar != NULL)
+				if ((*it)->m_sliderBar1 != NULL)
 				{
-					panelThatPointIsIn = (*it)->m_sliderBar;
+					if (IsPointInRect(x, y, (*it)->m_sliderBar1->m_rectFloat_abs))
+					{
+						panelThatPointIsIn = (*it)->m_sliderBar1;
+					}
+				}
+				if ((*it)->m_sliderBar2 != NULL)
+				{
+					if (IsPointInRect(x, y, (*it)->m_sliderBar2->m_rectFloat_abs))
+					{
+						panelThatPointIsIn = (*it)->m_sliderBar2;
+					}
 				}
 			}
 		}

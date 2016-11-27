@@ -76,7 +76,8 @@ void SetUpWindow()
 
 	Window.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
 	Window.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
-	//Window.m_subPanels[0]->m_sliders[0]->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	Window.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, -0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	//Window.m_subPanels[0]->m_sliders[0]->CreateSliderBar1(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
 
 	SetUpButtons();
 }
