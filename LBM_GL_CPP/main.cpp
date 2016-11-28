@@ -23,7 +23,9 @@ int winh = 480;
 //simulation inputs
 int g_xDim = 512;
 int g_yDim = 384;
-float g_uMax = 0.06f;
+float g_uMax = 0.1f;
+float g_contMin = 0.f;
+float g_contMax = 0.1f;
 
 ContourVariable g_contourVar;
 
@@ -35,6 +37,8 @@ Obstruction g_obstructions[MAXOBSTS];
 
 Panel Window;
 Mouse theMouse;
+
+ButtonGroup contourButtons;
 
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
@@ -54,6 +58,7 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 
 void SetUpButtons();
+void VelMagButtonCallBack();
 
 
 void Init()
@@ -79,7 +84,7 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.4f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.6f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.8f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
-	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -1.f+0.01f , 1.1f, 0.19f) , Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -1.f+0.01f , 1.1f, 0.19f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
 
 	float sliderW = 0.4f;
 	float sliderBarW = 2.f;
@@ -99,23 +104,113 @@ void SetUpWindow()
 	Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
 	Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
-	Window.GetPanel("Label_Contour")->m_displayText = "Contour";
-	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, "Slider_Contour", Color(Color::LIGHT_GRAY));
-	Window.GetSlider("Slider_Contour")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_ContourMax", Color(Color::GRAY));
-	Window.GetSlider("Slider_Contour")->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.85f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_ContourMin", Color(Color::GRAY));
-	Window.GetSlider("Slider_Contour")->m_maxValue = 1.8f;
-	Window.GetSlider("Slider_Contour")->m_minValue = 1.99f;
-	Window.GetSlider("Slider_Contour")->m_sliderBar1->m_displayText = "Min";
-	Window.GetSlider("Slider_Contour")->m_sliderBar2->m_displayText = "Max";
-	Window.GetSlider("Slider_Contour")->m_sliderBar2->UpdateValue();
+	std::string VarName = "VelMag";
+	std::string labelName = "Label_"+VarName;
+	std::string sliderName = "Slider_"+VarName;
+	std::string sliderBarName1 = "SliderBar_"+VarName+"Max";
+	std::string sliderBarName2 = "SliderBar_"+VarName+"Min";
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = g_uMax*2.f;
+	Window.GetSlider(sliderName)->m_minValue = 0.f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_backgroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_backgroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+
+	VarName = "VelX";
+	labelName = "Label_"+VarName;
+	sliderName = "Slider_"+VarName;
+	sliderBarName1 = "SliderBar_"+VarName+"Max";
+	sliderBarName2 = "SliderBar_"+VarName+"Min";
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.8f;
+	Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_backgroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_backgroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+	Window.GetSlider(sliderName)->Hide();
+
+	VarName = "VelY";
+	labelName = "Label_"+VarName;
+	sliderName = "Slider_"+VarName;
+	sliderBarName1 = "SliderBar_"+VarName+"Max";
+	sliderBarName2 = "SliderBar_"+VarName+"Min";
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.f;
+	Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_backgroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_backgroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+	Window.GetSlider(sliderName)->Hide();
+
+	VarName = "StrainRate";
+	labelName = "Label_"+VarName;
+	sliderName = "Slider_"+VarName;
+	sliderBarName1 = "SliderBar_"+VarName+"Max";
+	sliderBarName2 = "SliderBar_"+VarName+"Min";
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = g_uMax*0.1f;
+	Window.GetSlider(sliderName)->m_minValue = 0.f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_backgroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_backgroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+	Window.GetSlider(sliderName)->Hide();
+
+
+	VarName = "Pressure";
+	labelName = "Label_"+VarName;
+	sliderName = "Slider_"+VarName;
+	sliderBarName1 = "SliderBar_"+VarName+"Max";
+	sliderBarName2 = "SliderBar_"+VarName+"Min";
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.85f, sliderBarW, 0.2f), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = 1.03f;
+	Window.GetSlider(sliderName)->m_minValue = 0.97f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_backgroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_backgroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+	Window.GetSlider(sliderName)->Hide();
 
 	SetUpButtons();
+	VelMagButtonCallBack(); //default is vel mag contour
 }
 
 /*----------------------------------------------------------------------------------------
  *	Button setup
  */
+
+Slider* GetCurrentContourSlider()
+{
+	if (Window.GetSlider("Slider_VelMag")->m_draw == true) return Window.GetSlider("Slider_VelMag");
+	else if (Window.GetSlider("Slider_VelX")->m_draw == true) return Window.GetSlider("Slider_VelX");
+	else if (Window.GetSlider("Slider_VelY")->m_draw == true) return Window.GetSlider("Slider_VelY");
+	else if (Window.GetSlider("Slider_StrainRate")->m_draw == true) return Window.GetSlider("Slider_StrainRate");
+	else if (Window.GetSlider("Slider_Pressure")->m_draw == true) return Window.GetSlider("Slider_Pressure");
+}
+
 
 void InitializeButtonCallBack()
 {
@@ -125,12 +220,18 @@ void InitializeButtonCallBack()
 
 void VelMagButtonCallBack()
 {
+	//contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
 	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::LIGHT_GRAY;
 	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_MAG;
+	Window.GetSlider("Slider_VelMag")->Show();
+	Window.GetSlider("Slider_VelX")->Hide();
+	Window.GetSlider("Slider_VelY")->Hide();
+	Window.GetSlider("Slider_StrainRate")->Hide();
+	Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void VelXButtonCallBack()
@@ -141,6 +242,11 @@ void VelXButtonCallBack()
 	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_U;
+	Window.GetSlider("Slider_VelMag")->Hide();
+	Window.GetSlider("Slider_VelX")->Show();
+	Window.GetSlider("Slider_VelY")->Hide();
+	Window.GetSlider("Slider_StrainRate")->Hide();
+	Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void VelYButtonCallBack()
@@ -151,6 +257,11 @@ void VelYButtonCallBack()
 	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_V;
+	Window.GetSlider("Slider_VelMag")->Hide();
+	Window.GetSlider("Slider_VelX")->Hide();
+	Window.GetSlider("Slider_VelY")->Show();
+	Window.GetSlider("Slider_StrainRate")->Hide();
+	Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void StrainRateButtonCallBack()
@@ -161,6 +272,11 @@ void StrainRateButtonCallBack()
 	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::LIGHT_GRAY;
 	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = STRAIN_RATE;
+	Window.GetSlider("Slider_VelMag")->Hide();
+	Window.GetSlider("Slider_VelX")->Hide();
+	Window.GetSlider("Slider_VelY")->Hide();
+	Window.GetSlider("Slider_StrainRate")->Show();
+	Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void PressureButtonCallBack()
@@ -171,6 +287,11 @@ void PressureButtonCallBack()
 	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
 	Window.GetButton("Pressure"          )->m_backgroundColor = Color::LIGHT_GRAY;
 	g_contourVar = PRESSURE;
+	Window.GetSlider("Slider_VelMag")->Hide();
+	Window.GetSlider("Slider_VelX")->Hide();
+	Window.GetSlider("Slider_VelY")->Hide();
+	Window.GetSlider("Slider_StrainRate")->Hide();
+	Window.GetSlider("Slider_Pressure")->Show();
 }
 
 void SetUpButtons()
@@ -187,6 +308,14 @@ void SetUpButtons()
 	Window.GetButton("Y Velocity"        )->m_displayText = "Y Velocity"        ;
 	Window.GetButton("StrainRate"        )->m_displayText = "StrainRate"        ;
 	Window.GetButton("Pressure"          )->m_displayText = "Pressure"          ;
+
+//	contourButtons.m_buttons = {
+//		Window.GetButton("Initialize"),
+//		Window.GetButton("Velocity Magnitude"),
+//		Window.GetButton("X Velocity"),
+//		Window.GetButton("Y Velocity"),
+//		Window.GetButton("StrainRate"),
+//		Window.GetButton("Pressure") };
 }
 
 
@@ -347,7 +476,9 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 
 	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
 	float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_xDim, g_yDim, u, omega, 5);
+	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
+	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, 5);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, vbo_resource, 0);

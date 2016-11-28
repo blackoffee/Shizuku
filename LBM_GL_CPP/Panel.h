@@ -71,7 +71,7 @@ public:
 class Button : public Panel
 {
 public:
-	std::string m_secondName;
+	bool m_highlighted = false;
 	
 	using Panel::Panel;
 	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
@@ -113,7 +113,23 @@ public:
 	void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
 	void DrawAll();
+	void Hide();
+	void Show();
 };
+
+class ButtonGroup
+{
+public:
+	std::vector<Button*> m_buttons;
+	ButtonGroup();
+	ButtonGroup(std::vector<Button*> buttons);
+
+	void ExclusiveEnable(Button* button);
+	Button* GetCurrentEnabledButton();
+};
+
+
+
 
 Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);
 //Button* GetButtonThatPointIsIn(Button* parentPanel, float x, float y);

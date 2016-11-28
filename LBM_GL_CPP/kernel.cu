@@ -82,6 +82,19 @@ __device__ int dmax(int a)
 	if (a>-1) return a;
 	else return 0;
 }
+__device__ float dmin(float a, float b)
+{
+	if (a<b) return a;
+	else return b;
+}
+__device__ float dmax(float a)
+{
+	if (a>0) return a;
+	else return 0;
+}
+
+
+
 inline __device__ int f_mem(int f_num, int x, int y, size_t pitch, int yDim)
 {
 
@@ -258,7 +271,7 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 
 // main LBM function including streaming and colliding
 __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
-	float omega, int *Im, Obstruction *obstructions, int contourVar, int xDim, int yDim, float uMax)//pitch in elements
+	float omega, int *Im, Obstruction *obstructions, int contourVar, float contMin, float contMax, int xDim, int yDim, float uMax)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -387,52 +400,55 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float maxValue;
 	float minValue;
 
+	minValue = contMin;
+	maxValue = contMax;
+
 	//change min/max contour values based on contour variable
 	if (contourVar == ContourVariable::VEL_MAG)
 	{
 		variableValue = sqrt(u*u+v*v);
-		maxValue = uMax*1.8f;
-		minValue = 0.0f;
+//		maxValue = uMax*1.8f;
+//		minValue = 0.0f;
 	}	
 	else if (contourVar == ContourVariable::VEL_U)
 	{
 		variableValue = u;
-		maxValue = uMax*1.8f;
-		minValue = -uMax*0.5f;
+//		maxValue = uMax*1.8f;
+//		minValue = -uMax*0.5f;
 	}	
 	else if (contourVar == ContourVariable::VEL_V)
 	{
 		variableValue = v;
-		maxValue = uMax;
-		minValue = -uMax;
+//		maxValue = uMax;
+//		minValue = -uMax;
 	}	
 	else if (contourVar == ContourVariable::PRESSURE)
 	{
 		variableValue = rho;
-		maxValue = 1.01f;
-		minValue = 0.99f;
+//		maxValue = 1.01f;
+//		minValue = 0.99f;
 	}
 	else if (contourVar == ContourVariable::STRAIN_RATE)
 	{
 		variableValue = Q;
-		maxValue = 0.03f*uMax;// 0.002f;// 1.01f;
-		minValue = 0.f;// 0.99f;
+//		maxValue = 0.03f*uMax;// 0.002f;// 1.01f;
+//		minValue = 0.f;// 0.99f;
 	}
 
-	if (variableValue > maxValue) variableValue = maxValue;
-	if (variableValue < minValue) variableValue = minValue;
+//	if (variableValue > maxValue) variableValue = maxValue;
+//	if (variableValue < minValue) variableValue = minValue;
 
 	////Blue to white color scheme
-	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	//signed char G = 0;// 255 * ((variableValue - minValue) / (maxValue - minValue));
-	//signed char B = 0;//255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	//signed char A = 255;
+	signed char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
+	signed char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
+	signed char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	signed char A = 255;
 
 	////Rainbow color scheme
-	signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
-	signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	signed char A = 255;
+	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
+	//signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
+	//signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	//signed char A = 255;
 
 	//set walls to be white
 	if (im == 1){
@@ -443,7 +459,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 		}
 		else
 		{
-			R = 255; G = 255; B = 255;
+			R = 200; G = 200; B = 200;
 		}
 	}
 	//set walls drawn by user to be light gray
@@ -471,12 +487,12 @@ void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax)
 }
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-	ContourVariable contVar, int xDim, int yDim, float uMax, float omega, int tStep)
+	ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep)
 {
 	for (int i = 0; i < tStep; i++)
 	{
-		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, xDim, yDim, uMax);
-		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, xDim, yDim, uMax);
+		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax);
+		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax);
 	}
 }
 

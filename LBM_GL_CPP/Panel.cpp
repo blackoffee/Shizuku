@@ -349,16 +349,84 @@ void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefin
 
 void Slider::DrawAll()
 {
-	if (m_draw == true) Draw();
+	if (m_draw == true)
+	{
+		Draw();
+		if (m_sliderBar1 != NULL)
+		{
+			m_sliderBar1->Draw();
+		}
+		if (m_sliderBar2 != NULL)
+		{
+			m_sliderBar2->Draw();
+		}
+	}
+}
+
+void Slider::Hide()
+{
+	m_draw = false;
 	if (m_sliderBar1 != NULL)
 	{
-		m_sliderBar1->Draw();
+		m_sliderBar1->m_draw = false;
 	}
 	if (m_sliderBar2 != NULL)
 	{
-		m_sliderBar2->Draw();
+		m_sliderBar2->m_draw = false;
 	}
 }
+
+void Slider::Show()
+{
+	m_draw = true;
+	if (m_sliderBar1 != NULL)
+	{
+		m_sliderBar1->m_draw = true;
+	}
+	if (m_sliderBar2 != NULL)
+	{
+		m_sliderBar2->m_draw = true;
+	}
+}
+
+ButtonGroup::ButtonGroup()
+{
+}
+
+ButtonGroup::ButtonGroup(std::vector<Button*> buttons)
+{
+	m_buttons = buttons;
+}
+
+void ButtonGroup::ExclusiveEnable(Button* button)
+{
+	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
+	{
+		if (*it == button)
+		{
+			(*it)->m_highlighted = true;
+			(*it)->m_backgroundColor = Color::LIGHT_GRAY;
+		}
+		else
+		{
+			button->m_highlighted = false;
+			button->m_backgroundColor = Color::GRAY;
+		}
+	}
+}
+
+Button* ButtonGroup::GetCurrentEnabledButton()
+{
+	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
+	{
+		if ((*it)->m_highlighted == true)
+		{
+			return *it;
+		}
+	}
+	return NULL;
+}
+
 
 
 bool IsPointInRect(float x, float y, RectFloat rect, float tol = 0.0f)
@@ -380,7 +448,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 		for (std::vector<Panel*>::iterator it = parentPanel->m_subPanels.begin(); it != parentPanel->m_subPanels.end(); ++it)
 		{
 			temp = GetPanelThatPointIsIn(*it, x, y);
-			if (temp != NULL)
+			if (temp != NULL && temp->m_draw == true)
 			{
 				panelThatPointIsIn = temp;
 			}
@@ -388,7 +456,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 		for (std::vector<Button*>::iterator it = parentPanel->m_buttons.begin(); it != parentPanel->m_buttons.end(); ++it)
 		{
 			temp = GetPanelThatPointIsIn(*it, x, y);
-			if (temp != NULL)
+			if (temp != NULL && temp->m_draw == true)
 			{
 				panelThatPointIsIn = temp;
 			}
@@ -396,17 +464,17 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 		for (std::vector<Slider*>::iterator it = parentPanel->m_sliders.begin(); it != parentPanel->m_sliders.end(); ++it)
 		{
 			temp = GetPanelThatPointIsIn(*it, x, y);
-			if (temp != NULL)
+			if (temp != NULL && temp->m_draw == true)
 			{
 				panelThatPointIsIn = temp;
-				if ((*it)->m_sliderBar1 != NULL)
+				if ((*it)->m_sliderBar1 != NULL && temp->m_draw == true)
 				{
 					if (IsPointInRect(x, y, (*it)->m_sliderBar1->m_rectFloat_abs))
 					{
 						panelThatPointIsIn = (*it)->m_sliderBar1;
 					}
 				}
-				if ((*it)->m_sliderBar2 != NULL)
+				if ((*it)->m_sliderBar2 != NULL && temp->m_draw == true)
 				{
 					if (IsPointInRect(x, y, (*it)->m_sliderBar2->m_rectFloat_abs))
 					{

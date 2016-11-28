@@ -12,7 +12,7 @@ void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax);
 
 //extern "C"
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
-						ContourVariable contVar, int xDim, int yDim, float uMax, float omega, int tStep);
+						ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep);
 
 //extern "C"
 void UpdateObstructions(Obstruction* obst_d, int targetObstID);
