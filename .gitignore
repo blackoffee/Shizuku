@@ -21,9 +21,11 @@ LBM1_out.dat
 [Dd]ebug*/
 *.sbr
 obj/
-[Rr]elease*/
 _ReSharper*/
 *.ipch
 *.sdf
 *.opensdf
 packages/*
+[Dd]ebug*/
+[Rr]elease*/
+!x64/[Rr]elease*/
