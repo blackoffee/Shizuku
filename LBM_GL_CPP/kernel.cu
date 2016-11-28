@@ -6,7 +6,7 @@ extern int g_xDim;
 extern int g_yDim;
 
 //float uMax = 0.06f;
-float omega = 1.9f;
+//float omega = 1.9f;
 
 //int BLOCKSIZEX = 64;
 //int BLOCKSIZEY = 1;
@@ -371,7 +371,6 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 //	float CS = 0.1f;
 //	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
 
-	rho = Q;
 
 	if (im == 1) rho = 0.0;
 	//zcoord = f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
@@ -389,27 +388,33 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float minValue;
 
 	//change min/max contour values based on contour variable
-	if (contourVar == ContourVariable::VEL_U)
+	if (contourVar == ContourVariable::VEL_MAG)
 	{
 		variableValue = sqrt(u*u+v*v);
 		maxValue = uMax*1.8f;
 		minValue = 0.0f;
 	}	
-	else if (contourVar == 2)
+	else if (contourVar == ContourVariable::VEL_U)
 	{
 		variableValue = u;
 		maxValue = uMax*1.8f;
 		minValue = -uMax*0.5f;
 	}	
-	else if (contourVar == 3)
+	else if (contourVar == ContourVariable::VEL_V)
 	{
 		variableValue = v;
 		maxValue = uMax;
 		minValue = -uMax;
 	}	
-	else if (contourVar == 4)
+	else if (contourVar == ContourVariable::PRESSURE)
 	{
 		variableValue = rho;
+		maxValue = 1.01f;
+		minValue = 0.99f;
+	}
+	else if (contourVar == ContourVariable::STRAIN_RATE)
+	{
+		variableValue = Q;
 		maxValue = 0.03f*uMax;// 0.002f;// 1.01f;
 		minValue = 0.f;// 0.99f;
 	}
@@ -418,16 +423,16 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	if (variableValue < minValue) variableValue = minValue;
 
 	////Blue to white color scheme
-	signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	signed char G = 0;// 255 * ((variableValue - minValue) / (maxValue - minValue));
-	signed char B = 0;//255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	signed char A = 255;
+	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
+	//signed char G = 0;// 255 * ((variableValue - minValue) / (maxValue - minValue));
+	//signed char B = 0;//255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	//signed char A = 255;
 
 	////Rainbow color scheme
-	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-	//signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
-	//signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	//signed char A = 255;
+	signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
+	signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
+	signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	signed char A = 255;
 
 	//set walls to be white
 	if (im == 1){
@@ -466,7 +471,7 @@ void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax)
 }
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-	ContourVariable contVar, int xDim, int yDim, float uMax, int tStep)
+	ContourVariable contVar, int xDim, int yDim, float uMax, float omega, int tStep)
 {
 	for (int i = 0; i < tStep; i++)
 	{

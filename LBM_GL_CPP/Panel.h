@@ -35,13 +35,19 @@ public:
 	RectFloat m_rectFloat_abs; //absolute coordinates in window. this is the one used for drawing, so always want to keep this up-to-date.
 	RectFloat m_rectFloat_rel;
 	Color m_backgroundColor;
+	Color m_foregroundColor = Color::WHITE;
 	bool m_draw = true;
-	void(*m_callBack)();
+	void(*m_callBack)() = NULL;
+	std::string m_displayText = "";
+	//these two members below should ideally be in Slider class
+	float m_minValue = 1.f;
+	float m_maxValue = 0.f;
 
 	Panel();
 	Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
+	Panel* GetRootPanel();
 	Panel* GetPanel(std::string name);
 	Button* GetButton(std::string name);
 	Slider* GetSlider(std::string name);
@@ -81,18 +87,22 @@ class SliderBar : public Panel
 public:
 	enum Orientation {VERTICAL, HORIZONTAL};
 	Orientation m_orientation = VERTICAL;
+	//float m_maxValue = 1.f;
+	//float m_minValue = 0.f;
+	float m_value = 0.5f;
+
 	SliderBar();
 	SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 	SliderBar(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 
+	void UpdateValue();
+	float GetValue();
 	virtual void Drag(float dx, float dy);
 };
 
 class Slider : public Panel
 {
 public:
-	float m_minValue;
-	float m_maxValue;
 	float m_currentValue;
 	SliderBar* m_sliderBar1 = NULL;
 	SliderBar* m_sliderBar2 = NULL;

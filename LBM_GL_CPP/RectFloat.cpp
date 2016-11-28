@@ -5,6 +5,16 @@ RectFloat::RectFloat() : m_x(0), m_y(0), m_w(0), m_h(0)
 {
 }
 
+float RectFloat::GetCentroidX()
+{
+	return m_x + m_w*0.5f;
+}
+
+float RectFloat::GetCentroidY()
+{
+	return m_y + m_h*0.5f;
+}
+
 //// chains together nested float coordinates. Use to get absolute float coordinates from relative float coordinates
 RectFloat operator*(RectFloat recParent, RectFloat recChild)
 {

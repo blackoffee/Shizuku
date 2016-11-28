@@ -25,6 +25,8 @@ int g_xDim = 512;
 int g_yDim = 384;
 float g_uMax = 0.06f;
 
+ContourVariable g_contourVar;
+
 //view transformations
 float rotate_x = 45.f;
 float translate_z = 1.f;
@@ -48,6 +50,8 @@ int* g_im_h;
 int* g_im_d;
 Obstruction* g_obst_d;
 
+const int g_glutMouseYOffset = 10; //hack to get better mouse precision
+
 
 void SetUpButtons();
 
@@ -69,15 +73,42 @@ void SetUpWindow()
 	Window.m_name = "Main Window";
 	theMouse.SetBasePanel(&Window);
 
-	Window.CreateSubPanel(RectInt(0, 0, 100, winh), Panel::DEF_ABS, "CDV", Color(Color::LIGHT_GRAY));
-	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
-	//Window.m_subPanels[0]->CreateButton(RectFloat(-0.9f, 0.f, 1.8f, 0.2f), Panel::DEF_REL, "Button1", Color(Color::RED));
-	Window.m_subPanels[0]->CreateButton(RectFloat(-0.9f,-0.5f, 1.8f, 0.2f), Panel::DEF_REL, "Button2", Color(Color::DARK_GRAY));
+	Window.CreateSubPanel(RectInt(0, 0, 175, winh), Panel::DEF_ABS, "CDV", Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.2f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.2f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Velocity Magnitude", Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.4f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.6f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.8f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
+	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -1.f+0.01f , 1.1f, 0.19f) , Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
 
-	Window.m_subPanels[0]->CreateSlider(RectFloat(-0.9f,0.5f, 0.4f, 0.4f), Panel::DEF_REL, "Slider1", Color(Color::DARK_GRAY));
-	Window.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
-	Window.GetSlider("Slider1")->CreateSliderBar(RectFloat(-1.2f, -0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
-	//Window.m_subPanels[0]->m_sliders[0]->CreateSliderBar1(RectFloat(-1.2f, 0.5f, 2.4f, 0.3f), Panel::DEF_REL, "SliderBar1", Color(Color::BLUE));
+	float sliderW = 0.4f;
+	float sliderBarW = 2.f;
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(-0.9f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_InletV", Color(Color::DARK_GRAY));
+	Window.GetPanel("Label_InletV")->m_displayText = "Inlet Velocity";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_InletV", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.5f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
+	Window.GetSlider("Slider_InletV")->m_maxValue = 0.1f;
+	Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
+	Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
+
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.1f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Visc", Color(Color::DARK_GRAY));
+	Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_Visc", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
+	Window.GetSlider("Slider_Visc")->m_maxValue = 1.8f;
+	Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
+	Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
+
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
+	Window.GetPanel("Label_Contour")->m_displayText = "Contour";
+	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, "Slider_Contour", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Contour")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_ContourMax", Color(Color::GRAY));
+	Window.GetSlider("Slider_Contour")->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.85f, sliderBarW, 0.2f), Panel::DEF_REL, "SliderBar_ContourMin", Color(Color::GRAY));
+	Window.GetSlider("Slider_Contour")->m_maxValue = 1.8f;
+	Window.GetSlider("Slider_Contour")->m_minValue = 1.99f;
+	Window.GetSlider("Slider_Contour")->m_sliderBar1->m_displayText = "Min";
+	Window.GetSlider("Slider_Contour")->m_sliderBar2->m_displayText = "Max";
+	Window.GetSlider("Slider_Contour")->m_sliderBar2->UpdateValue();
 
 	SetUpButtons();
 }
@@ -86,17 +117,76 @@ void SetUpWindow()
  *	Button setup
  */
 
-void ButtonCallBack()
+void InitializeButtonCallBack()
 {
-	Window.m_subPanels[0]->m_buttons[0]->m_backgroundColor = Color::GREEN;
-	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, g_uMax);
-	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, g_uMax);
+	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, u);
+}
+
+void VelMagButtonCallBack()
+{
+	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::LIGHT_GRAY;
+	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
+	g_contourVar = VEL_MAG;
+}
+
+void VelXButtonCallBack()
+{
+	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::LIGHT_GRAY;
+	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
+	g_contourVar = VEL_U;
+}
+
+void VelYButtonCallBack()
+{
+	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::LIGHT_GRAY;
+	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
+	g_contourVar = VEL_V;
+}
+
+void StrainRateButtonCallBack()
+{
+	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::LIGHT_GRAY;
+	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
+	g_contourVar = STRAIN_RATE;
+}
+
+void PressureButtonCallBack()
+{
+	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
+	Window.GetButton("Pressure"          )->m_backgroundColor = Color::LIGHT_GRAY;
+	g_contourVar = PRESSURE;
 }
 
 void SetUpButtons()
 {
-	Window.GetButton("Button1")->m_callBack = ButtonCallBack;
-	//Window.m_subPanels[0]->m_buttons[0]->m_callBack = ButtonCallBack;
+	Window.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
+	Window.GetButton("Velocity Magnitude")->m_callBack = VelMagButtonCallBack;
+	Window.GetButton("X Velocity")->m_callBack = VelXButtonCallBack;
+	Window.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
+	Window.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
+	Window.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
+	Window.GetButton("Initialize"        )->m_displayText = "Initialize"        ;
+	Window.GetButton("Velocity Magnitude")->m_displayText = "Velocity Magnitude";
+	Window.GetButton("X Velocity"        )->m_displayText = "X Velocity"        ;
+	Window.GetButton("Y Velocity"        )->m_displayText = "Y Velocity"        ;
+	Window.GetButton("StrainRate"        )->m_displayText = "StrainRate"        ;
+	Window.GetButton("Pressure"          )->m_displayText = "Pressure"          ;
 }
 
 
@@ -242,8 +332,9 @@ void SetUpCUDA()
 	cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
 
 	//writeInputs();
-	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, g_uMax);
-	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, g_uMax);
+	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, u);
+	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, u);
 }
 
 void RunCuda(struct cudaGraphicsResource **vbo_resource)
@@ -254,7 +345,9 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 	size_t num_bytes,num_bytes2;
 	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
 
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, ContourVariable::VEL_U, g_xDim, g_yDim, g_uMax, 5);
+	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+	float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_xDim, g_yDim, u, omega, 5);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, vbo_resource, 0);
@@ -301,14 +394,14 @@ void Draw2D()
 void MouseButton(int button, int state, int x, int y)
 {
 	//theMouse.Update(x, y, button, state);
-	theMouse.Click(x, theMouse.m_winH-y, button, state);
+	theMouse.Click(x, theMouse.m_winH-y-g_glutMouseYOffset, button, state);
 }
 
 void MouseMotion(int x, int y)
 {
 	int dx, dy;
 
-	theMouse.Move(x, theMouse.m_winH-y);
+	theMouse.Move(x, theMouse.m_winH-y-g_glutMouseYOffset);
 	//theMouse.GetChange(x, y);
 
 	//theMouse.Update(x, y);

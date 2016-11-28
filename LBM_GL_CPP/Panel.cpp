@@ -25,7 +25,7 @@ Color::Color(ColorName color)
 	case GRAY:
 		r = 0.5f; g = 0.5f; b = 0.5f; break;
 	case LIGHT_GRAY:
-		r = 0.9f; g = 0.9f; b = 0.9f; break;
+		r = 0.75f; g = 0.75f; b = 0.75f; break;
 	}
 }
 
@@ -85,7 +85,7 @@ void Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition,
 	m_subPanels.push_back(subPanel);
 }
 
-RectFloat Panel::RectIntAbsToRectFloatAbs()
+Panel* Panel::GetRootPanel()
 {
 	Panel* rootPanel(this);
 	bool isBasePanel(this->m_parent == NULL);
@@ -93,6 +93,18 @@ RectFloat Panel::RectIntAbsToRectFloatAbs()
 	{
 		rootPanel = rootPanel->m_parent;
 	}
+	return rootPanel;
+}
+
+RectFloat Panel::RectIntAbsToRectFloatAbs()
+{
+//	Panel* rootPanel(this);
+	bool isBasePanel(this->m_parent == NULL);
+//	while (rootPanel->m_parent != NULL)
+//	{
+//		rootPanel = rootPanel->m_parent;
+//	}
+	Panel* rootPanel = GetRootPanel();
 	int windowWidth = rootPanel->m_rectInt_abs.m_w;
 	int windowHeight = rootPanel->m_rectInt_abs.m_h;
 	RectFloat rectFloat;
@@ -134,6 +146,22 @@ void Panel::Draw()
 	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
 	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
 	glEnd();
+
+	Panel* rootPanel = GetRootPanel();
+	glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
+	int stringWidth = 0;
+	for (char& c:m_displayText)
+	{
+		stringWidth += (glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, c));
+	}
+	float stringWidthf = static_cast<float>(stringWidth) / rootPanel->m_rectInt_abs.m_w*2.f;
+	float stringHeightf = static_cast<float>(glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, 'A')) / rootPanel->m_rectInt_abs.m_h*2.f;
+	glRasterPos2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w*0.5f-stringWidthf*0.5f, 
+					m_rectFloat_abs.m_y + m_rectFloat_abs.m_h*0.5f-stringHeightf*0.5f);
+	for (char& c:m_displayText)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
+	}
 }
 
 void Panel::DrawAll()
@@ -244,11 +272,10 @@ Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string
 
 void Button::Click()
 {
-//	if (m_callBack != NULL)
-//	{
+	if (m_callBack != NULL)
+	{
 		m_callBack();
-//	}
-
+	}
 }
 
 SliderBar::SliderBar()
@@ -258,6 +285,26 @@ SliderBar::SliderBar()
 SliderBar::SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent)
 		: Panel(rectFloat, sizeDefinition, name, color, parent)
 {
+}
+
+void SliderBar::UpdateValue()
+{
+	if (m_orientation == VERTICAL)
+	{
+		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidY() - m_parent->m_rectFloat_abs.m_y) 
+					/ (m_parent->m_rectFloat_abs.m_h);
+	}
+	else
+	{
+		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidX() - m_parent->m_rectFloat_abs.m_x) 
+					/ (m_parent->m_rectFloat_abs.m_w);
+	}
+}
+
+float SliderBar::GetValue()
+{
+	UpdateValue();
+	return m_value;
 }
 
 void SliderBar::Drag(float dx, float dy)
@@ -272,6 +319,7 @@ void SliderBar::Drag(float dx, float dy)
 		m_rectFloat_abs.m_x = min(m_parent->m_rectFloat_abs.m_x, 
 							max(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
 	}
+	UpdateValue();
 }
 
 Slider::Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, 
@@ -313,9 +361,10 @@ void Slider::DrawAll()
 }
 
 
-bool IsPointInRect(float x, float y, RectFloat rect)
+bool IsPointInRect(float x, float y, RectFloat rect, float tol = 0.0f)
 {
-	if (x > rect.m_x && x<rect.m_x + rect.m_w && y>rect.m_y && y < rect.m_y + rect.m_h)
+	if (x+tol > rect.m_x && x-tol<rect.m_x + rect.m_w 
+		&& y+tol>rect.m_y && y-tol < rect.m_y + rect.m_h)
 		return true;
 	return false;
 }
