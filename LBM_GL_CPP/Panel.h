@@ -122,7 +122,7 @@ class ButtonGroup
 public:
 	std::vector<Button*> m_buttons;
 	ButtonGroup();
-	ButtonGroup(std::vector<Button*> buttons);
+	ButtonGroup(std::vector<Button*> &buttons);
 
 	void ExclusiveEnable(Button* button);
 	Button* GetCurrentEnabledButton();

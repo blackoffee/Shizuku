@@ -393,7 +393,7 @@ ButtonGroup::ButtonGroup()
 {
 }
 
-ButtonGroup::ButtonGroup(std::vector<Button*> buttons)
+ButtonGroup::ButtonGroup(std::vector<Button*> &buttons)
 {
 	m_buttons = buttons;
 }
@@ -406,11 +406,19 @@ void ButtonGroup::ExclusiveEnable(Button* button)
 		{
 			(*it)->m_highlighted = true;
 			(*it)->m_backgroundColor = Color::LIGHT_GRAY;
+			if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL)
+			{
+				(*it)->GetRootPanel()->GetSlider((*it)->m_name)->Show();
+			}
 		}
 		else
 		{
-			button->m_highlighted = false;
-			button->m_backgroundColor = Color::GRAY;
+			(*it)->m_highlighted = false;
+			(*it)->m_backgroundColor = Color::GRAY;
+			if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL)
+			{
+				(*it)->GetRootPanel()->GetSlider((*it)->m_name)->Hide();
+			}
 		}
 	}
 }
