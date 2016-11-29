@@ -285,6 +285,27 @@ SliderBar::SliderBar()
 SliderBar::SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent)
 		: Panel(rectFloat, sizeDefinition, name, color, parent)
 {
+	m_backgroundColor = Color::GRAY;
+}
+
+void SliderBar::Draw()
+{
+	glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
+	glBegin(GL_QUADS);
+	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+	glEnd();
+
+	glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
+	float outlineWidth = 0.005f;
+	glBegin(GL_QUADS);
+	glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h - outlineWidth*2.f);
+	glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + outlineWidth*2.f);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w - outlineWidth, m_rectFloat_abs.m_y + outlineWidth*2.f);
+	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w - outlineWidth, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h - outlineWidth*2.f);
+	glEnd();
 }
 
 void SliderBar::UpdateValue()
@@ -347,6 +368,105 @@ void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefin
 	}
 }
 
+void Slider::Draw()
+{
+	Color minColor, maxColor;
+	if (m_sliderBar2 == NULL)
+	{
+		minColor = Color::BLUE;
+		maxColor = Color::WHITE;
+		glBegin(GL_QUADS);
+		glColor3f(maxColor.r, maxColor.g, maxColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+		glColor3f(minColor.r, minColor.g, minColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+		glColor3f(maxColor.r, maxColor.g, maxColor.b);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+		glEnd();
+	}
+	else{
+		minColor = Color::BLUE;
+		maxColor = Color::WHITE;
+		Color lowerColor, higherColor;
+		SliderBar* lowerSliderBar;
+		SliderBar* higherSliderBar;
+		if (m_sliderBar1->GetValue() < m_sliderBar2->GetValue())
+		{
+			lowerColor = m_sliderBar1->m_foregroundColor;
+			higherColor = m_sliderBar2->m_foregroundColor;
+			lowerSliderBar = m_sliderBar1;
+			higherSliderBar = m_sliderBar2;
+		}
+		else
+		{
+			lowerColor = m_sliderBar2->m_foregroundColor;
+			higherColor = m_sliderBar1->m_foregroundColor;
+			lowerSliderBar = m_sliderBar2;
+			higherSliderBar = m_sliderBar1;
+		}
+		glBegin(GL_QUADS);
+		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+		glEnd();
+
+		glBegin(GL_QUADS);
+		glColor3f(higherColor.r, higherColor.g, higherColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+		glColor3f(higherColor.r, higherColor.g, higherColor.b);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+		glEnd();
+
+
+		glBegin(GL_QUADS);
+		glColor3f(higherColor.r, higherColor.g, higherColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+		glColor3f(higherColor.r, higherColor.g, higherColor.b);
+		glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+		glColor3f(higherColor.r, higherColor.g, higherColor.b);
+		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+		glEnd();
+	}
+
+//	if (m_sliderBar2 == NULL)
+//	{
+//		minColor = Color::BLUE;
+//		maxColor = Color::WHITE;
+//		glColor3f(minColor.r, minColor.g, minColor.b);
+//		glBegin(GL_QUADS);
+//		glVertex2f(m_rectFloat_abs.m_x, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
+//		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
+//		glEnd();
+
+//		glColor3f(maxColor.r, maxColor.g, maxColor.b);
+//		glBegin(GL_QUADS);
+//		glVertex2f(m_rectFloat_abs.m_x, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
+//		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
+//		glEnd();
+//	}
+
+//	glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
+//	glBegin(GL_QUADS);
+//	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+//	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+//	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+//	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+//	glEnd();
+}
+
 void Slider::DrawAll()
 {
 	if (m_draw == true)
@@ -402,22 +522,26 @@ void ButtonGroup::ExclusiveEnable(Button* button)
 {
 	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
 	{
+		Slider* sliderForButton(NULL);
+		if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL){
+			sliderForButton = (*it)->GetRootPanel()->GetSlider((*it)->m_name);
+		}
 		if (*it == button)
 		{
 			(*it)->m_highlighted = true;
 			(*it)->m_backgroundColor = Color::LIGHT_GRAY;
-			if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL)
+			if (sliderForButton != NULL)
 			{
-				(*it)->GetRootPanel()->GetSlider((*it)->m_name)->Show();
+				sliderForButton->Show();
 			}
 		}
 		else
 		{
 			(*it)->m_highlighted = false;
 			(*it)->m_backgroundColor = Color::GRAY;
-			if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL)
+			if (sliderForButton != NULL)
 			{
-				(*it)->GetRootPanel()->GetSlider((*it)->m_name)->Hide();
+				sliderForButton->Hide();
 			}
 		}
 	}

@@ -61,8 +61,8 @@ public:
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();
 
-	void Draw(); //draw current panel only
-	void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
+	virtual void Draw(); //draw current panel only
+	virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
 	virtual void Drag(float dx, float dy);
 	virtual void Click();
@@ -95,6 +95,7 @@ public:
 	SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 	SliderBar(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
 
+	void Draw();
 	void UpdateValue();
 	float GetValue();
 	virtual void Drag(float dx, float dy);
@@ -112,6 +113,7 @@ public:
 
 	void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
+	void Draw();
 	void DrawAll();
 	void Hide();
 	void Show();
