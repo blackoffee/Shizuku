@@ -18,4 +18,4 @@ INSTALLATION INSTRUCTIONS
 
 1. Download Release.rar
 2. Extract all contents to any location on your drive
-3. Run VS_LBM_GL1.exe
+3. Run LBM_GL_CPP.exe
