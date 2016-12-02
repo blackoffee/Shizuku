@@ -17,8 +17,11 @@
 #include "common.h"
 
 
-int winw = 640;
-int winh = 480;
+int winw, winh;
+const int g_leftPanelWidth(175);
+const int g_leftPanelHeight(450);
+const float g_initialScaleUp(1.5f);
+
 
 //simulation inputs
 int g_xDim = 512;
@@ -71,14 +74,16 @@ void Init()
 
 void SetUpWindow()
 {
-	int leftPanelWidth(100);
-	Window.m_rectInt_abs = RectInt(100, 100, winw, winh);
+	winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
+	winh = max(g_yDim*g_initialScaleUp,g_leftPanelHeight+100);
+	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
 	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
 	Window.m_draw = false;
 	Window.m_name = "Main Window";
+	Window.m_sizeDefinition = Panel::DEF_ABS;
 	theMouse.SetBasePanel(&Window);
 
-	Window.CreateSubPanel(RectInt(0, 0, 175, winh), Panel::DEF_ABS, "CDV", Color(Color::DARK_GRAY));
+	Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::BLACK));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.2f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.2f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Velocity Magnitude", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.4f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
@@ -114,7 +119,7 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.95f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*2.f;
 	Window.GetSlider(sliderName)->m_minValue = 0.f;
@@ -149,7 +154,7 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.f;
 	Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
@@ -167,8 +172,8 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.9f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.35f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*0.1f;
 	Window.GetSlider(sliderName)->m_minValue = 0.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
@@ -186,8 +191,8 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = 1.03f;
 	Window.GetSlider(sliderName)->m_minValue = 0.97f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
@@ -223,81 +228,31 @@ void InitializeButtonCallBack()
 void VelMagButtonCallBack()
 {
 	contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
-//	Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::LIGHT_GRAY;
-//	Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
-//	Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
-//	Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
-//	Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_MAG;
-//	Window.GetSlider("Slider_VelMag")->Show();
-//	Window.GetSlider("Slider_VelX")->Hide();
-//	Window.GetSlider("Slider_VelY")->Hide();
-//	Window.GetSlider("Slider_StrainRate")->Hide();
-//	Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void VelXButtonCallBack()
 {
 	contourButtons.ExclusiveEnable(Window.GetButton("X Velocity"));
-	//Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("X Velocity"        )->m_backgroundColor = Color::LIGHT_GRAY;
-	//Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_U;
-	//Window.GetSlider("Slider_VelMag")->Hide();
-	//Window.GetSlider("Slider_VelX")->Show();
-	//Window.GetSlider("Slider_VelY")->Hide();
-	//Window.GetSlider("Slider_StrainRate")->Hide();
-	//Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void VelYButtonCallBack()
 {
 	contourButtons.ExclusiveEnable(Window.GetButton("Y Velocity"));
-	//Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::LIGHT_GRAY;
-	//Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = VEL_V;
-	//Window.GetSlider("Slider_VelMag")->Hide();
-	//Window.GetSlider("Slider_VelX")->Hide();
-	//Window.GetSlider("Slider_VelY")->Show();
-	//Window.GetSlider("Slider_StrainRate")->Hide();
-	//Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void StrainRateButtonCallBack()
 {
 	contourButtons.ExclusiveEnable(Window.GetButton("StrainRate"));
-	//Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("StrainRate"        )->m_backgroundColor = Color::LIGHT_GRAY;
-	//Window.GetButton("Pressure"          )->m_backgroundColor = Color::GRAY      ;
 	g_contourVar = STRAIN_RATE;
-	//Window.GetSlider("Slider_VelMag")->Hide();
-	//Window.GetSlider("Slider_VelX")->Hide();
-	//Window.GetSlider("Slider_VelY")->Hide();
-	//Window.GetSlider("Slider_StrainRate")->Show();
-	//Window.GetSlider("Slider_Pressure")->Hide();
 }
 
 void PressureButtonCallBack()
 {
 	contourButtons.ExclusiveEnable(Window.GetButton("Pressure"));
-	//Window.GetButton("Velocity Magnitude")->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("X Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Y Velocity"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("StrainRate"        )->m_backgroundColor = Color::GRAY      ;
-	//Window.GetButton("Pressure"          )->m_backgroundColor = Color::LIGHT_GRAY;
 	g_contourVar = PRESSURE;
-	//Window.GetSlider("Slider_VelMag")->Hide();
-	//Window.GetSlider("Slider_VelX")->Hide();
-	//Window.GetSlider("Slider_VelY")->Hide();
-	//Window.GetSlider("Slider_StrainRate")->Hide();
-	//Window.GetSlider("Slider_Pressure")->Show();
 }
 
 void SetUpButtons()
@@ -493,34 +448,10 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 
 
 
-/*----------------------------------------------------------------------------------------
- *	This function will be used to draw the 3D scene
- */
-void Draw3D()
-{
-	gluLookAt(0,1,5,0,0,0,0,1,0);
-	glutSolidTeapot(1);
-}
-
-void DrawRectangle(RectInt rect)
-{
-	glBegin(GL_QUADS);
-		glVertex2f(rect.m_x         ,rect.m_y+rect.m_h);
-		glVertex2f(rect.m_x         ,rect.m_y         );
-		glVertex2f(rect.m_x+rect.m_w,rect.m_y         );
-		glVertex2f(rect.m_x+rect.m_w,rect.m_y+rect.m_h);
-	glEnd();
-}
-
 
 void Draw2D()
 {
 	Window.DrawAll();
-//	Window.m_subPanels[0]->Draw();
-//	Window.m_subPanels[0]->m_buttons[0]->Draw();
-//	Window.m_subPanels[0]->m_buttons[1]->Draw();
-//	Window.m_subPanels[0]->m_sliders[0]->Draw();
-//	Window.m_subPanels[0]->m_sliders[0]->m_sliderBar->Draw();
 }
 
 
@@ -530,7 +461,6 @@ void Draw2D()
 
 void MouseButton(int button, int state, int x, int y)
 {
-	//theMouse.Update(x, y, button, state);
 	theMouse.Click(x, theMouse.m_winH-y-g_glutMouseYOffset, button, state);
 }
 
@@ -539,11 +469,6 @@ void MouseMotion(int x, int y)
 	int dx, dy;
 
 	theMouse.Move(x, theMouse.m_winH-y-g_glutMouseYOffset);
-	//theMouse.GetChange(x, y);
-
-	//theMouse.Update(x, y);
-
-	//Window.m_subPanels[0]->m_sliders[0]->m_sliderBar->Slide(theMouse.)
 }
 
 
@@ -557,8 +482,30 @@ void MouseWheel(int button, int dir, int x, int y)
 	
 }
 
+void Resize(int w, int h)
+{
+	int area = w*h;
+	float aspectRatio = static_cast<float>(g_xDim) / g_yDim;
+	float leftPanelW = static_cast<float>(g_leftPanelWidth);
+	winh = g_initialScaleUp*(-g_initialScaleUp*leftPanelW+sqrt(g_initialScaleUp*g_initialScaleUp*leftPanelW*leftPanelW+g_initialScaleUp*g_initialScaleUp*4*aspectRatio*area))/(g_initialScaleUp*g_initialScaleUp*2.f*aspectRatio);
+	//winh = static_cast<int>(sqrt(area / aspectRatio));
+	winw = winh*aspectRatio+leftPanelW;
+
+	theMouse.m_winW = winw;
+	theMouse.m_winH = winh;
+
+	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
+	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
+
+	Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, winh - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
+	Window.UpdateAll();
+
+	glViewport(0, 0, winw, winh);
+}
+
 void Draw()
 {
+	glutReshapeWindow(winw, winh);
 	RunCuda(&g_cudaSolutionField);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -571,22 +518,25 @@ void Draw()
 	 */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluPerspective(45,(winh==0)?(1):((float)winw/winh),1,100);
 	glOrtho(-1,1,-1,1,-100,20);
+
+	glScalef((static_cast<float>(winw-g_leftPanelWidth) / winw), 1.f, 1.f);
+	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
+	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
+	glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth)),0.f,0.f);
+	//glTranslatef(-(1.f - (g_xDim+g_leftPanelWidth) / (static_cast<float>(g_xDim) )),0.f,0.f);
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.f, 0.f, translate_z);
 
 	// render from the vbo
 	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
-	//glVertexPointer(4, GL_FLOAT, 0, 0);
 	glVertexPointer(3, GL_FLOAT, 16, 0);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-	//glDrawArrays(GL_POINTS, 0, XDIM * YDIM);
 	glDrawElements(GL_QUADS, (XDIM - 1)*(YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
@@ -603,14 +553,10 @@ void Draw()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 
-//	/*
-//	 *	Set the orthographic viewing transformation
-//	 */
-//	glMatrixMode(GL_PROJECTION);
-//	glLoadIdentity();
-//	//glOrtho(0,winw,winh,0,-1,1);
-//	glMatrixMode(GL_MODELVIEW);
-//	glLoadIdentity();
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-1,1,-1,1,-100,20);
 
 	/*
 	 *	Draw the 2D overlay
@@ -626,17 +572,16 @@ void Draw()
 
 int main(int argc,char **argv)
 {
-
-
-
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-	glutInitWindowSize(winw,winh);
+	glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
 
+	SetUpWindow();
+
 	glutDisplayFunc(Draw);
-//	glutReshapeFunc(Resize);
+	glutReshapeFunc(Resize);
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMotion);
 //	glutPassiveMotionFunc(MousePassiveMotion);
@@ -645,7 +590,6 @@ int main(int argc,char **argv)
 
 	Init();
 
-	SetUpWindow();
 
 	SetUpGLInterop();
 

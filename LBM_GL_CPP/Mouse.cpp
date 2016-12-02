@@ -59,7 +59,10 @@ void Mouse::Click(int x, int y, int button, int state)
 		m_xprev = x;
 		m_yprev = y;
 		m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
-		m_currentlySelectedPanel->Click();
+		if (m_currentlySelectedPanel != NULL)
+		{
+			m_currentlySelectedPanel->Click();
+		}
 	}
 }
 

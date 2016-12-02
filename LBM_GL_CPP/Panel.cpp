@@ -38,6 +38,7 @@ Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string n
 {
 	m_name = name;
 	m_backgroundColor = color;
+	m_sizeDefinition = sizeDefinition;
 	if (parent != NULL)
 	{
 		m_parent = parent;
@@ -58,6 +59,7 @@ Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::stri
 {
 	m_name = name;
 	m_backgroundColor = color;
+	m_sizeDefinition = sizeDefinition;
 	if (parent != NULL)
 	{
 		m_parent = parent;
@@ -135,6 +137,34 @@ RectFloat Panel::RectFloatRelToRectFloatAbs()
 		rectFloat = m_rectFloat_rel;
 	}
 	return rectFloat;
+}
+
+void Panel::Update()
+{
+	if (m_sizeDefinition == DEF_ABS)
+	{
+		m_rectFloat_abs = RectIntAbsToRectFloatAbs();
+	}
+	else{
+		m_rectFloat_abs = RectFloatRelToRectFloatAbs();
+	}
+}
+
+void Panel::UpdateAll()
+{
+	Update();
+	for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+	{
+		(*it)->UpdateAll();
+	}
+	for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
+	{
+		(*it)->UpdateAll();
+	}
+	for (std::vector<Slider*>::iterator it = m_sliders.begin(); it != m_sliders.end(); ++it)
+	{
+		(*it)->UpdateAll();
+	}
 }
 
 void Panel::Draw()
@@ -368,6 +398,19 @@ void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefin
 	}
 }
 
+void Slider::UpdateAll()
+{
+	Update();
+	if (m_sliderBar1 != NULL)
+	{
+		m_sliderBar1->Update();
+	}
+	if (m_sliderBar2 != NULL)
+	{
+		m_sliderBar2->Update();
+	}
+}
+
 void Slider::Draw()
 {
 	Color minColor, maxColor;
@@ -437,35 +480,8 @@ void Slider::Draw()
 		glEnd();
 	}
 
-//	if (m_sliderBar2 == NULL)
-//	{
-//		minColor = Color::BLUE;
-//		maxColor = Color::WHITE;
-//		glColor3f(minColor.r, minColor.g, minColor.b);
-//		glBegin(GL_QUADS);
-//		glVertex2f(m_rectFloat_abs.m_x, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
-//		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
-//		glEnd();
-
-//		glColor3f(maxColor.r, maxColor.g, maxColor.b);
-//		glBegin(GL_QUADS);
-//		glVertex2f(m_rectFloat_abs.m_x, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
-//		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-//		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_sliderBar1->m_rectFloat_abs.GetCentroidY());
-//		glEnd();
-//	}
-
-//	glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
-//	glBegin(GL_QUADS);
-//	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-//	glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-//	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-//	glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-//	glEnd();
 }
+
 
 void Slider::DrawAll()
 {
@@ -618,10 +634,4 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 	}
 	return panelThatPointIsIn;
 }
-
-//SliderBar* GetSliderThatPointIsIn(SliderBar* parentPanel, float x, float y);
-//{
-
-//}
-
 

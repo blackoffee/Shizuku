@@ -36,6 +36,7 @@ public:
 	RectFloat m_rectFloat_rel;
 	Color m_backgroundColor;
 	Color m_foregroundColor = Color::WHITE;
+	SizeDefinitionMethod m_sizeDefinition;
 	bool m_draw = true;
 	void(*m_callBack)() = NULL;
 	std::string m_displayText = "";
@@ -61,6 +62,9 @@ public:
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();
 
+	virtual void Update();
+	virtual void UpdateAll();
+	
 	virtual void Draw(); //draw current panel only
 	virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
@@ -87,8 +91,6 @@ class SliderBar : public Panel
 public:
 	enum Orientation {VERTICAL, HORIZONTAL};
 	Orientation m_orientation = VERTICAL;
-	//float m_maxValue = 1.f;
-	//float m_minValue = 0.f;
 	float m_value = 0.5f;
 
 	SliderBar();
@@ -113,6 +115,8 @@ public:
 
 	void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
+	void UpdateAll();
+	
 	void Draw();
 	void DrawAll();
 	void Hide();
@@ -130,10 +134,4 @@ public:
 	Button* GetCurrentEnabledButton();
 };
 
-
-
-
 Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);
-//Button* GetButtonThatPointIsIn(Button* parentPanel, float x, float y);
-//SliderBar* GetSliderBarThatPointIsIn(SliderBar* parentPanel, float x, float y);
-

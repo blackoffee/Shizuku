@@ -407,36 +407,23 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	if (contourVar == ContourVariable::VEL_MAG)
 	{
 		variableValue = sqrt(u*u+v*v);
-//		maxValue = uMax*1.8f;
-//		minValue = 0.0f;
 	}	
 	else if (contourVar == ContourVariable::VEL_U)
 	{
 		variableValue = u;
-//		maxValue = uMax*1.8f;
-//		minValue = -uMax*0.5f;
 	}	
 	else if (contourVar == ContourVariable::VEL_V)
 	{
 		variableValue = v;
-//		maxValue = uMax;
-//		minValue = -uMax;
 	}	
 	else if (contourVar == ContourVariable::PRESSURE)
 	{
 		variableValue = rho;
-//		maxValue = 1.01f;
-//		minValue = 0.99f;
 	}
 	else if (contourVar == ContourVariable::STRAIN_RATE)
 	{
 		variableValue = Q;
-//		maxValue = 0.03f*uMax;// 0.002f;// 1.01f;
-//		minValue = 0.f;// 0.99f;
 	}
-
-//	if (variableValue > maxValue) variableValue = maxValue;
-//	if (variableValue < minValue) variableValue = minValue;
 
 	////Blue to white color scheme
 	signed char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
