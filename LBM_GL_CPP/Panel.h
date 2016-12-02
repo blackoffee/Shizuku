@@ -61,6 +61,7 @@ public:
 
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();
+	RectFloat RectFloatAbsToRectFloatRel();
 
 	virtual void Update();
 	virtual void UpdateAll();

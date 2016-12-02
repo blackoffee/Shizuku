@@ -26,6 +26,18 @@ RectFloat operator*(RectFloat recParent, RectFloat recChild)
 	return result;
 }
 
+//// chains together nested float coordinates. Use to get relative float coordinates from absolute float coordinates
+RectFloat operator/(RectFloat recChild, RectFloat recParent)
+{
+	RectFloat result;
+	result.m_x = (recChild.m_x - recParent.m_x) / (recParent.m_w)*2.f-1.f;
+	result.m_y = (recChild.m_y - recParent.m_y) / (recParent.m_h)*2.f-1.f;
+	result.m_w = (recChild.m_w)/(recParent.m_w)*2.f;
+	result.m_h = (recChild.m_h)/(recParent.m_h)*2.f;
+	return result;
+}
+
+
 bool operator==(RectFloat rec1, RectFloat rec2)
 {
 	bool result(true);

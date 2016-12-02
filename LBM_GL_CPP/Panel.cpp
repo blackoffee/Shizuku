@@ -139,6 +139,20 @@ RectFloat Panel::RectFloatRelToRectFloatAbs()
 	return rectFloat;
 }
 
+RectFloat Panel::RectFloatAbsToRectFloatRel()
+{
+	RectFloat rectFloat;
+	if (m_parent != NULL)
+	{
+		rectFloat = m_rectFloat_abs/m_parent->m_rectFloat_abs;
+	}
+	else
+	{
+		rectFloat = m_rectFloat_abs;
+	}
+	return rectFloat;
+}
+
 void Panel::Update()
 {
 	if (m_sizeDefinition == DEF_ABS)
@@ -360,6 +374,7 @@ float SliderBar::GetValue()
 
 void SliderBar::Drag(float dx, float dy)
 {
+	//dx and dy are coming in as float abs coordinates
 	if (m_orientation == VERTICAL)
 	{
 		m_rectFloat_abs.m_y = max(m_parent->m_rectFloat_abs.m_y, 
@@ -370,6 +385,7 @@ void SliderBar::Drag(float dx, float dy)
 		m_rectFloat_abs.m_x = min(m_parent->m_rectFloat_abs.m_x, 
 							max(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
 	}
+	m_rectFloat_rel = RectFloatAbsToRectFloatRel();
 	UpdateValue();
 }
 

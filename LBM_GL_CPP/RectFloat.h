@@ -14,6 +14,7 @@ public:
 	float GetCentroidY();
 
 	friend RectFloat operator*(const RectFloat rec1, const RectFloat rec2);
+	friend RectFloat operator/(const RectFloat rec1, const RectFloat rec2);
 	friend bool operator==(const RectFloat rec1, const RectFloat rec2);
 };
 
