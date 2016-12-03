@@ -24,8 +24,8 @@ const float g_initialScaleUp(1.5f);
 
 
 //simulation inputs
-int g_xDim = 512;
-int g_yDim = 384;
+int g_xDim = 256;// 512;
+int g_yDim = 192;// 384;
 float g_uMax = 0.1f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
@@ -75,6 +75,7 @@ void Init()
 void SetUpWindow()
 {
 	winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
+	//winh = g_yDim*g_initialScaleUp;
 	winh = max(g_yDim*g_initialScaleUp,g_leftPanelHeight+100);
 	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
 	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
@@ -94,7 +95,7 @@ void SetUpWindow()
 	float sliderW = 0.4f;
 	float sliderBarW = 2.f;
 	float sliderBarH = 0.2f;
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(-0.9f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_InletV", Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(-0.9f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_InletV", Color(Color::BLACK));
 	Window.GetPanel("Label_InletV")->m_displayText = "Inlet Velocity";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_InletV", Color(Color::LIGHT_GRAY));
 	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
@@ -102,7 +103,7 @@ void SetUpWindow()
 	Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
 	Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.1f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Visc", Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.1f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Visc", Color(Color::BLACK));
 	Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_Visc", Color(Color::LIGHT_GRAY));
 	Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
@@ -116,7 +117,7 @@ void SetUpWindow()
 	std::string sliderName = VarName;
 	std::string sliderBarName1 = VarName+"Max";
 	std::string sliderBarName2 = VarName+"Min";
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.95f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -362,9 +363,9 @@ int ImageFcn_h(int x, int y, Obstruction* obstructions){
 	//if(y == 0 || x == XDIM-1 || y == YDIM-1)
 	if (x < 0.1f)
 	return 3;//west
-	else if ((XDIM - x) < 1.1f)
+	else if ((g_xDim - x) < 1.1f)
 	return 2;//east
-	else if ((YDIM - y) < 1.1f)
+	else if ((g_yDim - y) < 1.1f)
 	return 11;//11;//xsymmetry top
 	else if (y < 0.1f)
 	return 12;//12;//xsymmetry bottom
@@ -405,14 +406,14 @@ void SetUpCUDA()
 		g_obstructions[i].y = -1000;
 	}	
 	g_obstructions[0].r1 = 10;
-	g_obstructions[0].x = XDIM*0.33f;
-	g_obstructions[0].y = YDIM*0.5f;
+	g_obstructions[0].x = g_xDim*0.33f;
+	g_obstructions[0].y = g_yDim*0.5f;
 	g_obstructions[0].shape = Obstruction::CIRCLE;
 
 	for (int i = 0; i < domainSize; i++)
 	{
-		int x = i%XDIM;
-		int y = i/XDIM;
+		int x = i%g_xDim;
+		int y = i/g_xDim;
 		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
 	}
 	
@@ -467,8 +468,10 @@ void MouseButton(int button, int state, int x, int y)
 void MouseMotion(int x, int y)
 {
 	int dx, dy;
-
-	theMouse.Move(x, theMouse.m_winH-y-g_glutMouseYOffset);
+	if (x >= 0 && x <= winw && y>=0 && y<=winh)
+	{
+		theMouse.Move(x, theMouse.m_winH-y-g_glutMouseYOffset);
+	}
 }
 
 
@@ -488,7 +491,7 @@ void Resize(int w, int h)
 	float aspectRatio = static_cast<float>(g_xDim) / g_yDim;
 	float leftPanelW = static_cast<float>(g_leftPanelWidth);
 	winh = g_initialScaleUp*(-g_initialScaleUp*leftPanelW+sqrt(g_initialScaleUp*g_initialScaleUp*leftPanelW*leftPanelW+g_initialScaleUp*g_initialScaleUp*4*aspectRatio*area))/(g_initialScaleUp*g_initialScaleUp*2.f*aspectRatio);
-	//winh = static_cast<int>(sqrt(area / aspectRatio));
+	winh = max(winh, g_leftPanelHeight);
 	winw = winh*aspectRatio+leftPanelW;
 
 	theMouse.m_winW = winw;
@@ -537,7 +540,7 @@ void Draw()
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-	glDrawElements(GL_QUADS, (XDIM - 1)*(YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+	glDrawElements(GL_QUADS, (g_xDim - 1)*(g_yDim - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	//glRotatef(rotate_x,1.f,0.f,0.f);
