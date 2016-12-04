@@ -171,6 +171,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GraphicsManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Panel.cpp" />
@@ -178,6 +179,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="RectInt.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GraphicsManager.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="common.h" />

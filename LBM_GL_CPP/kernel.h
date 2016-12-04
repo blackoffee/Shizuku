@@ -15,4 +15,4 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 						ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep);
 
 //extern "C"
-void UpdateObstructions(Obstruction* obst_d, int targetObstID);
+void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst);

@@ -63,6 +63,7 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 void SetUpButtons();
 void VelMagButtonCallBack();
 
+void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
 
 void Init()
 {
@@ -75,8 +76,9 @@ void Init()
 void SetUpWindow()
 {
 	winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
-	//winh = g_yDim*g_initialScaleUp;
 	winh = max(g_yDim*g_initialScaleUp,g_leftPanelHeight+100);
+	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+
 	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
 	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
 	Window.m_draw = false;
@@ -91,6 +93,11 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.6f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.8f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -1.f+0.01f , 1.1f, 0.19f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
+
+	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh), Panel::DEF_ABS, "Graphics", Color(Color::RED));
+	Window.GetPanel("Graphics")->m_draw = false;
+	Window.GetPanel("Graphics")->CreateGraphicsManager();
+	Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
 
 	float sliderW = 0.4f;
 	float sliderBarW = 2.f;
@@ -485,14 +492,19 @@ void MouseWheel(int button, int dir, int x, int y)
 	
 }
 
+void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp)
+{
+	float aspectRatio = static_cast<float>(xDim) / yDim;
+	float leftPanelW = static_cast<float>(leftPanelWidth);
+	heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW+scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
+	heightOut = max(heightOut, leftPanelHeight);
+	widthOut = heightOut*aspectRatio+leftPanelW;
+}
+
 void Resize(int w, int h)
 {
 	int area = w*h;
-	float aspectRatio = static_cast<float>(g_xDim) / g_yDim;
-	float leftPanelW = static_cast<float>(g_leftPanelWidth);
-	winh = g_initialScaleUp*(-g_initialScaleUp*leftPanelW+sqrt(g_initialScaleUp*g_initialScaleUp*leftPanelW*leftPanelW+g_initialScaleUp*g_initialScaleUp*4*aspectRatio*area))/(g_initialScaleUp*g_initialScaleUp*2.f*aspectRatio);
-	winh = max(winh, g_leftPanelHeight);
-	winw = winh*aspectRatio+leftPanelW;
+	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
 
 	theMouse.m_winW = winw;
 	theMouse.m_winH = winh;
@@ -501,6 +513,7 @@ void Resize(int w, int h)
 	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
 
 	Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, winh - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
+	Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh);
 	Window.UpdateAll();
 
 	glViewport(0, 0, winw, winh);

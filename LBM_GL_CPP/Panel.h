@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include "GraphicsManager.h"
 #include "RectFloat.h"
 #include "RectInt.h"
 
@@ -20,6 +21,8 @@ public:
 
 class Button;
 class Slider;
+class GraphicsManager;
+class Mouse;
 
 class Panel
 {
@@ -37,6 +40,7 @@ public:
 	Color m_backgroundColor;
 	Color m_foregroundColor = Color::WHITE;
 	SizeDefinitionMethod m_sizeDefinition;
+	GraphicsManager* m_graphicsManager = NULL;
 	bool m_draw = true;
 	void(*m_callBack)() = NULL;
 	std::string m_displayText = "";
@@ -52,6 +56,8 @@ public:
 	Panel* GetPanel(std::string name);
 	Button* GetButton(std::string name);
 	Slider* GetSlider(std::string name);
+
+	void CreateGraphicsManager();
 
 	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
@@ -70,7 +76,7 @@ public:
 	virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
 	virtual void Drag(float dx, float dy);
-	virtual void Click();
+	virtual void Click(Mouse mouse);
 };
 
 class Button : public Panel
@@ -82,7 +88,7 @@ public:
 	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
-	virtual void Click();
+	virtual void Click(Mouse mouse);
 };
 
 class Slider;

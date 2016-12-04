@@ -1,4 +1,5 @@
 #include "Panel.h"
+#include "Mouse.h"
 
 Color::Color()
 {
@@ -73,6 +74,11 @@ Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::stri
 		m_rectFloat_rel = rectFloat;
 		m_rectFloat_abs = RectFloatRelToRectFloatAbs();
 	}
+}
+
+void Panel::CreateGraphicsManager()
+{
+	m_graphicsManager = new GraphicsManager(this);
 }
 
 void Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
@@ -299,8 +305,12 @@ void Panel::Drag(float dx, float dy)
 {
 }
 
-void Panel::Click()
+void Panel::Click(Mouse mouse)
 {
+	if (m_graphicsManager != NULL)
+	{
+		m_graphicsManager->Click(mouse);
+	}
 }
 
 
@@ -314,7 +324,7 @@ Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string
 {
 }
 
-void Button::Click()
+void Button::Click(Mouse mouse)
 {
 	if (m_callBack != NULL)
 	{
@@ -612,7 +622,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 		for (std::vector<Panel*>::iterator it = parentPanel->m_subPanels.begin(); it != parentPanel->m_subPanels.end(); ++it)
 		{
 			temp = GetPanelThatPointIsIn(*it, x, y);
-			if (temp != NULL && temp->m_draw == true)
+			if (temp != NULL)// && temp->m_draw == true)   //not sure why I was checking m_draw
 			{
 				panelThatPointIsIn = temp;
 			}

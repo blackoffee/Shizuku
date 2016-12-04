@@ -483,9 +483,9 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 	}
 }
 
-void UpdateObstructions(Obstruction* obst_d, int targetObstID)
+void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst)
 {
-
+	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape);
 }
 
 int runCUDA()

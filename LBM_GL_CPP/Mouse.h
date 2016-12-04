@@ -8,7 +8,6 @@ class Mouse
 public:
 	int m_x, m_y;
 	int m_lmb, m_mmb, m_rmb;
-	int m_lmbState, m_mmbState, m_rmbState;
 	int m_xprev, m_yprev;
 	int m_winW, m_winH;
 	Panel* m_basePanel = NULL;

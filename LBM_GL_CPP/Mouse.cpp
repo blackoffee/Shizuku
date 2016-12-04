@@ -13,9 +13,10 @@ void Mouse::Update(int x, int y, int button, int state)
 {
 	m_x = x;
 	m_y = y;
-	m_lmbState = (button == GLUT_LEFT_BUTTON) ? state : m_lmbState;
-	m_rmbState = (button == GLUT_RIGHT_BUTTON) ? state : m_rmbState;
-	m_mmbState = (button == GLUT_MIDDLE_BUTTON) ? state : m_mmbState;
+	int mouseState = (state == GLUT_DOWN) ? 1 : 0;
+	m_lmb = (button == GLUT_LEFT_BUTTON) ? mouseState : m_lmb;
+	m_rmb = (button == GLUT_RIGHT_BUTTON) ? mouseState : m_rmb;
+	m_mmb = (button == GLUT_MIDDLE_BUTTON) ? mouseState : m_mmb;
 }
 void Mouse::Update(int x, int y)
 {
@@ -39,30 +40,29 @@ int Mouse::GetY()
 
 void Mouse::Move(int x, int y)
 {
-	float dx = intCoordToFloatCoord(x, m_winW) - intCoordToFloatCoord(m_xprev, m_winW);
-	float dy = intCoordToFloatCoord(y, m_winH) - intCoordToFloatCoord(m_yprev, m_winH);
-	m_xprev = x;
-	m_yprev = y;
+	float dx = intCoordToFloatCoord(x, m_winW) - intCoordToFloatCoord(m_x, m_winW);
+	float dy = intCoordToFloatCoord(y, m_winH) - intCoordToFloatCoord(m_y, m_winH);
+	Update(x, y);
 
-	if (m_lmb == GLUT_DOWN)
+	if (m_lmb == 1)
 	{
 		m_currentlySelectedPanel->Drag(dx, dy);
 	}
 
 }
 
-
 void Mouse::Click(int x, int y, int button, int state)
 {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	Update(x, y, button, state);
+	//if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	if (m_lmb == 1)
 	{
-		m_xprev = x;
-		m_yprev = y;
 		m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
 		if (m_currentlySelectedPanel != NULL)
 		{
-			m_currentlySelectedPanel->Click();
+			m_currentlySelectedPanel->Click(*this);
 		}
+	
 	}
 }
 
