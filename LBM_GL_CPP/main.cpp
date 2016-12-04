@@ -19,8 +19,10 @@
 
 int winw, winh;
 const int g_leftPanelWidth(175);
+const int g_drawingPanelWidth(150);
 const int g_leftPanelHeight(450);
-const float g_initialScaleUp(1.5f);
+const int g_drawingPanelHeight(450);
+const float g_initialScaleUp(1.f); //probably don't need this
 
 
 //simulation inputs
@@ -42,6 +44,9 @@ Panel Window;
 Mouse theMouse;
 
 ButtonGroup contourButtons;
+ButtonGroup shapeButtons;
+
+Obstruction::Shape g_currentShape=Obstruction::CIRCLE;
 
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
@@ -100,6 +105,7 @@ void SetUpWindow()
 	Window.GetPanel("Graphics")->CreateGraphicsManager();
 	Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
 
+
 	float sliderW = 0.4f;
 	float sliderBarW = 2.f;
 	float sliderBarH = 0.2f;
@@ -142,7 +148,7 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -160,7 +166,7 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -178,7 +184,7 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.9f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -197,7 +203,7 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::DARK_GRAY));
+	Window.GetPanel("CDV")->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -209,6 +215,17 @@ void SetUpWindow()
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
+
+	//Drawing panel
+	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::RED));
+	//Window.GetPanel("Drawing")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Square"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.2f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.4f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.6f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
+
+
+
 
 	SetUpButtons();
 	VelMagButtonCallBack(); //default is vel mag contour
@@ -264,6 +281,30 @@ void PressureButtonCallBack()
 	g_contourVar = PRESSURE;
 }
 
+void SquareButtonCallBack()
+{
+	shapeButtons.ExclusiveEnable(Window.GetButton("Square"));
+	g_currentShape = Obstruction::SQUARE;
+}
+
+void CircleButtonCallBack()
+{
+	shapeButtons.ExclusiveEnable(Window.GetButton("Circle"));
+	g_currentShape = Obstruction::CIRCLE;
+}
+
+void HorLineButtonCallBack()
+{
+	shapeButtons.ExclusiveEnable(Window.GetButton("Hor. Line"));
+	g_currentShape = Obstruction::HORIZONTAL_LINE;
+}
+
+void VertLineButtonCallBack()
+{
+	shapeButtons.ExclusiveEnable(Window.GetButton("Vert. Line"));
+	g_currentShape = Obstruction::VERTICAL_LINE;
+}
+
 void SetUpButtons()
 {
 	Window.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
@@ -272,12 +313,12 @@ void SetUpButtons()
 	Window.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
 	Window.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
 	Window.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
-	Window.GetButton("Initialize"        )->m_displayText = "Initialize"        ;
-	Window.GetButton("Velocity Magnitude")->m_displayText = "Velocity Magnitude";
-	Window.GetButton("X Velocity"        )->m_displayText = "X Velocity"        ;
-	Window.GetButton("Y Velocity"        )->m_displayText = "Y Velocity"        ;
-	Window.GetButton("StrainRate"        )->m_displayText = "Strain Rate"       ;
-	Window.GetButton("Pressure"          )->m_displayText = "Pressure"          ;
+//	Window.GetButton("Initialize"        )->m_displayText = "Initialize"        ;
+//	Window.GetButton("Velocity Magnitude")->m_displayText = "Velocity Magnitude";
+//	Window.GetButton("X Velocity"        )->m_displayText = "X Velocity"        ;
+//	Window.GetButton("Y Velocity"        )->m_displayText = "Y Velocity"        ;
+//	Window.GetButton("StrainRate"        )->m_displayText = "Strain Rate"       ;
+//	Window.GetButton("Pressure"          )->m_displayText = "Pressure"          ;
 
 	std::vector<Button*> buttons = {
 		Window.GetButton("Velocity Magnitude"),
@@ -286,6 +327,25 @@ void SetUpButtons()
 		Window.GetButton("StrainRate"),
 		Window.GetButton("Pressure") };
 	contourButtons = ButtonGroup(buttons);
+
+
+	//Shape buttons
+	Window.GetButton("Square")->m_callBack = SquareButtonCallBack;
+	Window.GetButton("Circle")->m_callBack = CircleButtonCallBack;
+	Window.GetButton("Hor. Line")->m_callBack = HorLineButtonCallBack;
+	Window.GetButton("Vert. Line")->m_callBack = VertLineButtonCallBack;
+
+//	Window.GetButton("Square"        )->m_displayText = "Square"        ;
+//	Window.GetButton("Circle"        )->m_displayText = "Circle"        ;
+//	Window.GetButton("Hor. Line"     )->m_displayText = "Hor. Line"     ;
+//	Window.GetButton("Vert. Line"    )->m_displayText = "Vert. Line"    ;
+
+	std::vector<Button*> buttons2 = {
+		Window.GetButton("Square"),
+		Window.GetButton("Circle"),
+		Window.GetButton("Hor. Line"),
+		Window.GetButton("Vert. Line") };
+	shapeButtons = ButtonGroup(buttons2);
 }
 
 
@@ -505,7 +565,7 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 void Resize(int w, int h)
 {
 	int area = w*h;
-	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, g_leftPanelHeight, g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
 
 	theMouse.m_winW = winw;
 	theMouse.m_winH = winh;
@@ -514,7 +574,8 @@ void Resize(int w, int h)
 	Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
 
 	Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, winh - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
-	Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh);
+	Window.GetPanel("Drawing")->m_rectInt_abs = RectInt(g_leftPanelWidth, winh - g_drawingPanelHeight, g_drawingPanelWidth, g_drawingPanelHeight);
+	Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth+g_drawingPanelWidth, 0, winw-g_leftPanelWidth-g_drawingPanelWidth, winh);
 	Window.UpdateAll();
 
 	glViewport(0, 0, winw, winh);
@@ -537,10 +598,10 @@ void Draw()
 	glLoadIdentity();
 	glOrtho(-1,1,-1,1,-100,20);
 
-	glScalef((static_cast<float>(winw-g_leftPanelWidth) / winw), 1.f, 1.f);
+	glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
-	glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth)),0.f,0.f);
+	glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth-g_drawingPanelWidth)),0.f,0.f);
 	//glTranslatef(-(1.f - (g_xDim+g_leftPanelWidth) / (static_cast<float>(g_xDim) )),0.f,0.f);
 
 	glMatrixMode(GL_MODELVIEW);

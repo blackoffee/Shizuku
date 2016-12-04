@@ -317,11 +317,13 @@ void Panel::Click(Mouse mouse)
 Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
 		: Panel(rectFloat, sizeDefinition, name, color, parent)
 {
+	m_displayText = m_name;
 }
 
 Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
 		: Panel(rectInt, sizeDefinition, name, color, parent)
 {
+	m_displayText = m_name;
 }
 
 void Button::Click(Mouse mouse)
@@ -622,7 +624,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 		for (std::vector<Panel*>::iterator it = parentPanel->m_subPanels.begin(); it != parentPanel->m_subPanels.end(); ++it)
 		{
 			temp = GetPanelThatPointIsIn(*it, x, y);
-			if (temp != NULL)// && temp->m_draw == true)   //not sure why I was checking m_draw
+			if (temp != NULL)// && temp->m_draw == true)   //OK to ignore the m_draw for now. For sliders, it affects the contour sliders. Need to differentiate between draw=false and inactive objects
 			{
 				panelThatPointIsIn = temp;
 			}
