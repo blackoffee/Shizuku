@@ -85,6 +85,7 @@ void SetUpWindow()
 	Window.m_name = "Main Window";
 	Window.m_sizeDefinition = Panel::DEF_ABS;
 	theMouse.SetBasePanel(&Window);
+	theMouse.m_simScaleUp = g_initialScaleUp;
 
 	Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::BLACK));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.2f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
@@ -201,8 +202,8 @@ void SetUpWindow()
 	Window.GetPanel("CDV")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->m_maxValue = 1.03f;
-	Window.GetSlider(sliderName)->m_minValue = 0.97f;
+	Window.GetSlider(sliderName)->m_maxValue = 1.05f;
+	Window.GetSlider(sliderName)->m_minValue = 0.95f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();

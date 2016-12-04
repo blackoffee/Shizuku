@@ -10,6 +10,7 @@ public:
 	int m_lmb, m_mmb, m_rmb;
 	int m_xprev, m_yprev;
 	int m_winW, m_winH;
+	float m_simScaleUp;
 	Panel* m_basePanel = NULL;
 	Panel* m_currentlySelectedPanel = NULL;
 	Mouse() :m_x(0), m_y(0), m_lmb(0), m_mmb(0), m_rmb(0)
@@ -34,5 +35,6 @@ public:
 };
 
 float intCoordToFloatCoord(int x, int xDim);
+int floatCoordToIntCoord(float x, int xDim);
 
 #endif

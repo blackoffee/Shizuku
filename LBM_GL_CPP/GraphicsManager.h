@@ -20,10 +20,14 @@ public:
 	GraphicsManager();
 	GraphicsManager(Panel* panel);
 
+	void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
 	void Click(Mouse mouse);
 	void AddObstruction(Mouse mouse);
 	void RemoveObstruction(Mouse mouse);
 	void MoveObstruction(Mouse mouse);
-	Obstruction* FindUnusedObstruction();
+	int FindUnusedObstructionId();
+	int FindClosestObstructionId(Mouse mouse);
 
 };
+
+float GetDistanceBetweenTwoPoints(float x1, float y1, float x2, float y2);

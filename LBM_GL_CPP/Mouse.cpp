@@ -54,15 +54,10 @@ void Mouse::Move(int x, int y)
 void Mouse::Click(int x, int y, int button, int state)
 {
 	Update(x, y, button, state);
-	//if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-	if (m_lmb == 1)
+	m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
+	if (m_currentlySelectedPanel != NULL)
 	{
-		m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
-		if (m_currentlySelectedPanel != NULL)
-		{
-			m_currentlySelectedPanel->Click(*this);
-		}
-	
+		m_currentlySelectedPanel->Click(*this);
 	}
 }
 
@@ -77,4 +72,9 @@ void Mouse::LeftClickDown(int x, int y)
 float intCoordToFloatCoord(int x, int xDim)
 {
 	return (static_cast<float> (x) / xDim)*2.f - 1.f;
+}
+
+int floatCoordToIntCoord(float x, int xDim)
+{
+	return static_cast<int> ((x+1.f)/2.f*xDim);
 }
