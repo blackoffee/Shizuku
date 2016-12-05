@@ -19,9 +19,9 @@
 
 int winw, winh;
 const int g_leftPanelWidth(175);
-const int g_drawingPanelWidth(150);
+const int g_drawingPanelWidth(200);
 const int g_leftPanelHeight(450);
-const int g_drawingPanelHeight(450);
+const int g_drawingPanelHeight(600);
 const float g_initialScaleUp(1.f); //probably don't need this
 
 
@@ -47,6 +47,7 @@ ButtonGroup contourButtons;
 ButtonGroup shapeButtons;
 
 Obstruction::Shape g_currentShape=Obstruction::CIRCLE;
+float g_currentSize = 5.f;
 
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
@@ -67,6 +68,7 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 void SetUpButtons();
 void VelMagButtonCallBack();
+void SquareButtonCallBack();
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
 
@@ -217,18 +219,24 @@ void SetUpWindow()
 	Window.GetSlider(sliderName)->Hide();
 
 	//Drawing panel
-	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::RED));
-	//Window.GetPanel("Drawing")->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Square"    , Color(Color::GRAY));
-	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.2f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
-	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.4f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
-	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.6f+0.02f , 1.8f, 0.19f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
+	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::DARK_GRAY));
+	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f,0.85f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Size", Color(Color::DARK_GRAY));
+	Window.GetPanel("Label_Size")->m_displayText = "Size";
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.35f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Square"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.2f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.05f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.10f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
+	Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
+	Window.GetSlider("Slider_Size")->m_minValue = 1.f;
+	Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
 
-
-
+	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-1.f, -1.f, 2.f, 0.75f), Panel::DEF_REL, "DrawingPreview", Color(Color::BLACK));
 
 	SetUpButtons();
 	VelMagButtonCallBack(); //default is vel mag contour
+	SquareButtonCallBack(); //default is square shape
 }
 
 /*----------------------------------------------------------------------------------------
@@ -348,6 +356,68 @@ void SetUpButtons()
 	shapeButtons = ButtonGroup(buttons2);
 }
 
+void DrawShapePreview()
+{
+	Panel* previewPanel = Window.GetPanel("DrawingPreview");
+	float centerX = previewPanel->m_rectFloat_abs.GetCentroidX();
+	float centerY = previewPanel->m_rectFloat_abs.GetCentroidY();
+	float graphicsToWindowScaleFactor = static_cast<float>(winw)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
+	//float r1 = static_cast<float>(g_currentSize)/g_xDim*2.f*graphicsToWindowScaleFactor;
+
+	int r1i = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / g_xDim; //r1 in pixels
+	float r1fx = static_cast<float>(r1i) / winw*2.f;
+	float r1fy = static_cast<float>(r1i) / winh*2.f;
+
+	glColor3f(0.8f,0.8f,0.8f);
+	switch (g_currentShape)
+	{
+	case Obstruction::CIRCLE:
+	{
+		glBegin(GL_TRIANGLE_FAN);
+		int circleResolution = 20;
+		glVertex2f(centerX, centerY);
+		for (int i = 0; i <= circleResolution; i++)
+		{
+			glVertex2f(centerX + r1fx*cos(i*2.f*PI/circleResolution),
+						centerY + r1fy*sin(i*2.f*PI/circleResolution));
+		}
+		glEnd();
+		break;
+	}
+	case Obstruction::SQUARE:
+	{
+		glBegin(GL_QUADS);
+			glVertex2f(centerX - r1fx, centerY + r1fy);
+			glVertex2f(centerX - r1fx, centerY - r1fy);
+			glVertex2f(centerX + r1fx, centerY - r1fy);
+			glVertex2f(centerX + r1fx, centerY + r1fy);
+		glEnd();
+		break;
+	}
+	case Obstruction::HORIZONTAL_LINE:
+	{
+		r1fy = static_cast<float>(LINE_OBST_WIDTH) / winw*2.f;
+		glBegin(GL_QUADS);
+			glVertex2f(centerX - r1fx*2.f, centerY + r1fy);
+			glVertex2f(centerX - r1fx*2.f, centerY - r1fy);
+			glVertex2f(centerX + r1fx*2.f, centerY - r1fy);
+			glVertex2f(centerX + r1fx*2.f, centerY + r1fy);
+		glEnd();
+		break;
+	}
+	case Obstruction::VERTICAL_LINE:
+	{
+		r1fx = static_cast<float>(LINE_OBST_WIDTH) / winw*2.f;
+		glBegin(GL_QUADS);
+			glVertex2f(centerX - r1fx, centerY + r1fy*2.f);
+			glVertex2f(centerX - r1fx, centerY - r1fy*2.f);
+			glVertex2f(centerX + r1fx, centerY - r1fy*2.f);
+			glVertex2f(centerX + r1fx, centerY + r1fy*2.f);
+		glEnd();
+		break;
+	}
+	}
+}
 
 /*----------------------------------------------------------------------------------------
  *	GL Interop Functions
@@ -521,6 +591,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 void Draw2D()
 {
 	Window.DrawAll();
+	DrawShapePreview();
 }
 
 
@@ -565,7 +636,8 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 void Resize(int w, int h)
 {
 	int area = w*h;
-	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, g_leftPanelHeight, g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),
+											g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
 
 	theMouse.m_winW = winw;
 	theMouse.m_winH = winh;
@@ -584,6 +656,8 @@ void Resize(int w, int h)
 void Draw()
 {
 	glutReshapeWindow(winw, winh);
+	g_currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+
 	RunCuda(&g_cudaSolutionField);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -617,8 +691,6 @@ void Draw()
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
 	glDrawElements(GL_QUADS, (g_xDim - 1)*(g_yDim - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
 	glDisableClientState(GL_VERTEX_ARRAY);
-
-	//glRotatef(rotate_x,1.f,0.f,0.f);
 
 	/*
 	 *	Draw the 3D elements in the scene

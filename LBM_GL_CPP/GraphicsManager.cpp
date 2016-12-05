@@ -6,6 +6,7 @@
 extern Obstruction* g_obst_d;
 extern int g_xDim;
 extern Obstruction::Shape g_currentShape;
+extern float g_currentSize;
 
 GraphicsManager::GraphicsManager()
 {
@@ -33,7 +34,7 @@ void GraphicsManager::Click(Mouse mouse)
 	{
 		int xi, yi;
 		GetSimCoordFromMouseCoord(xi, yi, mouse);
-		Obstruction obst = { g_currentShape, xi, yi, 10, 0 };
+		Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0 };
 		int obstId = FindUnusedObstructionId();
 		m_obstructions[obstId] = obst;
 		UpdateDeviceObstructions(g_obst_d, obstId, obst);

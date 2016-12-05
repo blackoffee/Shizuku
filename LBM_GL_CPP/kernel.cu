@@ -35,17 +35,17 @@ inline __device__ bool isInsideObstruction(int x, int y, Obstruction* obstructio
 			if (abs(x - obstructions[i].x)<obstructions[i].r1 && abs(y - obstructions[i].y)<obstructions[i].r1)
 				return true;//10;
 		}
-		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle
-			if ((x - obstructions[i].x)*(x - obstructions[i].x)+(y - obstructions[i].y)*(y - obstructions[i].y)
+		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
+			if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
 					<obstructions[i].r1*obstructions[i].r1+0.1f)
 				return true;//10;
 		}
 		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-			if (abs(x - obstructions[i].x)<obstructions[i].r1*3 && abs(y - obstructions[i].y)<2)
+			if (abs(x - obstructions[i].x)<obstructions[i].r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.5f)
 				return true;//10;
 		}
 		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-			if (abs(y - obstructions[i].y)<obstructions[i].r1*3 && abs(x - obstructions[i].x)<2)
+			if (abs(y - obstructions[i].y)<obstructions[i].r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.5f)
 				return true;//10;
 		}
 	}
@@ -446,7 +446,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 		}
 		else
 		{
-			R = 200; G = 200; B = 200;
+			R = 204; G = 204; B = 204;
 		}
 	}
 	//set walls drawn by user to be light gray
