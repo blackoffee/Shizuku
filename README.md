@@ -11,7 +11,7 @@ Solves the 2D incompressible Navier-Stokes equations on the GPU while allowing m
 GENERAL USAGE NOTES
 --------------------
 
-- Runs only on Windows machines with CUDA capabile NVIDIA GPUs
+- Runs only on Windows machines with CUDA capable NVIDIA GPUs
 
 INSTALLATION INSTRUCTIONS
 -------------------------
