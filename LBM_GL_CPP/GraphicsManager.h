@@ -13,7 +13,7 @@ class Mouse;
 class GraphicsManager
 {
 public:
-	Obstruction* m_currentObst;
+	int m_currentObstId = -1;
 	Obstruction* m_obstructions;
 	Panel* m_parent;
 
@@ -21,12 +21,15 @@ public:
 	GraphicsManager(Panel* panel);
 
 	void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
+	void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf);
 	void Click(Mouse mouse);
+	void Drag(float dx, float dy);
 	void AddObstruction(Mouse mouse);
 	void RemoveObstruction(Mouse mouse);
-	void MoveObstruction(Mouse mouse);
+	void MoveObstruction(float dx, float dy);
 	int FindUnusedObstructionId();
 	int FindClosestObstructionId(Mouse mouse);
+	bool GraphicsManager::IsInClosestObstruction(Mouse mouse);
 
 };
 

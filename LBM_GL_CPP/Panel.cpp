@@ -303,6 +303,10 @@ void Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinitio
 
 void Panel::Drag(float dx, float dy)
 {
+	if (m_graphicsManager != NULL)
+	{
+		m_graphicsManager->Drag(dx,dy);
+	}
 }
 
 void Panel::Click(Mouse mouse)

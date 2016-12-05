@@ -4,7 +4,7 @@
 
 
 extern Obstruction* g_obst_d;
-extern int g_xDim;
+extern int g_xDim, g_yDim;
 extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
 
@@ -28,42 +28,77 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
 	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactor;
 }
 
+void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf)
+{
+	RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
+	float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
+	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactor;
+	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactor;
+}
+
 void GraphicsManager::Click(Mouse mouse)
 {
 	if (mouse.m_rmb == 1)
 	{
-		int xi, yi;
-		GetSimCoordFromMouseCoord(xi, yi, mouse);
-		Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0 };
-		int obstId = FindUnusedObstructionId();
-		m_obstructions[obstId] = obst;
-		UpdateDeviceObstructions(g_obst_d, obstId, obst);
+		AddObstruction(mouse);
 	}
 	else if (mouse.m_mmb == 1)
 	{
-		int obstId = FindClosestObstructionId(mouse);
-		if (obstId < 0) return;
-		Obstruction obst = { g_currentShape, -100, -100, 0, 0 };
-		m_obstructions[obstId] = obst;
-		UpdateDeviceObstructions(g_obst_d, obstId, obst);
+		if (IsInClosestObstruction(mouse))
+		{
+			RemoveObstruction(mouse);
+		}
 	}
+	else if (mouse.m_lmb == 1)
+	{
+		if (IsInClosestObstruction(mouse))
+		{
+			m_currentObstId = FindClosestObstructionId(mouse);
+		}
+	}
+}
+
+void GraphicsManager::Drag(float dx, float dy)
+{
+	MoveObstruction(dx, dy);
 }
 
 void GraphicsManager::AddObstruction(Mouse mouse)
 {
-
+	int xi, yi;
+	GetSimCoordFromMouseCoord(xi, yi, mouse);
+	Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0 };
+	int obstId = FindUnusedObstructionId();
+	m_obstructions[obstId] = obst;
+	UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
 
 void GraphicsManager::RemoveObstruction(Mouse mouse)
 {
-
+	int obstId = FindClosestObstructionId(mouse);
+	if (obstId < 0) return;
+	Obstruction obst = { g_currentShape, -100, -100, 0, 0 };
+	m_obstructions[obstId] = obst;
+	UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
 
-void GraphicsManager::MoveObstruction(Mouse mouse)
+void GraphicsManager::MoveObstruction(float dx, float dy)
 {
-
+	if (m_currentObstId > -1)
+	{
+		Obstruction obst = m_obstructions[m_currentObstId];
+//		obst.x += dx*0.5f*m_parent->GetRootPanel()->m_rectInt_abs.m_w;
+//		obst.y += dy*0.5f*m_parent->GetRootPanel()->m_rectInt_abs.m_h;
+		int dxi, dyi;
+		dxi = dx / m_parent->m_rectFloat_abs.m_w*g_xDim;
+		dyi = dy / m_parent->m_rectFloat_abs.m_h*g_yDim;
+		obst.x += dxi;
+		obst.y += dyi;
+		m_obstructions[m_currentObstId] = obst;
+		UpdateDeviceObstructions(g_obst_d, m_currentObstId, obst);
+	}
 }
 
 int GraphicsManager::FindUnusedObstructionId()
@@ -98,6 +133,14 @@ int GraphicsManager::FindClosestObstructionId(Mouse mouse)
 		}
 	}
 	return closestObstId;
+}
+
+bool GraphicsManager::IsInClosestObstruction(Mouse mouse)
+{
+	int closestObstId = FindClosestObstructionId(mouse);
+	int xi, yi;
+	GetSimCoordFromMouseCoord(xi, yi, mouse);
+	return (GetDistanceBetweenTwoPoints(xi,yi,m_obstructions[closestObstId].x, m_obstructions[closestObstId].y) < m_obstructions[closestObstId].r1);
 }
 
 float GetDistanceBetweenTwoPoints(float x1, float y1, float x2, float y2)
