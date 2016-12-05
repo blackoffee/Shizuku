@@ -89,13 +89,11 @@ void GraphicsManager::MoveObstruction(float dx, float dy)
 	if (m_currentObstId > -1)
 	{
 		Obstruction obst = m_obstructions[m_currentObstId];
-//		obst.x += dx*0.5f*m_parent->GetRootPanel()->m_rectInt_abs.m_w;
-//		obst.y += dy*0.5f*m_parent->GetRootPanel()->m_rectInt_abs.m_h;
-		int dxi, dyi;
-		dxi = dx / m_parent->m_rectFloat_abs.m_w*g_xDim;
-		dyi = dy / m_parent->m_rectFloat_abs.m_h*g_yDim;
-		obst.x += dxi;
-		obst.y += dyi;
+		float dxf, dyf;
+		dxf = dx*static_cast<float>(g_xDim) / (m_parent->m_rectFloat_abs.m_w);
+		dyf = dy*static_cast<float>(g_yDim) / (m_parent->m_rectFloat_abs.m_h);
+		obst.x += dxf;
+		obst.y += dyf;
 		m_obstructions[m_currentObstId] = obst;
 		UpdateDeviceObstructions(g_obst_d, m_currentObstId, obst);
 	}

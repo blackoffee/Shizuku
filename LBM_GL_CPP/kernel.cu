@@ -41,11 +41,11 @@ inline __device__ bool isInsideObstruction(int x, int y, Obstruction* obstructio
 				return true;//10;
 		}
 		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-			if (abs(x - obstructions[i].x)<obstructions[i].r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.5f)
+			if (abs(x - obstructions[i].x)<obstructions[i].r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f)
 				return true;//10;
 		}
 		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-			if (abs(y - obstructions[i].y)<obstructions[i].r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.5f)
+			if (abs(y - obstructions[i].y)<obstructions[i].r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f)
 				return true;//10;
 		}
 	}
