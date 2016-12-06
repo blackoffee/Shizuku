@@ -10,6 +10,7 @@
 #include <iostream>
 #include <ostream>
 #include <fstream>
+#include <time.h>
 
 #include "kernel.h"
 #include "Mouse.h"
@@ -24,6 +25,9 @@ const int g_leftPanelHeight(450);
 const int g_drawingPanelHeight(600);
 const float g_initialScaleUp(1.f); //probably don't need this
 
+int g_fpsCount = 0;
+int g_fpsLimit = 20;
+clock_t g_timeBefore;
 
 //simulation inputs
 int g_xDim = 256;// 512;
@@ -31,6 +35,7 @@ int g_yDim = 192;// 384;
 float g_uMax = 0.1f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
+int g_tStep = 5;
 
 ContourVariable g_contourVar;
 
@@ -578,7 +583,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 	float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, 5);
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, vbo_resource, 0);
@@ -653,8 +658,28 @@ void Resize(int w, int h)
 	glViewport(0, 0, winw, winh);
 }
 
+
+void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
+	fpsCount++;
+	if (fpsCount % fpsLimit == 0)
+	{
+		char fps[256];
+		clock_t difference = clock() - before;
+		float avgFPS = static_cast<float>(fpsLimit) / (static_cast<float>(difference) / CLOCKS_PER_SEC);
+		sprintf(fps, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second", g_tStep * 2, avgFPS, g_tStep * 2 * avgFPS);
+		glutSetWindowTitle(fps);
+		before = clock();
+		//fpsLimit = (int)min(max(avgFPS,1.f),30.f);
+	}
+}
+
 void Draw()
 {
+	if (g_fpsCount == 0)
+	{
+		g_timeBefore = clock();
+	}
+
 	glutReshapeWindow(winw, winh);
 	g_currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
 
@@ -717,6 +742,8 @@ void Draw()
 	 *	Bring the back buffer to the front and vice-versa.
 	 */
 	glutSwapBuffers();
+
+	ComputeFPS(g_fpsCount, g_fpsLimit, g_timeBefore);
 
 }
 
