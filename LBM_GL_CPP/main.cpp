@@ -27,6 +27,8 @@ const float g_initialScaleUp(1.f); //probably don't need this
 
 int g_fpsCount = 0;
 int g_fpsLimit = 20;
+float g_fps = 0;
+float g_timeStepsPerSecond = 0;
 clock_t g_timeBefore;
 
 //simulation inputs
@@ -35,7 +37,7 @@ int g_yDim = 192;// 384;
 float g_uMax = 0.1f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
-int g_tStep = 5;
+int g_tStep = 15; //initial tstep value before adjustments
 
 ContourVariable g_contourVar;
 
@@ -663,13 +665,21 @@ void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
 	fpsCount++;
 	if (fpsCount % fpsLimit == 0)
 	{
-		char fps[256];
+		char fpsReport[256];
 		clock_t difference = clock() - before;
-		float avgFPS = static_cast<float>(fpsLimit) / (static_cast<float>(difference) / CLOCKS_PER_SEC);
-		sprintf(fps, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second", g_tStep * 2, avgFPS, g_tStep * 2 * avgFPS);
-		glutSetWindowTitle(fps);
+		float timeStepsPerSecond_prev = g_timeStepsPerSecond;
+		float fps = static_cast<float>(fpsLimit) / (static_cast<float>(difference) / CLOCKS_PER_SEC);
+		g_timeStepsPerSecond = g_tStep * 2 * fps;
 		before = clock();
 		//fpsLimit = (int)min(max(avgFPS,1.f),30.f);
+
+		//Time step optimizer
+		if (g_timeStepsPerSecond > timeStepsPerSecond_prev*1.2f){
+			g_tStep = max(1, g_tStep - 1);
+		}
+
+		sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second", g_tStep * 2, fps, g_timeStepsPerSecond);
+		glutSetWindowTitle(fpsReport);
 	}
 }
 

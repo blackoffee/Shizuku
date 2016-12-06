@@ -245,7 +245,7 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 	float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
 	float Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
 	float tau0 = 1.f / omega;
-	float CS = 0.1f;
+	float CS = SMAG_CONST;// 0.1f;
 	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
 	omega = 1.f / tau;
 
@@ -310,7 +310,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
 	float Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
 	float tau0 = 1.f / omega;
-	float CS = 0.1f;
+	float CS = SMAG_CONST;
 	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
 	omega = 1.f / tau;
 
