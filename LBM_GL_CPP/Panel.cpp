@@ -398,8 +398,8 @@ void SliderBar::Drag(float dx, float dy)
 	}
 	else
 	{ 
-		m_rectFloat_abs.m_x = min(m_parent->m_rectFloat_abs.m_x, 
-							max(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
+		m_rectFloat_abs.m_x = max(m_parent->m_rectFloat_abs.m_x, 
+							min(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
 	}
 	m_rectFloat_rel = RectFloatAbsToRectFloatRel();
 	UpdateValue();
@@ -448,19 +448,36 @@ void Slider::Draw()
 	Color minColor, maxColor;
 	if (m_sliderBar2 == NULL)
 	{
-		minColor = Color::BLUE;
-		maxColor = Color::WHITE;
-		glBegin(GL_QUADS);
-		glColor3f(maxColor.r, maxColor.g, maxColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-		glColor3f(minColor.r, minColor.g, minColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-		glColor3f(maxColor.r, maxColor.g, maxColor.b);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-		glEnd();
+		if (m_sliderBar1->m_orientation == SliderBar::VERTICAL)
+		{
+			minColor = Color::BLUE;
+			maxColor = Color::WHITE;
+			glBegin(GL_QUADS);
+			glColor3f(maxColor.r, maxColor.g, maxColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+			glColor3f(minColor.r, minColor.g, minColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+			glColor3f(maxColor.r, maxColor.g, maxColor.b);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+			glEnd();
+		}
+		else
+		{
+			minColor = Color::BLUE;
+			maxColor = Color::WHITE;
+			glBegin(GL_QUADS);
+			glColor3f(minColor.r, minColor.g, minColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+			glColor3f(maxColor.r, maxColor.g, maxColor.b);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+			glEnd();
+
+		}
 	}
-	else{
+	else{ //this doesn't work for horizontal sliders yet
 		minColor = Color::BLUE;
 		maxColor = Color::WHITE;
 		Color lowerColor, higherColor;
