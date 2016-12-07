@@ -1,3 +1,5 @@
+#define SMAG_CONST 1.f
+
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
