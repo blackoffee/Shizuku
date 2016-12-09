@@ -200,7 +200,7 @@ __device__ void boundaries(float& f0, float& f1, float& f2,
 // LBM collision step using MRT method
 __device__ void mrt_collide(float &f0, float &f1, float &f2,
 	float &f3, float &f4, float &f5,
-	float &f6, float &f7, float &f8, float omega)
+	float &f6, float &f7, float &f8, float omega, float &Q)
 {
 	//float rho,u,v;	
 	float u, v;
@@ -243,14 +243,13 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 	float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
 	float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
 	float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
-	float Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
+	Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
 	float tau0 = 1.f / omega;
 	float CS = SMAG_CONST;// 0.1f;
 	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
 	omega = 1.f / tau;
 
 	f0 = f0 - (-m1 + m2)*0.11111111f;//(-4.f*(m1)/36.0f+4.f *(m2)/36.0f);
-	//f1=f1-(-m1-2.0f*(m2+m4)+m7*omega*9.0f)*0.027777777f;
 	f1 = f1 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omega*0.25f);
 	f2 = f2 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omega*0.25f);
 	f3 = f3 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omega*0.25f);
@@ -259,14 +258,6 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 	f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 - m8*omega*0.25f);
 	f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 + m8*omega*0.25f);
 	f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omega*0.25f);
-	//	f1=f1-(-m1-2.f*m2-6.f*m4+m7*omega*9.0f)*0.027777777f;
-	//	f2=f2-(-m1-2.f*m2-6.f*m6-m7*omega*9.0f)*0.027777777f;
-	//	f3=f3-(-m1-2.f*m2+6.f*m4+m7*omega*9.0f)*0.027777777f;
-	//	f4=f4-(-m1-2.f*m2+6.f*m6-m7*omega*9.0f)*0.027777777f;
-	//	f5=f5-(2.f*m1+m2+3.f*m4+3.f*m6+m8*omega*9.0f)*0.027777777f;
-	//	f6=f6-(2.f*m1+m2-3.f*m4+3.f*m6-m8*omega*9.0f)*0.027777777f;
-	//	f7=f7-(2.f*m1+m2-3.f*m4-3.f*m6+m8*omega*9.0f)*0.027777777f;
-	//	f8=f8-(2.f*m1+m2+3.f*m4-3.f*m6-m8*omega*9.0f)*0.027777777f;
 }
 
 // main LBM function including streaming and colliding
@@ -294,26 +285,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float u = f1 - f3 + f5 - f6 - f7 + f8;
 	float v = f2 - f4 + f5 + f6 - f7 - f8;
 	float usqr = u*u+v*v;
-	float feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
-	float feq1 = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
-	float feq2 = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
-	float feq3 = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
-	float feq4 = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
-	float feq5 = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
-	float feq6 = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
-	float feq7 = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
-	float feq8 = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
-	
-	
-	float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
-	float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
-	float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
-	float Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
-	float tau0 = 1.f / omega;
-	float CS = SMAG_CONST;
-	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
-	omega = 1.f / tau;
-
+	float StrainRate;
 
 	if (im == 1 || im == 10){//bounce-back condition
 		//atomicAdd();   //will need this if force is to be computed
@@ -329,7 +301,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	else{
 		boundaries(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
-		mrt_collide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega);
+		mrt_collide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
 
 		fB[f_mem(0, x, y, xDim, yDim)] = f0;
 		fB[f_mem(1, x, y, xDim, yDim)] = f1;
@@ -359,40 +331,12 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	xcoord -= 1.0;// xdim / maxDim;
 	ycoord -= 1.0;// ydim / maxDim;
 
-	//compute macroscopic fluid variables
-//	float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-//	float u = f1 - f3 + f5 - f6 - f7 + f8;
-//	float v = f2 - f4 + f5 + f6 - f7 - f8;
-
-//	float usqr = u*u+v*v;
-//	float feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
-//	float feq1 = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
-//	float feq2 = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
-//	float feq3 = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
-//	float feq4 = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
-//	float feq5 = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
-//	float feq6 = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
-//	float feq7 = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
-//	float feq8 = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
-//	
-//	
-//	float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
-//	float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
-//	float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
-//	float Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
-//	float tau0 = 1.f / omega;
-//	float CS = 0.1f;
-//	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
-
-
 	if (im == 1) rho = 0.0;
 	//zcoord = f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
 	zcoord = 0.f;//(rho - 1.0f)*15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
 
 	//Color c = Color::FromArgb(1);
 	//pos[threadIdx.x+threadIdx.y*blockDim.x] = make_float4(x,y,z,1.0f);
-
-
 
 	//for color, need to convert 4 bytes (RGBA) to float
 	float color;
@@ -422,7 +366,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	}
 	else if (contourVar == ContourVariable::STRAIN_RATE)
 	{
-		variableValue = Q;
+		variableValue = StrainRate;
 	}
 
 	////Blue to white color scheme
