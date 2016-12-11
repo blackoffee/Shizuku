@@ -523,8 +523,6 @@ int ImageFcn_h(int x, int y, Obstruction* obstructions){
 	//if(y == 0 || x == XDIM-1 || y == YDIM-1)
 	if (x < 0.1f)
 		return 3;//west
-//	else if (x > g_xDim)
-//		return 99; //out-of-domain state
 	else if ((g_xDim - x) < 1.1f)
 		return 2;//east
 	else if ((g_yDim - y) < 1.1f)
@@ -724,22 +722,20 @@ void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
 	fpsCount++;
 	if (fpsCount % fpsLimit == 0)
 	{
-		char fpsReport[256];
 		clock_t difference = clock() - before;
 		float timeStepsPerSecond_prev = g_timeStepsPerSecond;
-		float fps = static_cast<float>(fpsLimit) / (static_cast<float>(difference) / CLOCKS_PER_SEC);
-		g_timeStepsPerSecond = g_tStep * 2 * fps;
+		g_fps = static_cast<float>(fpsLimit) / (static_cast<float>(difference) / CLOCKS_PER_SEC);
+		g_timeStepsPerSecond = g_tStep * 2 * g_fps;
 		before = clock();
 		//fpsLimit = (int)min(max(avgFPS,1.f),30.f);
-
 		//Time step optimizer
 		if (g_timeStepsPerSecond > timeStepsPerSecond_prev*1.2f){
 			g_tStep = max(1, g_tStep - 1);
 		}
-
-		sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, fps, g_timeStepsPerSecond, g_xDim, g_yDim);
-		glutSetWindowTitle(fpsReport);
 	}
+	char fpsReport[256];
+	sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, g_fps, g_timeStepsPerSecond, g_xDim, g_yDim);
+	glutSetWindowTitle(fpsReport);
 }
 
 void Draw()
@@ -768,10 +764,16 @@ void Draw()
 	glLoadIdentity();
 	glOrtho(-1,1,-1,1,-100,20);
 
-	glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
+	int graphicsViewWidth = winw - g_leftPanelWidth - g_drawingPanelWidth;
+	int graphicsViewHeight = winh;
+	float xTranslation = -((static_cast<float>(winw)-g_xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth + g_drawingPanelWidth)) / winw*2.f;
+	float yTranslation = -((static_cast<float>(winh)-g_yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
+	glTranslatef(xTranslation,yTranslation,0.f);
+	glScalef((static_cast<float>(g_xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(g_yDimVisible*g_initialScaleUp) / winh), 1.f);
+	//glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
-	glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth-g_drawingPanelWidth)),0.f,0.f);
+	//glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth-g_drawingPanelWidth)),0.f,0.f);
 	//glTranslatef(-(1.f - (g_xDim+g_leftPanelWidth) / (static_cast<float>(g_xDim) )),0.f,0.f);
 
 	glMatrixMode(GL_MODELVIEW);

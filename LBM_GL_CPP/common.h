@@ -2,7 +2,7 @@
 
 #define MAXOBSTS 100
 #define MAX_XDIM 512
-#define MAX_YDIM 384
+#define MAX_YDIM 512
 #define UMAX 0.06f
 #define BLOCKSIZEX 128
 #define BLOCKSIZEY 1
