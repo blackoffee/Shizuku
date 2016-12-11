@@ -736,7 +736,7 @@ void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
 			g_tStep = max(1, g_tStep - 1);
 		}
 
-		sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second", g_tStep * 2, fps, g_timeStepsPerSecond);
+		sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, fps, g_timeStepsPerSecond, g_xDim, g_yDim);
 		glutSetWindowTitle(fpsReport);
 	}
 }
