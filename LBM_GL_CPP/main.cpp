@@ -384,9 +384,10 @@ void DrawShapePreview()
 	float graphicsToWindowScaleFactor = static_cast<float>(winw)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
 	//float r1 = static_cast<float>(g_currentSize)/g_xDim*2.f*graphicsToWindowScaleFactor;
 
-	int r1i = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / g_xDim; //r1 in pixels
-	float r1fx = static_cast<float>(r1i) / winw*2.f;
-	float r1fy = static_cast<float>(r1i) / winh*2.f;
+	int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (g_xDimVisible); //r1x in pixels
+	int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (g_yDimVisible); //r1x in pixels
+	float r1fx = static_cast<float>(r1ix) / winw*2.f;
+	float r1fy = static_cast<float>(r1iy) / winh*2.f;
 
 	glColor3f(0.8f,0.8f,0.8f);
 	switch (g_currentShape)
