@@ -60,11 +60,9 @@ float g_currentSize = 5.f;
 
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
-GLuint g_elementArrayIndexBufferForMesh;
 cudaGraphicsResource *g_cudaSolutionField;
 
 int* g_elementArrayIndices;
-int* g_elementArrayIndicesForMesh;
 
 float* g_fA_h;
 float* g_fA_d;
@@ -478,21 +476,9 @@ void GenerateIndexList(){
 		}
 	}
 
-	g_elementArrayIndicesForMesh = new int[(MAX_XDIM)*2+(MAX_YDIM)*2];
-	for (int i = 0; i < MAX_YDIM; i++){
-		g_elementArrayIndicesForMesh[i*2  ] = i*MAX_XDIM;
-		g_elementArrayIndicesForMesh[i*2+1] = (i+1)*MAX_XDIM-1;
-	}
-	for (int i = 0; i < MAX_XDIM; i++){
-		g_elementArrayIndicesForMesh[MAX_YDIM*2+i*2  ] = i;
-		g_elementArrayIndicesForMesh[MAX_YDIM*2+i*2+1] = i+(MAX_YDIM-1)*MAX_XDIM;
-	}
-
 	glGenBuffers(1, &g_elementArrayIndexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
-
-	glGenBuffers(1, &g_elementArrayIndexBufferForMesh);
 }
 
 void CleanUpIndexList(){
@@ -799,16 +785,7 @@ void Draw()
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
 
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
 	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
-
-
-	glColor3f(1.0, 0.0, 0.0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBufferForMesh);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM*2+MAX_YDIM*2), g_elementArrayIndicesForMesh, GL_DYNAMIC_DRAW);
-	glDrawElements(GL_LINES, (MAX_XDIM*2+MAX_YDIM*2), GL_UNSIGNED_INT, (GLvoid*)0);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
