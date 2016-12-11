@@ -62,6 +62,10 @@ void GraphicsManager::Click(Mouse mouse)
 		{
 			m_currentObstId = FindClosestObstructionId(mouse);
 		}
+		else
+		{
+			m_currentObstId = -1;
+		}
 	}
 }
 
