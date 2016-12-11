@@ -241,17 +241,19 @@ void SetUpWindow()
 	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.2f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
 	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.05f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
 	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.10f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
-	Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
-	Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.9f, 0.5f,1.8f, 0.1f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
+	//Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarW*0.5f, 0.1f, sliderBarW), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
+	//Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
 	Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
 	Window.GetSlider("Slider_Size")->m_minValue = 1.f;
+	Window.GetSlider("Slider_Size")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
 	Window.GetPanel("Drawing")->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Resolution", Color(Color::LIGHT_GRAY));
 	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
 	Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
 	Window.GetSlider("Slider_Resolution")->m_minValue = 4.f;
 	Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
-
 	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-1.f, -1.f, 2.f, 0.75f), Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
 
 	SetUpButtons();
