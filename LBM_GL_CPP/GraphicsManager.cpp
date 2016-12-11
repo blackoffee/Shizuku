@@ -4,9 +4,10 @@
 
 
 extern Obstruction* g_obst_d;
-extern int g_xDim, g_yDim;
+extern int g_xDim, g_yDim, g_xDimVisible, g_yDimVisible;
 extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
+extern float g_initialScaleUp;
 
 GraphicsManager::GraphicsManager()
 {
@@ -23,17 +24,23 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
 	float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
 	float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
 	RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-	float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactor;
-	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactor;
+	//float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
+	//float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
+	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / m_parent->m_rectInt_abs.m_w;
+	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / m_parent->m_rectInt_abs.m_h;
+	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
+	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf)
 {
 	RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-	float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactor;
-	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactor;
+	//float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
+	//float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
+	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / m_parent->m_rectInt_abs.m_w;
+	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / m_parent->m_rectInt_abs.m_h;
+	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
+	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::Click(Mouse mouse)
@@ -90,8 +97,8 @@ void GraphicsManager::MoveObstruction(float dx, float dy)
 	{
 		Obstruction obst = m_obstructions[m_currentObstId];
 		float dxf, dyf;
-		dxf = dx*static_cast<float>(g_xDim) / (m_parent->m_rectFloat_abs.m_w);
-		dyf = dy*static_cast<float>(g_yDim) / (m_parent->m_rectFloat_abs.m_h);
+		dxf = dx*static_cast<float>(g_xDimVisible) / (m_parent->m_rectFloat_abs.m_w);
+		dyf = dy*static_cast<float>(g_yDimVisible) / (m_parent->m_rectFloat_abs.m_h);
 		obst.x += dxf;
 		obst.y += dyf;
 		m_obstructions[m_currentObstId] = obst;

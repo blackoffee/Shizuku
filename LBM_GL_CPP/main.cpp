@@ -23,7 +23,7 @@ const int g_leftPanelWidth(175);
 const int g_drawingPanelWidth(200);
 const int g_leftPanelHeight(450);
 const int g_drawingPanelHeight(600);
-const float g_initialScaleUp(1.f); //probably don't need this
+float g_initialScaleUp(2.f); 
 
 int g_fpsCount = 0;
 int g_fpsLimit = 20;
@@ -31,9 +31,11 @@ float g_fps = 0;
 float g_timeStepsPerSecond = 0;
 clock_t g_timeBefore;
 
+
 //simulation inputs
-int g_xDim = 256;// 512;
-int g_yDim = 192;// 384;
+int g_xDim = 512; // 256;// 512;
+int g_yDim = 384; //;// 384;
+int g_xDimVisible, g_yDimVisible;
 float g_uMax = 0.1f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
@@ -262,8 +264,13 @@ Slider* GetCurrentContourSlider()
 
 void InitializeButtonCallBack()
 {
+	float4 *dptr;
+	cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+	size_t num_bytes,num_bytes2;
+	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+
 	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, u);
+	InitializeDomain(dptr, g_fA_d, g_im_d, g_xDim, g_yDim, u, g_xDimVisible, g_yDimVisible);
 }
 
 void VelMagButtonCallBack()
@@ -452,21 +459,39 @@ void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res)
 
 void GenerateIndexList(){
 
-	g_elementArrayIndices = new int[(g_xDim-1)*(g_yDim-1) * 4];
-	for (int j = 0; j < g_yDim-1; j++){
-		for (int i = 0; i < g_xDim-1; i++){
+	g_elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4];
+	for (int j = 0; j < MAX_YDIM-1; j++){
+		for (int i = 0; i < MAX_XDIM-1; i++){
 			//going clockwise, since y orientation will be flipped when rendered
-			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 0] = (i)+(j)*g_xDim;
-			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 1] = (i + 1) + (j)*g_xDim;
-			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 2] = (i+1)+(j + 1)*g_xDim;
-			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 3] = (i)+(j + 1)*g_xDim;
+			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
+			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
+			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
+			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
 		}
 	}
 
 	glGenBuffers(1, &g_elementArrayIndexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(g_xDim-1)*(g_yDim-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
 }
+
+//void GenerateIndexList(){
+
+//	g_elementArrayIndices = new int[(g_xDim-1)*(g_yDim-1) * 4];
+//	for (int j = 0; j < g_yDim-1; j++){
+//		for (int i = 0; i < g_xDim-1; i++){
+//			//going clockwise, since y orientation will be flipped when rendered
+//			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 0] = (i)+(j)*g_xDim;
+//			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 1] = (i + 1) + (j)*g_xDim;
+//			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 2] = (i+1)+(j + 1)*g_xDim;
+//			g_elementArrayIndices[j*(g_xDim-1)*4+i * 4 + 3] = (i)+(j + 1)*g_xDim;
+//		}
+//	}
+
+//	glGenBuffers(1, &g_elementArrayIndexBuffer);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(g_xDim-1)*(g_yDim-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
+//}
 
 void CleanUpIndexList(){
 	free(g_elementArrayIndices);
@@ -479,7 +504,8 @@ void SetUpGLInterop()
 {
 	cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
 	GenerateIndexList();
-	unsigned int solutionMemorySize = g_xDim*g_yDim * 4 * sizeof(float);
+	unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+	//unsigned int solutionMemorySize = g_xDim*g_yDim * 4 * sizeof(float);
 	CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize, cudaGraphicsMapFlagsWriteDiscard);
 }
 
@@ -507,14 +533,31 @@ void timerEvent(int value)
 int ImageFcn_h(int x, int y, Obstruction* obstructions){
 	//if(y == 0 || x == XDIM-1 || y == YDIM-1)
 	if (x < 0.1f)
-	return 3;//west
+		return 3;//west
+//	else if (x > g_xDim)
+//		return 99; //out-of-domain state
 	else if ((g_xDim - x) < 1.1f)
-	return 2;//east
+		return 2;//east
 	else if ((g_yDim - y) < 1.1f)
-	return 11;//11;//xsymmetry top
+		return 11;//11;//xsymmetry top
 	else if (y < 0.1f)
-	return 12;//12;//xsymmetry bottom
+		return 12;//12;//xsymmetry bottom
 	return 0;
+}
+
+void UpdateDeviceImage()
+{
+	int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)
+						*BLOCKSIZEX*BLOCKSIZEY;
+	for (int i = 0; i < domainSize; i++)
+	{
+		int x = i%MAX_XDIM;
+		int y = i/MAX_XDIM;
+		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
+	}
+	size_t memsize_int = domainSize*sizeof(int);
+	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
+
 }
 
 void SetUpCUDA()
@@ -522,7 +565,7 @@ void SetUpCUDA()
 	size_t memsize, memsize_int, memsize_inputs;
 	g_uMax = 0.06f;
 
-	int domainSize = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY)
+	int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)
 						*BLOCKSIZEX*BLOCKSIZEY;
 	memsize = domainSize*sizeof(float)*9;
 	memsize_int = domainSize*sizeof(int);
@@ -555,40 +598,47 @@ void SetUpCUDA()
 	g_obstructions[0].y = g_yDim*0.5f;
 	g_obstructions[0].shape = Obstruction::CIRCLE;
 
-	for (int i = 0; i < domainSize; i++)
-	{
-		int x = i%g_xDim;
-		int y = i/g_xDim;
-		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
-	}
+//	for (int i = 0; i < domainSize; i++)
+//	{
+//		int x = i%MAX_XDIM;
+//		int y = i/MAX_XDIM;
+//		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
+//	}
+	UpdateDeviceImage();
 	
 	cudaMemcpy(g_fA_d, g_fA_h, memsize, cudaMemcpyHostToDevice);
 	cudaMemcpy(g_fB_d, g_fB_h, memsize, cudaMemcpyHostToDevice);
-	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
+//	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
 	cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
 
 	//writeInputs();
 	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-	InitializeDomain(g_fA_d, g_im_d, g_xDim, g_yDim, u);
-	InitializeDomain(g_fB_d, g_im_d, g_xDim, g_yDim, u);
+
+	float4 *dptr;
+	cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+	size_t num_bytes,num_bytes2;
+	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+
+	InitializeDomain(dptr, g_fA_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
+	InitializeDomain(dptr, g_fB_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
 }
 
 void RunCuda(struct cudaGraphicsResource **vbo_resource)
 {
 	// map OpenGL buffer object for writing from CUDA
 	float4 *dptr;
-	cudaGraphicsMapResources(1, vbo_resource, 0);
+	cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
 	size_t num_bytes,num_bytes2;
-	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
+	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
 	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
 	float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep);
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
 
 	// unmap buffer object
-	cudaGraphicsUnmapResources(1, vbo_resource, 0);
+	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 }
 
 
@@ -625,9 +675,14 @@ void MouseWheel(int button, int dir, int x, int y)
 {
 	if (dir > 0){
 		translate_z += 1.f;
+		g_xDim += 64;
 	}
 	else
+	{
 		translate_z -= 1.f;
+		g_xDim -= 64;
+	}
+	UpdateDeviceImage();
 	
 }
 
@@ -640,11 +695,23 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 	widthOut = heightOut*aspectRatio+leftPanelW;
 }
 
+void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp)
+{
+
+	g_xDim = min(max(BLOCKSIZEX, ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX),MAX_XDIM);
+	g_yDim = min(max(1, ceil(static_cast<float>(windowHeight) / scaleUp)),MAX_YDIM);
+	g_xDimVisible = min(max(BLOCKSIZEX, ((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
+	g_yDimVisible = g_yDim;
+}
+
 void Resize(int w, int h)
 {
 	int area = w*h;
-	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),
-											g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+	//UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+	UpdateDomainDimensionsBasedOnWindowSize(max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
+
+	winw = w;
+	winh = h;
 
 	theMouse.m_winW = winw;
 	theMouse.m_winH = winh;
@@ -658,6 +725,8 @@ void Resize(int w, int h)
 	Window.UpdateAll();
 
 	glViewport(0, 0, winw, winh);
+
+	UpdateDeviceImage();
 }
 
 
@@ -724,7 +793,8 @@ void Draw()
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-	glDrawElements(GL_QUADS, (g_xDim - 1)*(g_yDim - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+	//glDrawElements(GL_QUADS, (g_xDim - 1)*(g_yDim - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	/*
@@ -755,17 +825,23 @@ void Draw()
 
 	ComputeFPS(g_fpsCount, g_fpsLimit, g_timeBefore);
 
+	//g_xDim = 256;
+	//g_yDim = 192;
+
 }
 
 int main(int argc,char **argv)
 {
+	SetUpWindow();
+
 	glutInit(&argc,argv);
+
+
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
 	glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
 
-	SetUpWindow();
 
 	glutDisplayFunc(Draw);
 	glutReshapeFunc(Resize);
@@ -776,10 +852,7 @@ int main(int argc,char **argv)
 	glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
 	Init();
-
-
 	SetUpGLInterop();
-
 	SetUpCUDA();
 
 	glutMainLoop();

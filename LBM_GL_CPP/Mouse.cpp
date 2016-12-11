@@ -44,11 +44,17 @@ void Mouse::Move(int x, int y)
 	float dy = intCoordToFloatCoord(y, m_winH) - intCoordToFloatCoord(m_y, m_winH);
 	Update(x, y);
 
-	if (m_lmb == 1)
+	if (m_currentlySelectedPanel != NULL)
 	{
-		m_currentlySelectedPanel->Drag(dx, dy);
+		if (m_lmb == 1)
+		{
+			m_currentlySelectedPanel->Drag(dx, dy);
+		}
 	}
-
+	else
+	{
+		return;
+	}
 }
 
 void Mouse::Click(int x, int y, int button, int state)

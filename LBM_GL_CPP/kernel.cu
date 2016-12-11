@@ -12,8 +12,7 @@ extern int g_yDim;
 //int BLOCKSIZEY = 1;
 
 //grid and threads for CUDA
-dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
+
 //int nBlocks = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY);
 //int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
 
@@ -101,27 +100,52 @@ inline __device__ int f_mem(int f_num, int x, int y, size_t pitch, int yDim)
 	return (x + y*pitch) + f_num*pitch*yDim;
 }
 
+inline __device__ int f_mem(int f_num, int x, int y)
+{
+
+	return (x + y*MAX_XDIM) + f_num*MAX_XDIM*MAX_YDIM;
+}
+
+__device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
+{
+	xcoord = threadIdx.x + blockDim.x*blockIdx.x;
+	ycoord = threadIdx.y + blockDim.y*blockIdx.y;
+	xcoord /= xDimVisible *0.5f;
+	ycoord /= yDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
+	xcoord -= 1.0;// xdim / maxDim;
+	ycoord -= 1.0;// ydim / maxDim;
+}
+
 // Initialize domain using constant velocity
-__global__ void initialize_single(float *f, int *Im, int xDim, int yDim, float uMax) //obstruction* obstruction)//pitch in elements
+__global__ void initialize_single(float4* pos, float *f, int *Im, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
-	int j = x + y*xDim;//index on padded mem (pitch in elements)
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
 	float u, v, rho, usqr;
 	rho = 1.f;
 	u = uMax;// u_max;// UMAX;
 	v = 0.0f;
 	usqr = u*u + v*v;
 
-	f[j + 0 * xDim*yDim] = 0.4444444444f*(rho - 1.5f*usqr);
-	f[j + 1 * xDim*yDim] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-	f[j + 2 * xDim*yDim] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-	f[j + 3 * xDim*yDim] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-	f[j + 4 * xDim*yDim] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-	f[j + 5 * xDim*yDim] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
-	f[j + 6 * xDim*yDim] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
-	f[j + 7 * xDim*yDim] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
-	f[j + 8 * xDim*yDim] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
+	f[j + 0 * MAX_XDIM*MAX_YDIM] = 0.4444444444f*(rho - 1.5f*usqr);
+	f[j + 1 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+	f[j + 2 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+	f[j + 3 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+	f[j + 4 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+	f[j + 5 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
+	f[j + 6 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
+	f[j + 7 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
+	f[j + 8 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
+
+	float xcoord, ycoord, zcoord;
+	ChangeCoordinatesToNDC(xcoord, ycoord, xDimVisible, yDimVisible);
+	zcoord = 0.f;
+	float R(255.f), G(255.f), B(255.f), A(255.f);
+	char b[] = { R, G, B, A };
+	float color;
+	std::memcpy(&color, &b, sizeof(color));
+	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
 
@@ -260,25 +284,26 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 	f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omega*0.25f);
 }
 
+
 // main LBM function including streaming and colliding
 __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
-	float omega, int *Im, Obstruction *obstructions, int contourVar, float contMin, float contMax, int xDim, int yDim, float uMax)//pitch in elements
+	float omega, int *Im, Obstruction *obstructions, int contourVar, float contMin, float contMax, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
-	int j = x + y*xDim;//index on padded mem (pitch in elements)
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
 	int im = Im[j];//ImageFcn(x, y, obstructions); // 
 	if (isInsideObstruction(x, y, obstructions)) im = 1;
 	float f0, f1, f2, f3, f4, f5, f6, f7, f8;
 	f0 = fA[j];
-	f1 = fA[f_mem(1, dmax(x - 1), y, xDim, yDim)];
-	f3 = fA[f_mem(3, dmin(x + 1, xDim), y, xDim, yDim)];
-	f2 = fA[f_mem(2, x, y - 1, xDim, yDim)];
-	f5 = fA[f_mem(5, dmax(x - 1), y - 1, xDim, yDim)];
-	f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1, xDim, yDim)];
-	f4 = fA[f_mem(4, x, y + 1, xDim, yDim)];
-	f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1, xDim, yDim)];
-	f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim), xDim, yDim)];
+	f1 = fA[f_mem(1, dmax(x - 1), y)];
+	f3 = fA[f_mem(3, dmin(x + 1, xDim), y)];
+	f2 = fA[f_mem(2, x, y - 1)];
+	f5 = fA[f_mem(5, dmax(x - 1), y - 1)];
+	f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1)];
+	f4 = fA[f_mem(4, x, y + 1)];
+	f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
+	f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
 
 
 	float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
@@ -287,31 +312,35 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float usqr = u*u+v*v;
 	float StrainRate;
 
-	if (im == 1 || im == 10){//bounce-back condition
+	if (im == 99)
+	{
+	//do nothing
+	}
+	else if (im == 1 || im == 10){//bounce-back condition
 		//atomicAdd();   //will need this if force is to be computed
-		fB[f_mem(1, x, y, xDim, yDim)] = f3;
-		fB[f_mem(2, x, y, xDim, yDim)] = f4;
-		fB[f_mem(3, x, y, xDim, yDim)] = f1;
-		fB[f_mem(4, x, y, xDim, yDim)] = f2;
-		fB[f_mem(5, x, y, xDim, yDim)] = f7;
-		fB[f_mem(6, x, y, xDim, yDim)] = f8;
-		fB[f_mem(7, x, y, xDim, yDim)] = f5;
-		fB[f_mem(8, x, y, xDim, yDim)] = f6;
+		fB[f_mem(1, x, y)] = f3;
+		fB[f_mem(2, x, y)] = f4;
+		fB[f_mem(3, x, y)] = f1;
+		fB[f_mem(4, x, y)] = f2;
+		fB[f_mem(5, x, y)] = f7;
+		fB[f_mem(6, x, y)] = f8;
+		fB[f_mem(7, x, y)] = f5;
+		fB[f_mem(8, x, y)] = f6;
 	}
 	else{
 		boundaries(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
 		mrt_collide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
 
-		fB[f_mem(0, x, y, xDim, yDim)] = f0;
-		fB[f_mem(1, x, y, xDim, yDim)] = f1;
-		fB[f_mem(2, x, y, xDim, yDim)] = f2;
-		fB[f_mem(3, x, y, xDim, yDim)] = f3;
-		fB[f_mem(4, x, y, xDim, yDim)] = f4;
-		fB[f_mem(5, x, y, xDim, yDim)] = f5;
-		fB[f_mem(6, x, y, xDim, yDim)] = f6;
-		fB[f_mem(7, x, y, xDim, yDim)] = f7;
-		fB[f_mem(8, x, y, xDim, yDim)] = f8;
+		fB[f_mem(0, x, y)] = f0;
+		fB[f_mem(1, x, y)] = f1;
+		fB[f_mem(2, x, y)] = f2;
+		fB[f_mem(3, x, y)] = f3;
+		fB[f_mem(4, x, y)] = f4;
+		fB[f_mem(5, x, y)] = f5;
+		fB[f_mem(6, x, y)] = f6;
+		fB[f_mem(7, x, y)] = f7;
+		fB[f_mem(8, x, y)] = f8;
 	}
 
 	//Prepare data for visualization
@@ -319,17 +348,19 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	//need to change x,y,z coordinates to NDC (-1 to 1)
 	float xcoord, ycoord, zcoord;
 	int index;
-	int xdim = blockDim.x*gridDim.x;
-	int ydim = blockDim.y*gridDim.y;
-	xcoord = threadIdx.x + blockDim.x*blockIdx.x;
-	ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-	index = x + y*blockDim.x*gridDim.x;
-	//	x /= (float)(blockDim.x*gridDim.x)*0.5f;
-	//	y /= (float)(blockDim.x*gridDim.x)*0.5f;//(float)(blockDim.y*gridDim.y);
-	xcoord /= xdim / 2;
-	ycoord /= ydim / 2;//(float)(blockDim.y*gridDim.y);
-	xcoord -= 1.0;// xdim / maxDim;
-	ycoord -= 1.0;// ydim / maxDim;
+	//int xdim = blockDim.x*gridDim.x;
+	//int ydim = blockDim.y*gridDim.y;
+	//xcoord = threadIdx.x + blockDim.x*blockIdx.x;
+	//ycoord = threadIdx.y + blockDim.y*blockIdx.y;
+	index = j;// x + y*blockDim.x*gridDim.x;
+	////	x /= (float)(blockDim.x*gridDim.x)*0.5f;
+	////	y /= (float)(blockDim.x*gridDim.x)*0.5f;//(float)(blockDim.y*gridDim.y);
+	//xcoord /= xDim / 2;
+	//ycoord /= yDim / 2;//(float)(blockDim.y*gridDim.y);
+	//xcoord -= 1.0;// xdim / maxDim;
+	//ycoord -= 1.0;// ydim / maxDim;
+
+	ChangeCoordinatesToNDC(xcoord, ycoord, xDimVisible, yDimVisible);
 
 	if (im == 1) rho = 0.0;
 	//zcoord = f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
@@ -412,18 +443,24 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
  * End of device functions
  */
 
-void InitializeDomain(float* f_d, int* im_d, int xDim, int yDim, float uMax)
+void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible)
 {
-	initialize_single << <grid, threads >> >(f_d, im_d, xDim, yDim, uMax);
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	initialize_single << <grid, threads >> >(vis, f_d, im_d, xDim, yDim, uMax, xDimVisible, yDimVisible);
 }
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-	ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep)
+	ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible)
 {
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 	for (int i = 0; i < tStep; i++)
 	{
-		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax);
-		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax);
+		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
+		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
 	}
 }
 

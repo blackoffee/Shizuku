@@ -1,10 +1,10 @@
 #pragma once
 
 #define MAXOBSTS 100
-#define XDIM 512
-#define YDIM 384
+#define MAX_XDIM 512
+#define MAX_YDIM 384
 #define UMAX 0.06f
-#define BLOCKSIZEX 64
+#define BLOCKSIZEX 128
 #define BLOCKSIZEY 1
 #define REFRESH_DELAY 10
 #define LINE_OBST_WIDTH 1
