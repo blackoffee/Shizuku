@@ -59,11 +59,11 @@ public:
 
 	void CreateGraphicsManager();
 
-	void CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-	void CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-	void CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-	void CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-	void CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	Panel* CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	Panel* CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	Button* CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	Button* CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+	Slider* CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
 
 	RectFloat RectIntAbsToRectFloatAbs();
 	RectFloat RectFloatRelToRectFloatAbs();

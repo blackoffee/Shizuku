@@ -81,16 +81,18 @@ void Panel::CreateGraphicsManager()
 	m_graphicsManager = new GraphicsManager(this);
 }
 
-void Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Panel* Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	Panel* subPanel = new Panel(rectFloat, sizeDefinition, name, color, this);
 	m_subPanels.push_back(subPanel);
+	return subPanel;
 }
 
-void Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Panel* Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	Panel* subPanel = new Panel(rectInt, sizeDefinition, name, color, this);
 	m_subPanels.push_back(subPanel);
+	return subPanel;
 }
 
 Panel* Panel::GetRootPanel()
@@ -289,16 +291,18 @@ Slider* Panel::GetSlider(std::string name)
 	return NULL;
 }
 
-void Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Button* Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	Button* button = new Button(rectFloat, sizeDefinition, name, color, this);
 	m_buttons.push_back(button);
+	return button;
 }
 
-void Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Slider* Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
 {
 	Slider* slider = new Slider(rectFloat, sizeDefinition, name, color, this);
 	m_sliders.push_back(slider);
+	return slider;
 }
 
 void Panel::Drag(float dx, float dy)

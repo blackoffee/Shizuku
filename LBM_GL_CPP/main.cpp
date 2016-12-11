@@ -105,6 +105,10 @@ void SetUpWindow()
 	theMouse.m_simScaleUp = g_initialScaleUp;
 
 	Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::BLACK));
+
+
+
+
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.2f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.2f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Velocity Magnitude", Color(Color::GRAY));
 	Window.GetPanel("CDV")->CreateButton(RectFloat(-0.9f, -0.4f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
