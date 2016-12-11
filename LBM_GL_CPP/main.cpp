@@ -78,6 +78,7 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 void SetUpButtons();
 void VelMagButtonCallBack();
 void SquareButtonCallBack();
+void Resize(int w, int h);
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
 
@@ -240,6 +241,11 @@ void SetUpWindow()
 	Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
 	Window.GetSlider("Slider_Size")->m_minValue = 1.f;
 	Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
+	Window.GetPanel("Drawing")->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Resolution", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
+	Window.GetSlider("Slider_Resolution")->m_maxValue = 4.f;
+	Window.GetSlider("Slider_Resolution")->m_minValue = 1.f;
+	Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-1.f, -1.f, 2.f, 0.75f), Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
 
@@ -635,6 +641,9 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 	float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
+
+	g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+	Resize(winw, winh);
 	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
 
 	// unmap buffer object
