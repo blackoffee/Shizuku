@@ -752,9 +752,9 @@ void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
 		before = clock();
 		//fpsLimit = (int)min(max(avgFPS,1.f),30.f);
 		//Time step optimizer
-		if (g_timeStepsPerSecond > timeStepsPerSecond_prev*1.2f){
-			g_tStep = max(1, g_tStep - 1);
-		}
+		//if (g_timeStepsPerSecond > timeStepsPerSecond_prev*1.2f){
+		//	g_tStep = max(1, g_tStep - 1);
+		//}
 	}
 	char fpsReport[256];
 	sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, g_fps, g_timeStepsPerSecond, g_xDim, g_yDim);
