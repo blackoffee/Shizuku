@@ -150,13 +150,17 @@ void SetUpWindow()
 	std::string sliderBarName2 = VarName+"Min";
 	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
 	Window.GetPanel(labelName)->m_displayText = "Contour";
-	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.95f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSlider(RectFloat(-0.5f, 0.5f, 1.f, 0.2f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.95f, -1, 0.2, 2.0), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, 0.2, 2.0), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	//Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.95f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	//Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*2.f;
 	Window.GetSlider(sliderName)->m_minValue = 0.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 

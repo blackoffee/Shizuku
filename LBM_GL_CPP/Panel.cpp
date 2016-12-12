@@ -363,7 +363,7 @@ void SliderBar::Draw()
 	glEnd();
 
 	glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
-	float outlineWidth = 0.005f;
+	float outlineWidth = 0.003f;
 	glBegin(GL_QUADS);
 	glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h - outlineWidth*2.f);
 	glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + outlineWidth*2.f);
@@ -376,13 +376,13 @@ void SliderBar::UpdateValue()
 {
 	if (m_orientation == VERTICAL)
 	{
-		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidY() - m_parent->m_rectFloat_abs.m_y) 
-					/ (m_parent->m_rectFloat_abs.m_h);
+		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidY() - (m_parent->m_rectFloat_abs.m_y+m_rectFloat_abs.m_h*0.5f)) 
+					/ (m_parent->m_rectFloat_abs.m_h-m_rectFloat_abs.m_h);
 	}
 	else
 	{
-		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidX() - m_parent->m_rectFloat_abs.m_x) 
-					/ (m_parent->m_rectFloat_abs.m_w);
+		m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidX() - (m_parent->m_rectFloat_abs.m_x+m_rectFloat_abs.m_w*0.5f)) 
+					/ (m_parent->m_rectFloat_abs.m_w-m_rectFloat_abs.m_w);
 	}
 }
 
@@ -501,38 +501,67 @@ void Slider::Draw()
 			lowerSliderBar = m_sliderBar2;
 			higherSliderBar = m_sliderBar1;
 		}
-		glBegin(GL_QUADS);
-		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
-		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
-		glEnd();
+		if (m_sliderBar1->m_orientation == SliderBar::VERTICAL)
+		{
+			glBegin(GL_QUADS);
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+			glEnd();
 
-		glBegin(GL_QUADS);
-		glColor3f(higherColor.r, higherColor.g, higherColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
-		glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
-		glColor3f(higherColor.r, higherColor.g, higherColor.b);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
-		glEnd();
+			glBegin(GL_QUADS);
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+			glEnd();
 
 
-		glBegin(GL_QUADS);
-		glColor3f(higherColor.r, higherColor.g, higherColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-		glColor3f(higherColor.r, higherColor.g, higherColor.b);
-		glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
-		glColor3f(higherColor.r, higherColor.g, higherColor.b);
-		glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-		glEnd();
+			glBegin(GL_QUADS);
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glEnd();
+		}
+		else
+		{
+			glBegin(GL_QUADS);
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+			glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
+			glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glEnd();
+
+			glBegin(GL_QUADS);
+			glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
+			glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
+			glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glEnd();
+
+			glBegin(GL_QUADS);
+			glColor3f(higherColor.r, higherColor.g, higherColor.b);
+			glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
+			glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+			glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+			glEnd();
+		}
 	}
-
 }
 
 
