@@ -1,5 +1,4 @@
 # InteractiveCFD
-Rework of LBM_GL code
 
 DESCRIPTION OF APPLICATION
 --------------------------
@@ -15,6 +14,7 @@ GENERAL USAGE NOTES
 - Right click to add new object to simulation domain
 - Middle click to remove existing object from simulation domain
 - Left click and drag to move existing object within simulation domain
+- Resize the window to change the simulation domain extents
 
 INSTALLATION INSTRUCTIONS
 -------------------------
