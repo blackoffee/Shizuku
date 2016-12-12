@@ -415,14 +415,14 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	//set walls to be white
 	if (im == 1){
 		//R = 255; G = 255; B = 255;
-		if (contourVar == 4)
-		{
-			R = 80; G = 80; B = 80;
-		}
-		else
-		{
+//		if (contourVar == 4)
+//		{
+//			R = 80; G = 80; B = 80;
+//		}
+//		else
+//		{
 			R = 204; G = 204; B = 204;
-		}
+//		}
 	}
 	//set walls drawn by user to be light gray
 	else if (im == 10){

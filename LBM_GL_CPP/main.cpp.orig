@@ -19,10 +19,10 @@
 
 
 int winw, winh;
-const int g_leftPanelWidth(350);
-const int g_drawingPanelWidth(0);
+const int g_leftPanelWidth(250);
+const int g_drawingPanelWidth(200);
 const int g_leftPanelHeight(600);
-const int g_drawingPanelHeight(0);
+const int g_drawingPanelHeight(600);
 float g_initialScaleUp(2.f); 
 
 int g_fpsCount = 0;
@@ -33,9 +33,14 @@ clock_t g_timeBefore;
 
 
 //simulation inputs
+<<<<<<< HEAD
 int g_xDim = 512; // 256;// 512;
 int g_yDim = 384; //;// 384;
 int g_xDimVisible, g_yDimVisible;
+=======
+int g_xDim = 256;// 512;
+int g_yDim = 256;// 192;// 384;
+>>>>>>> horizontal_slider_for_size
 float g_uMax = 0.1f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
@@ -104,17 +109,18 @@ void SetUpWindow()
 	theMouse.SetBasePanel(&Window);
 	theMouse.m_simScaleUp = g_initialScaleUp;
 
-	Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::DARK_GRAY));
-	Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.6f), Panel::DEF_REL, "Outputs", Color(Color::DARK_GRAY));
-	Panel* inputsPanel  = CDV->CreateSubPanel(RectFloat(-1.f, -0.4f, 2.f, 0.6f), Panel::DEF_REL, "Inputs", Color(Color::DARK_GRAY));
-	Panel* drawingPanel = CDV->CreateSubPanel(RectFloat(-1.f,  0.2f, 2.f, 0.8f), Panel::DEF_REL, "Drawing", Color(Color::DARK_GRAY));
+	Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::BLACK));
+	Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.6f), Panel::DEF_REL, "Outputs", Color(Color::RED));
+	Panel* inputsPanel  = CDV->CreateSubPanel(RectFloat(-1.f, -0.4f, 2.f, 0.6f), Panel::DEF_REL, "Inputs", Color(Color::GREEN));
+	Panel* drawingPanel = CDV->CreateSubPanel(RectFloat(-1.f,  0.2f, 2.f, 0.8f), Panel::DEF_REL, "Drawing", Color(Color::RED));
 
 
-	outputsPanel->CreateButton(RectFloat(-0.9f, -0.2f +0.12f, 0.85f, 0.4f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(-0.9f, -0.6f +0.08f, 0.85f, 0.4f), Panel::DEF_REL, "Velocity Magnitude", Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(-0.9f, -1.f  +0.04f, 0.85f, 0.4f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(0.05f, -0.2f +0.12f, 0.85f, 0.4f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(0.05f, -0.6f +0.08f, 0.85f, 0.4f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f,  0.f+0.02f , 1.8f, 0.2f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f, -0.2f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Velocity Magnitude", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f, -0.4f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f, -0.6f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f, -0.8f+0.01f, 1.1f, 0.19f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(-0.9f, -1.f+0.01f , 1.1f, 0.19f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
 
 	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh), Panel::DEF_ABS, "Graphics", Color(Color::RED));
 	Window.GetPanel("Graphics")->m_draw = false;
@@ -122,59 +128,40 @@ void SetUpWindow()
 	Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
 
 
-	float sliderH = 1.4f/3.f/2.f;
-	float sliderBarW = 0.1f;
-	float sliderBarH = 2.f;
-
-	inputsPanel->CreateSubPanel(RectFloat(-0.9f, -1.f+0.4f+0.16f+sliderH*5, 0.5f, sliderH), Panel::DEF_REL, "Label_InletV", Color(Color::DARK_GRAY));
-	inputsPanel->CreateSubPanel(RectFloat(-0.9f, -1.f+0.4f+0.12f+sliderH*3, 0.5f, sliderH), Panel::DEF_REL, "Label_Visc", Color(Color::DARK_GRAY));
-	inputsPanel->CreateSubPanel(RectFloat(-0.9f, -1.f+0.4f+0.08f+sliderH, 0.5f, sliderH), Panel::DEF_REL, "Label_Resolution", Color(Color::DARK_GRAY));
-	inputsPanel->CreateSlider(RectFloat(-0.9f, -1.f+0.4f+0.16f+sliderH*4, 1.8f, sliderH), Panel::DEF_REL, "Slider_InletV", Color(Color::LIGHT_GRAY));
-	inputsPanel->CreateSlider(RectFloat(-0.9f, -1.f+0.4f+0.12f+sliderH*2, 1.8f, sliderH), Panel::DEF_REL, "Slider_Visc", Color(Color::LIGHT_GRAY));
-	inputsPanel->CreateSlider(RectFloat(-0.9f, -1.f+0.4f+0.08f, 1.8f, sliderH), Panel::DEF_REL, "Slider_Resolution", Color(Color::LIGHT_GRAY));
-	inputsPanel->CreateButton(RectFloat(-0.9f, -1.f+0.09f , 1.8f, 0.3f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
-
+	float sliderW = 0.4f;
+	float sliderBarW = 2.f;
+	float sliderBarH = 0.2f;
+	inputsPanel->CreateSubPanel(RectFloat(-0.9f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_InletV", Color(Color::BLACK));
 	Window.GetPanel("Label_InletV")->m_displayText = "Inlet Velocity";
-	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.5f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
+	inputsPanel->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_InletV", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
 	Window.GetSlider("Slider_InletV")->m_maxValue = 0.1f;
 	Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
-	Window.GetSlider("Slider_InletV")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
+	inputsPanel->CreateSubPanel(RectFloat(0.1f,0.8f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Visc", Color(Color::BLACK));
 	Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
-	Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-0.85f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
+	inputsPanel->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.25f, sliderW, 0.5f), Panel::DEF_REL, "Slider_Visc", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
 	Window.GetSlider("Slider_Visc")->m_maxValue = 1.8f;
 	Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
-	Window.GetSlider("Slider_Visc")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
-	Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
-	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(0.f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
-	Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
-	Window.GetSlider("Slider_Resolution")->m_minValue = 4.f;
-	Window.GetSlider("Slider_Resolution")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
-
-
+	sliderBarH = 0.15f;
 	std::string VarName = "Velocity Magnitude";
 	std::string labelName = "Label_"+VarName;
 	std::string sliderName = VarName;
 	std::string sliderBarName1 = VarName+"Max";
 	std::string sliderBarName2 = VarName+"Min";
-	RectFloat contourSliderPosition{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f, 1.8f, sliderH};
-	outputsPanel->CreateSubPanel(RectFloat{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f+sliderH, 0.5f, sliderH}, Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
-	Window.GetPanel("Label_Contour")->m_displayText = "Contour Color";
-	float contourSliderBarWidth = 0.1f;
-	float contourSliderBarHeight = 2.f;
-	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-1.f, -1, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.95f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*2.f;
 	Window.GetSlider(sliderName)->m_minValue = 0.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 
@@ -183,15 +170,15 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.85f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.85f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.8f;
 	Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
@@ -201,15 +188,15 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f-contourSliderBarWidth*0.5f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.65f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.f;
 	Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
@@ -219,58 +206,64 @@ void SetUpWindow()
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.9f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(0.35f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.9f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.35f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = g_uMax*0.1f;
 	Window.GetSlider(sliderName)->m_minValue = 0.f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
+
 
 	VarName = "Pressure";
 	labelName = "Label_"+VarName;
 	sliderName = VarName;
 	sliderBarName1 = VarName+"Max";
 	sliderBarName2 = VarName+"Min";
-	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	outputsPanel->CreateSubPanel(RectFloat(0.2f,-0.19f, 0.8f, 0.2f), Panel::DEF_REL, labelName, Color(Color::BLACK));
+	Window.GetPanel(labelName)->m_displayText = "Contour";
+	outputsPanel->CreateSlider(RectFloat(0.6f-sliderW*0.5f,-0.95f, sliderW, 0.75f), Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f, -0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-sliderBarW*0.5f,  0.45f, sliderBarW, sliderBarH), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
 	Window.GetSlider(sliderName)->m_maxValue = 1.05f;
 	Window.GetSlider(sliderName)->m_minValue = 0.95f;
 	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
 	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
 
 	//Drawing panel
 	//Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::DARK_GRAY));
-	Panel* drawingPreview = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f), Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
-	Panel* drawingButtons = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f), Panel::DEF_REL, "DrawingButtons", Color(Color::DARK_GRAY));
-
-	drawingPanel->CreateSlider(RectFloat(-0.9f, 0.9f-sliderH*0.75f*2,1.8f, sliderH*0.75f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
-	drawingPanel->CreateSubPanel(RectFloat(-0.9f,0.9f-sliderH*0.75f, 0.5f, sliderH*0.75f), Panel::DEF_REL, "Label_Size", Color(Color::DARK_GRAY));
+	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f,0.85f, 0.8f, 0.1f), Panel::DEF_REL, "Label_Size", Color(Color::DARK_GRAY));
 	Window.GetPanel("Label_Size")->m_displayText = "Size";
-
-	float leftEnd = -0.9f;
-	float width = 1.8f;
-	float buttonSpacing = 0.0f;
-	drawingButtons->CreateButton(RectFloat(-0.9f, 0.7f-0.04f , 1.8f, 0.3f ), Panel::DEF_REL, "Square"    , Color(Color::GRAY));
-	drawingButtons->CreateButton(RectFloat(-0.9f, 0.4f-0.08f , 1.8f, 0.3f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
-	drawingButtons->CreateButton(RectFloat(-0.9f, 0.1f-0.12f , 1.8f, 0.3f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
-	drawingButtons->CreateButton(RectFloat(-0.9f,-0.2f-0.16f , 1.8f, 0.3f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
-	Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.35f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Square"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.2f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Circle"    , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f, 0.05f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Hor. Line" , Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateButton(RectFloat(-0.9f,-0.10f-0.02f , 1.8f, 0.14f ), Panel::DEF_REL, "Vert. Line", Color(Color::GRAY));
+	Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.9f, 0.5f,1.8f, 0.1f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
+	//Window.GetPanel("Drawing")->CreateSlider(RectFloat(-0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Size", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarW*0.5f, 0.1f, sliderBarW), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
+	//Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
 	Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
 	Window.GetSlider("Slider_Size")->m_minValue = 1.f;
 	Window.GetSlider("Slider_Size")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
+<<<<<<< HEAD
+	Window.GetPanel("Drawing")->CreateSlider(RectFloat(0.5f-sliderW*0.5f,0.5f, sliderW, 0.35f), Panel::DEF_REL, "Slider_Resolution", Color(Color::LIGHT_GRAY));
+	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-sliderBarW*0.5f, 0.f, sliderBarW, sliderBarH*1.5f), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
+	Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
+	Window.GetSlider("Slider_Resolution")->m_minValue = 4.f;
+	Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
+
+=======
+>>>>>>> horizontal_slider_for_size
+	Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-1.f, -1.f, 2.f, 0.75f), Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
 
 	SetUpButtons();
 	VelMagButtonCallBack(); //default is vel mag contour
@@ -604,9 +597,9 @@ void SetUpCUDA()
 		g_obstructions[i].y = -1000;
 	}	
 	g_obstructions[0].r1 = 10;
-	g_obstructions[0].x = g_xDim*0.2f;
-	g_obstructions[0].y = g_yDim*0.3f;
-	g_obstructions[0].shape = Obstruction::SQUARE;
+	g_obstructions[0].x = g_xDim*0.33f;
+	g_obstructions[0].y = g_yDim*0.5f;
+	g_obstructions[0].shape = Obstruction::CIRCLE;
 
 //	for (int i = 0; i < domainSize; i++)
 //	{
@@ -856,8 +849,7 @@ int main(int argc,char **argv)
 
 
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-	glutInitWindowSize(1100,700);
-	//glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
+	glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
 
