@@ -21,7 +21,7 @@
 int winw, winh;
 const int g_leftPanelWidth(350);
 const int g_drawingPanelWidth(0);
-const int g_leftPanelHeight(600);
+const int g_leftPanelHeight(500);
 const int g_drawingPanelHeight(0);
 float g_initialScaleUp(2.f); 
 
@@ -36,7 +36,7 @@ clock_t g_timeBefore;
 int g_xDim = 512; // 256;// 512;
 int g_yDim = 384; //;// 384;
 int g_xDimVisible, g_yDimVisible;
-float g_uMax = 0.1f;
+float g_uMax = 0.125f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
 int g_tStep = 15; //initial tstep value before adjustments
@@ -135,8 +135,8 @@ void SetUpWindow()
 	inputsPanel->CreateButton(RectFloat(-0.9f, -1.f+0.09f , 1.8f, 0.3f ), Panel::DEF_REL, "Initialize", Color(Color::GRAY));
 
 	Window.GetPanel("Label_InletV")->m_displayText = "Inlet Velocity";
-	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.5f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
-	Window.GetSlider("Slider_InletV")->m_maxValue = 0.1f;
+	Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.7f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
+	Window.GetSlider("Slider_InletV")->m_maxValue = 0.125f;
 	Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
 	Window.GetSlider("Slider_InletV")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
@@ -149,9 +149,9 @@ void SetUpWindow()
 	Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
 	Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
-	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(0.f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
+	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.6f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
 	Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
-	Window.GetSlider("Slider_Resolution")->m_minValue = 4.f;
+	Window.GetSlider("Slider_Resolution")->m_minValue = 6.f;
 	Window.GetSlider("Slider_Resolution")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
 	Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
@@ -440,7 +440,7 @@ void DrawShapePreview()
 	}
 	case Obstruction::HORIZONTAL_LINE:
 	{
-		r1fy = static_cast<float>(LINE_OBST_WIDTH) / winw*2.f;
+		r1fy = static_cast<float>(LINE_OBST_WIDTH) / winh*2.f;
 		glBegin(GL_QUADS);
 			glVertex2f(centerX - r1fx*2.f, centerY + r1fy);
 			glVertex2f(centerX - r1fx*2.f, centerY - r1fy);
@@ -603,10 +603,15 @@ void SetUpCUDA()
 		g_obstructions[i].x = 0;
 		g_obstructions[i].y = -1000;
 	}	
-	g_obstructions[0].r1 = 10;
-	g_obstructions[0].x = g_xDim*0.2f;
-	g_obstructions[0].y = g_yDim*0.3f;
+	g_obstructions[0].r1 = 6.5;
+	g_obstructions[0].x = 30;// g_xDim*0.2f;
+	g_obstructions[0].y = 42;// g_yDim*0.3f;
 	g_obstructions[0].shape = Obstruction::SQUARE;
+
+	g_obstructions[1].r1 = 6.5;
+	g_obstructions[1].x = 30;// g_xDim*0.2f;
+	g_obstructions[1].y = 58;// g_yDim*0.3f;
+	g_obstructions[1].shape = Obstruction::SQUARE;
 
 //	for (int i = 0; i < domainSize; i++)
 //	{
@@ -856,7 +861,7 @@ int main(int argc,char **argv)
 
 
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-	glutInitWindowSize(1100,700);
+	glutInitWindowSize(1400,g_leftPanelHeight+10);
 	//glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
