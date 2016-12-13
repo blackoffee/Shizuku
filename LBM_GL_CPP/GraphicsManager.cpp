@@ -26,8 +26,8 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
 	RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
 	//float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
 	//float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / m_parent->m_rectInt_abs.m_w;
-	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / m_parent->m_rectInt_abs.m_h;
+	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
+	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
 	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
 	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
@@ -37,8 +37,8 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
 	RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
 	//float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
 	//float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / m_parent->m_rectInt_abs.m_w;
-	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / m_parent->m_rectInt_abs.m_h;
+	float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
+	float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
 	xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
 	yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
@@ -101,8 +101,10 @@ void GraphicsManager::MoveObstruction(float dx, float dy)
 	{
 		Obstruction obst = m_obstructions[m_currentObstId];
 		float dxf, dyf;
-		dxf = dx*static_cast<float>(g_xDimVisible) / (m_parent->m_rectFloat_abs.m_w);
-		dyf = dy*static_cast<float>(g_yDimVisible) / (m_parent->m_rectFloat_abs.m_h);
+		int windowWidth = m_parent->GetRootPanel()->m_rectInt_abs.m_w;
+		int windowHeight = m_parent->GetRootPanel()->m_rectInt_abs.m_h;
+		dxf = dx*static_cast<float>(g_xDimVisible) / min(m_parent->m_rectFloat_abs.m_w, g_xDimVisible*g_initialScaleUp/windowWidth*2.f);
+		dyf = dy*static_cast<float>(g_yDimVisible) / min(m_parent->m_rectFloat_abs.m_h, g_yDimVisible*g_initialScaleUp/windowHeight*2.f);
 		obst.x += dxf;
 		obst.y += dyf;
 		m_obstructions[m_currentObstId] = obst;
