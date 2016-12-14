@@ -1,5 +1,11 @@
 #include "Mouse.h"
 
+extern float rotate_x;
+extern float rotate_z;
+extern float translate_x;
+extern float translate_y;
+extern int g_TwoDView;
+
 void Mouse::SetBasePanel(Panel* basePanel)
 {
 	m_basePanel = basePanel;
@@ -49,6 +55,16 @@ void Mouse::Move(int x, int y)
 		if (m_lmb == 1)
 		{
 			m_currentlySelectedPanel->Drag(dx, dy);
+		}
+		else if (m_mmb == 1)
+		{
+			rotate_x += dy*45.f;
+			rotate_z += dx*45.f;
+		}
+		else if (m_rmb == 1)
+		{
+			translate_x += dx;
+			translate_y += dy;
 		}
 	}
 	else

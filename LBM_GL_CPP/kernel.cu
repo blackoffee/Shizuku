@@ -116,6 +116,16 @@ __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisi
 	ycoord -= 1.0;// ydim / maxDim;
 }
 
+__device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
+{
+	xcoord = threadIdx.x + blockDim.x*blockIdx.x;
+	ycoord = threadIdx.y + blockDim.y*blockIdx.y;
+	xcoord /= xDimVisible *0.5f;
+	ycoord /= xDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
+	xcoord -= 1.0;// xdim / maxDim;
+	ycoord -= 1.0;// ydim / maxDim;
+}
+
 // Initialize domain using constant velocity
 __global__ void initialize_single(float4* pos, float *f, int *Im, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
@@ -139,7 +149,7 @@ __global__ void initialize_single(float4* pos, float *f, int *Im, int xDim, int 
 	f[j + 8 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
 
 	float xcoord, ycoord, zcoord;
-	ChangeCoordinatesToNDC(xcoord, ycoord, xDimVisible, yDimVisible);
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 	zcoord = 0.f;
 	float R(255.f), G(255.f), B(255.f), A(255.f);
 	char b[] = { R, G, B, A };
@@ -360,11 +370,11 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	//xcoord -= 1.0;// xdim / maxDim;
 	//ycoord -= 1.0;// ydim / maxDim;
 
-	ChangeCoordinatesToNDC(xcoord, ycoord, xDimVisible, yDimVisible);
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
 	if (im == 1) rho = 0.0;
 	//zcoord = f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
-	zcoord = 0.f;//(rho - 1.0f)*15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
+	zcoord = (rho - 1.0f);// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
 
 	//Color c = Color::FromArgb(1);
 	//pos[threadIdx.x+threadIdx.y*blockDim.x] = make_float4(x,y,z,1.0f);
@@ -422,11 +432,16 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 //		else
 //		{
 			R = 204; G = 204; B = 204;
+			zcoord = 0.15f;
 //		}
 	}
 	//set walls drawn by user to be light gray
 	else if (im == 10){
 		R = 200; G = 200; B = 200;
+	}
+	else if (im != 0)
+	{
+		zcoord = -1.f;
 	}
 	//char b[] = {(char)R, (char)G, (char)B, (char)A};
 	char b[] = { R, G, B, A };

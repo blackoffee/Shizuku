@@ -45,7 +45,11 @@ ContourVariable g_contourVar;
 
 //view transformations
 float rotate_x = 45.f;
-float translate_z = 1.f;
+float rotate_z = 0.f;
+float translate_x = 0.f;
+float translate_y = 0.5f;
+float translate_z = -1.f;
+int g_TwoDView = 1;
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -54,6 +58,7 @@ Mouse theMouse;
 
 ButtonGroup contourButtons;
 ButtonGroup shapeButtons;
+ButtonGroup viewButtons;
 
 Obstruction::Shape g_currentShape=Obstruction::CIRCLE;
 float g_currentSize = 5.f;
@@ -78,6 +83,7 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 void SetUpButtons();
 void VelMagButtonCallBack();
 void SquareButtonCallBack();
+void TwoDButtonCallBack();
 void Resize(int w, int h);
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
@@ -115,6 +121,8 @@ void SetUpWindow()
 	outputsPanel->CreateButton(RectFloat(-0.9f, -1.f  +0.04f, 0.85f, 0.4f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
 	outputsPanel->CreateButton(RectFloat(0.05f, -0.2f +0.12f, 0.85f, 0.4f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
 	outputsPanel->CreateButton(RectFloat(0.05f, -0.6f +0.08f, 0.85f, 0.4f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(0.05f, -1.f  +0.04f, 0.4f, 0.4f), Panel::DEF_REL, "3D", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(0.50f, -1.f  +0.04f, 0.4f, 0.4f), Panel::DEF_REL, "2D", Color(Color::GRAY));
 
 	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh), Panel::DEF_ABS, "Graphics", Color(Color::RED));
 	Window.GetPanel("Graphics")->m_draw = false;
@@ -275,6 +283,7 @@ void SetUpWindow()
 	SetUpButtons();
 	VelMagButtonCallBack(); //default is vel mag contour
 	SquareButtonCallBack(); //default is square shape
+	TwoDButtonCallBack();
 }
 
 /*----------------------------------------------------------------------------------------
@@ -356,6 +365,18 @@ void VertLineButtonCallBack()
 	g_currentShape = Obstruction::VERTICAL_LINE;
 }
 
+void ThreeDButtonCallBack()
+{
+	viewButtons.ExclusiveEnable(Window.GetButton("3D"));
+	g_TwoDView = 0;
+}
+
+void TwoDButtonCallBack()
+{
+	viewButtons.ExclusiveEnable(Window.GetButton("2D"));
+	g_TwoDView = 1;
+}
+
 void SetUpButtons()
 {
 	Window.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
@@ -397,6 +418,16 @@ void SetUpButtons()
 		Window.GetButton("Hor. Line"),
 		Window.GetButton("Vert. Line") };
 	shapeButtons = ButtonGroup(buttons2);
+
+	Window.GetButton("3D")->m_callBack = ThreeDButtonCallBack;
+	Window.GetButton("2D")->m_callBack = TwoDButtonCallBack;
+	
+	std::vector<Button*> buttons3 = {
+		Window.GetButton("2D"),
+		Window.GetButton("3D")
+	};
+	viewButtons = ButtonGroup(buttons3);
+
 }
 
 void DrawShapePreview()
@@ -690,13 +721,11 @@ void MouseMotion(int x, int y)
 void MouseWheel(int button, int dir, int x, int y)
 {
 	if (dir > 0){
-		translate_z += 1.f;
-		g_xDim += 64;
+		translate_z -= 0.3f;
 	}
 	else
 	{
-		translate_z -= 1.f;
-		g_xDim -= 64;
+		translate_z += 0.3f;
 	}
 	UpdateDeviceImage();
 	
@@ -790,7 +819,6 @@ void Draw()
 	 */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(-1,1,-1,1,-100,20);
 
 	int graphicsViewWidth = winw - g_leftPanelWidth - g_drawingPanelWidth;
 	int graphicsViewHeight = winh;
@@ -798,11 +826,29 @@ void Draw()
 	float yTranslation = -((static_cast<float>(winh)-g_yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
 	glTranslatef(xTranslation,yTranslation,0.f);
 	glScalef((static_cast<float>(g_xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(g_yDimVisible*g_initialScaleUp) / winh), 1.f);
+
+	if (g_TwoDView == 1)
+	{
+		glOrtho(-1,1,-1,static_cast<float>(g_yDimVisible)/g_xDimVisible*2.f-1.f,-100,20);
+	}
+	else
+	{
+		gluPerspective(45.0, static_cast<float>(g_xDimVisible) / g_yDimVisible, 0.1, 10.0);
+		glTranslatef(translate_x, translate_y, -2+translate_z);
+		glRotatef(-rotate_x,1,0,0);
+		glRotatef(rotate_z,0,0,1);
+	}
+
+
+
+
 	//glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
 	//glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth-g_drawingPanelWidth)),0.f,0.f);
 	//glTranslatef(-(1.f - (g_xDim+g_leftPanelWidth) / (static_cast<float>(g_xDim) )),0.f,0.f);
+
+	//glScalef((static_cast<float>(g_xDimVisible) / g_yDimVisible)*cos(rotate_z*PI/180.f), (static_cast<float>(g_xDimVisible) / g_yDimVisible)*sin(rotate_z*PI/180.f), 1.f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

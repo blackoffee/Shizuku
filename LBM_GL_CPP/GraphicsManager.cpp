@@ -8,6 +8,7 @@ extern int g_xDim, g_yDim, g_xDimVisible, g_yDimVisible;
 extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
 extern float g_initialScaleUp;
+extern int g_TwoDView;
 
 GraphicsManager::GraphicsManager()
 {
@@ -45,26 +46,29 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
 
 void GraphicsManager::Click(Mouse mouse)
 {
-	if (mouse.m_rmb == 1)
+	if (g_TwoDView == 1)
 	{
-		AddObstruction(mouse);
-	}
-	else if (mouse.m_mmb == 1)
-	{
-		if (IsInClosestObstruction(mouse))
+		if (mouse.m_rmb == 1)
 		{
-			RemoveObstruction(mouse);
+			AddObstruction(mouse);
 		}
-	}
-	else if (mouse.m_lmb == 1)
-	{
-		if (IsInClosestObstruction(mouse))
+		else if (mouse.m_mmb == 1)
 		{
-			m_currentObstId = FindClosestObstructionId(mouse);
+			if (IsInClosestObstruction(mouse))
+			{
+				RemoveObstruction(mouse);
+			}
 		}
-		else
+		else if (mouse.m_lmb == 1)
 		{
-			m_currentObstId = -1;
+			if (IsInClosestObstruction(mouse))
+			{
+				m_currentObstId = FindClosestObstructionId(mouse);
+			}
+			else
+			{
+				m_currentObstId = -1;
+			}
 		}
 	}
 }
