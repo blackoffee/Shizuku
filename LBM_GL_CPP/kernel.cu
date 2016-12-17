@@ -411,16 +411,73 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	}
 
 	////Blue to white color scheme
-	signed char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
-	signed char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
-	signed char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	signed char A = 255;
+	unsigned char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
+	unsigned char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
+	unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
+	unsigned char A = 255;
 
 	////Rainbow color scheme
 	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
 	//signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
 	//signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
 	//signed char A = 255;
+
+	////normal vector
+	float n_x = 0.f;
+	float n_y = 0.f;
+	float n_z = 1.f;
+	float slope_x = 0.f;
+	float slope_y = 0.f;
+	float cellSize = 2.f / xDimVisible;
+	if (x == 0)
+	{
+		n_x = -1.f;
+		n_y = 0.f;
+		n_z = 0.f;
+	}
+	else if (y == 0)
+	{
+		n_x = 0.f;
+		n_y = -1.f;
+		n_z = 0.f;
+	}
+	else if (x >= xDimVisible - 1)
+	{
+		n_x = 1.f;
+		n_y = 0.f;
+		n_z = 0.f;
+	}
+	else if (y >= yDimVisible - 1)
+	{
+		n_x = 0.f;
+		n_y = 1.f;
+		n_z = 0.f;
+	}
+	if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	{
+		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
+		slope_y = (pos[(x) + (y+1)*MAX_XDIM].z - pos[(x) + (y-1)*MAX_XDIM].z) / (2.f*cellSize);
+
+		n_x = -slope_x*2.f*cellSize*2.f*cellSize;
+		n_y = -slope_y*2.f*cellSize*2.f*cellSize;
+		n_z = 2.f*cellSize*2.f*cellSize;
+	}
+	float n_mag = sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
+	n_x = n_x / n_mag;
+	n_y = n_y / n_mag;
+	n_z = n_z / n_mag;
+
+	float l_x =  0.577367;
+	float l_y =  0.577367;
+	float l_z = -0.577367f;
+
+	float cosTheta = -(n_x*l_x + n_y*l_y + n_z*l_z);
+	cosTheta = cosTheta < 0 ? 0 : cosTheta;
+
+	float light_R = 1.f;
+	float light_G = 1.f;
+	float light_B = 1.f;
+	
 
 	//set walls to be white
 	if (im == 1){
@@ -442,9 +499,17 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	else if (im != 0)
 	{
 		zcoord = -1.f;
+		R = 120; G = 120; B = 255;
 	}
+	else
+	{
+		R = 120; G = 120; B = 255;
+	}
+
+	
 	//char b[] = {(char)R, (char)G, (char)B, (char)A};
-	char b[] = { R, G, B, A };
+	//char b[] = { R*cosTheta, G*cosTheta, B*cosTheta, A };
+	char b[] = { R*light_R*cosTheta, G*light_G*cosTheta, B*light_B*cosTheta, A };
 	//char b[] = {'100','1','1','100'};
 	std::memcpy(&color, &b, sizeof(color));
 
