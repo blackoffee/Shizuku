@@ -106,6 +106,24 @@ inline __device__ int f_mem(int f_num, int x, int y)
 	return (x + y*MAX_XDIM) + f_num*MAX_XDIM*MAX_YDIM;
 }
 
+__device__ float DotProduct(float3 u, float3 v)
+{
+	return u.x*v.x + u.y*v.y + u.z*v.z;
+}
+
+__device__ float3 CrossProduct(float3 u, float3 v)
+{
+	return make_float3(u.y*v.z-u.z*v.y, -(u.x*v.z-u.z*v.x), u.x*v.y-u.y*v.x);
+}
+
+__device__ void Normalize(float3 &u)
+{
+	float mag = sqrt(DotProduct(u, u));
+	u.x /= mag;
+	u.y /= mag;
+	u.z /= mag;
+}
+
 __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
 {
 	xcoord = threadIdx.x + blockDim.x*blockIdx.x;
@@ -487,56 +505,37 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 	B = color[2];
 	A = color[3];
 
-	////normal vector
-	float n_x = 0.f;
-	float n_y = 0.f;
-	float n_z = 1.f;
+	float3 n = { 0, 0, 0 };
 	float slope_x = 0.f;
 	float slope_y = 0.f;
 	float cellSize = 2.f / xDimVisible;
 	if (x == 0)
 	{
-		n_x = -1.f;
-		n_y = 0.f;
-		n_z = 0.f;
+		n.x = -1.f;
 	}
 	else if (y == 0)
 	{
-		n_x = 0.f;
-		n_y = -1.f;
-		n_z = 0.f;
+		n.y = -1.f;
 	}
 	else if (x >= xDimVisible - 1)
 	{
-		n_x = 1.f;
-		n_y = 0.f;
-		n_z = 0.f;
+		n.x = 1.f;
 	}
 	else if (y >= yDimVisible - 1)
 	{
-		n_x = 0.f;
-		n_y = 1.f;
-		n_z = 0.f;
+		n.y = 1.f;
 	}
-	if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
 	{
 		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
-		slope_y = (pos[(x) + (y+1)*MAX_XDIM].z - pos[(x) + (y-1)*MAX_XDIM].z) / (2.f*cellSize);
-
-		n_x = -slope_x*2.f*cellSize*2.f*cellSize;
-		n_y = -slope_y*2.f*cellSize*2.f*cellSize;
-		n_z = 2.f*cellSize*2.f*cellSize;
+		slope_y = (pos[(x)+(y + 1)*MAX_XDIM].z - pos[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+		n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+		n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+		n.z = 2.f*cellSize*2.f*cellSize;
 	}
-	float n_mag = sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
-	n_x = n_x / n_mag;
-	n_y = n_y / n_mag;
-	n_z = n_z / n_mag;
-
-	float l_x =  0.577367;
-	float l_y =  0.577367;
-	float l_z = -0.577367f;
-
-	float cosTheta = -(n_x*l_x + n_y*l_y + n_z*l_z);
+	Normalize(n);
+	float3 l = { 0.577367, 0.577367, -0.577367 };
+	float cosTheta = -DotProduct(n,l);
 	cosTheta = cosTheta < 0 ? 0 : cosTheta;
 
 	float light_R = 1.f;
