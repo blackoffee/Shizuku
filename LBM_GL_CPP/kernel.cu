@@ -422,6 +422,71 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	//signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
 	//signed char A = 255;
 
+	//set walls to be white
+	if (x >= xDimVisible)
+	{
+		zcoord = -1.f;
+		R = 0; G = 0; B = 0;
+	}
+	else if (im == 1){
+		R = 204; G = 204; B = 204;
+		zcoord = 0.15f;
+	}
+	//set walls drawn by user to be light gray
+	else if (im == 10){
+		R = 200; G = 200; B = 200;
+	}
+	else if (im != 0)
+	{
+		zcoord = -1.f;
+		R = 120; G = 120; B = 255;
+	}
+	else
+	{
+		R = 120; G = 120; B = 255;
+	}	
+
+	
+	//char b[] = {(char)R, (char)G, (char)B, (char)A};
+	//char b[] = { R*cosTheta, G*cosTheta, B*cosTheta, A };
+	char b[] = { R, G, B, A };
+	//char b[] = {'100','1','1','100'};
+	std::memcpy(&color, &b, sizeof(color));
+
+	//vbo aray to be displayed
+	pos[index] = make_float4(xcoord, ycoord, zcoord, color);
+	//vel[index] = make_float4(xcoord, ycoord, u, 1.0f);
+
+}
+
+__global__ void CleanUpVBO(float4* pos, int xDim, int yDim)
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+	if (x >= xDim || y >= yDim)
+	{
+		char b[] = { 0,0,0,255 };
+		//char b[] = {'100','1','1','100'};
+		float color;
+		std::memcpy(&color, &b, sizeof(color));
+		pos[j] = make_float4(pos[j].x, pos[j].y, -1.f, color);
+	}
+}
+
+__global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible, int yDimVisible)
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+	unsigned char color[4];
+	std::memcpy(color, &(pos[j].w), sizeof(color));
+	float R, G, B, A;
+	R = color[0];
+	G = color[1];
+	B = color[2];
+	A = color[3];
+
 	////normal vector
 	float n_x = 0.f;
 	float n_y = 0.f;
@@ -478,46 +543,14 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	float light_G = 1.f;
 	float light_B = 1.f;
 	
+	color[0] = R*light_R*cosTheta;
+	color[1] = G*light_G*cosTheta;
+	color[2] = B*light_B*cosTheta;
+	color[3] = A;
 
-	//set walls to be white
-	if (im == 1){
-		//R = 255; G = 255; B = 255;
-//		if (contourVar == 4)
-//		{
-//			R = 80; G = 80; B = 80;
-//		}
-//		else
-//		{
-			R = 204; G = 204; B = 204;
-			zcoord = 0.15f;
-//		}
-	}
-	//set walls drawn by user to be light gray
-	else if (im == 10){
-		R = 200; G = 200; B = 200;
-	}
-	else if (im != 0)
-	{
-		zcoord = -1.f;
-		R = 120; G = 120; B = 255;
-	}
-	else
-	{
-		R = 120; G = 120; B = 255;
-	}
-
-	
-	//char b[] = {(char)R, (char)G, (char)B, (char)A};
-	//char b[] = { R*cosTheta, G*cosTheta, B*cosTheta, A };
-	char b[] = { R*light_R*cosTheta, G*light_G*cosTheta, B*light_B*cosTheta, A };
-	//char b[] = {'100','1','1','100'};
-	std::memcpy(&color, &b, sizeof(color));
-
-	//vbo aray to be displayed
-	pos[index] = make_float4(xcoord, ycoord, zcoord, color);
-	//vel[index] = make_float4(xcoord, ycoord, u, 1.0f);
-
+	std::memcpy(&(pos[j].w), color, sizeof(color));
 }
+
 
 /*----------------------------------------------------------------------------------------
  * End of device functions
@@ -547,6 +580,20 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst)
 {
 	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape);
+}
+
+void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible)
+{
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(MAX_XDIM / BLOCKSIZEX, MAX_YDIM / BLOCKSIZEY);
+	CleanUpVBO << <grid, threads>> >(vis, xDimVisible, yDimVisible);
+}
+
+void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible)
+{
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	Lighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible);
 }
 
 int runCUDA()

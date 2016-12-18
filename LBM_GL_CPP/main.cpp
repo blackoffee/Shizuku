@@ -684,6 +684,8 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 
 	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
 
+	DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible);
+	//CleanUpDeviceVBO(dptr, g_xDim, g_yDim);
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 }
@@ -772,6 +774,14 @@ void Resize(int w, int h)
 	glViewport(0, 0, winw, winh);
 
 	UpdateDeviceImage();
+
+
+	float4 *dptr;
+	cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+	size_t num_bytes,num_bytes2;
+	cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+	CleanUpDeviceVBO(dptr, g_xDim, g_yDim);
+	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 }
 
 

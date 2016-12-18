@@ -19,3 +19,6 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 //extern "C"
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst);
 
+void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible);
+
+void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible);
