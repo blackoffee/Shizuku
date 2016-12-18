@@ -106,6 +106,31 @@ inline __device__ int f_mem(int f_num, int x, int y)
 	return (x + y*MAX_XDIM) + f_num*MAX_XDIM*MAX_YDIM;
 }
 
+__device__ float3 operator+(const float3 &u, const float3 &v)
+{
+	return make_float3(u.x + v.x, u.y + v.y, u.z + v.z);
+}
+
+__device__ float3 operator-(const float3 &u, const float3 &v)
+{
+	return make_float3(u.x - v.x, u.y - v.y, u.z - v.z);
+}
+
+__device__ float3 operator*(const float3 &u, const float3 &v)
+{
+	return make_float3(u.x * v.x, u.y * v.y, u.z * v.z);
+}
+
+__device__ float3 operator/(const float3 &u, const float3 &v)
+{
+	return make_float3(u.x / v.x, u.y / v.y, u.z / v.z);
+}
+
+__device__ float3 operator*(const float a, const float3 &u)
+{
+	return make_float3(a*u.x, a*u.y, a*u.z);
+}
+
 __device__ float DotProduct(float3 u, float3 v)
 {
 	return u.x*v.x + u.y*v.y + u.z*v.z;
@@ -122,6 +147,11 @@ __device__ void Normalize(float3 &u)
 	u.x /= mag;
 	u.y /= mag;
 	u.z /= mag;
+}
+
+__device__ float Distance(float3 u, float3 v)
+{
+	float mag = sqrt(DotProduct((u-v), (u-v)));
 }
 
 __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
@@ -440,13 +470,12 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	//signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
 	//signed char A = 255;
 
-	//set walls to be white
-	if (x >= xDimVisible)
-	{
-		zcoord = -1.f;
-		R = 0; G = 0; B = 0;
-	}
-	else if (im == 1){
+//	if (x >= (xDimVisible))
+//	{
+//		zcoord = -1.f;
+//		R = 0; G = 0; B = 0;
+//	}
+	if (im == 1){
 		R = 204; G = 204; B = 204;
 		zcoord = 0.15f;
 	}
@@ -454,14 +483,14 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	else if (im == 10){
 		R = 200; G = 200; B = 200;
 	}
-	else if (im != 0)
+	else if (im != 0 || x == xDimVisible-1)
 	{
 		zcoord = -1.f;
-		R = 120; G = 120; B = 255;
+		R = 50; G = 120; B = 255;
 	}
 	else
 	{
-		R = 120; G = 120; B = 255;
+		R = 50; G = 120; B = 255;
 	}	
 
 	
@@ -477,15 +506,14 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 
 }
 
-__global__ void CleanUpVBO(float4* pos, int xDim, int yDim)
+__global__ void CleanUpVBO(float4* pos, int xDimVisible, int yDimVisible)
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
 	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-	if (x >= xDim || y >= yDim)
+	if (x >= xDimVisible || y >= yDimVisible)
 	{
-		char b[] = { 0,0,0,255 };
-		//char b[] = {'100','1','1','100'};
+		unsigned char b[] = { 0,0,0,255 };
 		float color;
 		std::memcpy(&color, &b, sizeof(color));
 		pos[j] = make_float4(pos[j].x, pos[j].y, -1.f, color);
@@ -534,17 +562,38 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 		n.z = 2.f*cellSize*2.f*cellSize;
 	}
 	Normalize(n);
-	float3 l = { 0.577367, 0.577367, -0.577367 };
-	float cosTheta = -DotProduct(n,l);
-	cosTheta = cosTheta < 0 ? 0 : cosTheta;
+	float3 elementPosition = {pos[j].x,pos[j].y,pos[j].z };
+	float3 diffuseLightDirection1 = {0.577367, 0.577367, -0.577367 };
+	float3 diffuseLightDirection2 = { -0.577367, 0.577367, -0.577367 };
+	float3 cameraPosition = { -1.5, -1.5, 1.5};
+	float3 eyeDirection = elementPosition - cameraPosition;
+	float3 diffuseLightColor1 = {0.5f, 0.5f, 0.5f};
+	float3 diffuseLightColor2 = {0.5f, 0.5f, 0.5f};
+	float3 specularLightColor1 = {0.9f, 0.9f, 0.9f};
 
-	float light_R = 1.f;
-	float light_G = 1.f;
-	float light_B = 1.f;
+	float cosTheta1 = -DotProduct(n,diffuseLightDirection1);
+	cosTheta1 = cosTheta1 < 0 ? 0 : cosTheta1;
+	float cosTheta2 = -DotProduct(n, diffuseLightDirection2);
+	cosTheta2 = cosTheta2 < 0 ? 0 : cosTheta2;
+
+	float3 specularLightPosition1 = {-1.5f, -1.5f, 1.5f};
+	float3 specularLight1 = elementPosition - specularLightPosition1;
+	float3 specularRefection1 = specularLight1 - 2.f*(DotProduct(specularLight1, n)*n);
+	Normalize(specularRefection1);
+	Normalize(eyeDirection);
+	float cosAlpha = -DotProduct(eyeDirection, specularRefection1);
+	cosAlpha = cosAlpha < 0 ? 0 : cosAlpha;
+	cosAlpha = pow(cosAlpha, 5.f);
+
+	float lightAmbient = 0.1f;
 	
-	color[0] = R*light_R*cosTheta;
-	color[1] = G*light_G*cosTheta;
-	color[2] = B*light_B*cosTheta;
+	float3 diffuse1  = cosTheta1*diffuseLightColor1;
+	float3 diffuse2  = cosTheta2*diffuseLightColor2;
+	float3 specular1 = cosAlpha*specularLightColor1;
+
+	color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));// R*light_R*cosTheta;
+	color[1] = color[1]*dmin(1.f,(diffuse1.y+diffuse2.y+specular1.y+lightAmbient));//G*light_G*cosTheta;
+	color[2] = color[2]*dmin(1.f,(diffuse1.z+diffuse2.z+specular1.z+lightAmbient));//B*light_B*cosTheta;
 	color[3] = A;
 
 	std::memcpy(&(pos[j].w), color, sizeof(color));
