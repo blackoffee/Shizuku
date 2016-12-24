@@ -4,6 +4,7 @@
 
 extern int g_xDim;
 extern int g_yDim;
+extern int g_paused;
 
 //float uMax = 0.06f;
 //float omega = 1.9f;
@@ -205,7 +206,6 @@ __global__ void initialize_single(float4* pos, float *f, int *Im, int xDim, int 
 	std::memcpy(&color, &b, sizeof(color));
 	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
-
 
 // rho=1.0 BC for east side
 __device__ void NeumannEast(float &f0, float &f1, float &f2,
@@ -462,7 +462,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	unsigned char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
 	unsigned char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
 	unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	unsigned char A = 255;
+	unsigned char A = 175;// 255;
 
 	////Rainbow color scheme
 	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
@@ -520,7 +520,7 @@ __global__ void CleanUpVBO(float4* pos, int xDimVisible, int yDimVisible)
 	}
 }
 
-__global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible, int yDimVisible)
+__global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible, int yDimVisible, float3 cameraPosition)
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -565,7 +565,7 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 	float3 elementPosition = {pos[j].x,pos[j].y,pos[j].z };
 	float3 diffuseLightDirection1 = {0.577367, 0.577367, -0.577367 };
 	float3 diffuseLightDirection2 = { -0.577367, 0.577367, -0.577367 };
-	float3 cameraPosition = { -1.5, -1.5, 1.5};
+	//float3 cameraPosition = { -1.5, -1.5, 1.5};
 	float3 eyeDirection = elementPosition - cameraPosition;
 	float3 diffuseLightColor1 = {0.5f, 0.5f, 0.5f};
 	float3 diffuseLightColor2 = {0.5f, 0.5f, 0.5f};
@@ -585,20 +585,37 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 	cosAlpha = cosAlpha < 0 ? 0 : cosAlpha;
 	cosAlpha = pow(cosAlpha, 5.f);
 
-	float lightAmbient = 0.1f;
+	float lightAmbient = 0.3f;
 	
-	float3 diffuse1  = cosTheta1*diffuseLightColor1;
-	float3 diffuse2  = cosTheta2*diffuseLightColor2;
+	float3 diffuse1  = 0.f*cosTheta1*diffuseLightColor1;
+	float3 diffuse2  = 0.f*cosTheta2*diffuseLightColor2;
 	float3 specular1 = cosAlpha*specularLightColor1;
 
-	color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));// R*light_R*cosTheta;
-	color[1] = color[1]*dmin(1.f,(diffuse1.y+diffuse2.y+specular1.y+lightAmbient));//G*light_G*cosTheta;
-	color[2] = color[2]*dmin(1.f,(diffuse1.z+diffuse2.z+specular1.z+lightAmbient));//B*light_B*cosTheta;
+	color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));
+	color[1] = color[1]*dmin(1.f,(diffuse1.y+diffuse2.y+specular1.y+lightAmbient));
+	color[2] = color[2]*dmin(1.f,(diffuse1.z+diffuse2.z+specular1.z+lightAmbient));
 	color[3] = A;
 
 	std::memcpy(&(pos[j].w), color, sizeof(color));
 }
 
+
+
+__global__ void initialize_Floor(float4* pos, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+	float xcoord, ycoord, zcoord;
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
+	zcoord = 1.f;
+	unsigned char R(255), G(255), B(255), A(255);
+	char b[] = { R, G, B, A };
+	float color;
+	std::memcpy(&color, &b, sizeof(color));
+	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
+}
 
 /*----------------------------------------------------------------------------------------
  * End of device functions
@@ -621,7 +638,10 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 	for (int i = 0; i < tStep; i++)
 	{
 		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
-		mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
+		if (g_paused == 0)
+		{
+			mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
+		}
 	}
 }
 
@@ -637,12 +657,21 @@ void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible)
 	CleanUpVBO << <grid, threads>> >(vis, xDimVisible, yDimVisible);
 }
 
-void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible)
+void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible, float3 cameraPosition)
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	Lighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible);
+	Lighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible, cameraPosition);
 }
+
+void InitializeFloor(float4* vis, int xDim, int yDim, int xDimVisible, int yDimVisible)
+{
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	initialize_Floor << <grid, threads >> >(vis, xDim, yDim, xDimVisible, yDimVisible);
+}
+
+
 
 int runCUDA()
 {

@@ -11,12 +11,15 @@
 #include <ostream>
 #include <fstream>
 #include <time.h>
+#include <algorithm>
+
+#include <glm/glm.hpp>
 
 #include "kernel.h"
 #include "Mouse.h"
 #include "Panel.h"
 #include "common.h"
-
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 int winw, winh;
 const int g_leftPanelWidth(350);
@@ -50,6 +53,7 @@ float translate_x = 0.f;
 float translate_y = 0.5f;
 float translate_z = -1.f;
 int g_TwoDView = 1;
+int g_paused = 0;
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -65,7 +69,10 @@ float g_currentSize = 5.f;
 
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
+GLuint g_vboFloor;
+GLuint g_elementArrayIndexFloorBuffer;
 cudaGraphicsResource *g_cudaSolutionField;
+cudaGraphicsResource *g_cudaFloor;
 
 int* g_elementArrayIndices;
 
@@ -99,7 +106,7 @@ void Init()
 void SetUpWindow()
 {
 	winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
-	winh = max(g_yDim*g_initialScaleUp,g_leftPanelHeight+100);
+	winh = std::max(g_yDim*g_initialScaleUp,static_cast<float>(g_leftPanelHeight+100));
 	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
 
 	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
@@ -518,44 +525,78 @@ void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res)
 }
 
 
-void GenerateIndexList(){
+void GenerateIndexList(GLuint &arrayIndexBuffer){
 
-	g_elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4];
+	int* elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4];
 	for (int j = 0; j < MAX_YDIM-1; j++){
 		for (int i = 0; i < MAX_XDIM-1; i++){
 			//going clockwise, since y orientation will be flipped when rendered
-			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
-			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
-			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
-			g_elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
 		}
 	}
 
-	glGenBuffers(1, &g_elementArrayIndexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, g_elementArrayIndices, GL_DYNAMIC_DRAW);
+	glGenBuffers(1, &arrayIndexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, elementArrayIndices, GL_DYNAMIC_DRAW);
+	free(elementArrayIndices);
 }
 
-void CleanUpIndexList(){
-	free(g_elementArrayIndices);
+void GenerateIndexList2(GLuint &arrayIndexBuffer){
+
+	int* elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 * 2];
+	for (int j = 0; j < MAX_YDIM-1; j++){
+		for (int i = 0; i < MAX_XDIM-1; i++){
+			//going clockwise, since y orientation will be flipped when rendered
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
+		}
+	}
+	for (int j = 0; j < MAX_YDIM-1; j++){
+		for (int i = 0; i < MAX_XDIM-1; i++){
+			//going clockwise, since y orientation will be flipped when rendered
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 0] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i)+(j)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 1] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i + 1) + (j)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 2] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i+1)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 3] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i)+(j + 1)*MAX_XDIM;
+		}
+	}
+
+
+	glGenBuffers(1, &arrayIndexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4*2, elementArrayIndices, GL_DYNAMIC_DRAW);
+	free(elementArrayIndices);
+}
+
+void CleanUpIndexList(GLuint &arrayIndexBuffer){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &g_elementArrayIndexBuffer);
+	glDeleteBuffers(1, &arrayIndexBuffer);
 }
 
 
 void SetUpGLInterop()
 {
 	cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-	GenerateIndexList();
+	GenerateIndexList2(g_elementArrayIndexBuffer);
+	//GenerateIndexList(g_elementArrayIndexFloorBuffer);
 	unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+	unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
 	//unsigned int solutionMemorySize = g_xDim*g_yDim * 4 * sizeof(float);
-	CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize, cudaGraphicsMapFlagsWriteDiscard);
+	CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize, cudaGraphicsMapFlagsWriteDiscard);
+	//CreateVBO(&g_vboFloor, &g_cudaFloor, floorSize, cudaGraphicsMapFlagsWriteDiscard);
 }
 
 void CleanUpGLInterop()
 {
-	CleanUpIndexList();
+	CleanUpIndexList(g_elementArrayIndexBuffer);
+	//CleanUpIndexList(g_elementArrayIndexFloorBuffer);
 	DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
+	//DeleteVBO(&g_vboFloor, g_cudaFloor);
 }
 
 
@@ -667,9 +708,20 @@ void SetUpCUDA()
 
 	InitializeDomain(dptr, g_fA_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
 	InitializeDomain(dptr, g_fB_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
+
+	InitializeFloor(dptr, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+
+	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
+
+	//float4 *dptr2;
+	//cudaGraphicsMapResources(1, &g_cudaFloor, 0);
+	//cudaGraphicsResourceGetMappedPointer((void **)&dptr2, &num_bytes, g_cudaFloor);
+
+
+	//cudaGraphicsUnmapResources(1, &g_cudaFloor, 0);
 }
 
-void RunCuda(struct cudaGraphicsResource **vbo_resource)
+void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 {
 	// map OpenGL buffer object for writing from CUDA
 	float4 *dptr;
@@ -682,12 +734,25 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource)
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
+	//MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
+	//DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
+	//CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
 
-	DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible);
-	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
+	InitializeFloor(dptr, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
+
+
+
+	//float4 *dptr2;
+	//cudaGraphicsMapResources(1, &g_cudaFloor, 0);
+	//cudaGraphicsResourceGetMappedPointer((void **)&dptr2, &num_bytes, g_cudaFloor);
+
+	//InitializeFloor(dptr2, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+
+	//cudaGraphicsUnmapResources(1, &g_cudaFloor, 0);
+
 }
 
 
@@ -733,21 +798,31 @@ void MouseWheel(int button, int dir, int x, int y)
 	
 }
 
+void Keyboard(unsigned char key, int /*x*/, int /*y*/)
+{
+	switch (key)
+	{
+	case (' ') :
+		g_paused = (g_paused + 1) % 2;
+		break;
+	}
+}
+
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp)
 {
 	float aspectRatio = static_cast<float>(xDim) / yDim;
 	float leftPanelW = static_cast<float>(leftPanelWidth);
 	heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW+scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
-	heightOut = max(heightOut, leftPanelHeight);
+	heightOut = std::max(heightOut, leftPanelHeight);
 	widthOut = heightOut*aspectRatio+leftPanelW;
 }
 
 void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp)
 {
 
-	g_xDim = min(max(BLOCKSIZEX, ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX),MAX_XDIM);
-	g_yDim = min(max(1, ceil(static_cast<float>(windowHeight) / scaleUp)),MAX_YDIM);
-	g_xDimVisible = min(max(BLOCKSIZEX, ((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
+	g_xDim = std::min(std::max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
+	g_yDim = std::min(std::max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
+	g_xDimVisible = std::min(std::max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
 	g_yDimVisible = g_yDim;
 }
 
@@ -755,7 +830,7 @@ void Resize(int w, int h)
 {
 	int area = w*h;
 	//UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
-	UpdateDomainDimensionsBasedOnWindowSize(max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
+	UpdateDomainDimensionsBasedOnWindowSize(std::max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
 
 	winw = w;
 	winh = h;
@@ -810,23 +885,21 @@ void Draw()
 	g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
 	Resize(winw, winh);
 
-	RunCuda(&g_cudaSolutionField);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_LIGHTING);
-
-	/*
-	 *	Set perspective viewing transformation
-	 */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
 	int graphicsViewWidth = winw - g_leftPanelWidth - g_drawingPanelWidth;
 	int graphicsViewHeight = winh;
 	float xTranslation = -((static_cast<float>(winw)-g_xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth + g_drawingPanelWidth)) / winw*2.f;
 	float yTranslation = -((static_cast<float>(winh)-g_yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
+	float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
+
+	RunCuda(&g_cudaSolutionField, cameraPosition);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
 	glTranslatef(xTranslation,yTranslation,0.f);
 	glScalef((static_cast<float>(g_xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(g_yDimVisible*g_initialScaleUp) / winh), 1.f);
 
@@ -842,9 +915,6 @@ void Draw()
 		glRotatef(rotate_z,0,0,1);
 	}
 
-
-
-
 	//glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
 	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
@@ -853,33 +923,67 @@ void Draw()
 
 	//glScalef((static_cast<float>(g_xDimVisible) / g_yDimVisible)*cos(rotate_z*PI/180.f), (static_cast<float>(g_xDimVisible) / g_yDimVisible)*sin(rotate_z*PI/180.f), 1.f);
 
+
+
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// render from the vbo
-	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
-	glVertexPointer(3, GL_FLOAT, 16, 0);
+//	//Draw Walls
+//	float R = 1.f;
+//	float G = 1.f;
+//	float B = 1.f;
+//	float A = 1.f;
+//	float yDimInFloatCoords = static_cast<float>(g_yDimVisible-1) / (g_xDimVisible-1)*2.f-1.f;
+//	glBegin(GL_QUADS);
+//	glColor4f(R,G,B,A);
+//	glVertex3f(-1.f,  yDimInFloatCoords, 0.2f);
+//	glVertex3f( 1.f,  yDimInFloatCoords, 0.2f);
+//	glVertex3f( 1.f,  yDimInFloatCoords, -1.f);
+//	glVertex3f(-1.f,  yDimInFloatCoords, -1.f);
+//	glEnd();
+//	glBegin(GL_QUADS);
+//	glColor4f(R,G,B,A);
+//	glVertex3f( 1.f,  yDimInFloatCoords, 0.2f);
+//	glVertex3f( 1.f, -1.f, 0.2f);
+//	glVertex3f( 1.f, -1.f, -1.f);
+//	glVertex3f( 1.f,  yDimInFloatCoords, -1.f);
+//	glEnd();
 
+
+//	//Draw Floor
+//	glBindBuffer(GL_ARRAY_BUFFER, g_vboFloor);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexFloorBuffer);
+//	glVertexPointer(3, GL_FLOAT, 16, 0);
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnableClientState(GL_COLOR_ARRAY);
+//	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+//	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+//	glDisableClientState(GL_VERTEX_ARRAY);
+
+
+
+	//Draw solution field
+	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
+	glVertexPointer(3, GL_FLOAT, 16, 0);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-
-	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
-
+	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(int)*(MAX_XDIM - 1)*(MAX_YDIM - 1) * 4));
+	//glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-	/*
-	 *	Draw the 3D elements in the scene
-	 */
-	//Draw3D();
+
+
 
 	/*
 	 *	Disable depth test and lighting for 2D elements
 	 */
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -920,6 +1024,7 @@ int main(int argc,char **argv)
 	glutReshapeFunc(Resize);
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMotion);
+	glutKeyboardFunc(Keyboard);
 //	glutPassiveMotionFunc(MousePassiveMotion);
 	glutMouseWheelFunc(MouseWheel);
 	glutTimerFunc(REFRESH_DELAY, timerEvent, 0);

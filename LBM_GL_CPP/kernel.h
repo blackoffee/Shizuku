@@ -21,4 +21,6 @@ void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction
 
 void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible);
 
-void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible);
+void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible, float3 cameraPosition);
+
+void InitializeFloor(float4* vis, int xDim, int yDim, int xDimVisible, int yDimVisible);
