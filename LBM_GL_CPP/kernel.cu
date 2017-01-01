@@ -82,18 +82,34 @@ __device__ int dmax(int a)
 	if (a>-1) return a;
 	else return 0;
 }
+__device__ int dmax(int a, int b)
+{
+	if (a>b) return a;
+	else return b;
+}
 __device__ float dmin(float a, float b)
 {
 	if (a<b) return a;
 	else return b;
+}
+__device__ float dmin(float a, float b, float c, float d)
+{
+	return dmin(dmin(a, b), dmin(c, d));
 }
 __device__ float dmax(float a)
 {
 	if (a>0) return a;
 	else return 0;
 }
-
-
+__device__ float dmax(float a, float b)
+{
+	if (a>b) return a;
+	else return b;
+}
+__device__ float dmax(float a, float b, float c, float d)
+{
+	return dmax(dmax(a, b), dmax(c, d));
+}
 
 inline __device__ int f_mem(int f_num, int x, int y, size_t pitch, int yDim)
 {
@@ -112,9 +128,19 @@ __device__ float3 operator+(const float3 &u, const float3 &v)
 	return make_float3(u.x + v.x, u.y + v.y, u.z + v.z);
 }
 
+__device__ float2 operator+(const float2 &u, const float2 &v)
+{
+	return make_float2(u.x + v.x, u.y + v.y);
+}
+
 __device__ float3 operator-(const float3 &u, const float3 &v)
 {
 	return make_float3(u.x - v.x, u.y - v.y, u.z - v.z);
+}
+
+__device__ float2 operator-(const float2 &u, const float2 &v)
+{
+	return make_float2(u.x - v.x, u.y - v.y);
 }
 
 __device__ float3 operator*(const float3 &u, const float3 &v)
@@ -142,6 +168,11 @@ __device__ float3 CrossProduct(float3 u, float3 v)
 	return make_float3(u.y*v.z-u.z*v.y, -(u.x*v.z-u.z*v.x), u.x*v.y-u.y*v.x);
 }
 
+__device__ float CrossProductArea(float2 u, float2 v)
+{
+	return 0.5f*sqrt((u.x*v.y-u.y*v.x)*(u.x*v.y-u.y*v.x));
+}
+
 __device__ void Normalize(float3 &u)
 {
 	float mag = sqrt(DotProduct(u, u));
@@ -154,6 +185,29 @@ __device__ float Distance(float3 u, float3 v)
 {
 	float mag = sqrt(DotProduct((u-v), (u-v)));
 }
+
+__device__ bool IsPointsOnSameSide(float2 p1, float2 p2, float2 a, float2 b)
+{
+	float cp1 = (b - a).x*(p1 - a).y - (b - a).y*(p1 - a).x;
+	float cp2 = (b - a).x*(p2 - a).y - (b - a).y*(p2 - a).x;
+	if (cp1*cp2 >= 0)
+	{
+		return true;
+	}
+	return false;
+}
+
+__device__ bool IsPointInsideTriangle(float2 p, float2 a, float2 b, float2 c)
+{
+	if (IsPointsOnSameSide(p, a, b, c) && IsPointsOnSameSide(p, b, a, c) && IsPointsOnSameSide(p, c, a, b))
+	{
+		return true;
+	}
+	return false;
+}
+
+
+
 
 __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
 {
@@ -421,8 +475,8 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
 	if (im == 1) rho = 0.0;
-	//zcoord = f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
-	zcoord = (rho - 1.0f);// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
+	zcoord =  (rho - 1.0f) - 0.5f;// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
+	//zcoord = 0.05f*sinf(0.1f*(x)) +0.05f*sinf(0.1f*y);// (rho - 1.0f) - 0.5f;// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
 
 	//Color c = Color::FromArgb(1);
 	//pos[threadIdx.x+threadIdx.y*blockDim.x] = make_float4(x,y,z,1.0f);
@@ -462,7 +516,7 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	unsigned char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
 	unsigned char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
 	unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-	unsigned char A = 175;// 255;
+	unsigned char A = 155;// 255;
 
 	////Rainbow color scheme
 	//signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
@@ -491,7 +545,13 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 	else
 	{
 		R = 50; G = 120; B = 255;
-	}	
+	}
+
+
+	//if (x > 100 && x < 110 && y > 50 && y < 52)
+	//{
+	//	R = 255; G = 0; B = 0;
+	//}
 
 	
 	//char b[] = {(char)R, (char)G, (char)B, (char)A};
@@ -601,7 +661,7 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 
 
 
-__global__ void initialize_Floor(float4* pos, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void initialize_Floor(float4* pos, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -609,14 +669,314 @@ __global__ void initialize_Floor(float4* pos, int xDim, int yDim, int xDimVisibl
 
 	float xcoord, ycoord, zcoord;
 	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-	zcoord = 1.f;
+	zcoord = -1.f;
 	unsigned char R(255), G(255), B(255), A(255);
+
+	float3 n = { 0, 0, 1 };
+	float slope_x = 0.f;
+	float slope_y = 0.f;
+	float cellSize = 2.f / xDimVisible;
+	if (x == 0)
+	{
+	}
+	else if (y == 0)
+	{
+	}
+	else if (x >= xDimVisible - 1)
+	{
+	}
+	else if (y >= yDimVisible - 1)
+	{
+	}
+	else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	{
+		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
+		slope_y = (pos[(x)+(y + 1)*MAX_XDIM].z - pos[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+		n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+		n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+		n.z = 2.f*cellSize*2.f*cellSize;
+	}
+	Normalize(n);
+	float theta1 = acosf(n.z / sqrt(DotProduct(n, n)));
+	float theta2 = asinf(1.0 / 1.33f)*sin(theta1);
+	float dx = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*(-n.x);
+	float dy = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*(-n.y);
+
+	float attenuation = 0.1f;// (pos[(x)+(y)*MAX_XDIM].z + 1.f)*0.5f;
+
+
+
+	R = 255.f*cos(theta1)*attenuation;
+	G = 255.f*cos(theta1)*attenuation;
+	B = 255.f*cos(theta1)*attenuation;
+
+	char b[] = { R, G, B, A };
+	float color;
+	std::memcpy(&color, &b, sizeof(color));
+	int newX = x;// +dx;
+	int newY = y;// + dy;
+	if (newX > 0 && newX < xDimVisible && newY > 0 && newY < yDimVisible && false)
+	{
+		pos[newX + newY*MAX_XDIM] = make_float4(xcoord, ycoord, zcoord, color);
+	}
+	else{
+		pos[j] = make_float4(xcoord, ycoord, zcoord, color);
+	}
+}
+
+__global__ void update_Floor(float4* pos, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+	float xcoord, ycoord, zcoord;
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
+	zcoord = -1.f;
+	unsigned char R(255), G(255), B(255), A(255);
+
+	float3 n = { 0, 0, 1 };
+	float slope_x = 0.f;
+	float slope_y = 0.f;
+	float cellSize = 2.f / xDimVisible;
+	if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	{
+		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
+		slope_y = (pos[(x)+(y + 1)*MAX_XDIM].z - pos[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+		n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+		n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+		n.z = 2.f*cellSize*2.f*cellSize;
+	}
+	Normalize(n);
+	float theta1 = acosf(n.z / sqrt(DotProduct(n, n)));
+	float theta2 = asinf(1.0 / 1.3f*sin(theta1));
+	float waterDepth = 80.f;
+	float dx = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth*(-n.x)/sqrt(n.x*n.x + n.y*n.y);
+	float dy = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth*(-n.y)/sqrt(n.x*n.x+n.y*n.y);
+
+	float attenuation = 0.5f;// -0.5f*sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 0.5f) + 1.f;
+
+	R = 255.f*cos(theta1)*attenuation;
+	G = 255.f*cos(theta1)*attenuation;
+	B = 255.f*cos(theta1)*attenuation;
+
+	char b[] = { R, G, B, A };
+	float color;
+	std::memcpy(&color, &b, sizeof(color));
+	int newX = x +dx + 0.5f;
+	int newY = y + dy+0.5f;
+	if (newX > 0 && newX < xDimVisible && newY > 0 && newY < yDimVisible)
+	{
+		atomicAdd(&floor_d[newX + newY*MAX_XDIM], attenuation);
+	}
+}
+
+__device__ float2 ComputePositionOfLightOnFloor(float4* pos, float3 incidentLight, int x, int y,  int xDimVisible, int yDimVisible)
+{
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+	unsigned char R(255), G(255), B(255), A(255);
+
+	float3 n = { 0, 0, 1 };
+	float slope_x = 0.f;
+	float slope_y = 0.f;
+	float cellSize = 2.f / xDimVisible;
+	if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	{
+		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
+		slope_y = (pos[(x)+(y + 1)*MAX_XDIM].z - pos[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+		n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+		n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+		n.z = 2.f*cellSize*2.f*cellSize;
+	}
+	Normalize(n);
+
+	//float2 incidentLightCP, refractedLightCP, normalCP;
+	Normalize(incidentLight);
+	//incidentLightCP.x = sqrt(incidentLight.x*incidentLight.x + incidentLight.y*incidentLight.y);
+	//incidentLightCP.y = incidentLight.z;
+	//float incidentLightCP_mag = sqrt(incidentLightCP.x*incidentLightCP.x + incidentLightCP.y*incidentLightCP.y);
+	//incidentLightCP.x /= incidentLightCP_mag;
+	//incidentLightCP.y /= incidentLightCP_mag;
+
+	//float incidentLightAngleXY = atan2f(incidentLight.y, incidentLight.x);
+	//normalCP.x = sqrt(n.x*n.x + n.y*n.y);
+	//normalCP.y = n.z;
+
+	//float theta1 = acosf(DotProduct(n,incidentLight));  //incident light is pointing into surface. n is pointing out of surface
+	//float theta1 = acosf(n.z / sqrt(DotProduct(n, n)));
+	//float theta2 = asinf(1.0 / 1.3f*sin(theta1));
+	float waterDepth = 80.f;
+
+	//float rotAngle = theta1 - theta2;
+	//if (normalCP.x < incidentLightCP.x) rotAngle = -rotAngle;
+	//refractedLightCP.x = incidentLightCP.x*cosf(theta1 - theta2) - incidentLightCP.y*sinf(theta1-theta2);
+	//refractedLightCP.y = incidentLightCP.x*cosf(theta1 - theta2) + incidentLightCP.y*sinf(theta1-theta2);
+
+	float3 refractedLight;
+	//refractedLight.x = refractedLightCP.x*cosf(incidentLightAngleXY);
+	//refractedLight.y = refractedLightCP.x*sinf(incidentLightAngleXY);
+	//refractedLight.z = refractedLightCP.y;
+
+	//float gamma = asinf(-incidentLight.z);
+	//float alpha = gamma + theta1 - theta2;
+	//float deltaFloor;
+	//deltaFloor = (pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth / tanf(alpha);
+	//deltaFloor = (pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth*sinf(PI*0.25f - alpha) / dmax(0.01f, cosf(PI*0.25f - alpha));
+
+	//float dx = deltaFloor*(refractedLight.x) / sqrt(refractedLight.x*refractedLight.x + refractedLight.y*refractedLight.y);
+	//float dy = deltaFloor*(refractedLight.y) / sqrt(refractedLight.x*refractedLight.x + refractedLight.y*refractedLight.y);
+
+	float r = 1.0 / 1.3f;
+	float c = -(DotProduct(n, incidentLight));
+	refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
+	//if (x == 100 && y == 10) printf("light intensity: %ff\n",refractedLight.z);
+	//refractedLight = r*(CrossProduct(n,(CrossProduct(-1.f*n,incidentLight))))-1.f*sqrt(1.f-r*r*DotProduct(CrossProduct(n,incidentLight),CrossProduct(n,incidentLight)))*n;
+
+
+	float dx = -refractedLight.x*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth / refractedLight.z;
+	float dy = -refractedLight.y*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth / refractedLight.z;
+
+	//if (x > 100 && x < 110 && y > 50 && y < 52) printf("%i, %i, %f, %f\n",x,y,dx,dy);
+
+//	float dx = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth*(-n.x)/sqrt(n.x*n.x + n.y*n.y);
+//	float dy = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 0.5f)*waterDepth*(-n.y)/sqrt(n.x*n.x+n.y*n.y);
+
+	return float2{ (float)x + dx, (float)y + dy };
+}
+
+__device__ float ComputeAreaFrom4Points(float2 nw, float2 ne, float2 sw, float2 se)
+{
+	float2 vecN = ne - nw;
+	float2 vecS = se - sw;
+	float2 vecE = ne - se;
+	float2 vecW = nw - sw;
+	return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
+}
+
+__global__ void update_LightMesh(float4* pos, float2* lightMesh_d, float3 incidentLight, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+	
+	if (x < xDimVisible && y < yDimVisible)
+	{
+
+	//float3 incidentLight{ 0.f, -0.f, -1.f };
+	float2 lightPositionOnfLoor = ComputePositionOfLightOnFloor(pos, incidentLight, x, y, xDimVisible, yDimVisible);
+
+	lightMesh_d[j] = lightPositionOnfLoor;
+	}
+}
+
+__global__ void LightFloorUsingLightMesh(float* floor_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+
+	if (x < xDimVisible-2 && y < yDimVisible-2)
+	{
+		float2 nw, ne, sw, se;
+		nw = lightMesh_d[(x)+(y+1)*MAX_XDIM];
+		ne = lightMesh_d[(x+1)+(y+1)*MAX_XDIM];
+		sw = lightMesh_d[(x)+(y)*MAX_XDIM];
+		se = lightMesh_d[(x+1)+(y)*MAX_XDIM];
+		float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
+		float lightIntensity =  0.3f / areaOfLightMeshOnFloor;
+		//if (x > 100 && x < 110 && y > 50 && y < 52) lightIntensity = 0.1f;
+		//if (areaOfLightMeshOnFloor > 1.f) printf("%f, %f, %f\n",sw.x,sw.y,areaOfLightMeshOnFloor);
+		//if (x == 100 && y == 10) printf("light intensity: %ff\n",lightIntensity);
+
+//		nw.x -= 5.f;
+//		nw.y += 5.f;
+//		sw.x -= 5.f;
+//		sw.y -= 5.f;
+//		ne.x += 5.f;
+//		ne.y += 5.f;
+//		se.x += 5.f;
+//		se.y -= 5.f;
+
+//		if (x == 100)
+//		{
+//			lightIntensity = 0.1f;
+//		}
+//		else
+//		{
+//			lightIntensity = 0.f;
+//		}
+
+
+//		for (int i = dmax(1.f,dmin(nw.x, ne.x, sw.x, se.x)); i < dmin(xDimVisible-2.f,dmax(nw.x, ne.x, sw.x, se.x)+1.f); i++)
+//		{
+//			for (int j = dmax(1.f,dmin(nw.y, ne.y, sw.y, se.y)); j < dmin(yDimVisible-2.f,dmax(nw.y, ne.y, sw.y, se.y)+1.f); j++)
+//			{
+//				if (i >= 0 && i < xDimVisible && j >= 0 && j < yDimVisible)
+//				{
+//					float2 p = make_float2(i, j);
+//					if (IsPointInsideTriangle(p,nw,ne,sw) || IsPointInsideTriangle(p,ne,se,sw))
+//					{
+//						atomicAdd(&floor_d[i + j*MAX_XDIM], lightIntensity);
+//					}
+//				}
+//			}
+//		}
+		//floor_d[x + y*MAX_XDIM] = lightIntensity;
+		atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+	}
+}
+
+__global__ void light_Filter(float* floor_d, float* floorFiltered_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+	if (x> 1 && y>1 && x < xDimVisible-1 && y<yDimVisible-1)
+	{ 
+		float light = floor_d[x + y*MAX_XDIM];
+		//float light = floor_d[x + y*MAX_XDIM] +floor_d[x + 1 + (y)*MAX_XDIM] + floor_d[x - 1 + (y)*MAX_XDIM] +
+		//	floor_d[x + (y + 1)*MAX_XDIM] + floor_d[x + 1 + (y + 1)*MAX_XDIM] + floor_d[x - 1 + (y + 1)*MAX_XDIM] +
+		//	floor_d[x + (y - 1)*MAX_XDIM] + floor_d[x + 1 + (y - 1)*MAX_XDIM] + floor_d[x - 1 + (y - 1)*MAX_XDIM];
+		floorFiltered_d[j] = light / 9.f;
+
+		//if (x == 100 && y == 10) printf("%f\n",light);
+	}
+	
+
+}
+
+__global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+	float xcoord, ycoord, zcoord;
+
+	xcoord = lightMesh_d[x + y*MAX_XDIM].x;
+	ycoord = lightMesh_d[x + y*MAX_XDIM].y;
+
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
+	zcoord = -1.f;
+
+	float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
+	//float lightFactor = floor_d[x + y*MAX_XDIM];
+	//if (x == 0 && y == 5) printf("%f\n",floor_d[x + y*MAX_XDIM]);
+	floor_d[x + y*MAX_XDIM] = 0.f;
+
+	unsigned char R = 50.f*lightFactor;
+	unsigned char G = 120.f*lightFactor;
+	unsigned char B = 255.f*lightFactor;
+	unsigned char A = 255.f;
+
 	char b[] = { R, G, B, A };
 	float color;
 	std::memcpy(&color, &b, sizeof(color));
 	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
-
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
@@ -664,14 +1024,51 @@ void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimV
 	Lighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible, cameraPosition);
 }
 
-void InitializeFloor(float4* vis, int xDim, int yDim, int xDimVisible, int yDimVisible)
+void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	initialize_Floor << <grid, threads >> >(vis, xDim, yDim, xDimVisible, yDimVisible);
+	initialize_Floor << <grid, threads >> >(vis, floor_d, xDim, yDim, xDimVisible, yDimVisible);
 }
 
+void UpdateFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
+{
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	update_Floor << <grid, threads >> >(vis, floor_d, xDim, yDim, xDimVisible, yDimVisible);
+}
 
+void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
+{
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	float3 incidentLight4 = { 0, -20.f, -1.f };
+	float3 incidentLight2 = { -0.5f, -0.5f, -1.f };
+	float3 incidentLight3 = { -0.5f, 0.5f, -1.f };
+	float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
+	update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight1, xDim, yDim, xDimVisible, yDimVisible);
+	LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+	//update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight2, xDim, yDim, xDimVisible, yDimVisible);
+	//LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+	//update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight3, xDim, yDim, xDimVisible, yDimVisible);
+	//LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+	//update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight4, xDim, yDim, xDimVisible, yDimVisible);
+	//LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+
+	light_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+
+
+	//light_Filter << <grid, threads >> >(floor_d, floorFiltered_d, xDim, yDim, xDimVisible, yDimVisible);
+	//update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight2, xDim, yDim, xDimVisible, yDimVisible);
+	//LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+}
+
+//void LightFloor(float4* vis, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
+//{
+//	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+//	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+//	light_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, xDim, yDim, xDimVisible, yDimVisible);
+//}
 
 int runCUDA()
 {

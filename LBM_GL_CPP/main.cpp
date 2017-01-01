@@ -78,8 +78,13 @@ int* g_elementArrayIndices;
 
 float* g_fA_h;
 float* g_fA_d;
+float* g_floor_h;
+float2* g_lightMesh_h;
 float* g_fB_h;
 float* g_fB_d;
+float* g_floor_d;
+float* g_floorFiltered_d;
+float2* g_lightMesh_d;
 int* g_im_h;
 int* g_im_d;
 Obstruction* g_obst_d;
@@ -546,7 +551,26 @@ void GenerateIndexList(GLuint &arrayIndexBuffer){
 
 void GenerateIndexList2(GLuint &arrayIndexBuffer){
 
-	int* elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 * 2];
+//	GLuint* elementArrayIndices = new GLuint[(MAX_XDIM-1)*(2*MAX_YDIM-1) * 4 ];
+//	for (int j = 0; j < 2*MAX_YDIM-1; j++){
+//		for (int i = 0; i < MAX_XDIM-1; i++){
+//			//going clockwise, since y orientation will be flipped when rendered
+//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
+//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
+//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
+//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
+//		}
+//	}
+//	for (int j = 0; j < MAX_YDIM-1; j++){
+//		for (int i = 0; i < MAX_XDIM-1; i++){
+//			//going clockwise, since y orientation will be flipped when rendered
+//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 0] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j)*MAX_XDIM;
+//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 1] = (MAX_XDIM)*(MAX_YDIM) + (i + 1) + (j)*MAX_XDIM;
+//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 2] = (MAX_XDIM)*(MAX_YDIM) + (i+1)+(j + 1)*MAX_XDIM;
+//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 3] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j + 1)*MAX_XDIM;
+//		}
+//	}
+	GLuint* elementArrayIndices = new GLuint[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 * 2];
 	for (int j = 0; j < MAX_YDIM-1; j++){
 		for (int i = 0; i < MAX_XDIM-1; i++){
 			//going clockwise, since y orientation will be flipped when rendered
@@ -559,17 +583,17 @@ void GenerateIndexList2(GLuint &arrayIndexBuffer){
 	for (int j = 0; j < MAX_YDIM-1; j++){
 		for (int i = 0; i < MAX_XDIM-1; i++){
 			//going clockwise, since y orientation will be flipped when rendered
-			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 0] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i)+(j)*MAX_XDIM;
-			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 1] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i + 1) + (j)*MAX_XDIM;
-			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 2] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i+1)+(j + 1)*MAX_XDIM;
-			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 3] = (MAX_XDIM-1)*(MAX_YDIM-1) * 4 + (i)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 0] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 1] = (MAX_XDIM)*(MAX_YDIM) + (i + 1) + (j)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 2] = (MAX_XDIM)*(MAX_YDIM) + (i+1)+(j + 1)*MAX_XDIM;
+			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 3] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j + 1)*MAX_XDIM;
 		}
 	}
 
 
 	glGenBuffers(1, &arrayIndexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4*2, elementArrayIndices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*(MAX_XDIM-1)*(MAX_YDIM-1)*4*2, elementArrayIndices, GL_DYNAMIC_DRAW);
 	free(elementArrayIndices);
 }
 
@@ -644,22 +668,29 @@ void UpdateDeviceImage()
 
 void SetUpCUDA()
 {
-	size_t memsize, memsize_int, memsize_inputs;
+	size_t memsize, memsize_int, memsize_float, memsize_inputs, memsize_float2;
 	g_uMax = 0.06f;
 
 	int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)
 						*BLOCKSIZEX*BLOCKSIZEY;
 	memsize = domainSize*sizeof(float)*9;
 	memsize_int = domainSize*sizeof(int);
+	memsize_float = domainSize*sizeof(float);
+	memsize_float2 = domainSize*sizeof(float2);
 	memsize_inputs = sizeof(g_obstructions);
 
 	g_fA_h = (float *)malloc(memsize);
 	g_fB_h = (float *)malloc(memsize);
+	g_floor_h = (float *)malloc(memsize_float);
+	g_lightMesh_h = (float2 *)malloc(memsize_float2);
 	g_im_h = (int *)malloc(memsize_int);
 	//obstructions = (input_values *)malloc(memsize_inputs);
 
 	cudaMalloc((void **)&g_fA_d, memsize);
 	cudaMalloc((void **)&g_fB_d, memsize);
+	cudaMalloc((void **)&g_floor_d, memsize_float);
+	cudaMalloc((void **)&g_floorFiltered_d, memsize_float);
+	cudaMalloc((void **)&g_lightMesh_d, memsize_float2);
 	cudaMalloc((void **)&g_im_d, memsize_int);
 	cudaMalloc((void **)&g_obst_d, memsize_inputs);
 
@@ -691,10 +722,22 @@ void SetUpCUDA()
 //		int y = i/MAX_XDIM;
 //		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
 //	}
+	for (int i = 0; i < domainSize; i++)
+	{
+		g_floor_h[i] = 0;
+	}
+	for (int i = 0; i < domainSize; i++)
+	{
+		g_lightMesh_h[i].x = 0;
+		g_lightMesh_h[i].y = 0;
+	}
 	UpdateDeviceImage();
 	
 	cudaMemcpy(g_fA_d, g_fA_h, memsize, cudaMemcpyHostToDevice);
 	cudaMemcpy(g_fB_d, g_fB_h, memsize, cudaMemcpyHostToDevice);
+	cudaMemcpy(g_floor_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
+	cudaMemcpy(g_floorFiltered_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
+	cudaMemcpy(g_lightMesh_d, g_lightMesh_h, memsize_float2, cudaMemcpyHostToDevice);
 //	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
 	cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
 
@@ -709,7 +752,8 @@ void SetUpCUDA()
 	InitializeDomain(dptr, g_fA_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
 	InitializeDomain(dptr, g_fB_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
 
-	InitializeFloor(dptr, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+	InitializeFloor(dptr, g_floor_d, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+	InitializeFloor(dptr, g_floorFiltered_d, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
 
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -734,11 +778,13 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
-	//MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
-	//DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
-	//CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
+	DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
+	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
 
-	InitializeFloor(dptr, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
+	//UpdateFloor(dptr, g_floor_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
+	//LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_lightMesh_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
@@ -925,8 +971,8 @@ void Draw()
 
 
 
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -964,7 +1010,7 @@ void Draw()
 //	glDisableClientState(GL_VERTEX_ARRAY);
 
 
-
+	glDisable(GL_CULL_FACE);
 	//Draw solution field
 	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
@@ -973,8 +1019,15 @@ void Draw()
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(int)*(MAX_XDIM - 1)*(MAX_YDIM - 1) * 4));
-	//glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+	//glDrawArrays(GL_POINTS, 0, (MAX_XDIM*MAX_YDIM * 2));
+	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1)*4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+
+	GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 

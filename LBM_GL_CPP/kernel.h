@@ -1,6 +1,7 @@
 #define SMAG_CONST 1.f
 
 #include "cuda_runtime.h"
+#include "cuda.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
 #include <cstring>
@@ -23,4 +24,10 @@ void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible);
 
 void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible, float3 cameraPosition);
 
-void InitializeFloor(float4* vis, int xDim, int yDim, int xDimVisible, int yDimVisible);
+void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+
+void UpdateFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+
+void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+
+//void LightFloor(float4* vis, float* floor_d,  float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
