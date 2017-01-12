@@ -8,7 +8,7 @@ extern int g_xDim, g_yDim, g_xDimVisible, g_yDimVisible;
 extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
 extern float g_initialScaleUp;
-extern int g_TwoDView;
+extern ViewMode g_viewMode;
 
 GraphicsManager::GraphicsManager()
 {
@@ -46,7 +46,7 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
 
 void GraphicsManager::Click(Mouse mouse)
 {
-	if (g_TwoDView == 1)
+	if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
 	{
 		if (mouse.m_rmb == 1)
 		{

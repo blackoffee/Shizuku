@@ -15,7 +15,7 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, fl
 
 //extern "C"
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
-						ContourVariable contVar, float contMin, float contMax, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible);
+						ContourVariable contVar, float contMin, float contMax, ViewMode viewMode, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible);
 
 //extern "C"
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst);
@@ -28,6 +28,6 @@ void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVi
 
 void UpdateFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
 
-void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
 
-//void LightFloor(float4* vis, float* floor_d,  float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+void Refraction(float4* vis, float* floor_d,  float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible);

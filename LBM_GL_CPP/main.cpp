@@ -13,8 +13,6 @@
 #include <time.h>
 #include <algorithm>
 
-#include <glm/glm.hpp>
-
 #include "kernel.h"
 #include "Mouse.h"
 #include "Panel.h"
@@ -45,14 +43,14 @@ float g_contMax = 0.1f;
 int g_tStep = 15; //initial tstep value before adjustments
 
 ContourVariable g_contourVar;
+ViewMode g_viewMode;
 
 //view transformations
-float rotate_x = 45.f;
-float rotate_z = 0.f;
+float rotate_x = 60.f;
+float rotate_z = 30.f;
 float translate_x = 0.f;
-float translate_y = 0.5f;
-float translate_z = -1.f;
-int g_TwoDView = 1;
+float translate_y = 0.8f;
+float translate_z = -0.2f;
 int g_paused = 0;
 
 Obstruction g_obstructions[MAXOBSTS];
@@ -71,6 +69,8 @@ GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 GLuint g_vboFloor;
 GLuint g_elementArrayIndexFloorBuffer;
+GLuint g_floorFrameBuffer;
+GLuint g_floorTexture;
 cudaGraphicsResource *g_cudaSolutionField;
 cudaGraphicsResource *g_cudaFloor;
 
@@ -93,9 +93,9 @@ const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 
 void SetUpButtons();
-void VelMagButtonCallBack();
+void WaterRenderingButtonCallBack();
 void SquareButtonCallBack();
-void TwoDButtonCallBack();
+void ThreeDButtonCallBack();
 void Resize(int w, int h);
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
@@ -111,7 +111,7 @@ void Init()
 void SetUpWindow()
 {
 	winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
-	winh = std::max(g_yDim*g_initialScaleUp,static_cast<float>(g_leftPanelHeight+100));
+	winh = max(g_yDim*g_initialScaleUp,static_cast<float>(g_leftPanelHeight+100));
 	UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
 
 	Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
@@ -123,9 +123,10 @@ void SetUpWindow()
 	theMouse.m_simScaleUp = g_initialScaleUp;
 
 	Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::DARK_GRAY));
-	Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.6f), Panel::DEF_REL, "Outputs", Color(Color::DARK_GRAY));
+	Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -0.9f, 2.f, 0.5f), Panel::DEF_REL, "Outputs", Color(Color::DARK_GRAY));
 	Panel* inputsPanel  = CDV->CreateSubPanel(RectFloat(-1.f, -0.4f, 2.f, 0.6f), Panel::DEF_REL, "Inputs", Color(Color::DARK_GRAY));
 	Panel* drawingPanel = CDV->CreateSubPanel(RectFloat(-1.f,  0.2f, 2.f, 0.8f), Panel::DEF_REL, "Drawing", Color(Color::DARK_GRAY));
+	Panel* viewModePanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.1f), Panel::DEF_REL, "ViewMode", Color(Color::DARK_GRAY));
 
 
 	outputsPanel->CreateButton(RectFloat(-0.9f, -0.2f +0.12f, 0.85f, 0.4f), Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
@@ -133,8 +134,10 @@ void SetUpWindow()
 	outputsPanel->CreateButton(RectFloat(-0.9f, -1.f  +0.04f, 0.85f, 0.4f), Panel::DEF_REL, "StrainRate", Color(Color::GRAY));
 	outputsPanel->CreateButton(RectFloat(0.05f, -0.2f +0.12f, 0.85f, 0.4f), Panel::DEF_REL, "Y Velocity", Color(Color::GRAY));
 	outputsPanel->CreateButton(RectFloat(0.05f, -0.6f +0.08f, 0.85f, 0.4f) ,Panel::DEF_REL, "Pressure"  , Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(0.05f, -1.f  +0.04f, 0.4f, 0.4f), Panel::DEF_REL, "3D", Color(Color::GRAY));
-	outputsPanel->CreateButton(RectFloat(0.50f, -1.f  +0.04f, 0.4f, 0.4f), Panel::DEF_REL, "2D", Color(Color::GRAY));
+	outputsPanel->CreateButton(RectFloat(0.05f, -1.f  +0.04f, 0.85f, 0.4f), Panel::DEF_REL, "Water Rendering", Color(Color::GRAY));
+
+	viewModePanel->CreateButton(RectFloat(-0.9f , -1.f  +0.04f, 0.35f, 2.f), Panel::DEF_REL, "3D", Color(Color::GRAY));
+	viewModePanel->CreateButton(RectFloat(-0.50f, -1.f  +0.04f, 0.35f, 2.f), Panel::DEF_REL, "2D", Color(Color::GRAY));
 
 	Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh), Panel::DEF_ABS, "Graphics", Color(Color::RED));
 	Window.GetPanel("Graphics")->m_draw = false;
@@ -270,6 +273,25 @@ void SetUpWindow()
 	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 	Window.GetSlider(sliderName)->Hide();
 
+	VarName = "Water Rendering";
+	labelName = "Label_"+VarName;
+	sliderName = VarName;
+	sliderBarName1 = VarName+"Max";
+	sliderBarName2 = VarName+"Min";
+	outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+	Window.GetSlider(sliderName)->m_maxValue = 1.05f;
+	Window.GetSlider(sliderName)->m_minValue = 0.95f;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+	Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
+	Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
+	Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+	Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+	Window.GetSlider(sliderName)->Hide();
+
+
 	//Drawing panel
 	//Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::DARK_GRAY));
 	Panel* drawingPreview = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f), Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
@@ -293,9 +315,10 @@ void SetUpWindow()
 	Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
 
 	SetUpButtons();
-	VelMagButtonCallBack(); //default is vel mag contour
+	//VelMagButtonCallBack(); //default is vel mag contour
+	WaterRenderingButtonCallBack(); //default is water rendering
 	SquareButtonCallBack(); //default is square shape
-	TwoDButtonCallBack();
+	ThreeDButtonCallBack();
 }
 
 /*----------------------------------------------------------------------------------------
@@ -309,6 +332,7 @@ Slider* GetCurrentContourSlider()
 	else if (Window.GetSlider("Y Velocity")->m_draw == true) return Window.GetSlider("Y Velocity");
 	else if (Window.GetSlider("StrainRate")->m_draw == true) return Window.GetSlider("StrainRate");
 	else if (Window.GetSlider("Pressure")->m_draw == true) return Window.GetSlider("Pressure");
+	else if (Window.GetSlider("Water Rendering")->m_draw == true) return Window.GetSlider("Water Rendering");
 }
 
 
@@ -353,6 +377,12 @@ void PressureButtonCallBack()
 	g_contourVar = PRESSURE;
 }
 
+void WaterRenderingButtonCallBack()
+{
+	contourButtons.ExclusiveEnable(Window.GetButton("Water Rendering"));
+	g_contourVar = WATER_RENDERING;
+}
+
 void SquareButtonCallBack()
 {
 	shapeButtons.ExclusiveEnable(Window.GetButton("Square"));
@@ -380,13 +410,13 @@ void VertLineButtonCallBack()
 void ThreeDButtonCallBack()
 {
 	viewButtons.ExclusiveEnable(Window.GetButton("3D"));
-	g_TwoDView = 0;
+	g_viewMode = ViewMode::THREE_DIMENSIONAL;
 }
 
 void TwoDButtonCallBack()
 {
 	viewButtons.ExclusiveEnable(Window.GetButton("2D"));
-	g_TwoDView = 1;
+	g_viewMode = ViewMode::TWO_DIMENSIONAL;
 }
 
 void SetUpButtons()
@@ -397,6 +427,7 @@ void SetUpButtons()
 	Window.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
 	Window.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
 	Window.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
+	Window.GetButton("Water Rendering")->m_callBack = WaterRenderingButtonCallBack;
 //	Window.GetButton("Initialize"        )->m_displayText = "Initialize"        ;
 //	Window.GetButton("Velocity Magnitude")->m_displayText = "Velocity Magnitude";
 //	Window.GetButton("X Velocity"        )->m_displayText = "X Velocity"        ;
@@ -409,7 +440,8 @@ void SetUpButtons()
 		Window.GetButton("X Velocity"),
 		Window.GetButton("Y Velocity"),
 		Window.GetButton("StrainRate"),
-		Window.GetButton("Pressure") };
+		Window.GetButton("Pressure"),
+		Window.GetButton("Water Rendering") };
 	contourButtons = ButtonGroup(buttons);
 
 
@@ -530,8 +562,8 @@ void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res)
 }
 
 
-void GenerateIndexList(GLuint &arrayIndexBuffer){
-
+void GenerateIndexListForSurface(GLuint &arrayIndexBuffer)
+{
 	int* elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4];
 	for (int j = 0; j < MAX_YDIM-1; j++){
 		for (int i = 0; i < MAX_XDIM-1; i++){
@@ -549,27 +581,8 @@ void GenerateIndexList(GLuint &arrayIndexBuffer){
 	free(elementArrayIndices);
 }
 
-void GenerateIndexList2(GLuint &arrayIndexBuffer){
-
-//	GLuint* elementArrayIndices = new GLuint[(MAX_XDIM-1)*(2*MAX_YDIM-1) * 4 ];
-//	for (int j = 0; j < 2*MAX_YDIM-1; j++){
-//		for (int i = 0; i < MAX_XDIM-1; i++){
-//			//going clockwise, since y orientation will be flipped when rendered
-//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
-//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
-//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
-//			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
-//		}
-//	}
-//	for (int j = 0; j < MAX_YDIM-1; j++){
-//		for (int i = 0; i < MAX_XDIM-1; i++){
-//			//going clockwise, since y orientation will be flipped when rendered
-//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 0] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j)*MAX_XDIM;
-//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 1] = (MAX_XDIM)*(MAX_YDIM) + (i + 1) + (j)*MAX_XDIM;
-//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 2] = (MAX_XDIM)*(MAX_YDIM) + (i+1)+(j + 1)*MAX_XDIM;
-//			elementArrayIndices[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 + j*(MAX_XDIM-1)*4+i * 4 + 3] = (MAX_XDIM)*(MAX_YDIM) + (i)+(j + 1)*MAX_XDIM;
-//		}
-//	}
+void GenerateIndexListForSurfaceAndFloor(GLuint &arrayIndexBuffer)
+{
 	GLuint* elementArrayIndices = new GLuint[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 * 2];
 	for (int j = 0; j < MAX_YDIM-1; j++){
 		for (int i = 0; i < MAX_XDIM-1; i++){
@@ -590,7 +603,6 @@ void GenerateIndexList2(GLuint &arrayIndexBuffer){
 		}
 	}
 
-
 	glGenBuffers(1, &arrayIndexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*(MAX_XDIM-1)*(MAX_YDIM-1)*4*2, elementArrayIndices, GL_DYNAMIC_DRAW);
@@ -606,13 +618,31 @@ void CleanUpIndexList(GLuint &arrayIndexBuffer){
 void SetUpGLInterop()
 {
 	cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-	GenerateIndexList2(g_elementArrayIndexBuffer);
-	//GenerateIndexList(g_elementArrayIndexFloorBuffer);
+	GenerateIndexListForSurfaceAndFloor(g_elementArrayIndexBuffer);
 	unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
 	unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-	//unsigned int solutionMemorySize = g_xDim*g_yDim * 4 * sizeof(float);
 	CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize, cudaGraphicsMapFlagsWriteDiscard);
-	//CreateVBO(&g_vboFloor, &g_cudaFloor, floorSize, cudaGraphicsMapFlagsWriteDiscard);
+
+	//printf("%s",glGetString(GL_VERSION));
+//	g_floorFrameBuffer = 0;
+//	glGenFramebuffersEXT(1, &g_floorFrameBuffer);
+//	//glBindFramebufferEXT(GL_FRAMEBUFFER, g_floorFrameBuffer);
+
+
+//	glGenTextures(1, &g_floorTexture);
+//	glBindTexture(GL_TEXTURE_2D, g_floorTexture);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_xDimVisible*g_initialScaleUp, g_yDimVisible*g_initialScaleUp, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+//	glFramebufferTextureEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_floorTexture, 0);
+//	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+//	glDrawBuffers(1, DrawBuffers);
+
+//	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){  //Check for FBO completeness
+// 		std::cout << "Error! FrameBuffer is not complete" << std::endl;
+//  }
+
 }
 
 void CleanUpGLInterop()
@@ -757,12 +787,6 @@ void SetUpCUDA()
 
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
-	//float4 *dptr2;
-	//cudaGraphicsMapResources(1, &g_cudaFloor, 0);
-	//cudaGraphicsResourceGetMappedPointer((void **)&dptr2, &num_bytes, g_cudaFloor);
-
-
-	//cudaGraphicsUnmapResources(1, &g_cudaFloor, 0);
 }
 
 void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
@@ -778,26 +802,19 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
-	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
-	DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
-	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
+	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_viewMode, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
 
-	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
+	if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+	{
+		DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
+		LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
+	}
+	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
 	//UpdateFloor(dptr, g_floor_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 	//LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_lightMesh_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
-
-
-
-	//float4 *dptr2;
-	//cudaGraphicsMapResources(1, &g_cudaFloor, 0);
-	//cudaGraphicsResourceGetMappedPointer((void **)&dptr2, &num_bytes, g_cudaFloor);
-
-	//InitializeFloor(dptr2, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
-
-	//cudaGraphicsUnmapResources(1, &g_cudaFloor, 0);
 
 }
 
@@ -859,16 +876,16 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 	float aspectRatio = static_cast<float>(xDim) / yDim;
 	float leftPanelW = static_cast<float>(leftPanelWidth);
 	heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW+scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
-	heightOut = std::max(heightOut, leftPanelHeight);
+	heightOut = max(heightOut, leftPanelHeight);
 	widthOut = heightOut*aspectRatio+leftPanelW;
 }
 
 void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp)
 {
 
-	g_xDim = std::min(std::max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
-	g_yDim = std::min(std::max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
-	g_xDimVisible = std::min(std::max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
+	g_xDim = min(max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
+	g_yDim = min(max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
+	g_xDimVisible = min(max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
 	g_yDimVisible = g_yDim;
 }
 
@@ -876,7 +893,7 @@ void Resize(int w, int h)
 {
 	int area = w*h;
 	//UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
-	UpdateDomainDimensionsBasedOnWindowSize(std::max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
+	UpdateDomainDimensionsBasedOnWindowSize(max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
 
 	winw = w;
 	winh = h;
@@ -949,7 +966,7 @@ void Draw()
 	glTranslatef(xTranslation,yTranslation,0.f);
 	glScalef((static_cast<float>(g_xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(g_yDimVisible*g_initialScaleUp) / winh), 1.f);
 
-	if (g_TwoDView == 1)
+	if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
 	{
 		glOrtho(-1,1,-1,static_cast<float>(g_yDimVisible)/g_xDimVisible*2.f-1.f,-100,20);
 	}
@@ -999,15 +1016,27 @@ void Draw()
 //	glEnd();
 
 
-//	//Draw Floor
-//	glBindBuffer(GL_ARRAY_BUFFER, g_vboFloor);
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexFloorBuffer);
-//	glVertexPointer(3, GL_FLOAT, 16, 0);
-//	glEnableClientState(GL_VERTEX_ARRAY);
-//	glEnableClientState(GL_COLOR_ARRAY);
-//	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-//	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
-//	glDisableClientState(GL_VERTEX_ARRAY);
+//	glBindFramebufferEXT(GL_FRAMEBUFFER, g_floorFrameBuffer);
+////	//Draw Floor
+////	glBindBuffer(GL_ARRAY_BUFFER, g_vboFloor);
+////	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexFloorBuffer);
+////	glVertexPointer(3, GL_FLOAT, 16, 0);
+////	glEnableClientState(GL_VERTEX_ARRAY);
+////	glEnableClientState(GL_COLOR_ARRAY);
+////	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+////	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
+////	glDisableClientState(GL_VERTEX_ARRAY);
+//	glBegin(GL_QUADS);
+//	glColor4f(1.f,1.f,1.f,1.f);
+//	glVertex3f( 0.f,-0.3f, -1.f);
+//	glVertex3f( 0.1f,-0.3f, -1.f);
+//	glVertex3f( 0.1f,-0.3f, 0.3f);
+//	glVertex3f( 0.f, -0.3f, 0.3f);
+//	glEnd();
+
+
+
+//	glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
 
 
 	glDisable(GL_CULL_FACE);
@@ -1030,9 +1059,6 @@ void Draw()
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-
-
-
 	/*
 	 *	Disable depth test and lighting for 2D elements
 	 */
@@ -1053,9 +1079,6 @@ void Draw()
 	glutSwapBuffers();
 
 	ComputeFPS(g_fpsCount, g_fpsLimit, g_timeBefore);
-
-	//g_xDim = 256;
-	//g_yDim = 192;
 
 }
 
