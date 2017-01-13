@@ -807,8 +807,8 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
 	{
 		DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
-		LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 	}
+	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
 	//UpdateFloor(dptr, g_floor_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 	//LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_lightMesh_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
@@ -1058,6 +1058,8 @@ void Draw()
     }
 
 	glDisableClientState(GL_VERTEX_ARRAY);
+
+
 
 	/*
 	 *	Disable depth test and lighting for 2D elements

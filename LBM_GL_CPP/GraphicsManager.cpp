@@ -71,6 +71,10 @@ void GraphicsManager::Click(Mouse mouse)
 			}
 		}
 	}
+	else
+	{
+		m_currentObstId = -1;
+	}
 }
 
 void GraphicsManager::Drag(float dx, float dy)

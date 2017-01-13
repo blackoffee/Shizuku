@@ -20,8 +20,8 @@ public:
 	GraphicsManager();
 	GraphicsManager(Panel* panel);
 
-	void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
-	void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf);
+	void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
+	void GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf);
 	void Click(Mouse mouse);
 	void Drag(float dx, float dy);
 	void AddObstruction(Mouse mouse);
@@ -29,7 +29,7 @@ public:
 	void MoveObstruction(float dx, float dy);
 	int FindUnusedObstructionId();
 	int FindClosestObstructionId(Mouse mouse);
-	bool GraphicsManager::IsInClosestObstruction(Mouse mouse);
+	bool IsInClosestObstruction(Mouse mouse);
 
 };
 
