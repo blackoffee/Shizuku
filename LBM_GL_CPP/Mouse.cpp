@@ -54,7 +54,7 @@ void Mouse::Move(int x, int y)
 	{
 		if (m_lmb == 1)
 		{
-			m_currentlySelectedPanel->Drag(dx, dy);
+			m_currentlySelectedPanel->Drag(x,y,dx, dy);
 		}
 		else if (m_mmb == 1)
 		{

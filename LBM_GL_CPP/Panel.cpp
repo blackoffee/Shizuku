@@ -305,11 +305,11 @@ Slider* Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefini
 	return slider;
 }
 
-void Panel::Drag(float dx, float dy)
+void Panel::Drag(int x, int y, float dx, float dy)
 {
 	if (m_graphicsManager != NULL)
 	{
-		m_graphicsManager->Drag(dx,dy);
+		m_graphicsManager->Drag(x,y,dx,dy);
 	}
 }
 

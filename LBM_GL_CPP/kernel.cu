@@ -4,6 +4,7 @@
 
 extern int g_xDim;
 extern int g_yDim;
+extern int *g_selectedElement_d;
 extern int g_paused;
 
 //float uMax = 0.06f;
@@ -16,6 +17,14 @@ extern int g_paused;
 
 //int nBlocks = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY);
 //int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
+
+
+
+/*----------------------------------------------------------------------------------------
+ *	Device Variables
+*/
+__device__ int d_selectedElement;
+
 
 
 /*----------------------------------------------------------------------------------------
@@ -205,6 +214,31 @@ __device__ bool IsPointInsideTriangle(float2 p, float2 a, float2 b, float2 c)
 		return true;
 	}
 	return false;
+}
+
+__device__ bool IsPointInsideTriangle(float3 p1, float3 p2, float3 p3, float3 q)
+{
+	float3 n = CrossProduct((p2 - p1), (p3 - p1));
+
+	if (DotProduct(CrossProduct(p2 - p1, q - p1), n) < 0) return false;
+	if (DotProduct(CrossProduct(p3 - p2, q - p2), n) < 0) return false;
+	if (DotProduct(CrossProduct(p1 - p3, q - p3), n) < 0) return false;
+
+	return true;
+}
+
+//p1, p2, p3 should be in clockwise order
+__device__ float3 GetIntersectionOfRayWithTriangle(float3 rayOrigin, float3 rayDir, float3 p1, float3 p2, float3 p3)
+{
+	//plane of triangle
+	float3 n = CrossProduct((p2 - p1), (p3 - p1));
+	Normalize(n);
+	float d = DotProduct(n, p1); //coefficient "d" of plane equation (n.x = d)
+
+	Normalize(rayDir);
+	float t = (d-DotProduct(n,rayOrigin))/(DotProduct(n,rayDir));
+
+	return rayOrigin + t*rayDir;
 }
 
 
@@ -1056,6 +1090,37 @@ __global__ void refraction_Floor(float4* pos, float* floor_d, float* floorFilter
 }
 
 
+__global__ void RayCast(float4* pos, int* selectedElement, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;
+
+	if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
+	{
+		if (isInsideObstruction(x, y, obstructions, 1.f))
+		{
+			float3 nw{ pos[j+MAX_XDIM].x, pos[j+MAX_XDIM].y, pos[j+MAX_XDIM].z };
+			float3 ne{ pos[j+MAX_XDIM+1].x, pos[j+MAX_XDIM+1].y, pos[j+MAX_XDIM+1].z };
+			float3 se{ pos[j+1].x, pos[j+1].y, pos[j+1].z };
+			float3 sw{ pos[j].x, pos[j].y, pos[j].z };
+
+			float3 intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
+			if (IsPointInsideTriangle(nw, ne, se, intersectingPoint))
+			{
+				selectedElement[0] = j;
+			}
+			else if (IsPointInsideTriangle(ne, se, sw, intersectingPoint))
+			{
+				selectedElement[0] = j;
+			}
+		}
+	}
+
+}
+
+
+
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
@@ -1146,6 +1211,31 @@ void Refraction(float4* vis, float* floor_d, float* floorFiltered_d, float2* lig
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
 	//refraction_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+}
+
+int RayCastMouseClick(float3 &selectedElementCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
+{
+	int selectedElementIndex = -1;
+	//float3 selectedElementCoord{ -1000000.f, -1000000.f, -1000000.f };
+	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
+	RayCast << <grid, threads >> >(vis, g_selectedElement_d, rayOrigin, rayDir, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	cudaMemcpy(&selectedElementIndex, g_selectedElement_d, sizeof(int), cudaMemcpyDeviceToHost); 
+	if (selectedElementIndex < 0)
+	{
+		return 1;
+	}
+	else
+	{
+		cudaMemcpy(&selectedElementCoord, &vis[selectedElementIndex], sizeof(float)*3, cudaMemcpyDeviceToHost); 
+		int clearSelectedIndex[1];
+		clearSelectedIndex[0] = -1;
+		cudaMemcpy(g_selectedElement_d, &clearSelectedIndex[0], sizeof(int), cudaMemcpyHostToDevice); 
+		printf("selectedIndex: %i\n", selectedElementIndex);
+		printf("selectedCoord: %f, %f, %f\n", selectedElementCoord.x,selectedElementCoord.y,selectedElementCoord.z);
+		//return selectedElementCoord;
+		return 0;
+	}
 }
 
 int runCUDA()

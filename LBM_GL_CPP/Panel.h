@@ -75,7 +75,7 @@ public:
 	virtual void Draw(); //draw current panel only
 	virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
-	virtual void Drag(float dx, float dy);
+	virtual void Drag(int x, int y, float dx, float dy);
 	virtual void Click(Mouse mouse);
 };
 

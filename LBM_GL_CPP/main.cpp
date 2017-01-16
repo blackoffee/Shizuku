@@ -44,6 +44,9 @@ int g_tStep = 15; //initial tstep value before adjustments
 
 ContourVariable g_contourVar;
 ViewMode g_viewMode;
+int g_selectedElement = -1;
+int *g_selectedElement_d;
+
 
 //view transformations
 float rotate_x = 60.f;
@@ -52,6 +55,12 @@ float translate_x = 0.f;
 float translate_y = 0.8f;
 float translate_z = -0.2f;
 int g_paused = 0;
+
+
+GLint viewport[4];
+GLdouble modelMatrix[16];
+GLdouble projectionMatrix[16];
+
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -714,6 +723,7 @@ void SetUpCUDA()
 	g_floor_h = (float *)malloc(memsize_float);
 	g_lightMesh_h = (float2 *)malloc(memsize_float2);
 	g_im_h = (int *)malloc(memsize_int);
+	g_selectedElement = -1;
 	//obstructions = (input_values *)malloc(memsize_inputs);
 
 	cudaMalloc((void **)&g_fA_d, memsize);
@@ -723,6 +733,7 @@ void SetUpCUDA()
 	cudaMalloc((void **)&g_lightMesh_d, memsize_float2);
 	cudaMalloc((void **)&g_im_d, memsize_int);
 	cudaMalloc((void **)&g_obst_d, memsize_inputs);
+	cudaMalloc((void **)&g_selectedElement_d, sizeof(int));
 
 	for (int i = 0; i < domainSize*9; i++)
 	{
@@ -770,6 +781,7 @@ void SetUpCUDA()
 	cudaMemcpy(g_lightMesh_d, g_lightMesh_h, memsize_float2, cudaMemcpyHostToDevice);
 //	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
 	cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
+	cudaMemcpy(g_selectedElement_d, &g_selectedElement, memsize_inputs, cudaMemcpyHostToDevice);
 
 	//writeInputs();
 	float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
@@ -987,7 +999,6 @@ void Draw()
 	//glScalef((static_cast<float>(g_xDimVisible) / g_yDimVisible)*cos(rotate_z*PI/180.f), (static_cast<float>(g_xDimVisible) / g_yDimVisible)*sin(rotate_z*PI/180.f), 1.f);
 
 
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1059,6 +1070,10 @@ void Draw()
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
+
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+	glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
 
 
 	/*
