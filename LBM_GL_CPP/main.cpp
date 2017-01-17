@@ -818,7 +818,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 
 	if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
 	{
-		DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
+		LightSurface(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
 	}
 	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible,cameraPosition);
 	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
@@ -988,42 +988,11 @@ void Draw()
 		glRotatef(rotate_z,0,0,1);
 	}
 
-	//glScalef((static_cast<float>(winw-g_leftPanelWidth-g_drawingPanelWidth) / winw), 1.f, 1.f);
-	//glScalef((static_cast<float>(g_xDim) / winw), 1.f, 1.f);
-	//glScalef((static_cast<float>(g_xDim) / (g_xDim+g_leftPanelWidth)), 1.f, 1.f);
-	//glTranslatef(-(1.f - static_cast<float>(winw) / (winw-g_leftPanelWidth-g_drawingPanelWidth)),0.f,0.f);
-	//glTranslatef(-(1.f - (g_xDim+g_leftPanelWidth) / (static_cast<float>(g_xDim) )),0.f,0.f);
-
-	//glScalef((static_cast<float>(g_xDimVisible) / g_yDimVisible)*cos(rotate_z*PI/180.f), (static_cast<float>(g_xDimVisible) / g_yDimVisible)*sin(rotate_z*PI/180.f), 1.f);
-
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-//	//Draw Walls
-//	float R = 1.f;
-//	float G = 1.f;
-//	float B = 1.f;
-//	float A = 1.f;
-//	float yDimInFloatCoords = static_cast<float>(g_yDimVisible-1) / (g_xDimVisible-1)*2.f-1.f;
-//	glBegin(GL_QUADS);
-//	glColor4f(R,G,B,A);
-//	glVertex3f(-1.f,  yDimInFloatCoords, 0.2f);
-//	glVertex3f( 1.f,  yDimInFloatCoords, 0.2f);
-//	glVertex3f( 1.f,  yDimInFloatCoords, -1.f);
-//	glVertex3f(-1.f,  yDimInFloatCoords, -1.f);
-//	glEnd();
-//	glBegin(GL_QUADS);
-//	glColor4f(R,G,B,A);
-//	glVertex3f( 1.f,  yDimInFloatCoords, 0.2f);
-//	glVertex3f( 1.f, -1.f, 0.2f);
-//	glVertex3f( 1.f, -1.f, -1.f);
-//	glVertex3f( 1.f,  yDimInFloatCoords, -1.f);
-//	glEnd();
-
 
 //	glBindFramebufferEXT(GL_FRAMEBUFFER, g_floorFrameBuffer);
 ////	//Draw Floor
@@ -1043,10 +1012,7 @@ void Draw()
 //	glVertex3f( 0.f, -0.3f, 0.3f);
 //	glEnd();
 
-
-
 //	glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
-
 
 	glDisable(GL_CULL_FACE);
 	//Draw solution field
@@ -1068,11 +1034,9 @@ void Draw()
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-
 	glGetIntegerv(GL_VIEWPORT, viewport);
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
 	glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
-
 
 	/*
 	 *	Disable depth test and lighting for 2D elements

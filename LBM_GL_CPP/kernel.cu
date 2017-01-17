@@ -622,7 +622,7 @@ __global__ void CleanUpVBO(float4* pos, int xDimVisible, int yDimVisible)
 	}
 }
 
-__global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible, int yDimVisible, float3 cameraPosition)
+__global__ void PhongLighting(float4* pos, Obstruction *obstructions, int xDimVisible, int yDimVisible, float3 cameraPosition)
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -671,7 +671,7 @@ __global__ void Lighting(float4* pos, Obstruction *obstructions, int xDimVisible
 	float3 eyeDirection = elementPosition - cameraPosition;
 	float3 diffuseLightColor1 = {0.5f, 0.5f, 0.5f};
 	float3 diffuseLightColor2 = {0.5f, 0.5f, 0.5f};
-	float3 specularLightColor1 = {0.9f, 0.9f, 0.9f};
+	float3 specularLightColor1 = {0.5f, 0.5f, 0.5f};
 
 	float cosTheta1 = -DotProduct(n,diffuseLightDirection1);
 	cosTheta1 = cosTheta1 < 0 ? 0 : cosTheta1;
@@ -853,7 +853,7 @@ __global__ void LightFloorUsingLightMesh(float* floor_d, float2* lightMesh_d, Ob
 	}
 }
 
-__global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisiblen) //obstruction* obstruction)//pitch in elements
+__global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -862,35 +862,36 @@ __global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d,
 
 	xcoord = lightMesh_d[x + y*MAX_XDIM].x;
 	ycoord = lightMesh_d[x + y*MAX_XDIM].y;
-	zcoord = -1.f;
+	zcoord = pos[j].z;
+	//zcoord = -1.f;
 
 	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 	float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
 	floor_d[x + y*MAX_XDIM] = 0.f;
 
-	unsigned char R = 50.f*lightFactor;
-	unsigned char G = 120.f*lightFactor;
-	unsigned char B = 255.f*lightFactor;
+	unsigned char R = 50.f;
+	unsigned char G = 120.f;
+	unsigned char B = 255.f;
 	unsigned char A = 255.f;
 
-	if (isInsideObstruction(x, y, obstructions, 1.f))
+	if (isInsideObstruction(x, y, obstructions, 0.5f))
 	{
-
 		if (isInsideObstruction(x, y, obstructions))
 		{
-			zcoord = -0.3f;
+			zcoord = -0.3f; // dmin(-0.3f, zcoord + 0.05f);// -0.3f;
+		}
 			lightFactor = 0.8f;
 			R = 255.f;
 			G = 255.f;
 			B = 255.f;
-		}
 	}
 	else
 	{
-		R *= lightFactor;
-		G *= lightFactor;
-		B *= lightFactor;
+		zcoord = -1.f;
 	}
+	R *= lightFactor;
+	G *= lightFactor;
+	B *= lightFactor;
 
 	char b[] = { R, G, B, A };
 	float color;
@@ -1010,11 +1011,11 @@ void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible)
 	CleanUpVBO << <grid, threads>> >(vis, xDimVisible, yDimVisible);
 }
 
-void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible, float3 cameraPosition)
+void LightSurface(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimVisible, float3 cameraPosition)
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	Lighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible, cameraPosition);
+	PhongLighting << <grid, threads>> >(vis, obst_d, xDimVisible, yDimVisible, cameraPosition);
 }
 
 void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
@@ -1035,7 +1036,7 @@ void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFi
 	light_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 
 	//phong lighting on floor mesh to shade obstructions
-	Lighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, xDimVisible, yDimVisible, cameraPosition);
+	PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, xDimVisible, yDimVisible, cameraPosition);
 }
 
 void Refraction(float4* vis, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
