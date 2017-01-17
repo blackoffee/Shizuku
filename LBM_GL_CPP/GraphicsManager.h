@@ -31,6 +31,7 @@ public:
 	void Click(Mouse mouse);
 	void Drag(int x, int y, float dx, float dy);
 	void AddObstruction(Mouse mouse);
+	void AddObstruction(int simX, int simY);
 	void RemoveObstruction(Mouse mouse);
 	void MoveObstruction(int x, int y, float dx, float dy);
 	int FindUnusedObstructionId();

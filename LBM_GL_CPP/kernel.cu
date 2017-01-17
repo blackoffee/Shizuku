@@ -62,6 +62,32 @@ inline __device__ bool isInsideObstruction(int x, int y, Obstruction* obstructio
 	return false;
 }
 
+inline __device__ int getObstructionFromCoord(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+	for (int i = 0; i < MAXOBSTS; i++){
+		float r1 = obstructions[i].r1 + tolerance;
+		if (obstructions[i].shape == Obstruction::SQUARE){//square
+			if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
+			if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
+					<r1*r1+0.1f)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
+			if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
+			if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+				return i;//10;
+		}
+	}
+	return -1;
+}
+
+
+
 //defines BCs for grid
 // no longer in use. 10/29/2016
 //inline __device__ int ImageFcn(int x, int y, obstruction* obstructions){

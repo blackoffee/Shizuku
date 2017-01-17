@@ -163,10 +163,29 @@ void GraphicsManager::Click(Mouse mouse)
 			{
 				m_currentObstId = FindClosestObstructionId(x, y);
 			}
+		}
+		else if (mouse.m_rmb == 1)
+		{
+			m_currentObstId = -1;
+			int x{ 0 }, y{ 0 }, z{ 0 };
+			m_currentZ = -0.5f;
+			GetSimCoordFrom2DMouseRay(x, y, mouse);
+			AddObstruction(x,y);
+		}
+		else if (mouse.m_mmb == 1)
+		{
+			m_currentObstId = -1;
+			int x{ 0 }, y{ 0 }, z{ 0 };
+			if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
+			{
+				m_currentObstId = FindClosestObstructionId(x, y);
+				RemoveObstruction(mouse);
+			}
+	
+		}
 			//Obstruction obst = { g_currentShape, -100, -100, 0, 0 };
 			//m_obstructions[obstId] = obst;
 			//UpdateDeviceObstructions(g_obst_d, obstId, obst);
-		}
 	}
 }
 
@@ -185,6 +204,13 @@ void GraphicsManager::AddObstruction(Mouse mouse)
 	UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
+void GraphicsManager::AddObstruction(int simX, int simY)
+{
+	Obstruction obst = { g_currentShape, simX, simY, g_currentSize, 0 };
+	int obstId = FindUnusedObstructionId();
+	m_obstructions[obstId] = obst;
+	UpdateDeviceObstructions(g_obst_d, obstId, obst);
+}
 
 void GraphicsManager::RemoveObstruction(Mouse mouse)
 {
