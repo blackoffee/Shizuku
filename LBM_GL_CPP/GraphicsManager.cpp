@@ -52,7 +52,7 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX,
 {
 	double x, y, z;
 	gluUnProject(mouseX, mouseY, 0.0f, modelMatrix, projectionMatrix, viewport, &x, &y, &z);
-	printf("Origin: %f, %f, %f\n", x, y, z);
+	//printf("Origin: %f, %f, %f\n", x, y, z);
 	rayOrigin.x = x;
 	rayOrigin.y = y;
 	rayOrigin.z = z;
@@ -94,7 +94,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
 	//GetSimCoordFromFloatCoord(xOut, yOut, selectedCoordF.x, selectedCoordF.y);
-	printf("Coords: %i, %i\n", xOut,yOut);
+	//printf("Coords: %i, %i\n", xOut,yOut);
 
 	return returnVal;
 }
@@ -161,7 +161,7 @@ void GraphicsManager::Click(Mouse mouse)
 			int x{ 0 }, y{ 0 }, z{ 0 };
 			if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
 			{
-				m_currentObstId = FindClosestObstructionId(x, y);
+				m_currentObstId = FindObstructionPointIsInside(x, y, 1.f);
 			}
 		}
 		else if (mouse.m_rmb == 1)
@@ -178,14 +178,11 @@ void GraphicsManager::Click(Mouse mouse)
 			int x{ 0 }, y{ 0 }, z{ 0 };
 			if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
 			{
-				m_currentObstId = FindClosestObstructionId(x, y);
-				RemoveObstruction(mouse);
+				m_currentObstId = FindObstructionPointIsInside(x, y, 1.f);
+				RemoveObstruction(x,y);
 			}
 	
 		}
-			//Obstruction obst = { g_currentShape, -100, -100, 0, 0 };
-			//m_obstructions[obstId] = obst;
-			//UpdateDeviceObstructions(g_obst_d, obstId, obst);
 	}
 }
 
@@ -221,6 +218,16 @@ void GraphicsManager::RemoveObstruction(Mouse mouse)
 	UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
+void GraphicsManager::RemoveObstruction(int simX, int simY)
+{
+	Obstruction obst = { g_currentShape, -100, -100, g_currentSize, 0 };
+	int obstId = FindObstructionPointIsInside(simX,simY,1.f);
+	if (obstId >= 0)
+	{
+		m_obstructions[obstId] = obst;
+		UpdateDeviceObstructions(g_obst_d, obstId, obst);
+	}
+}
 
 void GraphicsManager::MoveObstruction(int x, int y, float dx, float dy)
 {
@@ -321,7 +328,7 @@ int GraphicsManager::FindObstructionPointIsInside(int simX, int simY, float tole
 			}
 		}
 	}
-	printf("closest obst: %i", closestObstId);
+	//printf("closest obst: %i", closestObstId);
 	return closestObstId;
 }
 

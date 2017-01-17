@@ -33,6 +33,7 @@ public:
 	void AddObstruction(Mouse mouse);
 	void AddObstruction(int simX, int simY);
 	void RemoveObstruction(Mouse mouse);
+	void RemoveObstruction(int simX, int simY);
 	void MoveObstruction(int x, int y, float dx, float dy);
 	int FindUnusedObstructionId();
 	int FindClosestObstructionId(Mouse mouse);

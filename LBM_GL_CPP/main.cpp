@@ -181,7 +181,7 @@ void SetUpWindow()
 	Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
 	Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
-	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.6f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
+	Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH), Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
 	Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
 	Window.GetSlider("Slider_Resolution")->m_minValue = 6.f;
 	Window.GetSlider("Slider_Resolution")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
@@ -1069,7 +1069,7 @@ int main(int argc,char **argv)
 
 
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-	glutInitWindowSize(1400,g_leftPanelHeight+10);
+	glutInitWindowSize(1400,g_leftPanelHeight+200);
 	//glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
