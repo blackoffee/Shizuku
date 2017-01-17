@@ -989,7 +989,7 @@ __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin,
 					rayCastIntersect[0].z = intersectingPoint.z;
 					rayCastIntersect[0].w = distance;
 				}
-				printf("distance in kernel: %f\n", distance);
+				//printf("distance in kernel: %f\n", distance);
 			}
 		}
 	}
@@ -1080,7 +1080,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrig
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
 	RayCast << <grid, threads >> >(vis, d_rayCastIntersect_d, rayOrigin, rayDir, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 	cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
-	printf("intersectionCoord: %f, %f, %f, %f\n", intersectionCoord.x,intersectionCoord.y,intersectionCoord.z,intersectionCoord.w);
+	//printf("intersectionCoord: %f, %f, %f, %f\n", intersectionCoord.x,intersectionCoord.y,intersectionCoord.z,intersectionCoord.w);
 	if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
 	{
 		return 1;
