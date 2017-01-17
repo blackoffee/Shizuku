@@ -392,7 +392,7 @@ float SliderBar::GetValue()
 	return m_value;
 }
 
-void SliderBar::Drag(float dx, float dy)
+void SliderBar::Drag(int x, int y, float dx, float dy)
 {
 	//dx and dy are coming in as float abs coordinates
 	if (m_orientation == VERTICAL)

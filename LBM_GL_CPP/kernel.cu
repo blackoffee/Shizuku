@@ -4,7 +4,7 @@
 
 extern int g_xDim;
 extern int g_yDim;
-extern int *g_selectedElement_d;
+extern float4 *d_rayCastIntersect_d;
 extern int g_paused;
 
 //float uMax = 0.06f;
@@ -23,7 +23,7 @@ extern int g_paused;
 /*----------------------------------------------------------------------------------------
  *	Device Variables
 */
-__device__ int d_selectedElement;
+__device__ float4 d_rayCastIntersect;
 
 
 
@@ -193,7 +193,7 @@ __device__ void Normalize(float3 &u)
 
 __device__ float Distance(float3 u, float3 v)
 {
-	float mag = sqrt(DotProduct((u-v), (u-v)));
+	return sqrt(DotProduct((u-v), (u-v)));
 }
 
 __device__ bool IsPointsOnSameSide(float2 p1, float2 p2, float2 a, float2 b)
@@ -1090,7 +1090,7 @@ __global__ void refraction_Floor(float4* pos, float* floor_d, float* floorFilter
 }
 
 
-__global__ void RayCast(float4* pos, int* selectedElement, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -1106,13 +1106,17 @@ __global__ void RayCast(float4* pos, int* selectedElement, float3 rayOrigin, flo
 			float3 sw{ pos[j].x, pos[j].y, pos[j].z };
 
 			float3 intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
-			if (IsPointInsideTriangle(nw, ne, se, intersectingPoint))
+			if (IsPointInsideTriangle(nw, ne, se, intersectingPoint) || IsPointInsideTriangle(ne, se, sw, intersectingPoint))
 			{
-				selectedElement[0] = j;
-			}
-			else if (IsPointInsideTriangle(ne, se, sw, intersectingPoint))
-			{
-				selectedElement[0] = j;
+				float distance = Distance(intersectingPoint, rayOrigin);
+				if (distance < rayCastIntersect[0].w)
+				{
+					rayCastIntersect[0].x = intersectingPoint.x;
+					rayCastIntersect[0].y = intersectingPoint.y;
+					rayCastIntersect[0].z = intersectingPoint.z;
+					rayCastIntersect[0].w = distance;
+				}
+				printf("distance in kernel: %f\n", distance);
 			}
 		}
 	}
@@ -1213,27 +1217,28 @@ void Refraction(float4* vis, float* floor_d, float* floorFiltered_d, float2* lig
 	//refraction_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 }
 
-int RayCastMouseClick(float3 &selectedElementCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
+int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
 {
-	int selectedElementIndex = -1;
-	//float3 selectedElementCoord{ -1000000.f, -1000000.f, -1000000.f };
+	float4 intersectionCoord{ 0, 0, 0, 1e6 };
+	//float3 rayCastIntersectCoord{ -1000000.f, -1000000.f, -1000000.f };
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	RayCast << <grid, threads >> >(vis, g_selectedElement_d, rayOrigin, rayDir, obst_d, xDim, yDim, xDimVisible, yDimVisible);
-	cudaMemcpy(&selectedElementIndex, g_selectedElement_d, sizeof(int), cudaMemcpyDeviceToHost); 
-	if (selectedElementIndex < 0)
+	RayCast << <grid, threads >> >(vis, d_rayCastIntersect_d, rayOrigin, rayDir, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+	printf("intersectionCoord: %f, %f, %f, %f\n", intersectionCoord.x,intersectionCoord.y,intersectionCoord.z,intersectionCoord.w);
+	if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
 	{
 		return 1;
 	}
 	else
 	{
-		cudaMemcpy(&selectedElementCoord, &vis[selectedElementIndex], sizeof(float)*3, cudaMemcpyDeviceToHost); 
-		int clearSelectedIndex[1];
-		clearSelectedIndex[0] = -1;
-		cudaMemcpy(g_selectedElement_d, &clearSelectedIndex[0], sizeof(int), cudaMemcpyHostToDevice); 
-		printf("selectedIndex: %i\n", selectedElementIndex);
-		printf("selectedCoord: %f, %f, %f\n", selectedElementCoord.x,selectedElementCoord.y,selectedElementCoord.z);
-		//return selectedElementCoord;
+		cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+		float4 clearSelectedIndex[1];
+		clearSelectedIndex[0] = { 0, 0, 0, 1e6 };
+		cudaMemcpy(d_rayCastIntersect_d, &clearSelectedIndex[0], sizeof(float4), cudaMemcpyHostToDevice); 
+		rayCastIntersectCoord.x = intersectionCoord.x;
+		rayCastIntersectCoord.y = intersectionCoord.y;
+		rayCastIntersectCoord.z = intersectionCoord.z;
 		return 0;
 	}
 }

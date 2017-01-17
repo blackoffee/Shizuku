@@ -107,7 +107,7 @@ public:
 	void Draw();
 	void UpdateValue();
 	float GetValue();
-	virtual void Drag(float dx, float dy);
+	virtual void Drag(int x, int y, float dx, float dy);
 };
 
 class Slider : public Panel
