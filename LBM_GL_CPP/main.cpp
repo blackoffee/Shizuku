@@ -820,10 +820,8 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	{
 		DeviceLighting(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
 	}
-	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
+	LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible,cameraPosition);
 	CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
-	//UpdateFloor(dptr, g_floor_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
-	//LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_lightMesh_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible);
 
 	// unmap buffer object
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);

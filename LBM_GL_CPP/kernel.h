@@ -26,9 +26,7 @@ void DeviceLighting(float4* vis, Obstruction* obst_d, int xDimVisible, int yDimV
 
 void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
 
-void UpdateFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
-
-void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
+void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible, float3 cameraPosition);
 
 void Refraction(float4* vis, float* floor_d,  float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
 
