@@ -6,6 +6,8 @@ DESCRIPTION OF APPLICATION
 Solves the 2D incompressible Navier-Stokes equations on the GPU while allowing mouse based interactions.
 
 ![Alt text](Screenshot1.png?raw=true "Title")
+![Alt text](Screenshot2.png?raw=true "Title")
+![Alt text](Screenshot3.png?raw=true "Title")
 
 GENERAL USAGE NOTES
 --------------------
@@ -19,6 +21,6 @@ GENERAL USAGE NOTES
 INSTALLATION INSTRUCTIONS
 -------------------------
 
-1. Download Release.rar
+1. Download Release.zip
 2. Extract all contents to any location on your drive
 3. Run LBM_GL_CPP.exe
