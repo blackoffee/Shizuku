@@ -52,19 +52,20 @@ void Mouse::Move(int x, int y)
 
 	if (m_currentlySelectedPanel != NULL)
 	{
+		int mod = glutGetModifiers();
 		if (m_lmb == 1)
 		{
 			m_currentlySelectedPanel->Drag(x,y,dx, dy);
+		}
+		else if (m_mmb == 1 && mod == GLUT_ACTIVE_CTRL)
+		{
+			translate_x += dx;
+			translate_y += dy;
 		}
 		else if (m_mmb == 1)
 		{
 			rotate_x += dy*45.f;
 			rotate_z += dx*45.f;
-		}
-		else if (m_rmb == 1)
-		{
-			translate_x += dx;
-			translate_y += dy;
 		}
 	}
 	else

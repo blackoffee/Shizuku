@@ -979,17 +979,26 @@ __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin,
 			float3 sw{ pos[j].x, pos[j].y, pos[j].z };
 
 			float3 intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
-			if (IsPointInsideTriangle(nw, ne, se, intersectingPoint) || IsPointInsideTriangle(ne, se, sw, intersectingPoint))
+			if (IsPointInsideTriangle(nw, ne, se, intersectingPoint))
 			{
 				float distance = Distance(intersectingPoint, rayOrigin);
 				if (distance < rayCastIntersect[0].w)
 				{
-					rayCastIntersect[0].x = intersectingPoint.x;
-					rayCastIntersect[0].y = intersectingPoint.y;
-					rayCastIntersect[0].z = intersectingPoint.z;
-					rayCastIntersect[0].w = distance;
+					rayCastIntersect[0] = { intersectingPoint.x, intersectingPoint.y, intersectingPoint.z, distance };
 				}
 				//printf("distance in kernel: %f\n", distance);
+			}
+			else{
+				intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, ne, se, sw);
+				if (IsPointInsideTriangle(ne, se, sw, intersectingPoint))
+				{
+					float distance = Distance(intersectingPoint, rayOrigin);
+					if (distance < rayCastIntersect[0].w)
+					{
+						rayCastIntersect[0] = { intersectingPoint.x, intersectingPoint.y, intersectingPoint.z, distance };
+					}
+					//printf("distance in kernel: %f\n", distance);
+				}
 			}
 		}
 	}
