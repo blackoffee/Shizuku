@@ -29,7 +29,7 @@ public:
 	void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
 	void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY);
 	void Click(Mouse mouse);
-	void Drag(int x, int y, float dx, float dy);
+	void Drag(int xi, int yi, float dxf, float dyf);
 	void AddObstruction(Mouse mouse);
 	void AddObstruction(int simX, int simY);
 	void RemoveObstruction(Mouse mouse);

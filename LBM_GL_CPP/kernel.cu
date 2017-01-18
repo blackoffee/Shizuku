@@ -7,25 +7,10 @@ extern int g_yDim;
 extern float4 *d_rayCastIntersect_d;
 extern int g_paused;
 
-//float uMax = 0.06f;
-//float omega = 1.9f;
-
-//int BLOCKSIZEX = 64;
-//int BLOCKSIZEY = 1;
-
-//grid and threads for CUDA
-
-//int nBlocks = ((g_xDim + BLOCKSIZEX - 1) / BLOCKSIZEX)*(g_yDim / BLOCKSIZEY);
-//int n = nBlocks*BLOCKSIZEX*BLOCKSIZEY;
-
-
-
 /*----------------------------------------------------------------------------------------
  *	Device Variables
 */
 __device__ float4 d_rayCastIntersect;
-
-
 
 /*----------------------------------------------------------------------------------------
  *	Device functions
@@ -38,7 +23,7 @@ __global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, fl
 	obstructions[obstNumber].y = y;
 }
 
-inline __device__ bool isInsideObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ bool IsInsideObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
 	for (int i = 0; i < MAXOBSTS; i++){
 		float r1 = obstructions[i].r1 + tolerance;
 		if (obstructions[i].shape == Obstruction::SQUARE){//square
@@ -62,7 +47,7 @@ inline __device__ bool isInsideObstruction(int x, int y, Obstruction* obstructio
 	return false;
 }
 
-inline __device__ int getObstructionFromCoord(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ int GetObstructionFromCoord(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
 	for (int i = 0; i < MAXOBSTS; i++){
 		float r1 = obstructions[i].r1 + tolerance;
 		if (obstructions[i].shape == Obstruction::SQUARE){//square
@@ -85,28 +70,6 @@ inline __device__ int getObstructionFromCoord(int x, int y, Obstruction* obstruc
 	}
 	return -1;
 }
-
-
-
-//defines BCs for grid
-// no longer in use. 10/29/2016
-//inline __device__ int ImageFcn(int x, int y, obstruction* obstructions){
-//	//if(y == 0 || x == XDIM-1 || y == YDIM-1)
-//	if (x < 0.1f)
-//		return 3;//west
-//	else if ((XDIM - x) < 1.1f)
-//		return 2;//east
-//	else if ((YDIM - y) < 1.1f)
-//		return 11;//11;//xsymmetry top
-//	else if (y < 0.1f)
-//		return 12;//12;//xsymmetry bottom
-
-//	for (int i = 0; i < MAXOBSTS; i++){
-//		if (abs(x - obstructions[i].x)<obstructions[i].r && abs(y - obstructions[i].y)<obstructions[i].r)
-//			return 1;//10;
-//	}
-//	return 0;
-//}
 
 __device__ int dmin(int a, int b)
 {
@@ -291,7 +254,7 @@ __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord, int 
 }
 
 // Initialize domain using constant velocity
-__global__ void initialize_single(float4* pos, float *f, int *Im, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void InitializeLBM(float4* pos, float *f, int *Im, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -367,7 +330,7 @@ __device__ void DirichletWest(float &f0, float &f1, float &f2,
 }
 
 // applies BCs
-__device__ void boundaries(float& f0, float& f1, float& f2,
+__device__ void ApplyBCs(float& f0, float& f1, float& f2,
 	float& f3, float& f4, float& f5,
 	float& f6, float& f7, float& f8,
 	int y, int im, int xDim, int yDim, float uMax)
@@ -395,7 +358,7 @@ __device__ void boundaries(float& f0, float& f1, float& f2,
 }
 
 // LBM collision step using MRT method
-__device__ void mrt_collide(float &f0, float &f1, float &f2,
+__device__ void MrtCollide(float &f0, float &f1, float &f2,
 	float &f3, float &f4, float &f5,
 	float &f6, float &f7, float &f8, float omega, float &Q)
 {
@@ -459,14 +422,14 @@ __device__ void mrt_collide(float &f0, float &f1, float &f2,
 
 
 // main LBM function including streaming and colliding
-__global__ void mrt_d_single(float4* pos, float* fA, float* fB,
+__global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	float omega, int *Im, Obstruction *obstructions, int contourVar, float contMin, float contMax, int viewMode, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
 	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
 	int im = Im[j];//ImageFcn(x, y, obstructions); // 
-	if (isInsideObstruction(x, y, obstructions)) im = 1;
+	if (IsInsideObstruction(x, y, obstructions)) im = 1;
 	float f0, f1, f2, f3, f4, f5, f6, f7, f8;
 	f0 = fA[j];
 	f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -501,9 +464,9 @@ __global__ void mrt_d_single(float4* pos, float* fA, float* fB,
 		fB[f_mem(8, x, y)] = f6;
 	}
 	else{
-		boundaries(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
+		ApplyBCs(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
-		mrt_collide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
+		MrtCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
 
 		fB[f_mem(0, x, y)] = f0;
 		fB[f_mem(1, x, y)] = f1;
@@ -729,7 +692,7 @@ __global__ void PhongLighting(float4* pos, Obstruction *obstructions, int xDimVi
 
 
 
-__global__ void initialize_Floor(float4* pos, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void InitializeFloorMesh(float4* pos, float* floor_d, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -835,7 +798,7 @@ __device__ float ComputeAreaFrom4Points(float2 nw, float2 ne, float2 sw, float2 
 	return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
 }
 
-__global__ void update_LightMesh(float4* pos, float2* lightMesh_d, float3 incidentLight, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void ComputeAndStoreCausticRayDesitinations(float4* pos, float2* lightMesh_d, float3 incidentLight, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -844,7 +807,7 @@ __global__ void update_LightMesh(float4* pos, float2* lightMesh_d, float3 incide
 	if (x < xDimVisible && y < yDimVisible)
 	{
 		float2 lightPositionOnFloor;
-		if (isInsideObstruction(x, y, obstructions,1.f))
+		if (IsInsideObstruction(x, y, obstructions,1.f))
 		{
 			lightPositionOnFloor = make_float2(x, y);
 		}
@@ -857,7 +820,7 @@ __global__ void update_LightMesh(float4* pos, float2* lightMesh_d, float3 incide
 	}
 }
 
-__global__ void LightFloorUsingLightMesh(float* floor_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void DeformFloorMeshUsingCausticRayDestinations(float* floor_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -879,7 +842,7 @@ __global__ void LightFloorUsingLightMesh(float* floor_d, float2* lightMesh_d, Ob
 	}
 }
 
-__global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
+__global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -900,9 +863,9 @@ __global__ void light_Floor(float4* pos, float* floor_d, float* floorFiltered_d,
 	unsigned char B = 255.f;
 	unsigned char A = 255.f;
 
-	if (isInsideObstruction(x, y, obstructions, 0.5f))
+	if (IsInsideObstruction(x, y, obstructions, 0.5f))
 	{
-		if (isInsideObstruction(x, y, obstructions))
+		if (IsInsideObstruction(x, y, obstructions))
 		{
 			zcoord = -0.3f; // dmin(-0.3f, zcoord + 0.05f);// -0.3f;
 		}
@@ -944,7 +907,7 @@ __global__ void refraction_Floor(float4* pos, float* floor_d, float* floorFilter
 	float lightFactor = cosf(x*0.05f);// dmin(1.f, floor_d[x + y*MAX_XDIM]);
 	floor_d[x + y*MAX_XDIM] = 0.5f;
 
-	if (isInsideObstruction(x, y, obstructions))
+	if (IsInsideObstruction(x, y, obstructions))
 	{
 		zcoord = 0.1f;
 		lightFactor = 1.f;
@@ -971,7 +934,7 @@ __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin,
 
 	if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
 	{
-		if (isInsideObstruction(x, y, obstructions, 1.f))
+		if (IsInsideObstruction(x, y, obstructions, 1.f))
 		{
 			float3 nw{ pos[j+MAX_XDIM].x, pos[j+MAX_XDIM].y, pos[j+MAX_XDIM].z };
 			float3 ne{ pos[j+MAX_XDIM+1].x, pos[j+MAX_XDIM+1].y, pos[j+MAX_XDIM+1].z };
@@ -1015,7 +978,7 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, fl
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	initialize_single << <grid, threads >> >(vis, f_d, im_d, xDim, yDim, uMax, xDimVisible, yDimVisible);
+	InitializeLBM << <grid, threads >> >(vis, f_d, im_d, xDim, yDim, uMax, xDimVisible, yDimVisible);
 }
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
@@ -1026,10 +989,10 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 	for (int i = 0; i < tStep; i++)
 	{
-		mrt_d_single << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, viewMode, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
+		MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, viewMode, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
 		if (g_paused == 0)
 		{
-			mrt_d_single << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, viewMode, xDim, yDim, uMax, xDimVisible, yDimVisible);
+			MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, viewMode, xDim, yDim, uMax, xDimVisible, yDimVisible);
 		}
 	}
 }
@@ -1057,7 +1020,7 @@ void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVi
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	initialize_Floor << <grid, threads >> >(vis, floor_d, xDim, yDim, xDimVisible, yDimVisible);
+	InitializeFloorMesh << <grid, threads >> >(vis, floor_d, xDim, yDim, xDimVisible, yDimVisible);
 }
 
 void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible, float3 cameraPosition)
@@ -1065,10 +1028,10 @@ void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFi
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
 	float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
-	update_LightMesh << <grid, threads >> >(vis, lightMesh_d, incidentLight1, obst_d, xDim, yDim, xDimVisible, yDimVisible);
-	LightFloorUsingLightMesh << <grid, threads >> >(floor_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	ComputeAndStoreCausticRayDesitinations << <grid, threads >> >(vis, lightMesh_d, incidentLight1, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	DeformFloorMeshUsingCausticRayDestinations << <grid, threads >> >(floor_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 
-	light_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 
 	//phong lighting on floor mesh to shade obstructions
 	PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, xDimVisible, yDimVisible, cameraPosition);
@@ -1105,9 +1068,4 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrig
 		rayCastIntersectCoord.z = intersectionCoord.z;
 		return 0;
 	}
-}
-
-int runCUDA()
-{
-    return 0;
 }

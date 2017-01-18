@@ -437,12 +437,6 @@ void SetUpButtons()
 	Window.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
 	Window.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
 	Window.GetButton("Water Rendering")->m_callBack = WaterRenderingButtonCallBack;
-//	Window.GetButton("Initialize"        )->m_displayText = "Initialize"        ;
-//	Window.GetButton("Velocity Magnitude")->m_displayText = "Velocity Magnitude";
-//	Window.GetButton("X Velocity"        )->m_displayText = "X Velocity"        ;
-//	Window.GetButton("Y Velocity"        )->m_displayText = "Y Velocity"        ;
-//	Window.GetButton("StrainRate"        )->m_displayText = "Strain Rate"       ;
-//	Window.GetButton("Pressure"          )->m_displayText = "Pressure"          ;
 
 	std::vector<Button*> buttons = {
 		Window.GetButton("Velocity Magnitude"),
@@ -453,17 +447,11 @@ void SetUpButtons()
 		Window.GetButton("Water Rendering") };
 	contourButtons = ButtonGroup(buttons);
 
-
 	//Shape buttons
 	Window.GetButton("Square")->m_callBack = SquareButtonCallBack;
 	Window.GetButton("Circle")->m_callBack = CircleButtonCallBack;
 	Window.GetButton("Hor. Line")->m_callBack = HorLineButtonCallBack;
 	Window.GetButton("Vert. Line")->m_callBack = VertLineButtonCallBack;
-
-//	Window.GetButton("Square"        )->m_displayText = "Square"        ;
-//	Window.GetButton("Circle"        )->m_displayText = "Circle"        ;
-//	Window.GetButton("Hor. Line"     )->m_displayText = "Hor. Line"     ;
-//	Window.GetButton("Vert. Line"    )->m_displayText = "Vert. Line"    ;
 
 	std::vector<Button*> buttons2 = {
 		Window.GetButton("Square"),
@@ -489,7 +477,6 @@ void DrawShapePreview()
 	float centerX = previewPanel->m_rectFloat_abs.GetCentroidX();
 	float centerY = previewPanel->m_rectFloat_abs.GetCentroidY();
 	float graphicsToWindowScaleFactor = static_cast<float>(winw)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
-	//float r1 = static_cast<float>(g_currentSize)/g_xDim*2.f*graphicsToWindowScaleFactor;
 
 	int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (g_xDimVisible); //r1x in pixels
 	int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (g_yDimVisible); //r1x in pixels
@@ -827,9 +814,6 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
 }
-
-
-
 
 
 void Draw2D()

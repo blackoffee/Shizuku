@@ -187,9 +187,9 @@ void GraphicsManager::Click(Mouse mouse)
 	}
 }
 
-void GraphicsManager::Drag(int x, int y, float dx, float dy)
+void GraphicsManager::Drag(int xi, int yi, float dxf, float dyf)
 {
-	MoveObstruction(x,y,dx, dy);
+	MoveObstruction(xi,yi,dxf,dyf);
 }
 
 void GraphicsManager::AddObstruction(Mouse mouse)
