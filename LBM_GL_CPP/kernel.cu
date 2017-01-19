@@ -16,11 +16,12 @@ __device__ float4 d_rayCastIntersect;
  *	Device functions
  */
 
-__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, float r, float x, float y, Obstruction::Shape shape){
+__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, float r, float x, float y, Obstruction::Shape shape, Obstruction::State state){
 	obstructions[obstNumber].shape = shape;
 	obstructions[obstNumber].r1 = r;
 	obstructions[obstNumber].x = x;
 	obstructions[obstNumber].y = y;
+	obstructions[obstNumber].state = state;
 }
 
 inline __device__ bool IsInsideObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
@@ -45,6 +46,30 @@ inline __device__ bool IsInsideObstruction(int x, int y, Obstruction* obstructio
 		}
 	}
 	return false;
+}
+
+inline __device__ int FindOverlappingObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+	for (int i = 0; i < MAXOBSTS; i++){
+		float r1 = obstructions[i].r1 + tolerance;
+		if (obstructions[i].shape == Obstruction::SQUARE){//square
+			if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
+			if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
+					<r1*r1+0.1f)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
+			if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+				return i;//10;
+		}
+		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
+			if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+				return i;//10;
+		}
+	}
+	return -1;
 }
 
 inline __device__ int GetObstructionFromCoord(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
@@ -588,9 +613,9 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	if (contourVar == ContourVariable::WATER_RENDERING)
 	{
 		variableValue = StrainRate;
-		R = 200; G = 200; B = 255;
+		R = 100; G = 150; B = 255;
 		//R = 50; G = 120; B = 255;
-		A = 75;// 155;
+		A = 100;
 	}
 //	if (viewMode == ViewMode::THREE_DIMENSIONAL)
 //	{
@@ -901,9 +926,22 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 
 	if (IsInsideObstruction(x, y, obstructions, 0.5f))
 	{
-		if (IsInsideObstruction(x, y, obstructions))
+		//if (IsInsideObstruction(x, y, obstructions))
+		int obstID = FindOverlappingObstruction(x, y, obstructions);
+		if (obstID >= 0)
 		{
-			zcoord = -0.3f; // dmin(-0.3f, zcoord + 0.05f);// -0.3f;
+			if (obstructions[obstID].state == Obstruction::NEW)
+			{
+				zcoord = dmin(-0.3f, zcoord + 0.075f);// -0.3f;
+				if (zcoord > -0.29f)
+				{
+					obstructions[obstID].state = Obstruction::NORMAL;
+				}
+			}
+			else
+			{
+				zcoord = -0.3f;
+			}
 		}
 			lightFactor = 0.8f;
 			R = 255.f;
@@ -1035,7 +1073,7 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst)
 {
-	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape);
+	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape,newObst.state);
 }
 
 void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible)

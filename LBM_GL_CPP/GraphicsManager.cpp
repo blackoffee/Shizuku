@@ -196,7 +196,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
 {
 	int xi, yi;
 	GetSimCoordFromMouseCoord(xi, yi, mouse);
-	Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0 };
+	Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0, Obstruction::NEW };
 	int obstId = FindUnusedObstructionId();
 	m_obstructions[obstId] = obst;
 	UpdateDeviceObstructions(g_obst_d, obstId, obst);
@@ -204,7 +204,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
 
 void GraphicsManager::AddObstruction(int simX, int simY)
 {
-	Obstruction obst = { g_currentShape, simX, simY, g_currentSize, 0 };
+	Obstruction obst = { g_currentShape, simX, simY, g_currentSize, 0, Obstruction::NEW  };
 	int obstId = FindUnusedObstructionId();
 	m_obstructions[obstId] = obst;
 	UpdateDeviceObstructions(g_obst_d, obstId, obst);
@@ -214,14 +214,14 @@ void GraphicsManager::RemoveObstruction(Mouse mouse)
 {
 	int obstId = FindClosestObstructionId(mouse);
 	if (obstId < 0) return;
-	Obstruction obst = { g_currentShape, -100, -100, 0, 0 };
+	Obstruction obst = { g_currentShape, -100, -100, 0, 0 , Obstruction::NEW };
 	m_obstructions[obstId] = obst;
 	UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
 void GraphicsManager::RemoveObstruction(int simX, int simY)
 {
-	Obstruction obst = { g_currentShape, -100, -100, g_currentSize, 0 };
+	Obstruction obst = { g_currentShape, -100, -100, g_currentSize, 0 , Obstruction::NEW };
 	int obstId = FindObstructionPointIsInside(simX,simY,1.f);
 	if (obstId >= 0)
 	{
@@ -260,6 +260,7 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
 			Obstruction obst = m_obstructions[m_currentObstId];
 			obst.x += simX2-simX1;
 			obst.y += simY2-simY1;
+			obst.state = Obstruction::NORMAL;
 			m_obstructions[m_currentObstId] = obst;
 			UpdateDeviceObstructions(g_obst_d, m_currentObstId, obst);
 		}

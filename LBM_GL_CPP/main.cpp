@@ -738,11 +738,13 @@ void SetUpCUDA()
 	g_obstructions[0].x = 30;// g_xDim*0.2f;
 	g_obstructions[0].y = 42;// g_yDim*0.3f;
 	g_obstructions[0].shape = Obstruction::SQUARE;
+	g_obstructions[0].state = Obstruction::NEW;
 
 	g_obstructions[1].r1 = 6.5;
 	g_obstructions[1].x = 30;// g_xDim*0.2f;
 	g_obstructions[1].y = 58;// g_yDim*0.3f;
 	g_obstructions[1].shape = Obstruction::SQUARE;
+	g_obstructions[1].state = Obstruction::NEW;
 
 //	for (int i = 0; i < domainSize; i++)
 //	{
