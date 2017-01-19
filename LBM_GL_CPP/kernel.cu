@@ -357,8 +357,8 @@ __device__ void ApplyBCs(float& f0, float& f1, float& f2,
 	}
 }
 
-// LBM collision step using MRT method
-__device__ void MrtCollide(float &f0, float &f1, float &f2,
+// LBM collision step 
+__device__ void LbmCollide(float &f0, float &f1, float &f2,
 	float &f3, float &f4, float &f5,
 	float &f6, float &f7, float &f8, float omega, float &Q)
 {
@@ -406,6 +406,7 @@ __device__ void MrtCollide(float &f0, float &f1, float &f2,
 	Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
 	float tau0 = 1.f / omega;
 	float CS = SMAG_CONST;// 0.1f;
+	//float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 1000000.0*Q*Q*Q);
 	float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
 	omega = 1.f / tau;
 
@@ -418,6 +419,40 @@ __device__ void MrtCollide(float &f0, float &f1, float &f2,
 	f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 - m8*omega*0.25f);
 	f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 + m8*omega*0.25f);
 	f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omega*0.25f);
+
+	//MRT Scheme. Might be slightly more stable, but needs more optimization
+//	float m[9];
+//	float meq[9];
+//	float S[9] = {1.f,1.f,1.f,1.f,1.f,1.f,1.f,omega,omega};
+//		meq[1] = -2.0*rho+3.0*usqr;//e_eq (uses rho, Yu)
+//		meq[2] = rho-3.0*usqr; //epsilon_eq (uses rho, Yu)
+//		meq[4] = -u;//qx_eq
+//		meq[6] = -v;//qy_eq
+//		meq[7] = u*u-v*v;//pxx_eq
+//		meq[8] = u*v;//pxy_eq
+
+////		m[0] = 1*f0+ 1*f1+ 1*f2+ 1*f3+ 1*f4+ 1*f5+ 1*f6+ 1*f7+ 1*f8;
+//		m[1] =-4*f0+-1*f1+-1*f2+-1*f3+-1*f4+ 2*f5+ 2*f6+ 2*f7+ 2*f8;
+//		m[2] = 4*f0+-2*f1+-2*f2+-2*f3+-2*f4+ 1*f5+ 1*f6+ 1*f7+ 1*f8;
+////		m[3] = 0*f0+ 1*f1+ 0*f2+-1*f3+ 0*f4+ 1*f5+-1*f6+-1*f7+ 1*f8;
+//		m[4] = 0*f0+-2*f1+ 0*f2+ 2*f3+ 0*f4+ 1*f5+-1*f6+-1*f7+ 1*f8;
+////		m[5] = 0*f0+ 0*f1+ 1*f2+ 0*f3+-1*f4+ 1*f5+ 1*f6+-1*f7+-1*f8;
+//		m[6] = 0*f0+ 0*f1+-2*f2+ 0*f3+ 2*f4+ 1*f5+ 1*f6+-1*f7+-1*f8;
+//		m[7] = 0*f0+ 1*f1+-1*f2+ 1*f3+-1*f4+ 0*f5+ 0*f6+ 0*f7+ 0*f8;
+//		m[8] = 0*f0+ 0*f1+ 0*f2+ 0*f3+ 0*f4+ 1*f5+-1*f6+ 1*f7+-1*f8;
+//		
+//		f0-=-4*(m[1]-meq[1])*S[1]/36.0+4 *(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
+//		f1-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+-2*(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+   (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
+//		f2-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+-2*(m[6]-meq[6])*S[6]/12.0+-  (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
+//		f3-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+2 *(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+   (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
+//		f4-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+2 *(m[6]-meq[6])*S[6]/12.0+-  (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
+//		f5-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+   (m[4]-meq[4])*S[4]/12.0+   (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+   (m[8]-meq[8])*omega/4.0;
+//		f6-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+-  (m[4]-meq[4])*S[4]/12.0+   (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+-  (m[8]-meq[8])*omega/4.0;
+//		f7-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+-  (m[4]-meq[4])*S[4]/12.0+-  (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+   (m[8]-meq[8])*omega/4.0;
+//		f8-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+   (m[4]-meq[4])*S[4]/12.0+-  (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+-  (m[8]-meq[8])*omega/4.0;	
+			
+
+
 }
 
 
@@ -466,7 +501,7 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	else{
 		ApplyBCs(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
-		MrtCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
+		LbmCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
 
 		fB[f_mem(0, x, y)] = f0;
 		fB[f_mem(1, x, y)] = f1;
@@ -553,8 +588,9 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	if (contourVar == ContourVariable::WATER_RENDERING)
 	{
 		variableValue = StrainRate;
-		R = 50; G = 120; B = 255;
-		A = 155;
+		R = 200; G = 200; B = 255;
+		//R = 50; G = 120; B = 255;
+		A = 75;// 155;
 	}
 //	if (viewMode == ViewMode::THREE_DIMENSIONAL)
 //	{
@@ -1047,7 +1083,6 @@ void Refraction(float4* vis, float* floor_d, float* floorFiltered_d, float2* lig
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
 {
 	float4 intersectionCoord{ 0, 0, 0, 1e6 };
-	//float3 rayCastIntersectCoord{ -1000000.f, -1000000.f, -1000000.f };
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
 	RayCast << <grid, threads >> >(vis, d_rayCastIntersect_d, rayOrigin, rayDir, obst_d, xDim, yDim, xDimVisible, yDimVisible);
