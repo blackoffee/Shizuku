@@ -30,22 +30,22 @@ inline __device__ bool IsInsideObstruction(float x, float y, Obstruction* obstru
 	for (int i = 0; i < MAXOBSTS; i++){
 		if (obstructions[i].state != Obstruction::INACTIVE)
 		{
-			float r1 = obstructions[i].r1 + tolerance;
+			float r1 = obstructions[i].r1;
 			if (obstructions[i].shape == Obstruction::SQUARE){//square
-				if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
+				if (abs(x - obstructions[i].x)<r1 + tolerance && abs(y - obstructions[i].y)<r1 + tolerance)
 					return true;//10;
 			}
 			else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
 				if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-						<r1*r1+0.1f)
+						<(r1+tolerance)*(r1+tolerance)+0.1f)
 					return true;//10;
 			}
 			else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-				if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+				if (abs(x - obstructions[i].x)<r1*2+tolerance && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
 					return true;//10;
 			}
 			else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-				if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+				if (abs(y - obstructions[i].y)<r1*2+tolerance && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
 					return true;//10;
 			}
 		}
@@ -995,7 +995,7 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 	unsigned char B = 255.f;
 	unsigned char A = 255.f;
 
-	if (IsInsideObstruction(x, y, obstructions, 1.f))
+	if (IsInsideObstruction(x, y, obstructions, 0.99f))
 	{
 		//if (IsInsideObstruction(x, y, obstructions))
 		int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
