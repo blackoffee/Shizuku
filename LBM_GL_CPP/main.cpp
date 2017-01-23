@@ -733,17 +733,22 @@ void SetUpCUDA()
 		g_obstructions[i].r1 = 0;
 		g_obstructions[i].x = 0;
 		g_obstructions[i].y = -1000;
+		g_obstructions[i].state = Obstruction::REMOVED;
 	}	
 	g_obstructions[0].r1 = 6.5;
 	g_obstructions[0].x = 30;// g_xDim*0.2f;
 	g_obstructions[0].y = 42;// g_yDim*0.3f;
+	g_obstructions[0].u = 0;// g_yDim*0.3f;
+	g_obstructions[0].v = 0;// g_yDim*0.3f;
 	g_obstructions[0].shape = Obstruction::SQUARE;
 	g_obstructions[0].state = Obstruction::NEW;
 
-	g_obstructions[1].r1 = 6.5;
+	g_obstructions[1].r1 = 4.5;
 	g_obstructions[1].x = 30;// g_xDim*0.2f;
-	g_obstructions[1].y = 58;// g_yDim*0.3f;
-	g_obstructions[1].shape = Obstruction::SQUARE;
+	g_obstructions[1].y = 100;// g_yDim*0.3f;
+	g_obstructions[1].u = 0;// g_yDim*0.3f;
+	g_obstructions[1].v = 0;// g_yDim*0.3f;
+	g_obstructions[1].shape = Obstruction::VERTICAL_LINE;
 	g_obstructions[1].state = Obstruction::NEW;
 
 //	for (int i = 0; i < domainSize; i++)
@@ -804,6 +809,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 	g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
 	MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_viewMode, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
+	SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
 	if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
 	{

@@ -76,7 +76,7 @@ public:
 	virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
 	virtual void Drag(int x, int y, float dx, float dy);
-	virtual void Click(Mouse mouse);
+	virtual void ClickDown(Mouse mouse);
 };
 
 class Button : public Panel
@@ -88,7 +88,7 @@ public:
 	Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 	Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
-	virtual void Click(Mouse mouse);
+	virtual void ClickDown(Mouse mouse);
 };
 
 class Slider;

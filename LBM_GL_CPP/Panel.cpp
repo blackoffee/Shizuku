@@ -313,11 +313,11 @@ void Panel::Drag(int x, int y, float dx, float dy)
 	}
 }
 
-void Panel::Click(Mouse mouse)
+void Panel::ClickDown(Mouse mouse)
 {
 	if (m_graphicsManager != NULL)
 	{
-		m_graphicsManager->Click(mouse);
+		m_graphicsManager->ClickDown(mouse);
 	}
 }
 
@@ -334,7 +334,7 @@ Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string
 	m_displayText = m_name;
 }
 
-void Button::Click(Mouse mouse)
+void Button::ClickDown(Mouse mouse)
 {
 	if (m_callBack != NULL)
 	{

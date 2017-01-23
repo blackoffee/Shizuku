@@ -16,57 +16,65 @@ __device__ float4 d_rayCastIntersect;
  *	Device functions
  */
 
-__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, float r, float x, float y, Obstruction::Shape shape, Obstruction::State state){
+__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, float r, float x, float y, Obstruction::Shape shape, Obstruction::State state, float u=0.f, float v=0.f){
 	obstructions[obstNumber].shape = shape;
 	obstructions[obstNumber].r1 = r;
 	obstructions[obstNumber].x = x;
 	obstructions[obstNumber].y = y;
+	obstructions[obstNumber].u = u;
+	obstructions[obstNumber].v = v;
 	obstructions[obstNumber].state = state;
 }
 
-inline __device__ bool IsInsideObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ bool IsInsideObstruction(float x, float y, Obstruction* obstructions, float tolerance = 0.f){
 	for (int i = 0; i < MAXOBSTS; i++){
-		float r1 = obstructions[i].r1 + tolerance;
-		if (obstructions[i].shape == Obstruction::SQUARE){//square
-			if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
-				return true;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
-			if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-					<r1*r1+0.1f)
-				return true;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-			if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-				return true;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-			if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-				return true;//10;
+		if (obstructions[i].state != Obstruction::INACTIVE)
+		{
+			float r1 = obstructions[i].r1 + tolerance;
+			if (obstructions[i].shape == Obstruction::SQUARE){//square
+				if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
+					return true;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
+				if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
+						<r1*r1+0.1f)
+					return true;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
+				if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+					return true;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
+				if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+					return true;//10;
+			}
 		}
 	}
 	return false;
 }
 
-inline __device__ int FindOverlappingObstruction(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ int FindOverlappingObstruction(float x, float y, Obstruction* obstructions, float tolerance = 0.f){
 	for (int i = 0; i < MAXOBSTS; i++){
-		float r1 = obstructions[i].r1 + tolerance;
-		if (obstructions[i].shape == Obstruction::SQUARE){//square
-			if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
-				return i;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
-			if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-					<r1*r1+0.1f)
-				return i;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-			if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-				return i;//10;
-		}
-		else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-			if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-				return i;//10;
+		if (obstructions[i].state != Obstruction::INACTIVE)
+		{
+			float r1 = obstructions[i].r1 + tolerance;
+			if (obstructions[i].shape == Obstruction::SQUARE){//square
+				if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
+					return i;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
+				if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
+						<r1*r1+0.1f)
+					return i;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
+				if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+					return i;//10;
+			}
+			else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
+				if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+					return i;//10;
+			}
 		}
 	}
 	return -1;
@@ -382,6 +390,38 @@ __device__ void ApplyBCs(float& f0, float& f1, float& f2,
 	}
 }
 
+__device__ void ComputeFEqs(float *feq, float rho, float u, float v)
+{
+	float usqr = u*u+v*v;
+	feq[0] = 4.0f/9.0f*(rho-1.5f*usqr);
+	feq[1] = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
+	feq[2] = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
+	feq[3] = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
+	feq[4] = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
+	feq[5] = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
+	feq[6] = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
+	feq[7] = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
+	feq[8] = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
+}
+
+__device__ void MovingWall(float &f0, float &f1, float &f2,
+	float &f3, float &f4, float &f5,
+	float &f6, float &f7, float &f8, float rho, float u, float v)
+{
+	float feq[9];
+	ComputeFEqs(feq, rho, u, v);
+	f0 = feq[0];
+	f1 = feq[1];
+	f2 = feq[2];
+	f3 = feq[3];
+	f4 = feq[4];
+	f5 = feq[5];
+	f6 = feq[6];
+	f7 = feq[7];
+	f8 = feq[8];
+}
+
+
 // LBM collision step 
 __device__ void LbmCollide(float &f0, float &f1, float &f2,
 	float &f3, float &f4, float &f5,
@@ -410,8 +450,7 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
 	//	m6 =                -2.f*f2        + 2.f*f4+     f5+     f6 -    f7 -    f8-(-v);//qy_eq
 	//	m7 =             f1 -    f2+     f3 -    f4                                -(u*u-v*v);//pxx_eq
 	//	m8 =                                             f5 -    f6+     f7 -    f8-(u*v);//pxy_eq
-	
-	
+
 	float usqr = u*u+v*v;
 	float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
 	float feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
@@ -489,7 +528,19 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	int y = threadIdx.y + blockIdx.y*blockDim.y;
 	int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
 	int im = Im[j];//ImageFcn(x, y, obstructions); // 
-	if (IsInsideObstruction(x, y, obstructions)) im = 1;
+	float u, v, rho;
+	int obstId = FindOverlappingObstruction(x, y, obstructions);
+	if (obstId >= 0)
+	{
+		if (obstructions[obstId].u < 1e-5f && obstructions[obstId].v < 1e-5f)
+		{
+			im = 1; //bounce back
+		}
+		else
+		{
+			im = 20; //moving wall
+		}
+	}
 	float f0, f1, f2, f3, f4, f5, f6, f7, f8;
 	f0 = fA[j];
 	f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -501,12 +552,8 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
 	f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
 
-
-	float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-	float u = f1 - f3 + f5 - f6 - f7 + f8;
-	float v = f2 - f4 + f5 + f6 - f7 - f8;
-	float usqr = u*u+v*v;
 	float StrainRate;
+
 
 	if (im == 99)
 	{
@@ -514,6 +561,21 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	}
 	else if (im == 1 || im == 10){//bounce-back condition
 		//atomicAdd();   //will need this if force is to be computed
+		fB[f_mem(1, x, y)] = f3;
+		fB[f_mem(2, x, y)] = f4;
+		fB[f_mem(3, x, y)] = f1;
+		fB[f_mem(4, x, y)] = f2;
+		fB[f_mem(5, x, y)] = f7;
+		fB[f_mem(6, x, y)] = f8;
+		fB[f_mem(7, x, y)] = f5;
+		fB[f_mem(8, x, y)] = f6;
+	}
+	else if (im == 20)
+	{
+		u = 0.f; v = 0.f, rho = 1.0f;
+		u = obstructions[FindOverlappingObstruction(x, y, obstructions)].u;
+		v = obstructions[FindOverlappingObstruction(x, y, obstructions)].v;
+		MovingWall(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
 		fB[f_mem(1, x, y)] = f3;
 		fB[f_mem(2, x, y)] = f4;
 		fB[f_mem(3, x, y)] = f1;
@@ -538,6 +600,13 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 		fB[f_mem(7, x, y)] = f7;
 		fB[f_mem(8, x, y)] = f8;
 	}
+
+
+	rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
+	u = f1 - f3 + f5 - f6 - f7 + f8;
+	v = f2 - f4 + f5 + f6 - f7 - f8;
+	float usqr = u*u+v*v;
+
 
 	//Prepare data for visualization
 
@@ -627,7 +696,7 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 //		zcoord = -1.f;
 //		R = 0; G = 0; B = 0;
 //	}
-	if (im == 1){
+	if (im == 1 && viewMode == TWO_DIMENSIONAL){
 		R = 204; G = 204; B = 204;
 		//zcoord = 0.15f;
 	}
@@ -895,11 +964,14 @@ __global__ void DeformFloorMeshUsingCausticRayDestinations(float* floor_d, float
 		se = lightMesh_d[(x+1)+(y)*MAX_XDIM];
 		float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
 		float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
-
-		atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
-		atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
-		atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
-		atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+		//if (!IsInsideObstruction(sw.x,sw.y,obstructions,1.f))
+			atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
+		//if (!IsInsideObstruction(se.x,se.y,obstructions,1.f))
+			atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
+		//if (!IsInsideObstruction(ne.x,ne.y,obstructions,1.f))
+			atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+		//if (!IsInsideObstruction(nw.x,nw.y,obstructions,1.f))
+			atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
 	}
 }
 
@@ -915,7 +987,6 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 	zcoord = pos[j].z;
 	//zcoord = -1.f;
 
-	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 	float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
 	floor_d[x + y*MAX_XDIM] = 0.f;
 
@@ -924,29 +995,37 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 	unsigned char B = 255.f;
 	unsigned char A = 255.f;
 
-	if (IsInsideObstruction(x, y, obstructions, 0.5f))
+	if (IsInsideObstruction(x, y, obstructions, 1.f))
 	{
 		//if (IsInsideObstruction(x, y, obstructions))
-		int obstID = FindOverlappingObstruction(x, y, obstructions);
+		int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
 		if (obstID >= 0)
 		{
 			if (obstructions[obstID].state == Obstruction::NEW)
 			{
 				zcoord = dmin(-0.3f, zcoord + 0.075f);// -0.3f;
-				if (zcoord > -0.29f)
-				{
-					obstructions[obstID].state = Obstruction::NORMAL;
-				}
 			}
-			else
+			else if (obstructions[obstID].state == Obstruction::REMOVED)
+			{
+				zcoord = dmax(-1.f, zcoord - 0.075f);// -0.3f;
+			}
+			else if (obstructions[obstID].state == Obstruction::ACTIVE)
 			{
 				zcoord = -0.3f;
 			}
+			else
+			{
+				zcoord = -1.f;
+			}
 		}
-			lightFactor = 0.8f;
-			R = 255.f;
-			G = 255.f;
-			B = 255.f;
+		else
+		{
+			zcoord = -1.f;
+		}
+		lightFactor = 0.8f;
+		R = 255.f;
+		G = 255.f;
+		B = 255.f;
 	}
 	else
 	{
@@ -959,8 +1038,37 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 	char b[] = { R, G, B, A };
 	float color;
 	std::memcpy(&color, &b, sizeof(color));
+	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
+
+__global__ void UpdateObstructionTransientStates(float4* pos, Obstruction* obstructions)
+{
+	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+	int y = threadIdx.y + blockIdx.y*blockDim.y;
+	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+	float xcoord, ycoord, zcoord;
+
+	zcoord = pos[j].z;
+
+	if (IsInsideObstruction(x, y, obstructions, 1.f))
+	{
+		//if (IsInsideObstruction(x, y, obstructions))
+		int obstID = FindOverlappingObstruction(x, y, obstructions);
+		if (obstID >= 0)
+		{
+			if (zcoord > -0.29f)
+			{
+				obstructions[obstID].state = Obstruction::ACTIVE;
+			}
+			if (zcoord < -0.99f)
+			{
+				obstructions[obstID].state = Obstruction::INACTIVE;
+			}
+		}
+	}
+}
+
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
@@ -1055,6 +1163,20 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, fl
 	InitializeLBM << <grid, threads >> >(vis, f_d, im_d, xDim, yDim, uMax, xDimVisible, yDimVisible);
 }
 
+void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
+{
+	for (int i = 0; i < MAXOBSTS; i++)
+	{
+		if (obst_h[i].u > 0.f || obst_h[i].v > 0.f)
+		{
+			obst_h[i].u = 0.f;
+			obst_h[i].v = 0.f;
+			UpdateObstructions << <1, 1 >> >(obst_d,i,obst_h[i].r1,obst_h[i].x,obst_h[i].y,obst_h[i].shape,obst_h[i].state,obst_h[i].u,obst_h[i].v);
+		}
+	}
+}
+
+
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
 	ContourVariable contVar, float contMin, float contMax, ViewMode viewMode, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible)
 {
@@ -1073,7 +1195,7 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst)
 {
-	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape,newObst.state);
+	UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst.r1,newObst.x,newObst.y,newObst.shape,newObst.state,newObst.u,newObst.v);
 }
 
 void CleanUpDeviceVBO(float4* vis, int xDimVisible, int yDimVisible)
@@ -1106,6 +1228,7 @@ void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFi
 	DeformFloorMeshUsingCausticRayDestinations << <grid, threads >> >(floor_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 
 	ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
+	UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
 	//phong lighting on floor mesh to shade obstructions
 	PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, xDimVisible, yDimVisible, cameraPosition);

@@ -28,7 +28,7 @@ public:
 	int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse);
 	void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
 	void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY);
-	void Click(Mouse mouse);
+	void ClickDown(Mouse mouse);
 	void Drag(int xi, int yi, float dxf, float dyf);
 	void AddObstruction(Mouse mouse);
 	void AddObstruction(int simX, int simY);

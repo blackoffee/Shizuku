@@ -78,9 +78,9 @@ void Mouse::Click(int x, int y, int button, int state)
 {
 	Update(x, y, button, state);
 	m_currentlySelectedPanel = GetPanelThatPointIsIn(m_basePanel, intCoordToFloatCoord(x, m_winW), intCoordToFloatCoord(y, m_winH));
-	if (m_currentlySelectedPanel != NULL)
+	if (m_currentlySelectedPanel != NULL && state == GLUT_DOWN)
 	{
-		m_currentlySelectedPanel->Click(*this);
+		m_currentlySelectedPanel->ClickDown(*this);
 	}
 }
 
