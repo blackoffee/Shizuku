@@ -3,7 +3,7 @@
 DESCRIPTION OF APPLICATION
 --------------------------
 
-Solves the 2D incompressible Navier-Stokes equations on the GPU while allowing mouse based interactions.
+Solves and renders the shallow water equations on the GPU while allowing mouse based interactions.
 
 ![Alt text](Screenshot1.png?raw=true "Title")
 ![Alt text](Screenshot2.png?raw=true "Title")
