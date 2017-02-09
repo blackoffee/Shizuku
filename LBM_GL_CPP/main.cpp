@@ -558,25 +558,6 @@ void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res)
 }
 
 
-void GenerateIndexListForSurface(GLuint &arrayIndexBuffer)
-{
-	int* elementArrayIndices = new int[(MAX_XDIM-1)*(MAX_YDIM-1) * 4];
-	for (int j = 0; j < MAX_YDIM-1; j++){
-		for (int i = 0; i < MAX_XDIM-1; i++){
-			//going clockwise, since y orientation will be flipped when rendered
-			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 0] = (i)+(j)*MAX_XDIM;
-			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 1] = (i + 1) + (j)*MAX_XDIM;
-			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 2] = (i+1)+(j + 1)*MAX_XDIM;
-			elementArrayIndices[j*(MAX_XDIM-1)*4+i * 4 + 3] = (i)+(j + 1)*MAX_XDIM;
-		}
-	}
-
-	glGenBuffers(1, &arrayIndexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*(MAX_XDIM-1)*(MAX_YDIM-1)*4, elementArrayIndices, GL_DYNAMIC_DRAW);
-	free(elementArrayIndices);
-}
-
 void GenerateIndexListForSurfaceAndFloor(GLuint &arrayIndexBuffer)
 {
 	GLuint* elementArrayIndices = new GLuint[(MAX_XDIM-1)*(MAX_YDIM-1) * 4 * 2];
@@ -619,34 +600,12 @@ void SetUpGLInterop()
 	unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
 	CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize, cudaGraphicsMapFlagsWriteDiscard);
 
-	//printf("%s",glGetString(GL_VERSION));
-//	g_floorFrameBuffer = 0;
-//	glGenFramebuffersEXT(1, &g_floorFrameBuffer);
-//	//glBindFramebufferEXT(GL_FRAMEBUFFER, g_floorFrameBuffer);
-
-
-//	glGenTextures(1, &g_floorTexture);
-//	glBindTexture(GL_TEXTURE_2D, g_floorTexture);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_xDimVisible*g_initialScaleUp, g_yDimVisible*g_initialScaleUp, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-//	glFramebufferTextureEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_floorTexture, 0);
-//	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-//	glDrawBuffers(1, DrawBuffers);
-
-//	if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){  //Check for FBO completeness
-// 		std::cout << "Error! FrameBuffer is not complete" << std::endl;
-//  }
-
 }
 
 void CleanUpGLInterop()
 {
 	CleanUpIndexList(g_elementArrayIndexBuffer);
-	//CleanUpIndexList(g_elementArrayIndexFloorBuffer);
 	DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
-	//DeleteVBO(&g_vboFloor, g_cudaFloor);
 }
 
 
@@ -945,6 +904,7 @@ void Draw()
 		g_timeBefore = clock();
 	}
 
+
 	glutReshapeWindow(winw, winh);
 	g_currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
 	g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
@@ -986,27 +946,6 @@ void Draw()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-//	glBindFramebufferEXT(GL_FRAMEBUFFER, g_floorFrameBuffer);
-////	//Draw Floor
-////	glBindBuffer(GL_ARRAY_BUFFER, g_vboFloor);
-////	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexFloorBuffer);
-////	glVertexPointer(3, GL_FLOAT, 16, 0);
-////	glEnableClientState(GL_VERTEX_ARRAY);
-////	glEnableClientState(GL_COLOR_ARRAY);
-////	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-////	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1) * 4, GL_UNSIGNED_INT, (GLvoid*)0);
-////	glDisableClientState(GL_VERTEX_ARRAY);
-//	glBegin(GL_QUADS);
-//	glColor4f(1.f,1.f,1.f,1.f);
-//	glVertex3f( 0.f,-0.3f, -1.f);
-//	glVertex3f( 0.1f,-0.3f, -1.f);
-//	glVertex3f( 0.1f,-0.3f, 0.3f);
-//	glVertex3f( 0.f, -0.3f, 0.3f);
-//	glEnd();
-
-//	glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
-
-	glDisable(GL_CULL_FACE);
 	//Draw solution field
 	glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
@@ -1015,16 +954,20 @@ void Draw()
 	glColor3f(1.0, 0.0, 0.0);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-	//glDrawArrays(GL_POINTS, 0, (MAX_XDIM*MAX_YDIM * 2));
-	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1)*4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
-	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(MAX_YDIM - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+	if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+	{
+		//Draw floor
+		glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(g_yDimVisible - 1)*4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+	}
+	//Draw water surface
+	glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(g_yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+	glDisableClientState(GL_VERTEX_ARRAY);
 
 	GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
         std::cout << "OpenGL error: " << err << std::endl;
     }
 
-	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glGetIntegerv(GL_VIEWPORT, viewport);
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
@@ -1062,7 +1005,6 @@ int main(int argc,char **argv)
 
 	glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
 	glutInitWindowSize(1400,g_leftPanelHeight+200);
-	//glutInitWindowSize(g_initialScaleUp*g_xDim+g_leftPanelWidth,g_initialScaleUp*g_yDim);
 	glutInitWindowPosition(200,100);
 	glutCreateWindow("Interactive CFD");
 
@@ -1072,7 +1014,6 @@ int main(int argc,char **argv)
 	glutMouseFunc(MouseButton);
 	glutMotionFunc(MouseMotion);
 	glutKeyboardFunc(Keyboard);
-//	glutPassiveMotionFunc(MousePassiveMotion);
 	glutMouseWheelFunc(MouseWheel);
 	glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 

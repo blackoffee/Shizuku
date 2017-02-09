@@ -613,26 +613,11 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	//need to change x,y,z coordinates to NDC (-1 to 1)
 	float xcoord, ycoord, zcoord;
 	int index;
-	//int xdim = blockDim.x*gridDim.x;
-	//int ydim = blockDim.y*gridDim.y;
-	//xcoord = threadIdx.x + blockDim.x*blockIdx.x;
-	//ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-	index = j;// x + y*blockDim.x*gridDim.x;
-	////	x /= (float)(blockDim.x*gridDim.x)*0.5f;
-	////	y /= (float)(blockDim.x*gridDim.x)*0.5f;//(float)(blockDim.y*gridDim.y);
-	//xcoord /= xDim / 2;
-	//ycoord /= yDim / 2;//(float)(blockDim.y*gridDim.y);
-	//xcoord -= 1.0;// xdim / maxDim;
-	//ycoord -= 1.0;// ydim / maxDim;
-
+	index = j;
 	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
 	if (im == 1) rho = 1.0;
-	zcoord =  (rho - 1.0f) - 0.5f;// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
-	//zcoord = -0.5f;// 0.05f*sinf(0.1f*(x)) + 0.05f*sinf(0.1f*y);// (rho - 1.0f) - 0.5f;// *15.f;//f1-f3+f5-f6-f7+f8;//rho;//(rho-1.0f)*2.f;
-
-	//Color c = Color::FromArgb(1);
-	//pos[threadIdx.x+threadIdx.y*blockDim.x] = make_float4(x,y,z,1.0f);
+	zcoord =  (rho - 1.0f) - 0.5f;
 
 	//for color, need to convert 4 bytes (RGBA) to float
 	float color;
@@ -683,7 +668,6 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	{
 		variableValue = StrainRate;
 		R = 100; G = 150; B = 255;
-		//R = 50; G = 120; B = 255;
 		A = 100;
 	}
 //	if (viewMode == ViewMode::THREE_DIMENSIONAL)
@@ -709,21 +693,11 @@ __global__ void MarchLBM(float4* pos, float* fA, float* fB,
 	}
 
 
-	//if (x > 100 && x < 110 && y > 50 && y < 52)
-	//{
-	//	R = 255; G = 0; B = 0;
-	//}
-
-	
-	//char b[] = {(char)R, (char)G, (char)B, (char)A};
-	//char b[] = { R*cosTheta, G*cosTheta, B*cosTheta, A };
 	char b[] = { R, G, B, A };
-	//char b[] = {'100','1','1','100'};
 	std::memcpy(&color, &b, sizeof(color));
 
 	//vbo aray to be displayed
-	pos[index] = make_float4(xcoord, ycoord, zcoord, color);
-	//vel[index] = make_float4(xcoord, ycoord, u, 1.0f);
+	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 
 }
 
@@ -1073,41 +1047,6 @@ __global__ void UpdateObstructionTransientStates(float4* pos, Obstruction* obstr
  * End of device functions
  */
 
-__global__ void refraction_Floor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
-{
-	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-	int y = threadIdx.y + blockIdx.y*blockDim.y;
-	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-	float xcoord, ycoord, zcoord;
-
-	xcoord = lightMesh_d[x + y*MAX_XDIM].x;
-	ycoord = lightMesh_d[x + y*MAX_XDIM].y;
-
-	float2 coordOfFloor = ComputePositionOfLightOnFloor(pos, make_float3(0, 0, -1), x, y, xDimVisible, yDimVisible);
-
-	ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-	float lightFactor = cosf(x*0.05f);// dmin(1.f, floor_d[x + y*MAX_XDIM]);
-	floor_d[x + y*MAX_XDIM] = 0.5f;
-
-	if (IsInsideObstruction(x, y, obstructions))
-	{
-		zcoord = 0.1f;
-		lightFactor = 1.f;
-	}
-	else
-	{
-		zcoord = -1.f;
-	}
-
-	unsigned char R = 50.f*lightFactor;
-	unsigned char G = 120.f*lightFactor;
-	unsigned char B = 255.f*lightFactor;
-	unsigned char A = 255.f;
-
-	char b[] = { R, G, B, A };
-}
-
-
 __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
 	int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
@@ -1232,13 +1171,6 @@ void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFi
 
 	//phong lighting on floor mesh to shade obstructions
 	PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, xDimVisible, yDimVisible, cameraPosition);
-}
-
-void Refraction(float4* vis, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible)
-{
-	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	//refraction_Floor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, xDim, yDim, xDimVisible, yDimVisible);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible)

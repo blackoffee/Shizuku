@@ -24,6 +24,4 @@ void InitializeFloor(float4* vis, float* floor_d, int xDim, int yDim, int xDimVi
 
 void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible, float3 cameraPosition);
 
-void Refraction(float4* vis, float* floor_d,  float* floorFiltered_d, float2* lightMesh_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
-
 int RayCastMouseClick(float3 &selectedElementCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d, int xDim, int yDim, int xDimVisible, int yDimVisible);
