@@ -807,10 +807,6 @@ __global__ void InitializeFloorMesh(float4* pos, float* floor_d, int xDim, int y
 	zcoord = -1.f;
 	unsigned char R(255), G(255), B(255), A(255);
 
-	R = 255.f;
-	G = 255.f;
-	B = 255.f;
-
 	char b[] = { R, G, B, A };
 	float color;
 	std::memcpy(&color, &b, sizeof(color));
@@ -820,8 +816,6 @@ __global__ void InitializeFloorMesh(float4* pos, float* floor_d, int xDim, int y
 __device__ float2 ComputePositionOfLightOnFloor(float4* pos, float3 incidentLight, int x, int y,  int xDimVisible, int yDimVisible)
 {
 	int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-
-	unsigned char R(255), G(255), B(255), A(255);
 
 	float3 n = { 0, 0, 1 };
 	float slope_x = 0.f;
@@ -878,7 +872,7 @@ __global__ void ComputeAndStoreCausticRayDesitinations(float4* pos, float2* ligh
 			lightPositionOnFloor = ComputePositionOfLightOnFloor(pos, incidentLight, x, y, xDimVisible, yDimVisible);
 		}
 
-	lightMesh_d[j] = lightPositionOnFloor;
+		lightMesh_d[j] = lightPositionOnFloor;
 	}
 }
 
@@ -896,14 +890,10 @@ __global__ void DeformFloorMeshUsingCausticRayDestinations(float* floor_d, float
 		se = lightMesh_d[(x+1)+(y)*MAX_XDIM];
 		float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
 		float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
-		//if (!IsInsideObstruction(sw.x,sw.y,obstructions,1.f))
-			atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
-		//if (!IsInsideObstruction(se.x,se.y,obstructions,1.f))
-			atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
-		//if (!IsInsideObstruction(ne.x,ne.y,obstructions,1.f))
-			atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
-		//if (!IsInsideObstruction(nw.x,nw.y,obstructions,1.f))
-			atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+		atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
 	}
 }
 
@@ -929,17 +919,16 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
 
 	if (IsInsideObstruction(x, y, obstructions, 0.99f))
 	{
-		//if (IsInsideObstruction(x, y, obstructions))
 		int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
 		if (obstID >= 0)
 		{
 			if (obstructions[obstID].state == Obstruction::NEW)
 			{
-				zcoord = dmin(-0.3f, zcoord + 0.075f);// -0.3f;
+				zcoord = dmin(-0.3f, zcoord + 0.075f);
 			}
 			else if (obstructions[obstID].state == Obstruction::REMOVED)
 			{
-				zcoord = dmax(-1.f, zcoord - 0.075f);// -0.3f;
+				zcoord = dmax(-1.f, zcoord - 0.075f);
 			}
 			else if (obstructions[obstID].state == Obstruction::ACTIVE)
 			{
@@ -985,7 +974,6 @@ __global__ void UpdateObstructionTransientStates(float4* pos, Obstruction* obstr
 
 	if (IsInsideObstruction(x, y, obstructions, 1.f))
 	{
-		//if (IsInsideObstruction(x, y, obstructions))
 		int obstID = FindOverlappingObstruction(x, y, obstructions);
 		if (obstID >= 0)
 		{
@@ -1000,10 +988,6 @@ __global__ void UpdateObstructionTransientStates(float4* pos, Obstruction* obstr
 		}
 	}
 }
-
-/*----------------------------------------------------------------------------------------
- * End of device functions
- */
 
 __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, int xDim, int yDim, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
 {
@@ -1047,15 +1031,14 @@ __global__ void RayCast(float4* pos, float4* rayCastIntersect, float3 rayOrigin,
 
 }
 
-
-
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
+
+
 void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible)
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
 	InitializeLBM << <grid, threads >> >(vis, f_d, im_d, xDim, yDim, uMax, xDimVisible, yDimVisible);
 }
@@ -1079,7 +1062,6 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 {
 	dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
 	dim3 grid(ceil(static_cast<float>(g_xDim) / BLOCKSIZEX), g_yDim / BLOCKSIZEY);
-	//dim3 grid(g_xDim / BLOCKSIZEX, g_yDim / BLOCKSIZEY);
 	for (int i = 0; i < tStep; i++)
 	{
 		MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, viewMode, contMax, xDim, yDim, uMax, xDimVisible, yDimVisible);
