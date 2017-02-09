@@ -807,56 +807,14 @@ __global__ void InitializeFloorMesh(float4* pos, float* floor_d, int xDim, int y
 	zcoord = -1.f;
 	unsigned char R(255), G(255), B(255), A(255);
 
-	float3 n = { 0, 0, 1 };
-	float slope_x = 0.f;
-	float slope_y = 0.f;
-	float cellSize = 2.f / xDimVisible;
-	if (x == 0)
-	{
-	}
-	else if (y == 0)
-	{
-	}
-	else if (x >= xDimVisible - 1)
-	{
-	}
-	else if (y >= yDimVisible - 1)
-	{
-	}
-	else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
-	{
-		slope_x = (pos[(x + 1) + y*MAX_XDIM].z - pos[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
-		slope_y = (pos[(x)+(y + 1)*MAX_XDIM].z - pos[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
-		n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-		n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-		n.z = 2.f*cellSize*2.f*cellSize;
-	}
-	Normalize(n);
-	float theta1 = acosf(n.z / sqrt(DotProduct(n, n)));
-	float theta2 = asinf(1.0 / 1.33f)*sin(theta1);
-	float dx = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*(-n.x);
-	float dy = sin(theta1 - theta2)*(pos[(x)+(y)*MAX_XDIM].z + 1.f)*(-n.y);
-
-	float attenuation = 0.1f;// (pos[(x)+(y)*MAX_XDIM].z + 1.f)*0.5f;
-
-
-
-	R = 255.f*cos(theta1)*attenuation;
-	G = 255.f*cos(theta1)*attenuation;
-	B = 255.f*cos(theta1)*attenuation;
+	R = 255.f;
+	G = 255.f;
+	B = 255.f;
 
 	char b[] = { R, G, B, A };
 	float color;
 	std::memcpy(&color, &b, sizeof(color));
-	int newX = x;// +dx;
-	int newY = y;// + dy;
-	if (newX > 0 && newX < xDimVisible && newY > 0 && newY < yDimVisible && false)
-	{
-		pos[newX + newY*MAX_XDIM] = make_float4(xcoord, ycoord, zcoord, color);
-	}
-	else{
-		pos[j] = make_float4(xcoord, ycoord, zcoord, color);
-	}
+	pos[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
 __device__ float2 ComputePositionOfLightOnFloor(float4* pos, float3 incidentLight, int x, int y,  int xDimVisible, int yDimVisible)
