@@ -3,7 +3,7 @@
 DESCRIPTION OF APPLICATION
 --------------------------
 
-Solves the 2D incompressible Navier-Stokes equations on the GPU while allowing mouse based interactions.
+Solves and renders the shallow water equations on the GPU while allowing mouse based interactions.
 
 ![Alt text](Screenshot1.png?raw=true "Title")
 ![Alt text](Screenshot2.png?raw=true "Title")
@@ -17,6 +17,7 @@ GENERAL USAGE NOTES
 - Middle click to remove existing object from simulation domain
 - Left click and drag to move existing object within simulation domain
 - Resize the window to change the simulation domain extents
+- In 3D mode, use the middle button to rotate the model. Hold Ctrl and use the middle button to pan the model.
 
 INSTALLATION INSTRUCTIONS
 -------------------------
