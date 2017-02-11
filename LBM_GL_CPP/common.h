@@ -15,15 +15,15 @@ enum ViewMode{TWO_DIMENSIONAL,THREE_DIMENSIONAL};
 
 struct Obstruction
 {
-	enum Shape{SQUARE,CIRCLE,HORIZONTAL_LINE,VERTICAL_LINE};
-	enum State{ACTIVE,INACTIVE,NEW,REMOVED};
-	//Obstruction() : state(NEW) {}
-	Shape shape;
-	float x;
-	float y;
-	float r1;
-	float r2;
-	float u;
-	float v;
-	State state;
+    enum Shape{SQUARE,CIRCLE,HORIZONTAL_LINE,VERTICAL_LINE};
+    enum State{ACTIVE,INACTIVE,NEW,REMOVED};
+    //Obstruction() : state(NEW) {}
+    Shape shape;
+    float x;
+    float y;
+    float r1;
+    float r2;
+    float u;
+    float v;
+    State state;
 };

@@ -12,7 +12,7 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, int xDim, int yDim, fl
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d);
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
-						ContourVariable contVar, float contMin, float contMax, ViewMode viewMode, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible);
+                        ContourVariable contVar, float contMin, float contMax, ViewMode viewMode, int xDim, int yDim, float uMax, float omega, int tStep, int xDimVisible, int yDimVisible);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst);
 
