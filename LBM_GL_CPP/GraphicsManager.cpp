@@ -4,7 +4,8 @@
 
 
 extern Obstruction* g_obst_d;
-extern int g_xDim, g_yDim, g_xDimVisible, g_yDimVisible, g_tStep;
+extern SimulationParameters g_simParams;
+extern int g_tStep;
 extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
 extern float g_initialScaleUp;
@@ -26,24 +27,24 @@ GraphicsManager::GraphicsManager(Panel* panel)
 
 void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
     float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-    //float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-    //float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
+    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
+    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
     xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
     yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-    //float graphicsToSimDomainScalingFactor = static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-    //float graphicsToSimDomainScalingFactor = 1.f/g_initialScaleUp;// static_cast<float>(g_xDim) / m_parent->m_rectInt_abs.m_w;
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(g_xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(g_yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
+    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
+    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
     xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
     yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
 }
@@ -68,6 +69,8 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX,
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
     int returnVal = 0;
@@ -83,8 +86,8 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     {
         m_currentZ = selectedCoordF.z;
 
-        xOut = (selectedCoordF.x + 1.f)*0.5f*g_xDimVisible;
-        yOut = (selectedCoordF.y + 1.f)*0.5f*g_xDimVisible;
+        xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
+        yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
     }
     else
     {
@@ -93,15 +96,13 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
-    //GetSimCoordFromFloatCoord(xOut, yOut, selectedCoordF.x, selectedCoordF.y);
-    //printf("Coords: %i, %i\n", xOut,yOut);
-
     return returnVal;
 }
 
 // get simulation coordinates from mouse ray casting on plane on m_currentZ
 void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
 
@@ -109,12 +110,13 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mous
     float xf = rayOrigin.x + t*rayDir.x;
     float yf = rayOrigin.y + t*rayDir.y;
 
-    xOut = (xf + 1.f)*0.5f*g_xDimVisible;
-    yOut = (yf + 1.f)*0.5f*g_xDimVisible;
+    xOut = (xf + 1.f)*0.5f*xDimVisible;
+    yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
 
 void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
@@ -122,8 +124,8 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX
     float xf = rayOrigin.x + t*rayDir.x;
     float yf = rayOrigin.y + t*rayDir.y;
 
-    xOut = (xf + 1.f)*0.5f*g_xDimVisible;
-    yOut = (yf + 1.f)*0.5f*g_xDimVisible;
+    xOut = (xf + 1.f)*0.5f*xDimVisible;
+    yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
 
 void GraphicsManager::ClickDown(Mouse mouse)
@@ -232,6 +234,8 @@ void GraphicsManager::RemoveObstruction(int simX, int simY)
 
 void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
 {
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     if (m_currentObstId > -1)
     {
         if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
@@ -240,8 +244,8 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
             float dxi, dyi;
             int windowWidth = m_parent->GetRootPanel()->m_rectInt_abs.m_w;
             int windowHeight = m_parent->GetRootPanel()->m_rectInt_abs.m_h;
-            dxi = dxf*static_cast<float>(g_xDimVisible) / min(m_parent->m_rectFloat_abs.m_w, g_xDimVisible*g_initialScaleUp/windowWidth*2.f);
-            dyi = dyf*static_cast<float>(g_yDimVisible) / min(m_parent->m_rectFloat_abs.m_h, g_yDimVisible*g_initialScaleUp/windowHeight*2.f);
+            dxi = dxf*static_cast<float>(xDimVisible) / min(m_parent->m_rectFloat_abs.m_w, xDimVisible*g_initialScaleUp/windowWidth*2.f);
+            dyi = dyf*static_cast<float>(yDimVisible) / min(m_parent->m_rectFloat_abs.m_h, yDimVisible*g_initialScaleUp/windowHeight*2.f);
             obst.x += dxi;
             obst.y += dyi;
             float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (2.f*g_tStep)));
