@@ -17,6 +17,7 @@
 #include "Mouse.h"
 #include "Panel.h"
 #include "common.h"
+#include "SimulationParameters.h"
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 int winw, winh;
@@ -24,7 +25,7 @@ const int g_leftPanelWidth(350);
 const int g_drawingPanelWidth(0);
 const int g_leftPanelHeight(500);
 const int g_drawingPanelHeight(0);
-float g_initialScaleUp(2.f); 
+float g_initialScaleUp(1.f); 
 
 int g_fpsCount = 0;
 int g_fpsLimit = 20;
@@ -34,9 +35,11 @@ clock_t g_timeBefore;
 
 
 //simulation inputs
-int g_xDim = 512; // 256;// 512;
+SimulationParameters g_simParams;
+int g_xDim = 384; // 256;// 512;
 int g_yDim = 384; //;// 384;
-int g_xDimVisible, g_yDimVisible;
+int g_xDimVisible = 384;
+int g_yDimVisible = 384;
 float g_uMax = 0.125f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
@@ -108,6 +111,7 @@ void ThreeDButtonCallBack();
 void Resize(int w, int h);
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
+void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp);
 
 void Init()
 {
@@ -119,9 +123,17 @@ void Init()
 
 void SetUpWindow()
 {
-    winw = g_xDim*g_initialScaleUp + g_leftPanelWidth;
-    winh = max(g_yDim*g_initialScaleUp,static_cast<float>(g_leftPanelHeight+100));
-    UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+    SimulationParameters_init(&g_simParams);
+    g_simParams.SetXDimVisible(&g_simParams, g_xDimVisible);
+    g_simParams.SetYDimVisible(&g_simParams, g_yDimVisible);
+
+
+    winw = 1200;// g_xDim*g_initialScaleUp + g_leftPanelWidth;
+    winh = g_leftPanelHeight + 100;// max(g_yDim*g_initialScaleUp, static_cast<float>(g_leftPanelHeight + 100));
+    //UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
+    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth, winw, winh, g_initialScaleUp);
+
+
 
     Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
     Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
@@ -353,7 +365,7 @@ void InitializeButtonCallBack()
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, g_xDim, g_yDim, u, g_xDimVisible, g_yDimVisible);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u);
 }
 
 void VelMagButtonCallBack()
@@ -744,11 +756,11 @@ void SetUpCUDA()
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
-    InitializeDomain(dptr, g_fB_d, g_im_d, MAX_XDIM, MAX_YDIM, u, g_xDimVisible, g_yDimVisible);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u);
+    InitializeDomain(dptr, g_fB_d, g_im_d, u);
 
-    InitializeFloor(dptr, g_floor_d, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
-    InitializeFloor(dptr, g_floorFiltered_d, MAX_XDIM, MAX_YDIM, g_xDimVisible, g_yDimVisible);
+    InitializeFloor(dptr, g_floor_d);
+    InitializeFloor(dptr, g_floorFiltered_d);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -767,15 +779,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
     g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
-    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_viewMode, g_xDim, g_yDim, u, omega, g_tStep, g_xDimVisible, g_yDimVisible);
+    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_viewMode, u, omega, g_tStep);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, g_xDimVisible, g_yDimVisible, cameraPosition);
+        LightSurface(dptr, g_obst_d, cameraPosition);
     }
-    LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d, g_xDim, g_yDim, g_xDimVisible, g_yDimVisible,cameraPosition);
-    CleanUpDeviceVBO(dptr, g_xDimVisible, g_yDimVisible);
+    LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d,cameraPosition);
+    CleanUpDeviceVBO(dptr);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
@@ -848,6 +860,11 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
     g_yDim = min(max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
     g_xDimVisible = min(max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
     g_yDimVisible = g_yDim;
+
+    g_simParams.SetXDimVisible(&g_simParams, g_xDimVisible);
+    g_simParams.SetYDimVisible(&g_simParams, g_yDimVisible);
+
+
 }
 
 void Resize(int w, int h)
@@ -1004,7 +1021,8 @@ int main(int argc,char **argv)
 
 
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-    glutInitWindowSize(1400,g_leftPanelHeight+200);
+    //glutInitWindowSize(1400,g_leftPanelHeight+200);
+    glutInitWindowSize(winw,winh);
     glutInitWindowPosition(200,100);
     glutCreateWindow("Interactive CFD");
 

@@ -177,6 +177,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
+    <ClCompile Include="SimulationParameters.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GraphicsManager.h" />
