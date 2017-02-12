@@ -873,7 +873,7 @@ __device__ float ComputeAreaFrom4Points(float2 nw, float2 ne, float2 sw, float2 
     return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
 }
 
-__global__ void ComputeAndStoreCausticRayDesitinations(float4* pos, float2* lightMesh_d, float3 incidentLight, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void ComputeAndStoreCausticRayDesitinations(float4* pos, float3 incidentLight, Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -893,11 +893,12 @@ __global__ void ComputeAndStoreCausticRayDesitinations(float4* pos, float2* ligh
             lightPositionOnFloor = ComputePositionOfLightOnFloor(pos, incidentLight, x, y, simParams);
         }
 
-        lightMesh_d[j] = lightPositionOnFloor;
+        pos[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
+        pos[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
     }
 }
 
-__global__ void DeformFloorMeshUsingCausticRayDestinations(float* floor_d, float2* lightMesh_d, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void DeformFloorMeshUsingCausticRayDestinations(float4* pos, float* floor_d, Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -907,30 +908,35 @@ __global__ void DeformFloorMeshUsingCausticRayDestinations(float* floor_d, float
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
         float2 nw, ne, sw, se;
-        nw = lightMesh_d[(x)+(y+1)*MAX_XDIM];
-        ne = lightMesh_d[(x+1)+(y+1)*MAX_XDIM];
-        sw = lightMesh_d[(x)+(y)*MAX_XDIM];
-        se = lightMesh_d[(x+1)+(y)*MAX_XDIM];
+//        nw = lightMesh_d[(x)+(y+1)*MAX_XDIM];
+//        ne = lightMesh_d[(x+1)+(y+1)*MAX_XDIM];
+//        sw = lightMesh_d[(x)+(y)*MAX_XDIM];
+//        se = lightMesh_d[(x+1)+(y)*MAX_XDIM];
+
+        nw = make_float2(pos[(x  )+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, pos[(x  )+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
+        ne = make_float2(pos[(x+1)+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, pos[(x+1)+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
+        sw = make_float2(pos[(x  )+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, pos[(x  )+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
+        se = make_float2(pos[(x+1)+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, pos[(x+1)+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
+
         float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
         float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
-        atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
-        atomicAdd(&floor_d[x+1 + (y)*MAX_XDIM], lightIntensity*0.25f);
+        atomicAdd(&floor_d[x   + (y  )*MAX_XDIM], lightIntensity*0.25f);
+        atomicAdd(&floor_d[x+1 + (y  )*MAX_XDIM], lightIntensity*0.25f);
         atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
-        atomicAdd(&floor_d[x + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+        atomicAdd(&floor_d[x   + (y+1)*MAX_XDIM], lightIntensity*0.25f);
     }
 }
 
-__global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* floorFiltered_d, float2* lightMesh_d, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* floorFiltered_d, Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     float xcoord, ycoord, zcoord;
 
-    xcoord = lightMesh_d[x + y*MAX_XDIM].x;
-    ycoord = lightMesh_d[x + y*MAX_XDIM].y;
+    xcoord = pos[j].x;
+    ycoord = pos[j].y;
     zcoord = pos[j].z;
-    //zcoord = -1.f;
 
     float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
     floor_d[x + y*MAX_XDIM] = 0.f;
@@ -985,7 +991,10 @@ __global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* 
     int xDimVisible = simParams.m_xDimVisible;
     int yDimVisible = simParams.m_yDimVisible;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-    pos[j] = make_float4(xcoord, ycoord, zcoord, color);
+    pos[j].x = xcoord;
+    pos[j].y = ycoord;
+    pos[j].z = zcoord;
+    pos[j].w = color;
 }
 
 __global__ void UpdateObstructionTransientStates(float4* pos, Obstruction* obstructions)
@@ -1133,17 +1142,17 @@ void InitializeFloor(float4* vis, float* floor_d)
     InitializeFloorMesh << <grid, threads >> >(vis, floor_d, g_simParams);
 }
 
-void LightFloor(float4* vis, float2* lightMesh_d, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, float3 cameraPosition)
+void LightFloor(float4* vis, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, float3 cameraPosition)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
-    ComputeAndStoreCausticRayDesitinations << <grid, threads >> >(vis, lightMesh_d, incidentLight1, obst_d, g_simParams);
-    DeformFloorMeshUsingCausticRayDestinations << <grid, threads >> >(floor_d, lightMesh_d, obst_d, g_simParams);
+    ComputeAndStoreCausticRayDesitinations << <grid, threads >> >(vis, incidentLight1, obst_d, g_simParams);
+    DeformFloorMeshUsingCausticRayDestinations << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, floorFiltered_d, lightMesh_d, obst_d, g_simParams);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, floorFiltered_d, obst_d, g_simParams);
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions

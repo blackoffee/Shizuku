@@ -91,12 +91,10 @@ int* g_elementArrayIndices;
 float* g_fA_h;
 float* g_fA_d;
 float* g_floor_h;
-float2* g_lightMesh_h;
 float* g_fB_h;
 float* g_fB_d;
 float* g_floor_d;
 float* g_floorFiltered_d;
-float2* g_lightMesh_d;
 int* g_im_h;
 int* g_im_d;
 Obstruction* g_obst_d;
@@ -679,7 +677,6 @@ void SetUpCUDA()
     g_fA_h = (float *)malloc(memsize);
     g_fB_h = (float *)malloc(memsize);
     g_floor_h = (float *)malloc(memsize_float);
-    g_lightMesh_h = (float2 *)malloc(memsize_float2);
     g_im_h = (int *)malloc(memsize_int);
     d_rayCastIntersect = { 0, 0, 0, 1e6 };
     //obstructions = (input_values *)malloc(memsize_inputs);
@@ -688,7 +685,6 @@ void SetUpCUDA()
     cudaMalloc((void **)&g_fB_d, memsize);
     cudaMalloc((void **)&g_floor_d, memsize_float);
     cudaMalloc((void **)&g_floorFiltered_d, memsize_float);
-    cudaMalloc((void **)&g_lightMesh_d, memsize_float2);
     cudaMalloc((void **)&g_im_d, memsize_int);
     cudaMalloc((void **)&g_obst_d, memsize_inputs);
     cudaMalloc((void **)&d_rayCastIntersect_d, sizeof(float4));
@@ -732,18 +728,13 @@ void SetUpCUDA()
     {
         g_floor_h[i] = 0;
     }
-    for (int i = 0; i < domainSize; i++)
-    {
-        g_lightMesh_h[i].x = 0;
-        g_lightMesh_h[i].y = 0;
-    }
+
     UpdateDeviceImage();
     
     cudaMemcpy(g_fA_d, g_fA_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_fB_d, g_fB_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floor_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floorFiltered_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_lightMesh_d, g_lightMesh_h, memsize_float2, cudaMemcpyHostToDevice);
 //	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
     cudaMemcpy(d_rayCastIntersect_d, &d_rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
@@ -786,7 +777,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     {
         LightSurface(dptr, g_obst_d, cameraPosition);
     }
-    LightFloor(dptr, g_lightMesh_d, g_floor_d, g_floorFiltered_d, g_obst_d,cameraPosition);
+    LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_obst_d,cameraPosition);
     CleanUpDeviceVBO(dptr);
 
     // unmap buffer object
