@@ -36,10 +36,7 @@ clock_t g_timeBefore;
 
 //simulation inputs
 SimulationParameters g_simParams;
-int g_xDim = 384; // 256;// 512;
-int g_yDim = 384; //;// 384;
-int g_xDimVisible = 384;
-int g_yDimVisible = 384;
+
 float g_uMax = 0.125f;
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
@@ -122,9 +119,6 @@ void Init()
 void SetUpWindow()
 {
     SimulationParameters_init(&g_simParams);
-    g_simParams.SetXDimVisible(&g_simParams, g_xDimVisible);
-    g_simParams.SetYDimVisible(&g_simParams, g_yDimVisible);
-
 
     winw = 1200;// g_xDim*g_initialScaleUp + g_leftPanelWidth;
     winh = g_leftPanelHeight + 100;// max(g_yDim*g_initialScaleUp, static_cast<float>(g_leftPanelHeight + 100));
@@ -488,8 +482,10 @@ void DrawShapePreview()
     float centerY = previewPanel->m_rectFloat_abs.GetCentroidY();
     float graphicsToWindowScaleFactor = static_cast<float>(winw)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
 
-    int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (g_xDimVisible); //r1x in pixels
-    int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (g_yDimVisible); //r1x in pixels
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
+    int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (xDimVisible); //r1x in pixels
+    int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (yDimVisible); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / winw*2.f;
     float r1fy = static_cast<float>(r1iy) / winh*2.f;
 
@@ -634,12 +630,14 @@ void timerEvent(int value)
 
 //BC function for host side
 int ImageFcn_h(int x, int y, Obstruction* obstructions){
+    int xDim = g_simParams.GetXDim(&g_simParams);
+    int yDim = g_simParams.GetYDim(&g_simParams);
     //if(y == 0 || x == XDIM-1 || y == YDIM-1)
     if (x < 0.1f)
         return 3;//west
-    else if ((g_xDim - x) < 1.1f)
+    else if ((xDim - x) < 1.1f)
         return 2;//east
-    else if ((g_yDim - y) < 1.1f)
+    else if ((yDim - y) < 1.1f)
         return 11;//11;//xsymmetry top
     else if (y < 0.1f)
         return 12;//12;//xsymmetry bottom
@@ -847,13 +845,13 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp)
 {
 
-    g_xDim = min(max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
-    g_yDim = min(max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
-    g_xDimVisible = min(max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
-    g_yDimVisible = g_yDim;
+    int xDim = min(max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
+    int yDim = min(max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
+    int xDimVisible = min(max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
+    int yDimVisible = yDim;
 
-    g_simParams.SetXDimVisible(&g_simParams, g_xDimVisible);
-    g_simParams.SetYDimVisible(&g_simParams, g_yDimVisible);
+    g_simParams.SetXDimVisible(&g_simParams, xDimVisible);
+    g_simParams.SetYDimVisible(&g_simParams, yDimVisible);
 
 
 }
@@ -901,7 +899,9 @@ void ComputeFPS(int &fpsCount, int fpsLimit, clock_t &before){
         //}
     }
     char fpsReport[256];
-    sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, g_fps, g_timeStepsPerSecond, g_xDim, g_yDim);
+    int xDim = g_simParams.GetXDim(&g_simParams);
+    int yDim = g_simParams.GetYDim(&g_simParams);
+    sprintf(fpsReport, "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh", g_tStep * 2, g_fps, g_timeStepsPerSecond, xDim, yDim);
     glutSetWindowTitle(fpsReport);
 }
 
@@ -920,8 +920,10 @@ void Draw()
 
     int graphicsViewWidth = winw - g_leftPanelWidth - g_drawingPanelWidth;
     int graphicsViewHeight = winh;
-    float xTranslation = -((static_cast<float>(winw)-g_xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth + g_drawingPanelWidth)) / winw*2.f;
-    float yTranslation = -((static_cast<float>(winh)-g_yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
+    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
+    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
+    float xTranslation = -((static_cast<float>(winw)-xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth + g_drawingPanelWidth)) / winw*2.f;
+    float yTranslation = -((static_cast<float>(winh)-yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
     float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
@@ -934,15 +936,15 @@ void Draw()
     glLoadIdentity();
 
     glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(g_xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(g_yDimVisible*g_initialScaleUp) / winh), 1.f);
+    glScalef((static_cast<float>(xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(yDimVisible*g_initialScaleUp) / winh), 1.f);
 
     if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
     {
-        glOrtho(-1,1,-1,static_cast<float>(g_yDimVisible)/g_xDimVisible*2.f-1.f,-100,20);
+        glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
     }
     else
     {
-        gluPerspective(45.0, static_cast<float>(g_xDimVisible) / g_yDimVisible, 0.1, 10.0);
+        gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
         glTranslatef(translate_x, translate_y, -2+translate_z);
         glRotatef(-rotate_x,1,0,0);
         glRotatef(rotate_z,0,0,1);
@@ -965,10 +967,10 @@ void Draw()
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
     {
         //Draw floor
-        glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(g_yDimVisible - 1)*4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+        glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
     }
     //Draw water surface
-    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(g_yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
     glDisableClientState(GL_VERTEX_ARRAY);
 
     GLenum err;
