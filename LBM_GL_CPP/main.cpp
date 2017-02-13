@@ -74,13 +74,9 @@ GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 cudaGraphicsResource *g_cudaSolutionField;
 
-float* g_fA_h;
 float* g_fA_d;
-float* g_floor_h;
-float* g_fB_h;
 float* g_fB_d;
 float* g_floor_d;
-int* g_im_h;
 int* g_im_d;
 Obstruction* g_obst_d;
 
@@ -636,17 +632,17 @@ int ImageFcn_h(int x, int y, Obstruction* obstructions){
 
 void UpdateDeviceImage()
 {
-    int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)
-                        *BLOCKSIZEX*BLOCKSIZEY;
+    int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEX*BLOCKSIZEY;
+    int* im_h = new int[domainSize];
     for (int i = 0; i < domainSize; i++)
     {
         int x = i%MAX_XDIM;
         int y = i/MAX_XDIM;
-        g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
+        im_h[i] = ImageFcn_h(x, y, g_obstructions);
     }
     size_t memsize_int = domainSize*sizeof(int);
-    cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
-
+    cudaMemcpy(g_im_d, im_h, memsize_int, cudaMemcpyHostToDevice);
+    delete[] im_h;
 }
 
 void SetUpCUDA()
@@ -654,20 +650,18 @@ void SetUpCUDA()
     size_t memsize, memsize_int, memsize_float, memsize_inputs, memsize_float2;
     g_uMax = 0.06f;
 
-    int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)
-                        *BLOCKSIZEX*BLOCKSIZEY;
+    int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEX*BLOCKSIZEY;
     memsize = domainSize*sizeof(float)*9;
     memsize_int = domainSize*sizeof(int);
     memsize_float = domainSize*sizeof(float);
     memsize_float2 = domainSize*sizeof(float2);
     memsize_inputs = sizeof(g_obstructions);
 
-    g_fA_h = (float *)malloc(memsize);
-    g_fB_h = (float *)malloc(memsize);
-    g_floor_h = (float *)malloc(memsize_float);
-    g_im_h = (int *)malloc(memsize_int);
+    float* fA_h = new float[domainSize * 9];
+    float* fB_h = new float[domainSize * 9];
+    float* floor_h = new float[domainSize];
+    int* im_h = new int[domainSize];
     d_rayCastIntersect = { 0, 0, 0, 1e6 };
-    //obstructions = (input_values *)malloc(memsize_inputs);
 
     cudaMalloc((void **)&g_fA_d, memsize);
     cudaMalloc((void **)&g_fB_d, memsize);
@@ -678,10 +672,9 @@ void SetUpCUDA()
 
     for (int i = 0; i < domainSize*9; i++)
     {
-        g_fA_h[i] = 0;
-        g_fB_h[i] = 0;
+        fA_h[i] = 0;
+        fB_h[i] = 0;
     }
-    //u_max = UMAX;
     for (int i = 0; i < MAXOBSTS; i++)
     {
         g_obstructions[i].r1 = 0;
@@ -705,25 +698,22 @@ void SetUpCUDA()
     g_obstructions[1].shape = Obstruction::VERTICAL_LINE;
     g_obstructions[1].state = Obstruction::NEW;
 
-//	for (int i = 0; i < domainSize; i++)
-//	{
-//		int x = i%MAX_XDIM;
-//		int y = i/MAX_XDIM;
-//		g_im_h[i] = ImageFcn_h(x, y, g_obstructions);
-//	}
     for (int i = 0; i < domainSize; i++)
     {
-        g_floor_h[i] = 0;
+        floor_h[i] = 0;
     }
 
     UpdateDeviceImage();
     
-    cudaMemcpy(g_fA_d, g_fA_h, memsize, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_fB_d, g_fB_h, memsize, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_floor_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
-//	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_fA_d, fA_h, memsize, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_fB_d, fB_h, memsize, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_floor_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
     cudaMemcpy(d_rayCastIntersect_d, &d_rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+
+    delete[] fA_h;
+    delete[] fB_h;
+    delete[] floor_h;
 
     //writeInputs();
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
