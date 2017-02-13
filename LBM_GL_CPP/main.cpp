@@ -34,7 +34,6 @@ clock_t g_timeBefore;
 
 //simulation inputs
 SimulationParameters g_simParams;
-float g_uMax = 0.125f;
 
 //view states
 float g_contMin = 0.f;
@@ -189,7 +188,7 @@ void SetUpWindow()
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-1.f, -1, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = g_uMax*2.f;
+    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*2.f;
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
@@ -206,8 +205,8 @@ void SetUpWindow()
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.85f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.8f;
-    Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
+    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*1.8f;
+    Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
     Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
@@ -224,8 +223,8 @@ void SetUpWindow()
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f-contourSliderBarWidth*0.5f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = g_uMax*1.f;
-    Window.GetSlider(sliderName)->m_minValue = -g_uMax*1.f;
+    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*1.f;
+    Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
     Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
@@ -242,7 +241,7 @@ void SetUpWindow()
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.9f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(0.35f, -1.f, contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = g_uMax*0.1f;
+    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*0.1f;
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
@@ -648,7 +647,6 @@ void UpdateDeviceImage()
 void SetUpCUDA()
 {
     size_t memsize, memsize_int, memsize_float, memsize_inputs, memsize_float2;
-    g_uMax = 0.06f;
 
     int domainSize = ((MAX_XDIM + BLOCKSIZEX - 1) / BLOCKSIZEX)*(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEX*BLOCKSIZEY;
     memsize = domainSize*sizeof(float)*9;

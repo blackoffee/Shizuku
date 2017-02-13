@@ -3,7 +3,7 @@
 #define MAXOBSTS 100
 #define MAX_XDIM 512
 #define MAX_YDIM 512
-#define UMAX 0.06f
+#define INITIAL_UMAX 0.125f
 #define BLOCKSIZEX 128
 #define BLOCKSIZEY 1
 #define REFRESH_DELAY 10
