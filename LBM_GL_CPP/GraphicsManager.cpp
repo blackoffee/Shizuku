@@ -6,8 +6,6 @@
 extern Obstruction* g_obst_d;
 extern SimulationParameters g_simParams;
 extern int g_tStep;
-extern Obstruction::Shape g_currentShape;
-extern float g_currentSize;
 extern float g_initialScaleUp;
 extern ViewMode g_viewMode;
 extern cudaGraphicsResource *g_cudaSolutionField;
@@ -196,7 +194,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
 {
     int xi, yi;
     GetSimCoordFromMouseCoord(xi, yi, mouse);
-    Obstruction obst = { g_currentShape, xi, yi, g_currentSize, 0, 0, 0, Obstruction::NEW };
+    Obstruction obst = { m_currentObstShape, xi, yi, m_currentObstSize, 0, 0, 0, Obstruction::NEW };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     UpdateDeviceObstructions(g_obst_d, obstId, obst);
@@ -204,7 +202,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
 
 void GraphicsManager::AddObstruction(int simX, int simY)
 {
-    Obstruction obst = { g_currentShape, simX, simY, g_currentSize, 0, 0, 0, Obstruction::NEW  };
+    Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, Obstruction::NEW  };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     UpdateDeviceObstructions(g_obst_d, obstId, obst);

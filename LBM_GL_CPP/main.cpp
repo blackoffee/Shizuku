@@ -31,13 +31,10 @@ float g_fps = 0;
 float g_timeStepsPerSecond = 0;
 clock_t g_timeBefore;
 
-
 //simulation inputs
 SimulationParameters g_simParams;
 
 //view states
-float g_contMin = 0.f;
-float g_contMax = 0.1f;
 ContourVariable g_contourVar;
 ViewMode g_viewMode;
 
@@ -63,10 +60,6 @@ Mouse theMouse;
 ButtonGroup contourButtons;
 ButtonGroup shapeButtons;
 ButtonGroup viewButtons;
-
-//drawing modes
-Obstruction::Shape g_currentShape=Obstruction::CIRCLE;
-float g_currentSize = 5.f;
 
 //GL buffers
 GLuint g_vboSolutionField;
@@ -309,6 +302,7 @@ void SetUpWindow()
     Window.GetSlider("Slider_Size")->m_minValue = 1.f;
     Window.GetSlider("Slider_Size")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
 
     SetUpButtons();
     //VelMagButtonCallBack(); //default is vel mag contour
@@ -382,25 +376,25 @@ void WaterRenderingButtonCallBack()
 void SquareButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Square"));
-    g_currentShape = Obstruction::SQUARE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::SQUARE;
 }
 
 void CircleButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Circle"));
-    g_currentShape = Obstruction::CIRCLE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::CIRCLE;
 }
 
 void HorLineButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Hor. Line"));
-    g_currentShape = Obstruction::HORIZONTAL_LINE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::HORIZONTAL_LINE;
 }
 
 void VertLineButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Vert. Line"));
-    g_currentShape = Obstruction::VERTICAL_LINE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::VERTICAL_LINE;
 }
 
 void ThreeDButtonCallBack()
@@ -469,13 +463,15 @@ void DrawShapePreview()
 
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
-    int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (xDimVisible); //r1x in pixels
-    int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (yDimVisible); //r1x in pixels
+    float currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    int r1ix = currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (xDimVisible); //r1x in pixels
+    int r1iy = currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (yDimVisible); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
+    Obstruction::Shape currentShape = Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape;
     glColor3f(0.8f,0.8f,0.8f);
-    switch (g_currentShape)
+    switch (currentShape)
     {
     case Obstruction::CIRCLE:
     {
@@ -735,15 +731,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     // map OpenGL buffer object for writing from CUDA
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
-    size_t num_bytes,num_bytes2;
+    size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
-    g_contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
-    g_contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
+    float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
+    float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
-    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, g_contMin, g_contMax, g_viewMode, u, omega, g_tStep);
+    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar, contMin, contMax, g_viewMode, u, omega, g_tStep);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
@@ -886,7 +882,6 @@ void Draw()
     int windowHeight = Window.GetHeight();
 
     glutReshapeWindow(windowWidth, windowHeight);
-    g_currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     Resize(windowWidth, windowHeight);
 
@@ -953,6 +948,8 @@ void Draw()
 
     // Update transformation matrices in graphics manager for mouse ray casting
     Window.GetPanel("Graphics")->m_graphicsManager->UpdateViewTransformations();
+    // Update Obstruction size based on current slider value
+    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
 
     /*
      *	Disable depth test and lighting for 2D elements
