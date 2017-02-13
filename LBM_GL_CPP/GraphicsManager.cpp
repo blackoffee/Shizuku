@@ -10,9 +10,6 @@ extern Obstruction::Shape g_currentShape;
 extern float g_currentSize;
 extern float g_initialScaleUp;
 extern ViewMode g_viewMode;
-extern GLint viewport[4];
-extern GLdouble projectionMatrix[16];
-extern GLdouble modelMatrix[16];
 extern cudaGraphicsResource *g_cudaSolutionField;
 
 GraphicsManager::GraphicsManager()
@@ -52,12 +49,13 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
 void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX, int mouseY)
 {
     double x, y, z;
-    gluUnProject(mouseX, mouseY, 0.0f, modelMatrix, projectionMatrix, viewport, &x, &y, &z);
+
+    gluUnProject(mouseX, mouseY, 0.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
     //printf("Origin: %f, %f, %f\n", x, y, z);
     rayOrigin.x = x;
     rayOrigin.y = y;
     rayOrigin.z = z;
-    gluUnProject(mouseX, mouseY, 1.0f, modelMatrix, projectionMatrix, viewport, &x, &y, &z);
+    gluUnProject(mouseX, mouseY, 1.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
     rayDir.x = x-rayOrigin.x;
     rayDir.y = y-rayOrigin.y;
     rayDir.z = z-rayOrigin.z;
@@ -358,6 +356,13 @@ bool GraphicsManager::IsInClosestObstruction(Mouse mouse)
     int xi, yi;
     GetSimCoordFromMouseCoord(xi, yi, mouse);
     return (GetDistanceBetweenTwoPoints(xi,yi,m_obstructions[closestObstId].x, m_obstructions[closestObstId].y) < m_obstructions[closestObstId].r1);
+}
+
+void GraphicsManager::UpdateViewTransformations()
+{
+    glGetIntegerv(GL_VIEWPORT, m_viewport);
+    glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
+    glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
 }
 
 float GetDistanceBetweenTwoPoints(float x1, float y1, float x2, float y2)

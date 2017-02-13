@@ -27,6 +27,7 @@ const int g_leftPanelHeight(500);
 const int g_drawingPanelHeight(0);
 float g_initialScaleUp(1.f); 
 
+int g_tStep = 15; //initial tstep value before adjustments
 int g_fpsCount = 0;
 int g_fpsLimit = 20;
 float g_fps = 0;
@@ -36,14 +37,15 @@ clock_t g_timeBefore;
 
 //simulation inputs
 SimulationParameters g_simParams;
-
 float g_uMax = 0.125f;
+
+//view states
 float g_contMin = 0.f;
 float g_contMax = 0.1f;
-int g_tStep = 15; //initial tstep value before adjustments
-
 ContourVariable g_contourVar;
 ViewMode g_viewMode;
+
+
 float4 d_rayCastIntersect;
 float4 *d_rayCastIntersect_d;
 
@@ -57,11 +59,6 @@ float translate_z = -0.2f;
 int g_paused = 0;
 
 
-GLint viewport[4];
-GLdouble modelMatrix[16];
-GLdouble projectionMatrix[16];
-
-
 Obstruction g_obstructions[MAXOBSTS];
 
 Panel Window;
@@ -71,9 +68,11 @@ ButtonGroup contourButtons;
 ButtonGroup shapeButtons;
 ButtonGroup viewButtons;
 
+//drawing modes
 Obstruction::Shape g_currentShape=Obstruction::CIRCLE;
 float g_currentSize = 5.f;
 
+//GL buffers
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 GLuint g_vboFloor;
@@ -82,8 +81,6 @@ GLuint g_floorFrameBuffer;
 GLuint g_floorTexture;
 cudaGraphicsResource *g_cudaSolutionField;
 cudaGraphicsResource *g_cudaFloor;
-
-int* g_elementArrayIndices;
 
 float* g_fA_h;
 float* g_fA_d;
@@ -99,6 +96,7 @@ Obstruction* g_obst_d;
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 
+// forward declarations
 void SetUpButtons();
 void WaterRenderingButtonCallBack();
 void SquareButtonCallBack();
@@ -122,9 +120,7 @@ void SetUpWindow()
 
     winw = 1200;// g_xDim*g_initialScaleUp + g_leftPanelWidth;
     winh = g_leftPanelHeight + 100;// max(g_yDim*g_initialScaleUp, static_cast<float>(g_leftPanelHeight + 100));
-    //UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, winw*winh, g_leftPanelHeight, g_leftPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth, winw, winh, g_initialScaleUp);
-
 
 
     Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
@@ -859,7 +855,6 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 void Resize(int w, int h)
 {
     int area = w*h;
-    //UpdateWindowDimensionsBasedOnAspectRatio(winh, winw, area, max(g_leftPanelHeight,g_drawingPanelHeight),g_leftPanelWidth+g_drawingPanelWidth, g_xDim, g_yDim, g_initialScaleUp);
     UpdateDomainDimensionsBasedOnWindowSize(max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
 
     winw = w;
@@ -979,9 +974,8 @@ void Draw()
     }
 
 
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
-    glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+    // Update transformation matrices in graphics manager for mouse ray casting
+    Window.GetPanel("Graphics")->m_graphicsManager->UpdateViewTransformations();
 
     /*
      *	Disable depth test and lighting for 2D elements
@@ -1012,13 +1006,11 @@ int main(int argc,char **argv)
 
     glutInit(&argc,argv);
 
-
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
     //glutInitWindowSize(1400,g_leftPanelHeight+200);
     glutInitWindowSize(winw,winh);
     glutInitWindowPosition(200,100);
     glutCreateWindow("Interactive CFD");
-
 
     glutDisplayFunc(Draw);
     glutReshapeFunc(Resize);

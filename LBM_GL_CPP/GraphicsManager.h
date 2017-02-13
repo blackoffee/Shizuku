@@ -19,6 +19,10 @@ public:
     Obstruction* m_obstructions;
     Panel* m_parent;
 
+    GLint m_viewport[4];
+    GLdouble m_modelMatrix[16];
+    GLdouble m_projectionMatrix[16];
+
     GraphicsManager();
     GraphicsManager(Panel* panel);
 
@@ -40,6 +44,8 @@ public:
     int FindClosestObstructionId(int simX, int simY);
     int FindObstructionPointIsInside(int x, int y, float tolerance=0.f);
     bool IsInClosestObstruction(Mouse mouse);
+    
+    void UpdateViewTransformations();
 
 };
 
