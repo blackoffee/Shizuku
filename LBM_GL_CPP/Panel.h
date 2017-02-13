@@ -52,6 +52,8 @@ public:
     Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
     Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
 
+    int GetWidth();
+    int GetHeight();
     Panel* GetRootPanel();
     Panel* GetPanel(std::string name);
     Button* GetButton(std::string name);

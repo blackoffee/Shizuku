@@ -76,6 +76,16 @@ Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::stri
     }
 }
 
+int Panel::GetWidth()
+{
+    return m_rectInt_abs.m_w;
+}
+
+int Panel::GetHeight()
+{
+    return m_rectInt_abs.m_h;
+}
+
 void Panel::CreateGraphicsManager()
 {
     m_graphicsManager = new GraphicsManager(this);

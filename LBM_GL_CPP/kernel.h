@@ -23,6 +23,6 @@ void LightSurface(float4* vis, Obstruction* obst_d, float3 cameraPosition);
 
 void InitializeFloor(float4* vis, float* floor_d);
 
-void LightFloor(float4* vis, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, float3 cameraPosition);
+void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, float3 cameraPosition);
 
 int RayCastMouseClick(float3 &selectedElementCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d);

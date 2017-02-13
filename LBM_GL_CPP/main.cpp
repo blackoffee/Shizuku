@@ -20,11 +20,8 @@
 #include "SimulationParameters.h"
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-int winw, winh;
 const int g_leftPanelWidth(350);
-const int g_drawingPanelWidth(0);
 const int g_leftPanelHeight(500);
-const int g_drawingPanelHeight(0);
 float g_initialScaleUp(1.f); 
 
 int g_tStep = 15; //initial tstep value before adjustments
@@ -75,12 +72,7 @@ float g_currentSize = 5.f;
 //GL buffers
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
-GLuint g_vboFloor;
-GLuint g_elementArrayIndexFloorBuffer;
-GLuint g_floorFrameBuffer;
-GLuint g_floorTexture;
 cudaGraphicsResource *g_cudaSolutionField;
-cudaGraphicsResource *g_cudaFloor;
 
 float* g_fA_h;
 float* g_fA_d;
@@ -88,7 +80,6 @@ float* g_floor_h;
 float* g_fB_h;
 float* g_fB_d;
 float* g_floor_d;
-float* g_floorFiltered_d;
 int* g_im_h;
 int* g_im_d;
 Obstruction* g_obst_d;
@@ -101,7 +92,6 @@ void SetUpButtons();
 void WaterRenderingButtonCallBack();
 void SquareButtonCallBack();
 void ThreeDButtonCallBack();
-void Resize(int w, int h);
 
 void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area, int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
 void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp);
@@ -110,7 +100,9 @@ void Init()
 {
     glEnable(GL_LIGHT0);
     glewInit();
-    glViewport(0,0,winw, winh);
+    int windowWidth = Window.GetWidth();
+    int windowHeight = Window.GetHeight();
+    glViewport(0,0,windowWidth,windowHeight);
 
 }
 
@@ -118,18 +110,18 @@ void SetUpWindow()
 {
     SimulationParameters_init(&g_simParams);
 
-    winw = 1200;// g_xDim*g_initialScaleUp + g_leftPanelWidth;
-    winh = g_leftPanelHeight + 100;// max(g_yDim*g_initialScaleUp, static_cast<float>(g_leftPanelHeight + 100));
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth, winw, winh, g_initialScaleUp);
+    int windowWidth = 1200;
+    int windowHeight = g_leftPanelHeight+100;
 
-
-    Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
+    Window.m_rectInt_abs = RectInt(200, 100, windowWidth, windowHeight);
     Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
     Window.m_draw = false;
     Window.m_name = "Main Window";
     Window.m_sizeDefinition = Panel::DEF_ABS;
     theMouse.SetBasePanel(&Window);
     theMouse.m_simScaleUp = g_initialScaleUp;
+
+    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth, windowWidth, windowHeight, g_initialScaleUp);
 
     Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS, "CDV", Color(Color::DARK_GRAY));
     Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -0.9f, 2.f, 0.5f), Panel::DEF_REL, "Outputs", Color(Color::DARK_GRAY));
@@ -148,7 +140,7 @@ void SetUpWindow()
     viewModePanel->CreateButton(RectFloat(-0.9f , -1.f  +0.04f, 0.35f, 2.f), Panel::DEF_REL, "3D", Color(Color::GRAY));
     viewModePanel->CreateButton(RectFloat(-0.50f, -1.f  +0.04f, 0.35f, 2.f), Panel::DEF_REL, "2D", Color(Color::GRAY));
 
-    Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, winw-g_leftPanelWidth, winh), Panel::DEF_ABS, "Graphics", Color(Color::RED));
+    Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight), Panel::DEF_ABS, "Graphics", Color(Color::RED));
     Window.GetPanel("Graphics")->m_draw = false;
     Window.GetPanel("Graphics")->CreateGraphicsManager();
     Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
@@ -476,14 +468,16 @@ void DrawShapePreview()
     Panel* previewPanel = Window.GetPanel("DrawingPreview");
     float centerX = previewPanel->m_rectFloat_abs.GetCentroidX();
     float centerY = previewPanel->m_rectFloat_abs.GetCentroidY();
-    float graphicsToWindowScaleFactor = static_cast<float>(winw)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
+    int windowWidth = Window.GetWidth();
+    int windowHeight = Window.GetHeight();
+    float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
 
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     int r1ix = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_w) / (xDimVisible); //r1x in pixels
     int r1iy = g_currentSize*static_cast<float>(Window.GetPanel("Graphics")->m_rectInt_abs.m_h) / (yDimVisible); //r1x in pixels
-    float r1fx = static_cast<float>(r1ix) / winw*2.f;
-    float r1fy = static_cast<float>(r1iy) / winh*2.f;
+    float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
+    float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
     glColor3f(0.8f,0.8f,0.8f);
     switch (g_currentShape)
@@ -513,7 +507,7 @@ void DrawShapePreview()
     }
     case Obstruction::HORIZONTAL_LINE:
     {
-        r1fy = static_cast<float>(LINE_OBST_WIDTH) / winh*2.f;
+        r1fy = static_cast<float>(LINE_OBST_WIDTH) / windowHeight*2.f;
         glBegin(GL_QUADS);
             glVertex2f(centerX - r1fx*2.f, centerY + r1fy);
             glVertex2f(centerX - r1fx*2.f, centerY - r1fy);
@@ -524,7 +518,7 @@ void DrawShapePreview()
     }
     case Obstruction::VERTICAL_LINE:
     {
-        r1fx = static_cast<float>(LINE_OBST_WIDTH) / winw*2.f;
+        r1fx = static_cast<float>(LINE_OBST_WIDTH) / windowWidth*2.f;
         glBegin(GL_QUADS);
             glVertex2f(centerX - r1fx, centerY + r1fy*2.f);
             glVertex2f(centerX - r1fx, centerY - r1fy*2.f);
@@ -678,7 +672,6 @@ void SetUpCUDA()
     cudaMalloc((void **)&g_fA_d, memsize);
     cudaMalloc((void **)&g_fB_d, memsize);
     cudaMalloc((void **)&g_floor_d, memsize_float);
-    cudaMalloc((void **)&g_floorFiltered_d, memsize_float);
     cudaMalloc((void **)&g_im_d, memsize_int);
     cudaMalloc((void **)&g_obst_d, memsize_inputs);
     cudaMalloc((void **)&d_rayCastIntersect_d, sizeof(float4));
@@ -728,7 +721,6 @@ void SetUpCUDA()
     cudaMemcpy(g_fA_d, g_fA_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_fB_d, g_fB_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floor_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_floorFiltered_d, g_floor_h, memsize_float, cudaMemcpyHostToDevice);
 //	cudaMemcpy(g_im_d, g_im_h, memsize_int, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
     cudaMemcpy(d_rayCastIntersect_d, &d_rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
@@ -745,7 +737,6 @@ void SetUpCUDA()
     InitializeDomain(dptr, g_fB_d, g_im_d, u);
 
     InitializeFloor(dptr, g_floor_d);
-    InitializeFloor(dptr, g_floorFiltered_d);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -771,7 +762,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     {
         LightSurface(dptr, g_obst_d, cameraPosition);
     }
-    LightFloor(dptr, g_floor_d, g_floorFiltered_d, g_obst_d,cameraPosition);
+    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition);
     CleanUpDeviceVBO(dptr);
 
     // unmap buffer object
@@ -799,7 +790,9 @@ void MouseButton(int button, int state, int x, int y)
 void MouseMotion(int x, int y)
 {
     int dx, dy;
-    if (x >= 0 && x <= winw && y>=0 && y<=winh)
+    int windowWidth = Window.GetWidth();
+    int windowHeight = Window.GetHeight();
+    if (x >= 0 && x <= windowWidth && y>=0 && y<=windowHeight)
     {
         theMouse.Move(x, theMouse.m_winH-y-g_glutMouseYOffset);
     }
@@ -840,7 +833,6 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
 
 void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth, int windowWidth, int windowHeight, float scaleUp)
 {
-
     int xDim = min(max(BLOCKSIZEX, int(ceil(((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp)/BLOCKSIZEX))*BLOCKSIZEX)),MAX_XDIM);
     int yDim = min(max(1, int(ceil(static_cast<float>(windowHeight) / scaleUp))),MAX_YDIM);
     int xDimVisible = min(max(BLOCKSIZEX, int((static_cast<float>(windowWidth - leftPanelWidth)/scaleUp))),MAX_XDIM);
@@ -852,26 +844,21 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 }
 
-void Resize(int w, int h)
+void Resize(int windowWidth, int windowHeight)
 {
-    int area = w*h;
-    UpdateDomainDimensionsBasedOnWindowSize(max(g_leftPanelHeight, g_drawingPanelHeight), g_leftPanelWidth + g_drawingPanelWidth, w, h, g_initialScaleUp);
+    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth, windowWidth, windowHeight, g_initialScaleUp);
 
-    winw = w;
-    winh = h;
+    theMouse.m_winW = windowWidth;
+    theMouse.m_winH = windowHeight;
 
-    theMouse.m_winW = winw;
-    theMouse.m_winH = winh;
-
-    Window.m_rectInt_abs = RectInt(200, 100, winw, winh);
+    Window.m_rectInt_abs = RectInt(200, 100, windowWidth, windowHeight);
     Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
 
-    Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, winh - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
-    Window.GetPanel("Drawing")->m_rectInt_abs = RectInt(g_leftPanelWidth, winh - g_drawingPanelHeight, g_drawingPanelWidth, g_drawingPanelHeight);
-    Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth+g_drawingPanelWidth, 0, winw-g_leftPanelWidth-g_drawingPanelWidth, winh);
+    Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, windowHeight - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
+    Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight);
     Window.UpdateAll();
 
-    glViewport(0, 0, winw, winh);
+    glViewport(0, 0, windowWidth, windowHeight);
 
     UpdateDeviceImage();
 
@@ -907,18 +894,20 @@ void Draw()
         g_timeBefore = clock();
     }
 
+    int windowWidth = Window.GetWidth();
+    int windowHeight = Window.GetHeight();
 
-    glutReshapeWindow(winw, winh);
+    glutReshapeWindow(windowWidth, windowHeight);
     g_currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-    Resize(winw, winh);
+    Resize(windowWidth, windowHeight);
 
-    int graphicsViewWidth = winw - g_leftPanelWidth - g_drawingPanelWidth;
-    int graphicsViewHeight = winh;
+    int graphicsViewWidth = windowWidth - g_leftPanelWidth;
+    int graphicsViewHeight = windowHeight;
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
-    float xTranslation = -((static_cast<float>(winw)-xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth + g_drawingPanelWidth)) / winw*2.f;
-    float yTranslation = -((static_cast<float>(winh)-yDimVisible*g_initialScaleUp)*0.5)/ winh*2.f;
+    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*g_initialScaleUp)*0.5 - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
+    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*g_initialScaleUp)*0.5)/ windowHeight*2.f;
     float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
@@ -931,7 +920,7 @@ void Draw()
     glLoadIdentity();
 
     glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(xDimVisible*g_initialScaleUp) / winw), (static_cast<float>(yDimVisible*g_initialScaleUp) / winh), 1.f);
+    glScalef((static_cast<float>(xDimVisible*g_initialScaleUp) / windowWidth), (static_cast<float>(yDimVisible*g_initialScaleUp) / windowHeight), 1.f);
 
     if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
     {
@@ -1007,8 +996,9 @@ int main(int argc,char **argv)
     glutInit(&argc,argv);
 
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-    //glutInitWindowSize(1400,g_leftPanelHeight+200);
-    glutInitWindowSize(winw,winh);
+    int windowWidth = Window.GetWidth();
+    int windowHeight = Window.GetHeight();
+    glutInitWindowSize(windowWidth,windowHeight);
     glutInitWindowPosition(200,100);
     glutCreateWindow("Interactive CFD");
 

@@ -927,7 +927,7 @@ __global__ void DeformFloorMeshUsingCausticRayDestinations(float4* pos, float* f
     }
 }
 
-__global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, float* floorFiltered_d, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void ApplyCausticLightingToFloor(float4* pos, float* floor_d, Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -1142,7 +1142,7 @@ void InitializeFloor(float4* vis, float* floor_d)
     InitializeFloorMesh << <grid, threads >> >(vis, floor_d, g_simParams);
 }
 
-void LightFloor(float4* vis, float* floor_d, float* floorFiltered_d, Obstruction* obst_d, float3 cameraPosition)
+void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, float3 cameraPosition)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
@@ -1152,7 +1152,7 @@ void LightFloor(float4* vis, float* floor_d, float* floorFiltered_d, Obstruction
     ComputeAndStoreCausticRayDesitinations << <grid, threads >> >(vis, incidentLight1, obst_d, g_simParams);
     DeformFloorMeshUsingCausticRayDestinations << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, floorFiltered_d, obst_d, g_simParams);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
