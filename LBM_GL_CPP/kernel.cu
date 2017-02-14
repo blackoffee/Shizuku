@@ -16,8 +16,7 @@ __device__ float4 d_rayCastIntersect;
  *	Device functions
  */
 
-//__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, float r, float x, float y, Obstruction::Shape shape, Obstruction::State state, float u=0.f, float v=0.f){
-__global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, Obstruction newObst){
+__global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumber, const Obstruction newObst){
     obstructions[obstNumber].shape = newObst.shape;
     obstructions[obstNumber].r1 = newObst.r1;
     obstructions[obstNumber].x = newObst.x;
@@ -27,53 +26,63 @@ __global__ void UpdateObstructions(Obstruction* obstructions, int obstNumber, Ob
     obstructions[obstNumber].state = newObst.state;
 }
 
-inline __device__ bool IsInsideObstruction(float x, float y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ bool IsInsideObstruction(const float x, const float y,
+    Obstruction* obstructions, const float tolerance = 0.f)
+{
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != Obstruction::INACTIVE)
         {
             float r1 = obstructions[i].r1;
-            if (obstructions[i].shape == Obstruction::SQUARE){//square
+            if (obstructions[i].shape == Obstruction::SQUARE){
                 if (abs(x - obstructions[i].x)<r1 + tolerance && abs(y - obstructions[i].y)<r1 + tolerance)
-                    return true;//10;
+                    return true;
             }
-            else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
-                if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-                        <(r1+tolerance)*(r1+tolerance)+0.1f)
-                    return true;//10;
+            else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
+                float distanceFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)\
+                    + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
+                if (distanceFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
+                    return true;
             }
-            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-                if (abs(x - obstructions[i].x)<r1*2+tolerance && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;//10;
+            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
+                if (abs(x - obstructions[i].x)<r1*2+tolerance &&\
+                    abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+                    return true;
             }
-            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-                if (abs(y - obstructions[i].y)<r1*2+tolerance && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;//10;
+            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
+                if (abs(y - obstructions[i].y)<r1*2+tolerance &&\
+                    abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+                    return true;
             }
         }
     }
     return false;
 }
 
-inline __device__ int FindOverlappingObstruction(float x, float y, Obstruction* obstructions, float tolerance = 0.f){
+inline __device__ int FindOverlappingObstruction(const float x, const float y,
+    Obstruction* obstructions, const float tolerance = 0.f)
+{
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != Obstruction::INACTIVE)
         {
             float r1 = obstructions[i].r1 + tolerance;
-            if (obstructions[i].shape == Obstruction::SQUARE){//square
+            if (obstructions[i].shape == Obstruction::SQUARE){
                 if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
-                if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-                        <r1*r1+0.1f)
+            else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
+                float distanceFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)\
+                    + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
+                if (distanceFromCenter<r1*r1+0.1f)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-                if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
+            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
+                if (abs(x - obstructions[i].x)<r1*2 &&\
+                    abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-                if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
+            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
+                if (abs(y - obstructions[i].y)<r1*2 &&\
+                    abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
             }
         }
@@ -81,76 +90,52 @@ inline __device__ int FindOverlappingObstruction(float x, float y, Obstruction* 
     return -1;
 }
 
-inline __device__ int GetObstructionFromCoord(int x, int y, Obstruction* obstructions, float tolerance = 0.f){
-    for (int i = 0; i < MAXOBSTS; i++){
-        float r1 = obstructions[i].r1 + tolerance;
-        if (obstructions[i].shape == Obstruction::SQUARE){//square
-            if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
-                return i;
-        }
-        else if (obstructions[i].shape == Obstruction::CIRCLE){//circle. shift by 0.5 cells for better looks
-            if ((x+0.5f - obstructions[i].x)*(x+0.5f - obstructions[i].x)+(y+0.5f - obstructions[i].y)*(y+0.5f - obstructions[i].y)
-                    <r1*r1+0.1f)
-                return i;
-        }
-        else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){//horizontal line
-            if (abs(x - obstructions[i].x)<r1*2 && abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-                return i;
-        }
-        else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){//vertical line
-            if (abs(y - obstructions[i].y)<r1*2 && abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-                return i;
-        }
-    }
-    return -1;
-}
-
-__device__ int dmin(int a, int b)
+__device__ int dmin(const int a, const int b)
 {
     if (a<b) return a;
     else return b - 1;
 }
-__device__ int dmax(int a)
+__device__ int dmax(const int a)
 {
     if (a>-1) return a;
     else return 0;
 }
-__device__ int dmax(int a, int b)
+__device__ int dmax(const int a, const int b)
 {
     if (a>b) return a;
     else return b;
 }
-__device__ float dmin(float a, float b)
+__device__ float dmin(const float a, const float b)
 {
     if (a<b) return a;
     else return b;
 }
-__device__ float dmin(float a, float b, float c, float d)
+__device__ float dmin(const float a, const float b, const float c, const float d)
 {
     return dmin(dmin(a, b), dmin(c, d));
 }
-__device__ float dmax(float a)
+__device__ float dmax(const float a)
 {
     if (a>0) return a;
     else return 0;
 }
-__device__ float dmax(float a, float b)
+__device__ float dmax(const float a, const float b)
 {
     if (a>b) return a;
     else return b;
 }
-__device__ float dmax(float a, float b, float c, float d)
+__device__ float dmax(const float a, const float b, const float c, const float d)
 {
     return dmax(dmax(a, b), dmax(c, d));
 }
 
-inline __device__ int f_mem(int f_num, int x, int y, size_t pitch, int yDim)
+inline __device__ int f_mem(const int f_num, const int x, const int y,
+    const size_t pitch, const int yDim)
 {
-
     return (x + y*pitch) + f_num*pitch*yDim;
 }
 
-inline __device__ int f_mem(int f_num, int x, int y)
+inline __device__ int f_mem(const int f_num, const int x, const int y)
 {
 
     return (x + y*MAX_XDIM) + f_num*MAX_XDIM*MAX_YDIM;
@@ -191,17 +176,17 @@ __device__ float3 operator*(const float a, const float3 &u)
     return make_float3(a*u.x, a*u.y, a*u.z);
 }
 
-__device__ float DotProduct(float3 u, float3 v)
+__device__ float DotProduct(const float3 &u, const float3 &v)
 {
     return u.x*v.x + u.y*v.y + u.z*v.z;
 }
 
-__device__ float3 CrossProduct(float3 u, float3 v)
+__device__ float3 CrossProduct(const float3 &u, const float3 &v)
 {
     return make_float3(u.y*v.z-u.z*v.y, -(u.x*v.z-u.z*v.x), u.x*v.y-u.y*v.x);
 }
 
-__device__ float CrossProductArea(float2 u, float2 v)
+__device__ float CrossProductArea(const float2 &u, const float2 &v)
 {
     return 0.5f*sqrt((u.x*v.y-u.y*v.x)*(u.x*v.y-u.y*v.x));
 }
@@ -214,12 +199,13 @@ __device__ void Normalize(float3 &u)
     u.z /= mag;
 }
 
-__device__ float Distance(float3 u, float3 v)
+__device__ float Distance(const float3 &u, const float3 &v)
 {
     return sqrt(DotProduct((u-v), (u-v)));
 }
 
-__device__ bool IsPointsOnSameSide(float2 p1, float2 p2, float2 a, float2 b)
+__device__ bool IsPointsOnSameSide(const float2 &p1, const float2 &p2,
+    const float2 &a, const float2 &b)
 {
     float cp1 = (b - a).x*(p1 - a).y - (b - a).y*(p1 - a).x;
     float cp2 = (b - a).x*(p2 - a).y - (b - a).y*(p2 - a).x;
@@ -230,16 +216,20 @@ __device__ bool IsPointsOnSameSide(float2 p1, float2 p2, float2 a, float2 b)
     return false;
 }
 
-__device__ bool IsPointInsideTriangle(float2 p, float2 a, float2 b, float2 c)
+__device__ bool IsPointInsideTriangle(const float2 &p, const float2 &a,
+    const float2 &b, const float2 &c)
 {
-    if (IsPointsOnSameSide(p, a, b, c) && IsPointsOnSameSide(p, b, a, c) && IsPointsOnSameSide(p, c, a, b))
+    if (IsPointsOnSameSide(p, a, b, c) &&\
+        IsPointsOnSameSide(p, b, a, c) &&\
+        IsPointsOnSameSide(p, c, a, b))
     {
         return true;
     }
     return false;
 }
 
-__device__ bool IsPointInsideTriangle(float3 p1, float3 p2, float3 p3, float3 q)
+__device__ bool IsPointInsideTriangle(const float3 &p1, const float3 &p2,
+    const float3 &p3, const float3 &q)
 {
     float3 n = CrossProduct((p2 - p1), (p3 - p1));
 
@@ -251,7 +241,8 @@ __device__ bool IsPointInsideTriangle(float3 p1, float3 p2, float3 p3, float3 q)
 }
 
 //p1, p2, p3 should be in clockwise order
-__device__ float3 GetIntersectionOfRayWithTriangle(float3 rayOrigin, float3 rayDir, float3 p1, float3 p2, float3 p3)
+__device__ float3 GetIntersectionOfRayWithTriangle(const float3 &rayOrigin,
+    float3 rayDir, const float3 &p1, const float3 &p2, const float3 &p3)
 {
     //plane of triangle
     float3 n = CrossProduct((p2 - p1), (p3 - p1));
@@ -267,7 +258,8 @@ __device__ float3 GetIntersectionOfRayWithTriangle(float3 rayOrigin, float3 rayD
 
 
 
-__device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
+__device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord,
+    const int xDimVisible, const int yDimVisible)
 {
     xcoord = threadIdx.x + blockDim.x*blockIdx.x;
     ycoord = threadIdx.y + blockDim.y*blockIdx.y;
@@ -277,7 +269,8 @@ __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord, int xDimVisi
     ycoord -= 1.0;// ydim / maxDim;
 }
 
-__device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord, int xDimVisible, int yDimVisible)
+__device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord,
+    const int xDimVisible, const int yDimVisible)
 {
     xcoord = threadIdx.x + blockDim.x*blockIdx.x;
     ycoord = threadIdx.y + blockDim.y*blockIdx.y;
@@ -288,8 +281,8 @@ __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord, int 
 }
 
 // Initialize domain using constant velocity
-//__global__ void InitializeLBM(float4* pos, float *f, int *Im, int xDim, int yDim, float uMax, int xDimVisible, int yDimVisible) //obstruction* obstruction)//pitch in elements
-__global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax, SimulationParameters simParams)
+__global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
+    SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -299,16 +292,17 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax, Simula
     u = uMax;// u_max;// UMAX;
     v = 0.0f;
     usqr = u*u + v*v;
+    int offset = MAX_XDIM*MAX_YDIM;
 
-    f[j + 0 * MAX_XDIM*MAX_YDIM] = 0.4444444444f*(rho - 1.5f*usqr);
-    f[j + 1 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-    f[j + 2 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-    f[j + 3 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-    f[j + 4 * MAX_XDIM*MAX_YDIM] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-    f[j + 5 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
-    f[j + 6 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
-    f[j + 7 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
-    f[j + 8 * MAX_XDIM*MAX_YDIM] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
+    f[j + 0 * offset] = 0.4444444444f*(rho - 1.5f*usqr);
+    f[j + 1 * offset] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+    f[j + 2 * offset] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+    f[j + 3 * offset] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+    f[j + 4 * offset] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+    f[j + 5 * offset] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
+    f[j + 6 * offset] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
+    f[j + 7 * offset] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
+    f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
 
     float xcoord, ycoord, zcoord;
     int xDimVisible = simParams.m_xDimVisible;
@@ -323,9 +317,9 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax, Simula
 }
 
 // rho=1.0 BC for east side
-__device__ void NeumannEast(float &f0, float &f1, float &f2,
-    float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, int y, int xDim, int yDim)
+__device__ void NeumannEast(float &f0, float &f1, float &f2, float &f3, float &f4,
+    float &f5, float &f6, float &f7, float &f8,
+    const int y, const int xDim, const int yDim)
 {
     if (y == 0){
         f2 = f4;
@@ -346,9 +340,9 @@ __device__ void NeumannEast(float &f0, float &f1, float &f2,
 }
 
 // u=uMax BC for east side
-__device__ void DirichletWest(float &f0, float &f1, float &f2,
-    float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, int y, int xDim, int yDim, float uMax)
+__device__ void DirichletWest(float &f0, float &f1, float &f2, float &f3, float &f4,
+    float &f5, float &f6, float &f7, float &f8,
+    const int y, const int xDim, const int yDim, const float uMax)
 {
     if (y == 0){
         f2 = f4;
@@ -367,10 +361,9 @@ __device__ void DirichletWest(float &f0, float &f1, float &f2,
 }
 
 // applies BCs
-__device__ void ApplyBCs(float& f0, float& f1, float& f2,
-    float& f3, float& f4, float& f5,
-    float& f6, float& f7, float& f8,
-    int y, int im, int xDim, int yDim, float uMax)
+__device__ void ApplyBCs(float& f0, float& f1, float& f2, float& f3, float& f4,
+    float& f5, float& f6, float& f7, float& f8,
+    const int y, const int im, const int xDim, const int yDim, const float uMax)
 {
     if (im == 2)//NeumannEast
     {
@@ -394,7 +387,7 @@ __device__ void ApplyBCs(float& f0, float& f1, float& f2,
     }
 }
 
-__device__ void ComputeFEqs(float *feq, float rho, float u, float v)
+__device__ void ComputeFEqs(float *feq, const float rho, const float u, const float v)
 {
     float usqr = u*u+v*v;
     feq[0] = 4.0f/9.0f*(rho-1.5f*usqr);
@@ -410,7 +403,8 @@ __device__ void ComputeFEqs(float *feq, float rho, float u, float v)
 
 __device__ void MovingWall(float &f0, float &f1, float &f2,
     float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, float rho, float u, float v)
+    float &f6, float &f7, float &f8,
+    const float rho, const float u, const float v)
 {
     float feq[9];
     ComputeFEqs(feq, rho, u, v);
@@ -429,7 +423,7 @@ __device__ void MovingWall(float &f0, float &f1, float &f2,
 // LBM collision step 
 __device__ void LbmCollide(float &f0, float &f1, float &f2,
     float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, float omega, float &Q)
+    float &f6, float &f7, float &f8, const float omega, float &Q)
 {
     //float rho,u,v;	
     float u, v;
@@ -476,17 +470,17 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
     float CS = SMAG_CONST;// 0.1f;
     //float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 1000000.0*Q*Q*Q);
     float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
-    omega = 1.f / tau;
+    float omegaTurb = 1.f / tau;
 
     f0 = f0 - (-m1 + m2)*0.11111111f;//(-4.f*(m1)/36.0f+4.f *(m2)/36.0f);
-    f1 = f1 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omega*0.25f);
-    f2 = f2 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omega*0.25f);
-    f3 = f3 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omega*0.25f);
-    f4 = f4 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m6 - m7*omega*0.25f);
-    f5 = f5 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6 + m8*omega*0.25f);
-    f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 - m8*omega*0.25f);
-    f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 + m8*omega*0.25f);
-    f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omega*0.25f);
+    f1 = f1 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omegaTurb*0.25f);
+    f2 = f2 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omegaTurb*0.25f);
+    f3 = f3 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omegaTurb*0.25f);
+    f4 = f4 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m6 - m7*omegaTurb*0.25f);
+    f5 = f5 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6 + m8*omegaTurb*0.25f);
+    f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 - m8*omegaTurb*0.25f);
+    f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 + m8*omegaTurb*0.25f);
+    f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omegaTurb*0.25f);
 
     //MRT Scheme. Might be slightly more stable, but needs more optimization
 //	float m[9];
@@ -525,13 +519,14 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
 
 
 // main LBM function including streaming and colliding
-__global__ void MarchLBM(float4* vbo, float* fA, float* fB,
-    float omega, int *Im, Obstruction *obstructions, int contourVar, float contMin, float contMax, int viewMode, float uMax, SimulationParameters simParams)
+__global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, int *Im,
+    Obstruction *obstructions, const int contourVar, const float contMin, const float contMax,
+    const int viewMode, const float uMax, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int im = Im[j];//ImageFcn(x, y, obstructions); // 
+    int j = x + y*MAX_XDIM;
+    int im = Im[j];
     float u, v, rho;
     int obstId = FindOverlappingObstruction(x, y, obstructions);
     if (obstId >= 0)
@@ -558,8 +553,7 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB,
     f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
     f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
 
-    float StrainRate;
-
+    float StrainRate = 0.f;
 
     if (im == 99)
     {
@@ -618,8 +612,6 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB,
 
     //need to change x,y,z coordinates to NDC (-1 to 1)
     float xcoord, ycoord, zcoord;
-    int index;
-    index = j;
     int xDimVisible = simParams.m_xDimVisible;
     int yDimVisible = simParams.m_yDimVisible;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
@@ -628,13 +620,7 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB,
     zcoord =  (rho - 1.0f) - 0.5f;
 
     //for color, need to convert 4 bytes (RGBA) to float
-    float color;
     float variableValue = 0.f;
-    float maxValue;
-    float minValue;
-
-    minValue = contMin;
-    maxValue = contMax;
 
     //change min/max contour values based on contour variable
     if (contourVar == ContourVariable::VEL_MAG)
@@ -660,8 +646,8 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB,
 
 
     ////Blue to white color scheme
-    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
-    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - minValue) / (maxValue - minValue))));
+    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
+    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
     unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
     unsigned char A = 255;// 255;
 
@@ -700,13 +686,12 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB,
     {
     }
 
-
+    float color;
     char b[] = { R, G, B, A };
     std::memcpy(&color, &b, sizeof(color));
 
     //vbo aray to be displayed
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
-
 }
 
 __global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
@@ -730,7 +715,8 @@ __global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
     }
 }
 
-__global__ void PhongLighting(float4* vbo, Obstruction *obstructions, float3 cameraPosition, SimulationParameters simParams)
+__global__ void PhongLighting(float4* vbo, Obstruction *obstructions, 
+    float3 cameraPosition, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -831,7 +817,8 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, SimulationParam
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
-__device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, int x, int y, SimulationParameters simParams)
+__device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
+    const int x, const int y, SimulationParameters simParams)
 {
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     int xDimVisible = simParams.m_xDimVisible;
@@ -864,7 +851,8 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     return float2{ (float)x + dx, (float)y + dy };
 }
 
-__device__ float ComputeAreaFrom4Points(float2 nw, float2 ne, float2 sw, float2 se)
+__device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
+    const float2 &sw, const float2 &se)
 {
     float2 vecN = ne - nw;
     float2 vecS = se - sw;
@@ -873,7 +861,8 @@ __device__ float ComputeAreaFrom4Points(float2 nw, float2 ne, float2 sw, float2 
     return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
 }
 
-__global__ void DeformFloorMeshBasedOnCausticRayDestinations(float4* vbo, float3 incidentLight, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
+    Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -898,7 +887,8 @@ __global__ void DeformFloorMeshBasedOnCausticRayDestinations(float4* vbo, float3
     }
 }
 
-__global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, float* floor_d, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, float* floor_d, 
+    Obstruction* obstructions, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -908,11 +898,11 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
         float2 nw, ne, sw, se;
-
-        nw = make_float2(vbo[(x  )+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, vbo[(x  )+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
-        ne = make_float2(vbo[(x+1)+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, vbo[(x+1)+(y+1)*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
-        sw = make_float2(vbo[(x  )+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, vbo[(x  )+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
-        se = make_float2(vbo[(x+1)+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].x, vbo[(x+1)+(y  )*MAX_XDIM+MAX_XDIM*MAX_YDIM].y);
+        int offset = MAX_XDIM*MAX_YDIM;
+        nw = make_float2(vbo[(x  )+(y+1)*MAX_XDIM+offset].x, vbo[(x  )+(y+1)*MAX_XDIM+offset].y);
+        ne = make_float2(vbo[(x+1)+(y+1)*MAX_XDIM+offset].x, vbo[(x+1)+(y+1)*MAX_XDIM+offset].y);
+        sw = make_float2(vbo[(x  )+(y  )*MAX_XDIM+offset].x, vbo[(x  )+(y  )*MAX_XDIM+offset].y);
+        se = make_float2(vbo[(x+1)+(y  )*MAX_XDIM+offset].x, vbo[(x+1)+(y  )*MAX_XDIM+offset].y);
 
         float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
         float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
@@ -923,11 +913,12 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
     }
 }
 
-__global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
+    Obstruction* obstructions, SimulationParameters simParams)
 {
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;
     float xcoord, ycoord, zcoord;
 
     xcoord = vbo[j].x;
@@ -1019,9 +1010,10 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     }
 }
 
-__global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir, Obstruction* obstructions, SimulationParameters simParams)
+__global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir,
+    Obstruction* obstructions, SimulationParameters simParams)
 {
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;
     int xDim = simParams.m_xDim;
@@ -1038,24 +1030,24 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
             float3 se{ vbo[j+1].x, vbo[j+1].y, vbo[j+1].z };
             float3 sw{ vbo[j].x, vbo[j].y, vbo[j].z };
 
-            float3 intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
-            if (IsPointInsideTriangle(nw, ne, se, intersectingPoint))
+            float3 intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
+            if (IsPointInsideTriangle(nw, ne, se, intersection))
             {
-                float distance = Distance(intersectingPoint, rayOrigin);
+                float distance = Distance(intersection, rayOrigin);
                 if (distance < rayCastIntersect[0].w)
                 {
-                    rayCastIntersect[0] = { intersectingPoint.x, intersectingPoint.y, intersectingPoint.z, distance };
+                    rayCastIntersect[0] = { intersection.x, intersection.y, intersection.z, distance };
                 }
                 //printf("distance in kernel: %f\n", distance);
             }
             else{
-                intersectingPoint = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, ne, se, sw);
-                if (IsPointInsideTriangle(ne, se, sw, intersectingPoint))
+                intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, ne, se, sw);
+                if (IsPointInsideTriangle(ne, se, sw, intersection))
                 {
-                    float distance = Distance(intersectingPoint, rayOrigin);
+                    float distance = Distance(intersection, rayOrigin);
                     if (distance < rayCastIntersect[0].w)
                     {
-                        rayCastIntersect[0] = { intersectingPoint.x, intersectingPoint.y, intersectingPoint.z, distance };
+                        rayCastIntersect[0] = { intersection.x, intersection.y, intersection.z, distance };
                     }
                     //printf("distance in kernel: %f\n", distance);
                 }
@@ -1070,7 +1062,7 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
  */
 
 
-void InitializeDomain(float4* vis, float* f_d, int* im_d, float uMax)
+void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax)
 {
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
@@ -1092,7 +1084,8 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
 
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-    ContourVariable contVar, float contMin, float contMax, ViewMode viewMode, float uMax, float omega, int tStep)
+    const ContourVariable contVar, const float contMin, const float contMax,
+    const ViewMode viewMode, const float uMax, const float omega, const int tStep)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
@@ -1100,15 +1093,18 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     for (int i = 0; i < tStep; i++)
     {
-        MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar, contMin, contMax, viewMode, uMax, g_simParams);
+        MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
+            contMin, contMax, viewMode, uMax, g_simParams);
         if (g_paused == 0)
         {
-            MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar, contMin, contMax, viewMode, uMax, g_simParams);
+            MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar,
+                contMin, contMax, viewMode, uMax, g_simParams);
         }
     }
 }
 
-void UpdateDeviceObstructions(Obstruction* obst_d, int targetObstID, Obstruction newObst)
+void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
+    const Obstruction &newObst)
 {
     UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst);
 }
@@ -1120,7 +1116,7 @@ void CleanUpDeviceVBO(float4* vis)
     CleanUpVBO << <grid, threads>> >(vis, g_simParams);
 }
 
-void LightSurface(float4* vis, Obstruction* obst_d, float3 cameraPosition)
+void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
@@ -1138,15 +1134,17 @@ void InitializeFloor(float4* vis, float* floor_d)
     InitializeFloorMesh << <grid, threads >> >(vis, floor_d, g_simParams);
 }
 
-void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, float3 cameraPosition)
+void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
-    DeformFloorMeshBasedOnCausticRayDestinations << <grid, threads >> >(vis, incidentLight1, obst_d, g_simParams);
-    ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
+    DeformFloorMeshUsingCausticRay << <grid, threads >> >
+        (vis, incidentLight1, obst_d, g_simParams);
+    ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
+        (vis, floor_d, obst_d, g_simParams);
 
     ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
@@ -1155,7 +1153,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, float3 cameraP
     PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, g_simParams);
 }
 
-int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrigin, float3 rayDir, Obstruction* obst_d)
+int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, 
+    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d)
 {
     int xDim = g_simParams.GetXDim(&g_simParams);
     int yDim = g_simParams.GetYDim(&g_simParams);
@@ -1164,7 +1163,6 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float3 rayOrig
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     RayCast << <grid, threads >> >(vis, d_rayCastIntersect_d, rayOrigin, rayDir, obst_d, g_simParams);
     cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
-    //printf("intersectionCoord: %f, %f, %f, %f\n", intersectionCoord.x,intersectionCoord.y,intersectionCoord.z,intersectionCoord.w);
     if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
     {
         return 1;
