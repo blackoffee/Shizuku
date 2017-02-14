@@ -17,6 +17,7 @@ public:
     int m_currentObstId = -1;
     float m_currentZ = -1000.f;
     float m_currentObstSize = 0.f;
+    float4* m_rayCastIntersect;
     Obstruction::Shape m_currentObstShape = Obstruction::SQUARE;
     Obstruction* m_obstructions;
     Panel* m_parent;

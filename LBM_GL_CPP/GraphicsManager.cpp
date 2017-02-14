@@ -78,7 +78,9 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float3 selectedCoordF;
-    if (RayCastMouseClick(selectedCoordF, dptr, rayOrigin, rayDir, g_obst_d) == 0)
+    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect, 
+        rayOrigin, rayDir, g_obst_d, &g_simParams);
+    if (rayCastResult == 0)
     {
         m_currentZ = selectedCoordF.z;
 

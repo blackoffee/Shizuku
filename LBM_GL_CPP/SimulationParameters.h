@@ -4,8 +4,6 @@
 
 extern "C"
 {
-
-
     struct SimulationParameters
     {
         int m_xDim;

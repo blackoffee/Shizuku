@@ -42,9 +42,6 @@ ContourVariable g_contourVar;
 ViewMode g_viewMode;
 
 
-float4 d_rayCastIntersect;
-float4 *d_rayCastIntersect_d;
-
 
 //view transformations
 float rotate_x = 60.f;
@@ -393,7 +390,7 @@ void InitializeButtonCallBack()
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, u);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
 }
 
 void VelMagButtonCallBack()
@@ -719,14 +716,15 @@ void SetUpCUDA()
     float* fB_h = new float[domainSize * 9];
     float* floor_h = new float[domainSize];
     int* im_h = new int[domainSize];
-    d_rayCastIntersect = { 0, 0, 0, 1e6 };
+    float4 rayCastIntersect{ 0, 0, 0, 1e6 };
 
     cudaMalloc((void **)&g_fA_d, memsize);
     cudaMalloc((void **)&g_fB_d, memsize);
     cudaMalloc((void **)&g_floor_d, memsize_float);
     cudaMalloc((void **)&g_im_d, memsize_int);
     cudaMalloc((void **)&g_obst_d, memsize_inputs);
-    cudaMalloc((void **)&d_rayCastIntersect_d, sizeof(float4));
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    cudaMalloc((void **)&graphicsManager->m_rayCastIntersect, sizeof(float4));
 
     for (int i = 0; i < domainSize*9; i++)
     {
@@ -767,7 +765,7 @@ void SetUpCUDA()
     cudaMemcpy(g_fB_d, fB_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floor_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rayCastIntersect_d, &d_rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+    cudaMemcpy(graphicsManager->m_rayCastIntersect, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
 
     delete[] fA_h;
     delete[] fB_h;
@@ -781,10 +779,10 @@ void SetUpCUDA()
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, u);
-    InitializeDomain(dptr, g_fB_d, g_im_d, u);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
+    InitializeDomain(dptr, g_fB_d, g_im_d, u, &g_simParams);
 
-    InitializeFloor(dptr, g_floor_d);
+    InitializeFloor(dptr, g_floor_d, &g_simParams);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -804,15 +802,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar,
-        contMin, contMax, g_viewMode, u, omega, g_tStep);
+        contMin, contMax, g_viewMode, u, omega, g_tStep, &g_simParams, g_paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition);
+        LightSurface(dptr, g_obst_d, cameraPosition, &g_simParams);
     }
-    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition);
-    CleanUpDeviceVBO(dptr);
+    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, &g_simParams);
+    CleanUpDeviceVBO(dptr, &g_simParams);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
