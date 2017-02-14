@@ -38,7 +38,7 @@ public:
     RectFloat m_rectFloat_abs; //absolute coordinates in window. this is the one used for drawing, so always want to keep this up-to-date.
     RectFloat m_rectFloat_rel;
     Color m_backgroundColor;
-    Color m_foregroundColor = Color::WHITE;
+    Color m_foregroundColor;
     SizeDefinitionMethod m_sizeDefinition;
     GraphicsManager* m_graphicsManager = NULL;
     bool m_draw = true;
@@ -99,7 +99,7 @@ class SliderBar : public Panel
 {
 public:
     enum Orientation {VERTICAL, HORIZONTAL};
-    Orientation m_orientation = VERTICAL;
+    Orientation m_orientation = HORIZONTAL;
     float m_value = 0.5f;
 
     SliderBar();
