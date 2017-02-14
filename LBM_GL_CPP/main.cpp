@@ -873,17 +873,14 @@ void Draw()
 {
     g_fpsTracker.Tick();
 
+    float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    graphicsManager->m_scaleFactor = scaleUp;
+
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
-
-    glutReshapeWindow(windowWidth, windowHeight);
-    float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-    Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor = scaleUp;
-
     Resize(windowWidth, windowHeight);
 
-    int graphicsViewWidth = windowWidth - g_leftPanelWidth;
-    int graphicsViewHeight = windowHeight;
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
@@ -892,7 +889,6 @@ void Draw()
         / windowHeight*2.f;
 
     //get view transformations
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     float translate_x = graphicsManager->m_translate_x;
     float translate_y = graphicsManager->m_translate_y;
     float translate_z = graphicsManager->m_translate_z;
