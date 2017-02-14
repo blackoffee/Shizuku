@@ -36,17 +36,6 @@ SimulationParameters g_simParams;
 ContourVariable g_contourVar;
 ViewMode g_viewMode;
 
-
-
-//view transformations
-float rotate_x = 60.f;
-float rotate_z = 30.f;
-float translate_x = 0.f;
-float translate_y = 0.8f;
-float translate_z = -0.2f;
-int g_paused = 0;
-
-
 Obstruction g_obstructions[MAXOBSTS];
 
 Panel Window;
@@ -778,9 +767,10 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
     float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
     float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
+    int paused = Window.GetPanel("Graphics")->m_graphicsManager->m_paused;
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar,
-        contMin, contMax, g_viewMode, u, omega, g_tStep, &g_simParams, g_paused);
+        contMin, contMax, g_viewMode, u, omega, g_tStep, &g_simParams, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
@@ -826,15 +816,7 @@ void MouseMotion(int x, int y)
 
 void MouseWheel(int button, int dir, int x, int y)
 {
-    if (dir > 0){
-        translate_z -= 0.3f;
-    }
-    else
-    {
-        translate_z += 0.3f;
-    }
-    UpdateDeviceImage();
-    
+    theMouse.Wheel(button, dir, x, y);
 }
 
 void Keyboard(unsigned char key, int /*x*/, int /*y*/)
@@ -842,7 +824,8 @@ void Keyboard(unsigned char key, int /*x*/, int /*y*/)
     switch (key)
     {
     case (' ') :
-        g_paused = (g_paused + 1) % 2;
+        GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+        graphicsManager->m_paused = (graphicsManager->m_paused + 1) % 2;
         break;
     }
 }
@@ -907,6 +890,14 @@ void Draw()
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
     float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*g_initialScaleUp)*0.5)
         / windowHeight*2.f;
+
+    //get view transformations
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    float translate_x = graphicsManager->m_translate_x;
+    float translate_y = graphicsManager->m_translate_y;
+    float translate_z = graphicsManager->m_translate_z;
+    float rotate_x = graphicsManager->m_rotate_x;
+    float rotate_z = graphicsManager->m_rotate_z;
     float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
@@ -964,7 +955,6 @@ void Draw()
     }
 
 
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     // Update transformation matrices in graphics manager for mouse ray casting
     graphicsManager->UpdateViewTransformations();
     // Update Obstruction size based on current slider value

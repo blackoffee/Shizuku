@@ -315,11 +315,19 @@ Slider* Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefini
     return slider;
 }
 
-void Panel::Drag(int x, int y, float dx, float dy)
+void Panel::Drag(int x, int y, float dx, float dy, int button)
 {
     if (m_graphicsManager != NULL)
     {
-        m_graphicsManager->Drag(x,y,dx,dy);
+        m_graphicsManager->Drag(x,y,dx,dy,button);
+    }
+}
+
+void Panel::Wheel(int button, int dir, int x, int y)
+{
+    if (m_graphicsManager != NULL)
+    {
+        m_graphicsManager->Wheel(button,dir,x,y);
     }
 }
 
@@ -402,7 +410,7 @@ float SliderBar::GetValue()
     return m_value;
 }
 
-void SliderBar::Drag(int x, int y, float dx, float dy)
+void SliderBar::Drag(int x, int y, float dx, float dy, int button)
 {
     //dx and dy are coming in as float abs coordinates
     if (m_orientation == VERTICAL)

@@ -77,7 +77,8 @@ public:
     virtual void Draw(); //draw current panel only
     virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
-    virtual void Drag(int x, int y, float dx, float dy);
+    virtual void Drag(int x, int y, float dx, float dy, int button);
+    virtual void Wheel(int button, int dir, int x, int y);
     virtual void ClickDown(Mouse mouse);
 };
 
@@ -109,7 +110,7 @@ public:
     void Draw();
     void UpdateValue();
     float GetValue();
-    virtual void Drag(int x, int y, float dx, float dy);
+    virtual void Drag(int x, int y, float dx, float dy, int button);
 };
 
 class Slider : public Panel

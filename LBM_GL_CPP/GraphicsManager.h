@@ -26,6 +26,14 @@ public:
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
 
+    //view transformations
+    float m_rotate_x = 60.f;
+    float m_rotate_z = 30.f;
+    float m_translate_x = 0.f;
+    float m_translate_y = 0.8f;
+    float m_translate_z = -0.2f;
+    int m_paused = 0;
+
     GraphicsManager();
     GraphicsManager(Panel* panel);
 
@@ -36,7 +44,8 @@ public:
     void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
     void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY);
     void ClickDown(Mouse mouse);
-    void Drag(int xi, int yi, float dxf, float dyf);
+    void Drag(int xi, int yi, float dxf, float dyf, int button);
+    void Wheel(int button, int dir, int x, int y);
     void AddObstruction(Mouse mouse);
     void AddObstruction(int simX, int simY);
     void RemoveObstruction(Mouse mouse);

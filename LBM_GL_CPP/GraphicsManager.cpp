@@ -178,7 +178,7 @@ void GraphicsManager::ClickDown(Mouse mouse)
             m_currentObstId = -1;
             int x{ 0 }, y{ 0 }, z{ 0 };
             if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
-            {
+            {            
                 m_currentObstId = FindClosestObstructionId(x, y);
                 RemoveObstruction(x,y);
             }
@@ -187,9 +187,38 @@ void GraphicsManager::ClickDown(Mouse mouse)
     }
 }
 
-void GraphicsManager::Drag(int xi, int yi, float dxf, float dyf)
+void GraphicsManager::Drag(int xi, int yi, float dxf, float dyf, int button)
 {
-    MoveObstruction(xi,yi,dxf,dyf);
+    if (button == GLUT_LEFT_BUTTON)
+    {
+        MoveObstruction(xi,yi,dxf,dyf);
+    }
+    else if (button == GLUT_MIDDLE_BUTTON)
+    {
+        int mod = glutGetModifiers();
+        if (mod == GLUT_ACTIVE_CTRL)
+        {
+            m_translate_x += dxf;
+            m_translate_y += dyf;
+        }
+        else
+        {
+            m_rotate_x += dyf*45.f;
+            m_rotate_z += dxf*45.f;
+        }
+
+    }
+}
+
+void GraphicsManager::Wheel(int button, int dir, int x, int y)
+{
+    if (dir > 0){
+        m_translate_z -= 0.3f;
+    }
+    else
+    {
+        m_translate_z += 0.3f;
+    }
 }
 
 void GraphicsManager::AddObstruction(Mouse mouse)
