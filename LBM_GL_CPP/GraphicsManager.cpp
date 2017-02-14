@@ -5,7 +5,6 @@
 
 extern Obstruction* g_obst_d;
 extern SimulationParameters g_simParams;
-extern int g_tStep;
 extern ViewMode g_viewMode;
 extern cudaGraphicsResource *g_cudaSolutionField;
 
@@ -282,8 +281,8 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
                 min(m_parent->m_rectFloat_abs.m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
             obst.x += dxi;
             obst.y += dyi;
-            float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (2.f*g_tStep)));
-            float v = max(-0.1f,min(0.1f,static_cast<float>(dyi) / (2.f*g_tStep)));
+            float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
+            float v = max(-0.1f,min(0.1f,static_cast<float>(dyi) / (TIMESTEPS_PER_FRAME)));
             obst.u = u;
             obst.v = v;
             m_obstructions[m_currentObstId] = obst;
@@ -302,8 +301,8 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
             Obstruction obst = m_obstructions[m_currentObstId];
             obst.x += simX2-simX1;
             obst.y += simY2-simY1;
-            float u = max(-0.1f,min(0.1f,static_cast<float>(simX2-simX1) / (2.f*g_tStep)));
-            float v = max(-0.1f,min(0.1f,static_cast<float>(simY2-simY1) / (2.f*g_tStep)));
+            float u = max(-0.1f,min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+            float v = max(-0.1f,min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
             obst.u = u;
             obst.v = v;
             obst.state = Obstruction::ACTIVE;

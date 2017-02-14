@@ -26,7 +26,6 @@ const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
 
 FpsTracker g_fpsTracker;
-int g_tStep = 15; //initial tstep value before adjustments
 
 //simulation inputs
 SimulationParameters g_simParams;
@@ -768,7 +767,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     int paused = Window.GetPanel("Graphics")->m_graphicsManager->m_paused;
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar,
-        contMin, contMax, g_viewMode, u, omega, g_tStep, &g_simParams, paused);
+        contMin, contMax, g_viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
@@ -979,7 +978,7 @@ void Draw()
     int yDim = g_simParams.GetYDim(&g_simParams);
     sprintf(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        g_tStep * 2, fps, g_tStep * 2*fps, xDim, yDim);
+        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
     glutSetWindowTitle(fpsReport);
 
 
