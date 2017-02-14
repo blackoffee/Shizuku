@@ -28,11 +28,6 @@ float g_initialScaleUp(1.f);
 
 FpsTracker g_fpsTracker;
 int g_tStep = 15; //initial tstep value before adjustments
-int g_fpsCount = 0;
-int g_fpsLimit = 20;
-float g_fps = 0;
-float g_timeStepsPerSecond = 0;
-clock_t g_timeBefore;
 
 //simulation inputs
 SimulationParameters g_simParams;
@@ -175,7 +170,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
     Window.GetSlider("Slider_InletV")->m_maxValue = 0.125f;
     Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
-    Window.GetSlider("Slider_InletV")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
     Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
@@ -183,7 +177,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
     Window.GetSlider("Slider_Visc")->m_maxValue = 1.8f;
     Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
-    Window.GetSlider("Slider_Visc")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
     Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
@@ -191,7 +184,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
     Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
     Window.GetSlider("Slider_Resolution")->m_minValue = 6.f;
-    Window.GetSlider("Slider_Resolution")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 
@@ -215,8 +207,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 
@@ -234,8 +224,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -254,8 +242,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -274,8 +260,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -294,8 +278,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.95f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -314,8 +296,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.95f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -349,13 +329,11 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
     Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
     Window.GetSlider("Slider_Size")->m_minValue = 1.f;
-    Window.GetSlider("Slider_Size")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstSize = currentObstSize;
 
     SetUpButtons();
-    //VelMagButtonCallBack(); //default is vel mag contour
     WaterRenderingButtonCallBack(); //default is water rendering
     SquareButtonCallBack(); //default is square shape
     ThreeDButtonCallBack();
@@ -912,10 +890,6 @@ void Resize(int windowWidth, int windowHeight)
 
 void Draw()
 {
-    if (g_fpsCount == 0)
-    {
-        g_timeBefore = clock();
-    }
     g_fpsTracker.Tick();
 
     int windowWidth = Window.GetWidth();
