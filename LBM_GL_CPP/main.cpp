@@ -863,8 +863,6 @@ void Resize(int windowWidth, int windowHeight)
 
     glViewport(0, 0, windowWidth, windowHeight);
 
-    UpdateDeviceImage();
-
 }
 
 void Draw()
