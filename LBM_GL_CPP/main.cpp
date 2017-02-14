@@ -24,7 +24,6 @@
 
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
-float g_initialScaleUp(1.f); 
 
 FpsTracker g_fpsTracker;
 int g_tStep = 15; //initial tstep value before adjustments
@@ -93,10 +92,6 @@ void SetUpWindow()
     Window.m_name = "Main Window";
     Window.m_sizeDefinition = Panel::DEF_ABS;
     theMouse.SetBasePanel(&Window);
-    theMouse.m_simScaleUp = g_initialScaleUp;
-
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, g_initialScaleUp);
 
     Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
         "CDV", Color(Color::DARK_GRAY));
@@ -133,6 +128,10 @@ void SetUpWindow()
     Window.GetPanel("Graphics")->m_draw = false;
     Window.GetPanel("Graphics")->CreateGraphicsManager();
     Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
+
+    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
+        windowWidth, windowHeight, scaleUp);
 
 
     float sliderH = 1.4f/3.f/2.f;
@@ -291,7 +290,6 @@ void SetUpWindow()
 
 
     //Drawing panel
-    //Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::DARK_GRAY));
     Panel* drawingPreview = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
         Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
     Panel* drawingButtons = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
@@ -852,8 +850,9 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 void Resize(int windowWidth, int windowHeight)
 {
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, g_initialScaleUp);
+        windowWidth, windowHeight, scaleUp);
 
     theMouse.m_winW = windowWidth;
     theMouse.m_winH = windowHeight;
@@ -879,16 +878,18 @@ void Draw()
     int windowHeight = Window.GetHeight();
 
     glutReshapeWindow(windowWidth, windowHeight);
-    g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor = scaleUp;
+
     Resize(windowWidth, windowHeight);
 
     int graphicsViewWidth = windowWidth - g_leftPanelWidth;
     int graphicsViewHeight = windowHeight;
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
-    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*g_initialScaleUp)*0.5
+    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
-    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*g_initialScaleUp)*0.5)
+    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
         / windowHeight*2.f;
 
     //get view transformations
@@ -910,8 +911,8 @@ void Draw()
     glLoadIdentity();
 
     glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(xDimVisible*g_initialScaleUp) / windowWidth),
-        (static_cast<float>(yDimVisible*g_initialScaleUp) / windowHeight), 1.f);
+    glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
+        (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
     if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
     {

@@ -33,6 +33,7 @@ public:
     float m_translate_y = 0.8f;
     float m_translate_z = -0.2f;
     int m_paused = 0;
+    float m_scaleFactor = 1.f;
 
     GraphicsManager();
     GraphicsManager(Panel* panel);

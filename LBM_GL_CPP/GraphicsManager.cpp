@@ -6,7 +6,6 @@
 extern Obstruction* g_obst_d;
 extern SimulationParameters g_simParams;
 extern int g_tStep;
-extern float g_initialScaleUp;
 extern ViewMode g_viewMode;
 extern cudaGraphicsResource *g_cudaSolutionField;
 
@@ -27,10 +26,14 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
     float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
     float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
+    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
+        min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*m_scaleFactor);
+    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
+        min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*
+        graphicsToSimDomainScalingFactorX;
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*
+        graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf)
@@ -38,16 +41,19 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) / min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*g_initialScaleUp);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) / min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*g_initialScaleUp);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*graphicsToSimDomainScalingFactorY;
+    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
+        min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*m_scaleFactor);
+    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
+        min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*
+        graphicsToSimDomainScalingFactorX;
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*
+        graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX, int mouseY)
 {
     double x, y, z;
-
     gluUnProject(mouseX, mouseY, 0.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
     //printf("Origin: %f, %f, %f\n", x, y, z);
     rayOrigin.x = x;
@@ -254,7 +260,6 @@ void GraphicsManager::RemoveObstruction(int simX, int simY)
     if (obstId >= 0)
     {
         m_obstructions[obstId].state = Obstruction::REMOVED;
-        //m_obstructions[obstId] = obst;
         UpdateDeviceObstructions(g_obst_d, obstId, m_obstructions[obstId]);
     }
 }
@@ -271,8 +276,10 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
             float dxi, dyi;
             int windowWidth = m_parent->GetRootPanel()->m_rectInt_abs.m_w;
             int windowHeight = m_parent->GetRootPanel()->m_rectInt_abs.m_h;
-            dxi = dxf*static_cast<float>(xDimVisible) / min(m_parent->m_rectFloat_abs.m_w, xDimVisible*g_initialScaleUp/windowWidth*2.f);
-            dyi = dyf*static_cast<float>(yDimVisible) / min(m_parent->m_rectFloat_abs.m_h, yDimVisible*g_initialScaleUp/windowHeight*2.f);
+            dxi = dxf*static_cast<float>(xDimVisible) / 
+                min(m_parent->m_rectFloat_abs.m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
+            dyi = dyf*static_cast<float>(yDimVisible) / 
+                min(m_parent->m_rectFloat_abs.m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
             obst.x += dxi;
             obst.y += dyi;
             float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (2.f*g_tStep)));
@@ -310,12 +317,14 @@ int GraphicsManager::FindUnusedObstructionId()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state == Obstruction::REMOVED || m_obstructions[i].state == Obstruction::INACTIVE)
+        if (m_obstructions[i].state == Obstruction::REMOVED || 
+            m_obstructions[i].state == Obstruction::INACTIVE)
         {
             return i;
         }
     }
-    MessageBox(0, "Object could not be added. You are currently using the maximum number of objects.", "Error", MB_OK);
+    MessageBox(0, "Object could not be added. You are currently using the maximum number of objects.",
+        "Error", MB_OK);
     return 0;
 }
 
@@ -384,7 +393,9 @@ bool GraphicsManager::IsInClosestObstruction(Mouse mouse)
     int closestObstId = FindClosestObstructionId(mouse);
     int xi, yi;
     GetSimCoordFromMouseCoord(xi, yi, mouse);
-    return (GetDistanceBetweenTwoPoints(xi,yi,m_obstructions[closestObstId].x, m_obstructions[closestObstId].y) < m_obstructions[closestObstId].r1);
+    float dist = GetDistanceBetweenTwoPoints(xi, yi, m_obstructions[closestObstId].x, 
+        m_obstructions[closestObstId].y);
+    return (dist < m_obstructions[closestObstId].r1);
 }
 
 void GraphicsManager::UpdateViewTransformations()

@@ -11,7 +11,6 @@ public:
     int m_button;
 	int m_xprev, m_yprev;
 	int m_winW, m_winH;
-	float m_simScaleUp;
 	Panel* m_basePanel = NULL;
 	Panel* m_currentlySelectedPanel = NULL;
 	Mouse() :m_x(0), m_y(0), m_lmb(0), m_mmb(0), m_rmb(0)
