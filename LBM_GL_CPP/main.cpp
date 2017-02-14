@@ -30,10 +30,6 @@ FpsTracker g_fpsTracker;
 //simulation inputs
 SimulationParameters g_simParams;
 
-//view states
-ContourVariable g_contourVar;
-ViewMode g_viewMode;
-
 Obstruction g_obstructions[MAXOBSTS];
 
 Panel Window;
@@ -360,37 +356,37 @@ void InitializeButtonCallBack()
 void VelMagButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
-    g_contourVar = VEL_MAG;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_MAG;
 }
 
 void VelXButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("X Velocity"));
-    g_contourVar = VEL_U;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_U;
 }
 
 void VelYButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Y Velocity"));
-    g_contourVar = VEL_V;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_V;
 }
 
 void StrainRateButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("StrainRate"));
-    g_contourVar = STRAIN_RATE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = STRAIN_RATE;
 }
 
 void PressureButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Pressure"));
-    g_contourVar = PRESSURE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = PRESSURE;
 }
 
 void WaterRenderingButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Water Rendering"));
-    g_contourVar = WATER_RENDERING;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = WATER_RENDERING;
 }
 
 void SquareButtonCallBack()
@@ -420,13 +416,13 @@ void VertLineButtonCallBack()
 void ThreeDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("3D"));
-    g_viewMode = ViewMode::THREE_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = THREE_DIMENSIONAL;
 }
 
 void TwoDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("2D"));
-    g_viewMode = ViewMode::TWO_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = TWO_DIMENSIONAL;
 }
 
 void SetUpButtons()
@@ -765,12 +761,14 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
     float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
     int paused = Window.GetPanel("Graphics")->m_graphicsManager->m_paused;
+    ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar;
+    ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode;
 
-    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar,
-        contMin, contMax, g_viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
+    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
+        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
-    if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
         LightSurface(dptr, g_obst_d, cameraPosition, &g_simParams);
     }
@@ -909,7 +907,8 @@ void Draw()
     glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
         (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
-    if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
+    ViewMode viewMode = graphicsManager->m_viewMode;
+    if (viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
     }
@@ -935,7 +934,8 @@ void Draw()
     glColor3f(1.0, 0.0, 0.0);
     glEnableClientState(GL_COLOR_ARRAY);
     glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-    if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+    ContourVariable contourVar = graphicsManager->m_contourVar;
+    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
         //Draw floor
         glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 

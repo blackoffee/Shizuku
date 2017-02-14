@@ -35,6 +35,10 @@ public:
     int m_paused = 0;
     float m_scaleFactor = 1.f;
 
+    //contour and viewmode
+    ContourVariable m_contourVar;
+    ViewMode m_viewMode;
+
     GraphicsManager();
     GraphicsManager(Panel* panel);
 

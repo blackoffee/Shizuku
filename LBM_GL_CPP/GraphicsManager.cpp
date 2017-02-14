@@ -5,7 +5,6 @@
 
 extern Obstruction* g_obst_d;
 extern SimulationParameters g_simParams;
-extern ViewMode g_viewMode;
 extern cudaGraphicsResource *g_cudaSolutionField;
 
 GraphicsManager::GraphicsManager()
@@ -134,7 +133,7 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX
 void GraphicsManager::ClickDown(Mouse mouse)
 {
     int mod = glutGetModifiers();
-    if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
+    if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         if (mouse.m_rmb == 1)
         {
@@ -269,7 +268,7 @@ void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     if (m_currentObstId > -1)
     {
-        if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
+        if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
         {
             Obstruction obst = m_obstructions[m_currentObstId];
             float dxi, dyi;
