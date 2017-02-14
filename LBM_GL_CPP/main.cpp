@@ -24,36 +24,11 @@
 
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
-float g_initialScaleUp(1.f); 
 
 FpsTracker g_fpsTracker;
-int g_tStep = 15; //initial tstep value before adjustments
-int g_fpsCount = 0;
-int g_fpsLimit = 20;
-float g_fps = 0;
-float g_timeStepsPerSecond = 0;
-clock_t g_timeBefore;
 
 //simulation inputs
 SimulationParameters g_simParams;
-
-//view states
-ContourVariable g_contourVar;
-ViewMode g_viewMode;
-
-
-float4 d_rayCastIntersect;
-float4 *d_rayCastIntersect_d;
-
-
-//view transformations
-float rotate_x = 60.f;
-float rotate_z = 30.f;
-float translate_x = 0.f;
-float translate_y = 0.8f;
-float translate_z = -0.2f;
-int g_paused = 0;
-
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -112,10 +87,6 @@ void SetUpWindow()
     Window.m_name = "Main Window";
     Window.m_sizeDefinition = Panel::DEF_ABS;
     theMouse.SetBasePanel(&Window);
-    theMouse.m_simScaleUp = g_initialScaleUp;
-
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, g_initialScaleUp);
 
     Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
         "CDV", Color(Color::DARK_GRAY));
@@ -152,6 +123,10 @@ void SetUpWindow()
     Window.GetPanel("Graphics")->m_draw = false;
     Window.GetPanel("Graphics")->CreateGraphicsManager();
     Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
+
+    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
+        windowWidth, windowHeight, scaleUp);
 
 
     float sliderH = 1.4f/3.f/2.f;
@@ -178,7 +153,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
     Window.GetSlider("Slider_InletV")->m_maxValue = 0.125f;
     Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
-    Window.GetSlider("Slider_InletV")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
     Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
@@ -186,7 +160,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
     Window.GetSlider("Slider_Visc")->m_maxValue = 1.8f;
     Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
-    Window.GetSlider("Slider_Visc")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
     Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
@@ -194,7 +167,6 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
     Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
     Window.GetSlider("Slider_Resolution")->m_minValue = 6.f;
-    Window.GetSlider("Slider_Resolution")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 
@@ -218,8 +190,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 
@@ -237,8 +207,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -257,8 +225,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -277,8 +243,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -297,8 +261,6 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.95f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -317,15 +279,12 @@ void SetUpWindow()
     Window.GetSlider(sliderName)->m_minValue = 0.95f;
     Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
     Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
 
 
     //Drawing panel
-    //Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, g_drawingPanelWidth, g_drawingPanelHeight), Panel::DEF_ABS, "Drawing", Color(Color::DARK_GRAY));
     Panel* drawingPreview = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
         Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
     Panel* drawingButtons = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
@@ -352,13 +311,11 @@ void SetUpWindow()
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
     Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
     Window.GetSlider("Slider_Size")->m_minValue = 1.f;
-    Window.GetSlider("Slider_Size")->m_sliderBar1->m_orientation = SliderBar::HORIZONTAL;
     Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstSize = currentObstSize;
 
     SetUpButtons();
-    //VelMagButtonCallBack(); //default is vel mag contour
     WaterRenderingButtonCallBack(); //default is water rendering
     SquareButtonCallBack(); //default is square shape
     ThreeDButtonCallBack();
@@ -393,43 +350,43 @@ void InitializeButtonCallBack()
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, u);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
 }
 
 void VelMagButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
-    g_contourVar = VEL_MAG;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_MAG;
 }
 
 void VelXButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("X Velocity"));
-    g_contourVar = VEL_U;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_U;
 }
 
 void VelYButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Y Velocity"));
-    g_contourVar = VEL_V;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_V;
 }
 
 void StrainRateButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("StrainRate"));
-    g_contourVar = STRAIN_RATE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = STRAIN_RATE;
 }
 
 void PressureButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Pressure"));
-    g_contourVar = PRESSURE;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = PRESSURE;
 }
 
 void WaterRenderingButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Water Rendering"));
-    g_contourVar = WATER_RENDERING;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = WATER_RENDERING;
 }
 
 void SquareButtonCallBack()
@@ -459,13 +416,13 @@ void VertLineButtonCallBack()
 void ThreeDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("3D"));
-    g_viewMode = ViewMode::THREE_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = THREE_DIMENSIONAL;
 }
 
 void TwoDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("2D"));
-    g_viewMode = ViewMode::TWO_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = TWO_DIMENSIONAL;
 }
 
 void SetUpButtons()
@@ -719,14 +676,15 @@ void SetUpCUDA()
     float* fB_h = new float[domainSize * 9];
     float* floor_h = new float[domainSize];
     int* im_h = new int[domainSize];
-    d_rayCastIntersect = { 0, 0, 0, 1e6 };
+    float4 rayCastIntersect{ 0, 0, 0, 1e6 };
 
     cudaMalloc((void **)&g_fA_d, memsize);
     cudaMalloc((void **)&g_fB_d, memsize);
     cudaMalloc((void **)&g_floor_d, memsize_float);
     cudaMalloc((void **)&g_im_d, memsize_int);
     cudaMalloc((void **)&g_obst_d, memsize_inputs);
-    cudaMalloc((void **)&d_rayCastIntersect_d, sizeof(float4));
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    cudaMalloc((void **)&graphicsManager->m_rayCastIntersect, sizeof(float4));
 
     for (int i = 0; i < domainSize*9; i++)
     {
@@ -767,7 +725,7 @@ void SetUpCUDA()
     cudaMemcpy(g_fB_d, fB_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floor_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rayCastIntersect_d, &d_rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+    cudaMemcpy(graphicsManager->m_rayCastIntersect, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
 
     delete[] fA_h;
     delete[] fB_h;
@@ -781,10 +739,10 @@ void SetUpCUDA()
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, u);
-    InitializeDomain(dptr, g_fB_d, g_im_d, u);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
+    InitializeDomain(dptr, g_fB_d, g_im_d, u, &g_simParams);
 
-    InitializeFloor(dptr, g_floor_d);
+    InitializeFloor(dptr, g_floor_d, &g_simParams);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -802,17 +760,20 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
     float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
     float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
+    int paused = Window.GetPanel("Graphics")->m_graphicsManager->m_paused;
+    ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar;
+    ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode;
 
-    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, g_contourVar,
-        contMin, contMax, g_viewMode, u, omega, g_tStep);
+    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
+        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
-    if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition);
+        LightSurface(dptr, g_obst_d, cameraPosition, &g_simParams);
     }
-    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition);
-    CleanUpDeviceVBO(dptr);
+    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, &g_simParams);
+    CleanUpDeviceVBO(dptr, &g_simParams);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
@@ -850,15 +811,7 @@ void MouseMotion(int x, int y)
 
 void MouseWheel(int button, int dir, int x, int y)
 {
-    if (dir > 0){
-        translate_z -= 0.3f;
-    }
-    else
-    {
-        translate_z += 0.3f;
-    }
-    UpdateDeviceImage();
-    
+    theMouse.Wheel(button, dir, x, y);
 }
 
 void Keyboard(unsigned char key, int /*x*/, int /*y*/)
@@ -866,7 +819,8 @@ void Keyboard(unsigned char key, int /*x*/, int /*y*/)
     switch (key)
     {
     case (' ') :
-        g_paused = (g_paused + 1) % 2;
+        GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+        graphicsManager->m_paused = (graphicsManager->m_paused + 1) % 2;
         break;
     }
 }
@@ -893,8 +847,9 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 void Resize(int windowWidth, int windowHeight)
 {
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, g_initialScaleUp);
+        windowWidth, windowHeight, scaleUp);
 
     theMouse.m_winW = windowWidth;
     theMouse.m_winH = windowHeight;
@@ -908,33 +863,33 @@ void Resize(int windowWidth, int windowHeight)
 
     glViewport(0, 0, windowWidth, windowHeight);
 
-    UpdateDeviceImage();
-
 }
 
 void Draw()
 {
-    if (g_fpsCount == 0)
-    {
-        g_timeBefore = clock();
-    }
     g_fpsTracker.Tick();
+
+    float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    graphicsManager->m_scaleFactor = scaleUp;
 
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
-
-    glutReshapeWindow(windowWidth, windowHeight);
-    g_initialScaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     Resize(windowWidth, windowHeight);
 
-    int graphicsViewWidth = windowWidth - g_leftPanelWidth;
-    int graphicsViewHeight = windowHeight;
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
-    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*g_initialScaleUp)*0.5
+    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
-    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*g_initialScaleUp)*0.5)
+    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
         / windowHeight*2.f;
+
+    //get view transformations
+    float translate_x = graphicsManager->m_translate_x;
+    float translate_y = graphicsManager->m_translate_y;
+    float translate_z = graphicsManager->m_translate_z;
+    float rotate_x = graphicsManager->m_rotate_x;
+    float rotate_z = graphicsManager->m_rotate_z;
     float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
@@ -947,10 +902,11 @@ void Draw()
     glLoadIdentity();
 
     glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(xDimVisible*g_initialScaleUp) / windowWidth),
-        (static_cast<float>(yDimVisible*g_initialScaleUp) / windowHeight), 1.f);
+    glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
+        (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
-    if (g_viewMode == ViewMode::TWO_DIMENSIONAL)
+    ViewMode viewMode = graphicsManager->m_viewMode;
+    if (viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
     }
@@ -976,7 +932,8 @@ void Draw()
     glColor3f(1.0, 0.0, 0.0);
     glEnableClientState(GL_COLOR_ARRAY);
     glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-    if (g_viewMode == ViewMode::THREE_DIMENSIONAL || g_contourVar == ContourVariable::WATER_RENDERING)
+    ContourVariable contourVar = graphicsManager->m_contourVar;
+    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
         //Draw floor
         glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
@@ -992,7 +949,6 @@ void Draw()
     }
 
 
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     // Update transformation matrices in graphics manager for mouse ray casting
     graphicsManager->UpdateViewTransformations();
     // Update Obstruction size based on current slider value
@@ -1016,7 +972,7 @@ void Draw()
     int yDim = g_simParams.GetYDim(&g_simParams);
     sprintf(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        g_tStep * 2, fps, g_tStep * 2*fps, xDim, yDim);
+        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
     glutSetWindowTitle(fpsReport);
 
 

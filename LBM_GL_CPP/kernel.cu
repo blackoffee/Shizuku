@@ -2,15 +2,6 @@
 #include "math.h"
 #include "kernel.h"
 
-extern float4 *d_rayCastIntersect_d;
-extern int g_paused;
-
-extern SimulationParameters g_simParams;
-
-/*----------------------------------------------------------------------------------------
- *	Device Variables
-*/
-__device__ float4 d_rayCastIntersect;
 
 /*----------------------------------------------------------------------------------------
  *	Device functions
@@ -1062,11 +1053,12 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
  */
 
 
-void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax)
+void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
+    SimulationParameters* simParams)
 {
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
-    InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, g_simParams);
+    InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, *simParams);
 }
 
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
@@ -1085,20 +1077,21 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
     const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float uMax, const float omega, const int tStep)
+    const ViewMode viewMode, const float uMax, const float omega, const int tStep,
+    SimulationParameters* simParams, const int paused)
 {
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = simParams->GetXDim(simParams);
+    int yDim = simParams->GetYDim(simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     for (int i = 0; i < tStep; i++)
     {
         MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
-            contMin, contMax, viewMode, uMax, g_simParams);
-        if (g_paused == 0)
+            contMin, contMax, viewMode, uMax, *simParams);
+        if (paused == 0)
         {
             MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar,
-                contMin, contMax, viewMode, uMax, g_simParams);
+                contMin, contMax, viewMode, uMax, *simParams);
         }
     }
 }
@@ -1109,70 +1102,72 @@ void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst);
 }
 
-void CleanUpDeviceVBO(float4* vis)
+void CleanUpDeviceVBO(float4* vis, SimulationParameters* simParams)
 {
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(MAX_XDIM / BLOCKSIZEX, MAX_YDIM / BLOCKSIZEY);
-    CleanUpVBO << <grid, threads>> >(vis, g_simParams);
+    CleanUpVBO << <grid, threads>> >(vis, *simParams);
 }
 
-void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition)
+void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
+    SimulationParameters* simParams)
 {
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = simParams->GetXDim(simParams);
+    int yDim = simParams->GetYDim(simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, g_simParams);
+    PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, *simParams);
 }
 
-void InitializeFloor(float4* vis, float* floor_d)
+void InitializeFloor(float4* vis, float* floor_d, SimulationParameters* simParams)
 {
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = simParams->GetXDim(simParams);
+    int yDim = simParams->GetYDim(simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, g_simParams);
+    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, *simParams);
 }
 
-void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition)
+void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition,
+    SimulationParameters* simParams)
 {
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = simParams->GetXDim(simParams);
+    int yDim = simParams->GetYDim(simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, incidentLight1, obst_d, g_simParams);
+        (vis, incidentLight1, obst_d, *simParams);
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
-        (vis, floor_d, obst_d, g_simParams);
+        (vis, floor_d, obst_d, *simParams);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, g_simParams);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, *simParams);
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, g_simParams);
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, *simParams);
 }
 
-int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, 
-    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d)
+int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
+    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d, SimulationParameters* simParams)
 {
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = simParams->GetXDim(simParams);
+    int yDim = simParams->GetYDim(simParams);
     float4 intersectionCoord{ 0, 0, 0, 1e6 };
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    RayCast << <grid, threads >> >(vis, d_rayCastIntersect_d, rayOrigin, rayDir, obst_d, g_simParams);
-    cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+    RayCast << <grid, threads >> >(vis, rayCastIntersect_d, rayOrigin, rayDir, obst_d, *simParams);
+    cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
     if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
     {
         return 1;
     }
     else
     {
-        cudaMemcpy(&intersectionCoord, d_rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+        cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
         float4 clearSelectedIndex[1];
         clearSelectedIndex[0] = { 0, 0, 0, 1e6 };
-        cudaMemcpy(d_rayCastIntersect_d, &clearSelectedIndex[0], sizeof(float4), cudaMemcpyHostToDevice); 
+        cudaMemcpy(rayCastIntersect_d, &clearSelectedIndex[0], sizeof(float4), cudaMemcpyHostToDevice); 
         rayCastIntersectCoord.x = intersectionCoord.x;
         rayCastIntersectCoord.y = intersectionCoord.y;
         rayCastIntersectCoord.z = intersectionCoord.z;

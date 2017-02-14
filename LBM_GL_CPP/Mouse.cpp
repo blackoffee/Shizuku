@@ -19,6 +19,7 @@ void Mouse::Update(int x, int y, int button, int state)
 {
     m_x = x;
     m_y = y;
+    m_button = button;
     int mouseState = (state == GLUT_DOWN) ? 1 : 0;
     m_lmb = (button == GLUT_LEFT_BUTTON) ? mouseState : m_lmb;
     m_rmb = (button == GLUT_RIGHT_BUTTON) ? mouseState : m_rmb;
@@ -52,21 +53,7 @@ void Mouse::Move(int x, int y)
 
     if (m_currentlySelectedPanel != NULL)
     {
-        int mod = glutGetModifiers();
-        if (m_lmb == 1)
-        {
-            m_currentlySelectedPanel->Drag(x,y,dx, dy);
-        }
-        else if (m_mmb == 1 && mod == GLUT_ACTIVE_CTRL)
-        {
-            translate_x += dx;
-            translate_y += dy;
-        }
-        else if (m_mmb == 1)
-        {
-            rotate_x += dy*45.f;
-            rotate_z += dx*45.f;
-        }
+        m_currentlySelectedPanel->Drag(x,y,dx, dy, m_button);
     }
     else
     {
@@ -89,7 +76,17 @@ void Mouse::LeftClickDown(int x, int y)
 
 }
 
-
+void Mouse::Wheel(int button, int dir, int x, int y)
+{
+    if (m_currentlySelectedPanel != NULL)
+    {
+        m_currentlySelectedPanel->Wheel(m_button,dir,x,y);
+    }
+    else
+    {
+        return;
+    }
+}
 
 
 float intCoordToFloatCoord(int x, int xDim)

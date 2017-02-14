@@ -8,9 +8,9 @@ class Mouse
 public:
 	int m_x, m_y;
 	int m_lmb, m_mmb, m_rmb;
+    int m_button;
 	int m_xprev, m_yprev;
 	int m_winW, m_winH;
-	float m_simScaleUp;
 	Panel* m_basePanel = NULL;
 	Panel* m_currentlySelectedPanel = NULL;
 	Mouse() :m_x(0), m_y(0), m_lmb(0), m_mmb(0), m_rmb(0)
@@ -31,7 +31,7 @@ public:
 	void LeftClickUp(int x, int y);
 	void LeftClickDown(int x, int y);
 
-
+    void Wheel(int button, int dir, int x, int y);
 };
 
 float intCoordToFloatCoord(int x, int xDim);

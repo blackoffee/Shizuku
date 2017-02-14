@@ -17,6 +17,7 @@ public:
     int m_currentObstId = -1;
     float m_currentZ = -1000.f;
     float m_currentObstSize = 0.f;
+    float4* m_rayCastIntersect;
     Obstruction::Shape m_currentObstShape = Obstruction::SQUARE;
     Obstruction* m_obstructions;
     Panel* m_parent;
@@ -24,6 +25,19 @@ public:
     GLint m_viewport[4];
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
+
+    //view transformations
+    float m_rotate_x = 60.f;
+    float m_rotate_z = 30.f;
+    float m_translate_x = 0.f;
+    float m_translate_y = 0.8f;
+    float m_translate_z = -0.2f;
+    int m_paused = 0;
+    float m_scaleFactor = 1.f;
+
+    //contour and viewmode
+    ContourVariable m_contourVar;
+    ViewMode m_viewMode;
 
     GraphicsManager();
     GraphicsManager(Panel* panel);
@@ -35,7 +49,8 @@ public:
     void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
     void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY);
     void ClickDown(Mouse mouse);
-    void Drag(int xi, int yi, float dxf, float dyf);
+    void Drag(int xi, int yi, float dxf, float dyf, int button);
+    void Wheel(int button, int dir, int x, int y);
     void AddObstruction(Mouse mouse);
     void AddObstruction(int simX, int simY);
     void RemoveObstruction(Mouse mouse);
