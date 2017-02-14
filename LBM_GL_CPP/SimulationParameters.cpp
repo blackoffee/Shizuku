@@ -40,25 +40,25 @@ void SimulationParameters_SetXDim(SimulationParameters* p_this, const int xDim)
 {
     //x dimension must be multiple of BLOCKSIZEX
     int xDimAsMultipleOfBlocksize = ceil(static_cast<float>(xDim)/BLOCKSIZEX)*BLOCKSIZEX;
-    p_this->m_xDim = xDimAsMultipleOfBlocksize;
+    p_this->m_xDim = xDimAsMultipleOfBlocksize < MAX_XDIM ? xDimAsMultipleOfBlocksize : MAX_XDIM;
 }
 
 void SimulationParameters_SetYDim(SimulationParameters* p_this, const int yDim)
 {
     //y dimension must be multiple of BLOCKSIZEY
     int yDimAsMultipleOfBlocksize = ceil(static_cast<float>(yDim)/BLOCKSIZEY)*BLOCKSIZEY;
-    p_this->m_yDim = yDimAsMultipleOfBlocksize;
+    p_this->m_yDim = yDimAsMultipleOfBlocksize < MAX_YDIM ? yDimAsMultipleOfBlocksize : MAX_YDIM;
 }
 
 void SimulationParameters_SetXDimVisible(SimulationParameters* p_this, const int xDimVisible)
 {
-    p_this->m_xDimVisible = xDimVisible;
+    p_this->m_xDimVisible = xDimVisible < MAX_XDIM ? xDimVisible : MAX_XDIM;
     p_this->SetXDim(p_this,xDimVisible);
 }
 
 void SimulationParameters_SetYDimVisible(SimulationParameters* p_this, const int yDimVisible)
 {
-    p_this->m_yDimVisible = yDimVisible;
+    p_this->m_yDimVisible = yDimVisible < MAX_YDIM ? yDimVisible : MAX_YDIM;
     p_this->SetYDim(p_this,yDimVisible);
 }
 
