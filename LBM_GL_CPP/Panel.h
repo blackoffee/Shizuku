@@ -26,17 +26,19 @@ class Mouse;
 
 class Panel
 {
-public:
-    enum SizeDefinitionMethod {DEF_ABS, DEF_REL};
+private:
     std::string m_name;
-    std::vector<Panel*> m_subPanels;
-    std::vector<Button*> m_buttons;
-    std::vector<Slider*> m_sliders;
-    Panel* m_parent = NULL; //pointer to parent frame
     RectInt m_rectInt_abs; //absolute coordinates in Window
     RectInt m_rectInt_rel; //relative coordinates wrt to parent
     RectFloat m_rectFloat_abs; //absolute coordinates in window. this is the one used for drawing, so always want to keep this up-to-date.
     RectFloat m_rectFloat_rel;
+public:
+    enum SizeDefinitionMethod {DEF_ABS, DEF_REL};
+    std::vector<Panel*> m_subPanels;
+    std::vector<Button*> m_buttons;
+    std::vector<Slider*> m_sliders;
+    Panel* m_parent = NULL; //pointer to parent frame
+
     Color m_backgroundColor;
     Color m_foregroundColor;
     SizeDefinitionMethod m_sizeDefinition;
@@ -48,24 +50,43 @@ public:
     float m_minValue = 1.f;
     float m_maxValue = 0.f;
 
+
+
     Panel();
-    Panel(RectInt rectInt  , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
-    Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+    Panel(const RectInt rectInt  , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
+    Panel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
+
+    std::string GetName();
+    void SetName(const std::string name);
+
+    void SetSize_Relative(const RectFloat);
+    void SetSize_Absolute(const RectFloat);
+    void SetSize_Absolute(const RectInt);
+
+    RectFloat GetRectFloatAbs();
+    RectInt GetRectIntAbs();
 
     int GetWidth();
     int GetHeight();
     Panel* GetRootPanel();
-    Panel* GetPanel(std::string name);
-    Button* GetButton(std::string name);
-    Slider* GetSlider(std::string name);
+    Panel* GetPanel(const std::string name);
+    Button* GetButton(const std::string name);
+    Slider* GetSlider(const std::string name);
 
     void CreateGraphicsManager();
 
-    Panel* CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-    Panel* CreateSubPanel(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-    Button* CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-    Button* CreateButton(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color);
-    Slider* CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+    Panel* CreateSubPanel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
+    Panel* CreateSubPanel(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
+    Button* CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
+    Button* CreateButton(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
+    Slider* CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
 
     RectFloat RectIntAbsToRectFloatAbs();
     RectFloat RectFloatRelToRectFloatAbs();
@@ -77,8 +98,8 @@ public:
     virtual void Draw(); //draw current panel only
     virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
-    virtual void Drag(int x, int y, float dx, float dy, int button);
-    virtual void Wheel(int button, int dir, int x, int y);
+    virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
+    virtual void Wheel(const int button, const int dir, const int x, const int y);
     virtual void ClickDown(Mouse mouse);
 };
 
@@ -88,8 +109,10 @@ public:
     bool m_highlighted = false;
     
     using Panel::Panel;
-    Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
-    Button(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+    Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
+    Button(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
 
     virtual void ClickDown(Mouse mouse);
 };
@@ -104,8 +127,10 @@ public:
     float m_value = 0.5f;
 
     SliderBar();
-    SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
-    SliderBar(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent = NULL);
+    SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Slider* parent = NULL);
+    SliderBar(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Slider* parent = NULL);
 
     void Draw();
     void UpdateValue();
@@ -120,10 +145,13 @@ public:
     SliderBar* m_sliderBar1 = NULL;
     SliderBar* m_sliderBar2 = NULL;
 
-    Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
-    Slider(RectInt rectInt    , SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent = NULL);
+    Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
+    Slider(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color, Panel* parent = NULL);
 
-    void CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color);
+    void CreateSliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+        const std::string name, const Color color);
 
     void UpdateAll();
     

@@ -81,11 +81,9 @@ void SetUpWindow()
     int windowWidth = 1200;
     int windowHeight = g_leftPanelHeight+100;
 
-    Window.m_rectInt_abs = RectInt(200, 100, windowWidth, windowHeight);
-    Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
+    Window.SetSize_Absolute(RectInt(200, 100, windowWidth, windowHeight));
     Window.m_draw = false;
-    Window.m_name = "Main Window";
-    Window.m_sizeDefinition = Panel::DEF_ABS;
+    Window.SetName("Main Window");
     theMouse.SetBasePanel(&Window);
 
     Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
@@ -472,18 +470,18 @@ void SetUpButtons()
 void DrawShapePreview()
 {
     Panel* previewPanel = Window.GetPanel("DrawingPreview");
-    float centerX = previewPanel->m_rectFloat_abs.GetCentroidX();
-    float centerY = previewPanel->m_rectFloat_abs.GetCentroidY();
+    float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
+    float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
     float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
-        Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
+        Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     float currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    int graphicsWindowWidth = Window.GetPanel("Graphics")->m_rectInt_abs.m_w;
-    int graphicsWindowHeight = Window.GetPanel("Graphics")->m_rectInt_abs.m_h;
+    int graphicsWindowWidth = Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
+    int graphicsWindowHeight = Window.GetPanel("Graphics")->GetRectIntAbs().m_h;
     int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (xDimVisible); //r1x in pixels
     int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (yDimVisible); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
@@ -856,11 +854,12 @@ void Resize(int windowWidth, int windowHeight)
     theMouse.m_winW = windowWidth;
     theMouse.m_winH = windowHeight;
 
-    Window.m_rectInt_abs = RectInt(200, 100, windowWidth, windowHeight);
-    Window.m_rectFloat_abs = Window.RectIntAbsToRectFloatAbs();
-
-    Window.GetPanel("CDV")->m_rectInt_abs = RectInt(0, windowHeight - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight);
-    Window.GetPanel("Graphics")->m_rectInt_abs = RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight);
+    RectInt rect = { 200, 100, windowWidth, windowHeight };
+    Window.SetSize_Absolute(rect);
+    rect = { 0, windowHeight - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight };
+    Window.GetPanel("CDV")->SetSize_Absolute(rect);
+    rect = { g_leftPanelWidth, 0, windowWidth - g_leftPanelWidth, windowHeight };
+    Window.GetPanel("Graphics")->SetSize_Absolute(rect);
     Window.UpdateAll();
 
     glViewport(0, 0, windowWidth, windowHeight);

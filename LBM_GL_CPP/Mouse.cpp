@@ -9,8 +9,8 @@ extern int g_TwoDView;
 void Mouse::SetBasePanel(Panel* basePanel)
 {
     m_basePanel = basePanel;
-    m_winW = m_basePanel->m_rectInt_abs.m_w;
-    m_winH = m_basePanel->m_rectInt_abs.m_h;
+    m_winW = m_basePanel->GetRectIntAbs().m_w;
+    m_winH = m_basePanel->GetRectIntAbs().m_h;
     m_x = 0;
     m_y = 0;
 }

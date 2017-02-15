@@ -89,14 +89,14 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
     float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
     float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
-    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
+    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*m_scaleFactor);
+        min(m_parent->GetRectIntAbs().m_w, MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*
+        min(m_parent->GetRectIntAbs().m_h, MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
         graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
         graphicsToSimDomainScalingFactorY;
 }
 
@@ -105,14 +105,14 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut,
 {
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
-    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->m_rectFloat_abs;
+    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        min(m_parent->m_rectInt_abs.m_w, MAX_XDIM*m_scaleFactor);
+        min(m_parent->GetRectIntAbs().m_w, MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        min(m_parent->m_rectInt_abs.m_h, MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->m_rectInt_abs.m_w)*
+        min(m_parent->GetRectIntAbs().m_h, MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
         graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->m_rectInt_abs.m_h)*
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
         graphicsToSimDomainScalingFactorY;
 }
 
@@ -344,12 +344,12 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
         {
             Obstruction obst = m_obstructions[m_currentObstId];
             float dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->m_rectInt_abs.m_w;
-            int windowHeight = m_parent->GetRootPanel()->m_rectInt_abs.m_h;
+            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
             dxi = dxf*static_cast<float>(xDimVisible) / 
-                min(m_parent->m_rectFloat_abs.m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
+                min(m_parent->GetRectFloatAbs().m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
             dyi = dyf*static_cast<float>(yDimVisible) / 
-                min(m_parent->m_rectFloat_abs.m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
+                min(m_parent->GetRectFloatAbs().m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
             obst.x += dxi;
             obst.y += dyi;
             float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
@@ -363,8 +363,8 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
         {
             int simX1, simY1, simX2, simY2;
             int dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->m_rectInt_abs.m_w;
-            int windowHeight = m_parent->GetRootPanel()->m_rectInt_abs.m_h;
+            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
             dxi = dxf*static_cast<float>(windowWidth) / 2.f;
             dyi = dyf*static_cast<float>(windowHeight) / 2.f;
             GetSimCoordFrom2DMouseRay(simX1, simY1, xi-dxi, yi-dyi);

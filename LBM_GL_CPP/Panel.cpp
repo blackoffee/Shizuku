@@ -35,7 +35,8 @@ Panel::Panel()
     m_name = "None";
 }
 
-Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent)
+Panel::Panel(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color, Panel* parent)
 {
     m_name = name;
     m_backgroundColor = color;
@@ -56,7 +57,8 @@ Panel::Panel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string n
     }
 }
 
-Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent)
+Panel::Panel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color, Panel* parent)
 {
     m_name = name;
     m_backgroundColor = color;
@@ -76,6 +78,16 @@ Panel::Panel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::stri
     }
 }
 
+std::string Panel::GetName()
+{
+    return m_name;
+}
+
+void Panel::SetName(const std::string name)
+{
+    m_name = name;
+}
+
 int Panel::GetWidth()
 {
     return m_rectInt_abs.m_w;
@@ -86,19 +98,52 @@ int Panel::GetHeight()
     return m_rectInt_abs.m_h;
 }
 
+void Panel::SetSize_Relative(const RectFloat rectFloatRel)
+{
+    m_rectFloat_rel = rectFloatRel;
+    if (m_sizeDefinition == DEF_ABS)
+        m_rectFloat_abs = RectFloatRelToRectFloatAbs();
+}
+
+void Panel::SetSize_Absolute(const RectFloat rectFloatAbs)
+{
+    m_rectFloat_abs = rectFloatAbs;
+    if (m_sizeDefinition == DEF_REL)
+        m_rectFloat_rel = RectFloatAbsToRectFloatRel();
+}
+
+void Panel::SetSize_Absolute(const RectInt rectIntAbs)
+{
+    m_rectInt_abs = rectIntAbs;
+    if (m_sizeDefinition == DEF_ABS)
+        m_rectFloat_abs = RectIntAbsToRectFloatAbs();
+}
+
+RectFloat Panel::GetRectFloatAbs()
+{
+    return m_rectFloat_abs;
+}
+
+RectInt Panel::GetRectIntAbs()
+{
+    return m_rectInt_abs;
+}
+
 void Panel::CreateGraphicsManager()
 {
     m_graphicsManager = new GraphicsManager(this);
 }
 
-Panel* Panel::CreateSubPanel(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Panel* Panel::CreateSubPanel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color)
 {
     Panel* subPanel = new Panel(rectFloat, sizeDefinition, name, color, this);
     m_subPanels.push_back(subPanel);
     return subPanel;
 }
 
-Panel* Panel::CreateSubPanel(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Panel* Panel::CreateSubPanel(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color)
 {
     Panel* subPanel = new Panel(rectInt, sizeDefinition, name, color, this);
     m_subPanels.push_back(subPanel);
@@ -217,7 +262,8 @@ void Panel::Draw()
         stringWidth += (glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, c));
     }
     float stringWidthf = static_cast<float>(stringWidth) / rootPanel->m_rectInt_abs.m_w*2.f;
-    float stringHeightf = static_cast<float>(glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, 'A')) / rootPanel->m_rectInt_abs.m_h*2.f;
+    float stringHeightf = static_cast<float>(glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, 'A')) /
+        rootPanel->m_rectInt_abs.m_h*2.f;
     glRasterPos2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w*0.5f-stringWidthf*0.5f, 
                     m_rectFloat_abs.m_y + m_rectFloat_abs.m_h*0.5f-stringHeightf*0.5f);
     for (char& c:m_displayText)
@@ -244,7 +290,7 @@ void Panel::DrawAll()
 }
 
 
-Panel* Panel::GetPanel(std::string name)
+Panel* Panel::GetPanel(const std::string name)
 {
     for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
     {
@@ -261,7 +307,7 @@ Panel* Panel::GetPanel(std::string name)
     return NULL;
 }
 
-Button* Panel::GetButton(std::string name)
+Button* Panel::GetButton(const std::string name)
 {
     for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
     {
@@ -281,7 +327,7 @@ Button* Panel::GetButton(std::string name)
     return NULL;
 }
 
-Slider* Panel::GetSlider(std::string name)
+Slider* Panel::GetSlider(const std::string name)
 {
     for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
     {
@@ -301,21 +347,23 @@ Slider* Panel::GetSlider(std::string name)
     return NULL;
 }
 
-Button* Panel::CreateButton(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Button* Panel::CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color)
 {
     Button* button = new Button(rectFloat, sizeDefinition, name, color, this);
     m_buttons.push_back(button);
     return button;
 }
 
-Slider* Panel::CreateSlider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+Slider* Panel::CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color)
 {
     Slider* slider = new Slider(rectFloat, sizeDefinition, name, color, this);
     m_sliders.push_back(slider);
     return slider;
 }
 
-void Panel::Drag(int x, int y, float dx, float dy, int button)
+void Panel::Drag(const int x, const int y, const float dx, const float dy, const int button)
 {
     if (m_graphicsManager != NULL)
     {
@@ -323,7 +371,7 @@ void Panel::Drag(int x, int y, float dx, float dy, int button)
     }
 }
 
-void Panel::Wheel(int button, int dir, int x, int y)
+void Panel::Wheel(const int button, const int dir, const int x, const int y)
 {
     if (m_graphicsManager != NULL)
     {
@@ -340,16 +388,18 @@ void Panel::ClickDown(Mouse mouse)
 }
 
 
-Button::Button(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
-        : Panel(rectFloat, sizeDefinition, name, color, parent)
+Button::Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition, 
+    const std::string name, const Color color, Panel* parent) 
+    : Panel(rectFloat, sizeDefinition, name, color, parent)
 {
-    m_displayText = m_name;
+    m_displayText = this->GetName();
 }
 
-Button::Button(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Panel* parent) 
-        : Panel(rectInt, sizeDefinition, name, color, parent)
+Button::Button(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition, 
+    const std::string name, const Color color, Panel* parent) 
+    : Panel(rectInt, sizeDefinition, name, color, parent)
 {
-    m_displayText = m_name;
+    m_displayText = this->GetName();
 }
 
 void Button::ClickDown(Mouse mouse)
@@ -364,43 +414,48 @@ SliderBar::SliderBar()
 {
 }
 
-SliderBar::SliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color, Slider* parent)
-        : Panel(rectFloat, sizeDefinition, name, color, parent)
+SliderBar::SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color, Slider* parent) 
+    : Panel(rectFloat, sizeDefinition, name, color, parent)
 {
     m_backgroundColor = Color::GRAY;
 }
 
 void SliderBar::Draw()
 {
+    RectFloat rect = this->GetRectFloatAbs();
     glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
     glBegin(GL_QUADS);
-    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+    glVertex2f(rect.m_x, rect.m_y + rect.m_h);
+    glVertex2f(rect.m_x, rect.m_y);
+    glVertex2f(rect.m_x + rect.m_w, rect.m_y);
+    glVertex2f(rect.m_x + rect.m_w, rect.m_y + rect.m_h);
     glEnd();
 
     glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
     float outlineWidth = 0.003f;
     glBegin(GL_QUADS);
-    glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h - outlineWidth*2.f);
-    glVertex2f(m_rectFloat_abs.m_x + outlineWidth, m_rectFloat_abs.m_y + outlineWidth*2.f);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w - outlineWidth, m_rectFloat_abs.m_y + outlineWidth*2.f);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w - outlineWidth, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h - outlineWidth*2.f);
+    glVertex2f(rect.m_x + outlineWidth, rect.m_y + rect.m_h - outlineWidth*2.f);
+    glVertex2f(rect.m_x + outlineWidth, rect.m_y + outlineWidth*2.f);
+    glVertex2f(rect.m_x + rect.m_w - outlineWidth, rect.m_y + outlineWidth*2.f);
+    glVertex2f(rect.m_x + rect.m_w - outlineWidth, rect.m_y + rect.m_h - outlineWidth*2.f);
     glEnd();
 }
 
 void SliderBar::UpdateValue()
 {
+    RectFloat rect = this->GetRectFloatAbs();
     if (m_orientation == VERTICAL)
     {
-        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidY() - (m_parent->m_rectFloat_abs.m_y+m_rectFloat_abs.m_h*0.5f)) 
-                    / (m_parent->m_rectFloat_abs.m_h-m_rectFloat_abs.m_h);
+        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*
+            (rect.GetCentroidY() - (m_parent->GetRectFloatAbs().m_y+rect.m_h*0.5f)) /
+            (m_parent->GetRectFloatAbs().m_h-rect.m_h);
     }
     else
     {
-        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*(m_rectFloat_abs.GetCentroidX() - (m_parent->m_rectFloat_abs.m_x+m_rectFloat_abs.m_w*0.5f)) 
-                    / (m_parent->m_rectFloat_abs.m_w-m_rectFloat_abs.m_w);
+        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*
+            (rect.GetCentroidX() - (m_parent->GetRectFloatAbs().m_x+rect.m_w*0.5f)) /
+            (m_parent->GetRectFloatAbs().m_w-rect.m_w);
     }
 }
 
@@ -412,34 +467,36 @@ float SliderBar::GetValue()
 
 void SliderBar::Drag(int x, int y, float dx, float dy, int button)
 {
+    RectFloat rect = this->GetRectFloatAbs();
     //dx and dy are coming in as float abs coordinates
     if (m_orientation == VERTICAL)
     {
-        m_rectFloat_abs.m_y = max(m_parent->m_rectFloat_abs.m_y, 
-                            min(m_parent->m_rectFloat_abs.m_y + m_parent->m_rectFloat_abs.m_h - m_rectFloat_abs.m_h, m_rectFloat_abs.m_y + dy));
+        rect.m_y = max(m_parent->GetRectFloatAbs().m_y, 
+            min(m_parent->GetRectFloatAbs().m_y + m_parent->GetRectFloatAbs().m_h - rect.m_h, rect.m_y + dy));
     }
     else
     { 
-        m_rectFloat_abs.m_x = max(m_parent->m_rectFloat_abs.m_x, 
-                            min(m_parent->m_rectFloat_abs.m_x + m_parent->m_rectFloat_abs.m_w - m_rectFloat_abs.m_w, m_rectFloat_abs.m_x + dx));
+        rect.m_x = max(m_parent->GetRectFloatAbs().m_x,
+            min(m_parent->GetRectFloatAbs().m_x + m_parent->GetRectFloatAbs().m_w - rect.m_w, rect.m_x + dx));
     }
-    m_rectFloat_rel = RectFloatAbsToRectFloatRel();
+    SetSize_Absolute(rect);
     UpdateValue();
 }
 
-Slider::Slider(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, 
-        Color color, Panel* parent) 
-        : Panel(rectFloat, sizeDefinition, name, color, parent)
+Slider::Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color, Panel* parent) 
+    : Panel(rectFloat, sizeDefinition, name, color, parent)
 {
 }
 
-Slider::Slider(RectInt rectInt, SizeDefinitionMethod sizeDefinition, std::string name, 
-        Color color, Panel* parent) 
-        : Panel(rectInt, sizeDefinition, name, color, parent)
+Slider::Slider(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
+    const std::string name, const Color color, Panel* parent) 
+    : Panel(rectInt, sizeDefinition, name, color, parent)
 {
 }
 
-void Slider::CreateSliderBar(RectFloat rectFloat, SizeDefinitionMethod sizeDefinition, std::string name, Color color)
+void Slider::CreateSliderBar(const RectFloat rectFloat,
+    const SizeDefinitionMethod sizeDefinition, const std::string name, const Color color)
 {
     SliderBar* slider = new SliderBar(rectFloat, sizeDefinition, name, color, this);
     if (m_sliderBar1 == NULL)
@@ -468,6 +525,7 @@ void Slider::UpdateAll()
 void Slider::Draw()
 {
     Color minColor, maxColor;
+    RectFloat rect = this->GetRectFloatAbs();
     if (m_sliderBar2 == NULL)
     {
         if (m_sliderBar1->m_orientation == SliderBar::VERTICAL)
@@ -476,12 +534,12 @@ void Slider::Draw()
             maxColor = Color::WHITE;
             glBegin(GL_QUADS);
             glColor3f(maxColor.r, maxColor.g, maxColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x, rect.m_y + rect.m_h);
             glColor3f(minColor.r, minColor.g, minColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+            glVertex2f(rect.m_x, rect.m_y);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y);
             glColor3f(maxColor.r, maxColor.g, maxColor.b);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y + rect.m_h);
             glEnd();
         }
         else
@@ -490,11 +548,11 @@ void Slider::Draw()
             maxColor = Color::WHITE;
             glBegin(GL_QUADS);
             glColor3f(minColor.r, minColor.g, minColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+            glVertex2f(rect.m_x, rect.m_y + rect.m_h);
+            glVertex2f(rect.m_x, rect.m_y);
             glColor3f(maxColor.r, maxColor.g, maxColor.b);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y + rect.m_h);
             glEnd();
 
         }
@@ -523,60 +581,60 @@ void Slider::Draw()
         {
             glBegin(GL_QUADS);
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x, lowerSliderBar->GetRectFloatAbs().GetCentroidY());
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+            glVertex2f(rect.m_x, rect.m_y);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y);
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x + rect.m_w, lowerSliderBar->GetRectFloatAbs().GetCentroidY());
             glEnd();
 
             glBegin(GL_QUADS);
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x, higherSliderBar->GetRectFloatAbs().GetCentroidY());
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, lowerSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x, lowerSliderBar->GetRectFloatAbs().GetCentroidY());
+            glVertex2f(rect.m_x + rect.m_w, lowerSliderBar->GetRectFloatAbs().GetCentroidY());
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x + rect.m_w, higherSliderBar->GetRectFloatAbs().GetCentroidY());
             glEnd();
 
 
             glBegin(GL_QUADS);
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x, rect.m_y+rect.m_h);
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, higherSliderBar->m_rectFloat_abs.GetCentroidY());
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, higherSliderBar->m_rectFloat_abs.GetCentroidY());
+            glVertex2f(rect.m_x, higherSliderBar->GetRectFloatAbs().GetCentroidY());
+            glVertex2f(rect.m_x + rect.m_w, higherSliderBar->GetRectFloatAbs().GetCentroidY());
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x + rect.m_w, rect.m_y+rect.m_h);
             glEnd();
         }
         else
         {
             glBegin(GL_QUADS);
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-            glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-            glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
-            glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+            glVertex2f(rect.m_x, rect.m_y+rect.m_h);
+            glVertex2f(rect.m_x, rect.m_y);
+            glVertex2f(lowerSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y);
+            glVertex2f(lowerSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y+rect.m_h);
             glEnd();
 
             glBegin(GL_QUADS);
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);
-            glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-            glVertex2f(lowerSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
+            glVertex2f(lowerSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y+rect.m_h);
+            glVertex2f(lowerSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y);
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
-            glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+            glVertex2f(higherSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y);
+            glVertex2f(higherSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y+rect.m_h);
             glEnd();
 
             glBegin(GL_QUADS);
             glColor3f(higherColor.r, higherColor.g, higherColor.b);
-            glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
-            glVertex2f(higherSliderBar->m_rectFloat_abs.GetCentroidX(), m_rectFloat_abs.m_y);
-            glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-            glVertex2f(m_rectFloat_abs.m_x+m_rectFloat_abs.m_w, m_rectFloat_abs.m_y+m_rectFloat_abs.m_h);
+            glVertex2f(higherSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y+rect.m_h);
+            glVertex2f(higherSliderBar->GetRectFloatAbs().GetCentroidX(), rect.m_y);
+            glVertex2f(rect.m_x+rect.m_w, rect.m_y);
+            glVertex2f(rect.m_x+rect.m_w, rect.m_y+rect.m_h);
             glEnd();
         }
     }
@@ -639,8 +697,8 @@ void ButtonGroup::ExclusiveEnable(Button* button)
     for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
     {
         Slider* sliderForButton(NULL);
-        if ((*it)->GetRootPanel()->GetSlider((*it)->m_name) != NULL){
-            sliderForButton = (*it)->GetRootPanel()->GetSlider((*it)->m_name);
+        if ((*it)->GetRootPanel()->GetSlider((*it)->GetName()) != NULL){
+            sliderForButton = (*it)->GetRootPanel()->GetSlider((*it)->GetName());
         }
         if (*it == button)
         {
@@ -689,7 +747,7 @@ bool IsPointInRect(float x, float y, RectFloat rect, float tol = 0.0f)
 Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 {
     Panel* panelThatPointIsIn = NULL; 
-    if (IsPointInRect(x, y, parentPanel->m_rectFloat_abs))
+    if (IsPointInRect(x, y, parentPanel->GetRectFloatAbs()))
     {
         panelThatPointIsIn = parentPanel;
         Panel* temp;
@@ -717,14 +775,14 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
                 panelThatPointIsIn = temp;
                 if ((*it)->m_sliderBar1 != NULL && temp->m_draw == true)
                 {
-                    if (IsPointInRect(x, y, (*it)->m_sliderBar1->m_rectFloat_abs))
+                    if (IsPointInRect(x, y, (*it)->m_sliderBar1->GetRectFloatAbs()))
                     {
                         panelThatPointIsIn = (*it)->m_sliderBar1;
                     }
                 }
                 if ((*it)->m_sliderBar2 != NULL && temp->m_draw == true)
                 {
-                    if (IsPointInRect(x, y, (*it)->m_sliderBar2->m_rectFloat_abs))
+                    if (IsPointInRect(x, y, (*it)->m_sliderBar2->GetRectFloatAbs()))
                     {
                         panelThatPointIsIn = (*it)->m_sliderBar2;
                     }
