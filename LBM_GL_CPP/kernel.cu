@@ -378,18 +378,21 @@ __device__ void ApplyBCs(float& f0, float& f1, float& f2, float& f3, float& f4,
     }
 }
 
-__device__ void ComputeFEqs(float *feq, const float rho, const float u, const float v)
+__device__ void ComputeFEqs(float &feq0, float &feq1, float &feq2,
+    float &feq3, float &feq4, float &feq5,
+    float &feq6, float &feq7, float &feq8,
+    const float rho, const float u, const float v)
 {
     float usqr = u*u+v*v;
-    feq[0] = 4.0f/9.0f*(rho-1.5f*usqr);
-    feq[1] = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
-    feq[2] = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
-    feq[3] = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
-    feq[4] = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
-    feq[5] = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
-    feq[6] = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
-    feq[7] = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
-    feq[8] = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
+    feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
+    feq1 = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
+    feq2 = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
+    feq3 = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
+    feq4 = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
+    feq5 = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
+    feq6 = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
+    feq7 = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
+    feq8 = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
 }
 
 __device__ void MovingWall(float &f0, float &f1, float &f2,
@@ -398,16 +401,7 @@ __device__ void MovingWall(float &f0, float &f1, float &f2,
     const float rho, const float u, const float v)
 {
     float feq[9];
-    ComputeFEqs(feq, rho, u, v);
-    f0 = feq[0];
-    f1 = feq[1];
-    f2 = feq[2];
-    f3 = feq[3];
-    f4 = feq[4];
-    f5 = feq[5];
-    f6 = feq[6];
-    f7 = feq[7];
-    f8 = feq[8];
+    ComputeFEqs(f0,f1,f2,f3,f4,f5,f6,f7,f8,rho,u,v);
 }
 
 
@@ -442,16 +436,8 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
 
     float usqr = u*u+v*v;
     float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-    float feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
-    float feq1 = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
-    float feq2 = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
-    float feq3 = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
-    float feq4 = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
-    float feq5 = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
-    float feq6 = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
-    float feq7 = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
-    float feq8 = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
-    
+    float feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8;
+    ComputeFEqs(feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8, rho, u, v);
     
     float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
     float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
