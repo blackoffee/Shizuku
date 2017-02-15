@@ -122,8 +122,8 @@ void SetUpWindow()
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
     Window.GetPanel("Graphics")->m_draw = false;
     Window.GetPanel("Graphics")->CreateGraphicsManager();
-    Window.GetPanel("Graphics")->m_graphicsManager->m_obstructions = &g_obstructions[0];
-    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetObstructionsPointer(&g_obstructions[0]);
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
 
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
@@ -313,7 +313,8 @@ void SetUpWindow()
     Window.GetSlider("Slider_Size")->m_minValue = 1.f;
     Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstSize = currentObstSize;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstSize(currentObstSize);
+
 
     SetUpButtons();
     WaterRenderingButtonCallBack(); //default is water rendering
@@ -356,73 +357,73 @@ void InitializeButtonCallBack()
 void VelMagButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_MAG;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_MAG);
 }
 
 void VelXButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("X Velocity"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_U;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_U);
 }
 
 void VelYButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Y Velocity"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = VEL_V;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_V);
 }
 
 void StrainRateButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("StrainRate"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = STRAIN_RATE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(STRAIN_RATE);
 }
 
 void PressureButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Pressure"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = PRESSURE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(PRESSURE);
 }
 
 void WaterRenderingButtonCallBack()
 {
     contourButtons.ExclusiveEnable(Window.GetButton("Water Rendering"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar = WATER_RENDERING;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(WATER_RENDERING);
 }
 
 void SquareButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Square"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::SQUARE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::SQUARE);
 }
 
 void CircleButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Circle"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::CIRCLE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::CIRCLE);
 }
 
 void HorLineButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Hor. Line"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::HORIZONTAL_LINE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
 }
 
 void VertLineButtonCallBack()
 {
     shapeButtons.ExclusiveEnable(Window.GetButton("Vert. Line"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape = Obstruction::VERTICAL_LINE;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
 }
 
 void ThreeDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("3D"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = THREE_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetViewMode(THREE_DIMENSIONAL);
 }
 
 void TwoDButtonCallBack()
 {
     viewButtons.ExclusiveEnable(Window.GetButton("2D"));
-    Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode = TWO_DIMENSIONAL;
+    Window.GetPanel("Graphics")->m_graphicsManager->SetViewMode(TWO_DIMENSIONAL);
 }
 
 void SetUpButtons()
@@ -488,7 +489,8 @@ void DrawShapePreview()
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    Obstruction::Shape currentShape = Window.GetPanel("Graphics")->m_graphicsManager->m_currentObstShape;
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    Obstruction::Shape currentShape = graphicsManager->GetCurrentObstShape();
     glColor3f(0.8f,0.8f,0.8f);
     switch (currentShape)
     {
@@ -684,7 +686,7 @@ void SetUpCUDA()
     cudaMalloc((void **)&g_im_d, memsize_int);
     cudaMalloc((void **)&g_obst_d, memsize_inputs);
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
-    cudaMalloc((void **)&graphicsManager->m_rayCastIntersect, sizeof(float4));
+    cudaMalloc((void **)&graphicsManager->m_rayCastIntersect_d, sizeof(float4));
 
     for (int i = 0; i < domainSize*9; i++)
     {
@@ -725,7 +727,7 @@ void SetUpCUDA()
     cudaMemcpy(g_fB_d, fB_h, memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(g_floor_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
     cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
-    cudaMemcpy(graphicsManager->m_rayCastIntersect, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+    cudaMemcpy(graphicsManager->m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
 
     delete[] fA_h;
     delete[] fB_h;
@@ -760,9 +762,9 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
     float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
     float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
-    int paused = Window.GetPanel("Graphics")->m_graphicsManager->m_paused;
-    ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->m_contourVar;
-    ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->m_viewMode;
+    bool paused = Window.GetPanel("Graphics")->m_graphicsManager->IsPaused();
+    ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
+    ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
         contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
@@ -820,7 +822,7 @@ void Keyboard(unsigned char key, int /*x*/, int /*y*/)
     {
     case (' ') :
         GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
-        graphicsManager->m_paused = (graphicsManager->m_paused + 1) % 2;
+        graphicsManager->TogglePausedState();
         break;
     }
 }
@@ -847,7 +849,7 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 void Resize(int windowWidth, int windowHeight)
 {
-    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->m_scaleFactor;
+    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
 
@@ -871,7 +873,7 @@ void Draw()
 
     float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
-    graphicsManager->m_scaleFactor = scaleUp;
+    graphicsManager->SetScaleFactor(scaleUp);
 
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
@@ -885,12 +887,10 @@ void Draw()
         / windowHeight*2.f;
 
     //get view transformations
-    float translate_x = graphicsManager->m_translate_x;
-    float translate_y = graphicsManager->m_translate_y;
-    float translate_z = graphicsManager->m_translate_z;
-    float rotate_x = graphicsManager->m_rotate_x;
-    float rotate_z = graphicsManager->m_rotate_z;
-    float3 cameraPosition = { -xTranslation - translate_x, -yTranslation - translate_y, +2 - translate_z };
+    float3 translateTransforms = graphicsManager->GetTranslationTransforms();
+    float3 rotateTransforms = graphicsManager->GetRotationTransforms();
+    float3 cameraPosition = { -xTranslation - translateTransforms.x, 
+        -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
 
@@ -905,7 +905,7 @@ void Draw()
     glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
         (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
-    ViewMode viewMode = graphicsManager->m_viewMode;
+    ViewMode viewMode = graphicsManager->GetViewMode();
     if (viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
@@ -913,9 +913,9 @@ void Draw()
     else
     {
         gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
-        glTranslatef(translate_x, translate_y, -2+translate_z);
-        glRotatef(-rotate_x,1,0,0);
-        glRotatef(rotate_z,0,0,1);
+        glTranslatef(translateTransforms.x, translateTransforms.y, -2+translateTransforms.z);
+        glRotatef(-rotateTransforms.x,1,0,0);
+        glRotatef(rotateTransforms.z,0,0,1);
     }
 
     glEnable(GL_BLEND);
@@ -932,7 +932,7 @@ void Draw()
     glColor3f(1.0, 0.0, 0.0);
     glEnableClientState(GL_COLOR_ARRAY);
     glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-    ContourVariable contourVar = graphicsManager->m_contourVar;
+    ContourVariable contourVar = graphicsManager->GetContourVar();
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
         //Draw floor
@@ -952,7 +952,8 @@ void Draw()
     // Update transformation matrices in graphics manager for mouse ray casting
     graphicsManager->UpdateViewTransformations();
     // Update Obstruction size based on current slider value
-    graphicsManager->m_currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    graphicsManager->SetCurrentObstSize(currentObstSize);
 
 
     glDisable(GL_DEPTH_TEST);

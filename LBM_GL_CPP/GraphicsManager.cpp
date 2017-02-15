@@ -7,14 +7,80 @@ extern Obstruction* g_obst_d;
 extern SimulationParameters g_simParams;
 extern cudaGraphicsResource *g_cudaSolutionField;
 
-GraphicsManager::GraphicsManager()
-{
-
-}
-
 GraphicsManager::GraphicsManager(Panel* panel)
 {
     m_parent = panel;
+}
+
+float3 GraphicsManager::GetRotationTransforms()
+{
+    return float3{ m_rotate_x, m_rotate_y, m_rotate_z };
+}
+
+float3 GraphicsManager::GetTranslationTransforms()
+{
+    return float3{ m_translate_x, m_translate_y, m_translate_z };
+}
+
+void GraphicsManager::SetCurrentObstSize(float size)
+{
+    m_currentObstSize = size;
+}
+
+void GraphicsManager::SetCurrentObstShape(Obstruction::Shape shape)
+{
+    m_currentObstShape = shape;
+}
+
+ViewMode GraphicsManager::GetViewMode()
+{
+    return m_viewMode;
+}
+
+void GraphicsManager::SetViewMode(ViewMode viewMode)
+{
+    m_viewMode = viewMode;
+}
+
+ContourVariable GraphicsManager::GetContourVar()
+{
+    return m_contourVar;
+}
+
+void GraphicsManager::SetContourVar(ContourVariable contourVar)
+{
+    m_contourVar = contourVar;
+}
+
+
+Obstruction::Shape GraphicsManager::GetCurrentObstShape()
+{
+    return m_currentObstShape;
+}
+
+void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
+{
+    m_obstructions = obst;
+}
+
+bool GraphicsManager::IsPaused()
+{
+    return m_paused;
+}
+
+void GraphicsManager::TogglePausedState()
+{
+    m_paused = !m_paused;
+}
+
+float GraphicsManager::GetScaleFactor()
+{
+    return m_scaleFactor;
+}
+
+void GraphicsManager::SetScaleFactor(float scaleFactor)
+{
+    m_scaleFactor = scaleFactor;
 }
 
 void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse)
@@ -82,7 +148,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float3 selectedCoordF;
-    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect, 
+    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
         rayOrigin, rayDir, g_obst_d, &g_simParams);
     if (rayCastResult == 0)
     {
