@@ -22,12 +22,12 @@ float3 GraphicsManager::GetTranslationTransforms()
     return float3{ m_translate_x, m_translate_y, m_translate_z };
 }
 
-void GraphicsManager::SetCurrentObstSize(float size)
+void GraphicsManager::SetCurrentObstSize(const float size)
 {
     m_currentObstSize = size;
 }
 
-void GraphicsManager::SetCurrentObstShape(Obstruction::Shape shape)
+void GraphicsManager::SetCurrentObstShape(const Obstruction::Shape shape)
 {
     m_currentObstShape = shape;
 }
@@ -37,7 +37,7 @@ ViewMode GraphicsManager::GetViewMode()
     return m_viewMode;
 }
 
-void GraphicsManager::SetViewMode(ViewMode viewMode)
+void GraphicsManager::SetViewMode(const ViewMode viewMode)
 {
     m_viewMode = viewMode;
 }
@@ -47,7 +47,7 @@ ContourVariable GraphicsManager::GetContourVar()
     return m_contourVar;
 }
 
-void GraphicsManager::SetContourVar(ContourVariable contourVar)
+void GraphicsManager::SetContourVar(const ContourVariable contourVar)
 {
     m_contourVar = contourVar;
 }
@@ -78,7 +78,7 @@ float GraphicsManager::GetScaleFactor()
     return m_scaleFactor;
 }
 
-void GraphicsManager::SetScaleFactor(float scaleFactor)
+void GraphicsManager::SetScaleFactor(const float scaleFactor)
 {
     m_scaleFactor = scaleFactor;
 }
@@ -100,7 +100,8 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
         graphicsToSimDomainScalingFactorY;
 }
 
-void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf)
+void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, 
+    const float xf, const float yf)
 {
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
@@ -115,7 +116,8 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, 
         graphicsToSimDomainScalingFactorY;
 }
 
-void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX, int mouseY)
+void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
+    const int mouseX, const int mouseY)
 {
     double x, y, z;
     gluUnProject(mouseX, mouseY, 0.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
@@ -133,7 +135,8 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX,
     rayDir.z /= mag;
 }
 
-int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse)
+int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
+    Mouse mouse)
 {
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
@@ -182,7 +185,8 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mous
     yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
 
-void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY)
+void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, 
+    const int mouseX, const int mouseY)
 {
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     float3 rayOrigin, rayDir;
@@ -257,7 +261,8 @@ void GraphicsManager::ClickDown(Mouse mouse)
     }
 }
 
-void GraphicsManager::Drag(int xi, int yi, float dxf, float dyf, int button)
+void GraphicsManager::Drag(const int xi, const int yi, const float dxf,
+    const float dyf, const int button)
 {
     if (button == GLUT_LEFT_BUTTON)
     {
@@ -280,7 +285,7 @@ void GraphicsManager::Drag(int xi, int yi, float dxf, float dyf, int button)
     }
 }
 
-void GraphicsManager::Wheel(int button, int dir, int x, int y)
+void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
 {
     if (dir > 0){
         m_translate_z -= 0.3f;
@@ -301,7 +306,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
     UpdateDeviceObstructions(g_obst_d, obstId, obst);
 }
 
-void GraphicsManager::AddObstruction(int simX, int simY)
+void GraphicsManager::AddObstruction(const int simX, const int simY)
 {
     Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, Obstruction::NEW  };
     int obstId = FindUnusedObstructionId();
@@ -318,7 +323,7 @@ void GraphicsManager::RemoveObstruction(Mouse mouse)
     UpdateDeviceObstructions(g_obst_d, obstId, m_obstructions[obstId]);
 }
 
-void GraphicsManager::RemoveObstruction(int simX, int simY)
+void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 {
     int obstId = FindObstructionPointIsInside(simX,simY,1.f);
     if (obstId >= 0)
@@ -328,7 +333,8 @@ void GraphicsManager::RemoveObstruction(int simX, int simY)
     }
 }
 
-void GraphicsManager::MoveObstruction(int xi, int yi, float dxf, float dyf)
+void GraphicsManager::MoveObstruction(const int xi, const int yi,
+    const float dxf, const float dyf)
 {
     int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
     int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
@@ -413,7 +419,7 @@ int GraphicsManager::FindClosestObstructionId(Mouse mouse)
     return closestObstId;
 }
 
-int GraphicsManager::FindClosestObstructionId(int simX, int simY)
+int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
 {
     float dist = 999999999999.f;
     int closestObstId = -1;
@@ -432,7 +438,8 @@ int GraphicsManager::FindClosestObstructionId(int simX, int simY)
     return closestObstId;
 }
 
-int GraphicsManager::FindObstructionPointIsInside(int simX, int simY, float tolerance)
+int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY,
+    const float tolerance)
 {
     float dist = 999999999999.f;
     int closestObstId = -1;
@@ -440,7 +447,8 @@ int GraphicsManager::FindObstructionPointIsInside(int simX, int simY, float tole
     {
         if (m_obstructions[i].state != Obstruction::REMOVED)
         {
-            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x, m_obstructions[i].y);
+            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x,
+                m_obstructions[i].y);
             if (newDist < dist && newDist < m_obstructions[i].r1+tolerance)
             {
                 dist = newDist;
@@ -469,7 +477,8 @@ void GraphicsManager::UpdateViewTransformations()
     glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
 }
 
-float GetDistanceBetweenTwoPoints(float x1, float y1, float x2, float y2)
+float GetDistanceBetweenTwoPoints(const float x1, const float y1,
+    const float x2, const float y2)
 {
     float dx = x2 - x1;
     float dy = y2 - y1;

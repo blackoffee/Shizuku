@@ -36,20 +36,20 @@ private:
     ContourVariable m_contourVar;
 
     void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
-    void GetSimCoordFromFloatCoord(int &xOut, int &yOut, float xf, float yf);
-    void GetMouseRay(float3 &rayOrigin, float3 &rayDir, int mouseX, int mouseY);
+    void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
+    void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
     int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse);
     void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
-    void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, int mouseX, int mouseY);
+    void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
     void AddObstruction(Mouse mouse);
-    void AddObstruction(int simX, int simY);
+    void AddObstruction(const int simX, const int simY);
     void RemoveObstruction(Mouse mouse);
-    void RemoveObstruction(int simX, int simY);
-    void MoveObstruction(int xi, int yi, float dxf, float dyf);
+    void RemoveObstruction(const int simX, const int simY);
+    void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);
     int FindUnusedObstructionId();
     int FindClosestObstructionId(Mouse mouse);
-    int FindClosestObstructionId(int simX, int simY);
-    int FindObstructionPointIsInside(int x, int y, float tolerance=0.f);
+    int FindClosestObstructionId(const int simX, const int simY);
+    int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
     bool IsInClosestObstruction(Mouse mouse);
  
 public:
@@ -60,16 +60,16 @@ public:
     float3 GetRotationTransforms();
     float3 GetTranslationTransforms();
 
-    void SetCurrentObstSize(float size);
+    void SetCurrentObstSize(const float size);
 
     Obstruction::Shape GetCurrentObstShape();
-    void SetCurrentObstShape(Obstruction::Shape shape);
+    void SetCurrentObstShape(const Obstruction::Shape shape);
 
     ViewMode GetViewMode();
-    void SetViewMode(ViewMode viewMode);
+    void SetViewMode(const ViewMode viewMode);
 
     ContourVariable GetContourVar();
-    void SetContourVar(ContourVariable contourVar);
+    void SetContourVar(const ContourVariable contourVar);
 
     void SetObstructionsPointer(Obstruction* obst);
 
@@ -77,15 +77,16 @@ public:
     void TogglePausedState();
 
     float GetScaleFactor();
-    void SetScaleFactor(float scaleFactor);
-
+    void SetScaleFactor(const float scaleFactor);
 
     void ClickDown(Mouse mouse);
-    void Drag(int xi, int yi, float dxf, float dyf, int button);
-    void Wheel(int button, int dir, int x, int y);
+    void Drag(const int xi, const int yi, const float dxf, const float dyf,
+        const int button);
+    void Wheel(const int button, const int dir, const int x, const int y);
    
     void UpdateViewTransformations();
 
 };
 
-float GetDistanceBetweenTwoPoints(float x1, float y1, float x2, float y2);
+float GetDistanceBetweenTwoPoints(const float x1, const float y1,
+    const float x2, const float y2);
