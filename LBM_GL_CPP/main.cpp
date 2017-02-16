@@ -17,7 +17,7 @@
 #include "Mouse.h"
 #include "Panel.h"
 #include "common.h"
-#include "SimulationParameters.h"
+#include "Domain.h"
 #include "FpsTracker.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -28,7 +28,7 @@ const int g_leftPanelHeight(500);
 FpsTracker g_fpsTracker;
 
 //simulation inputs
-SimulationParameters g_simParams;
+Domain g_simDomain;
 
 Obstruction g_obstructions[MAXOBSTS];
 
@@ -76,8 +76,6 @@ void Init()
 
 void SetUpWindow()
 {
-    //SimulationParameters_init(&g_simParams);
-
     int windowWidth = 1200;
     int windowHeight = g_leftPanelHeight+100;
 
@@ -349,7 +347,7 @@ void InitializeButtonCallBack()
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simParams);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simDomain);
 }
 
 void VelMagButtonCallBack()
@@ -477,8 +475,8 @@ void DrawShapePreview()
     float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
         Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
-    int xDimVisible = g_simParams.GetXDimVisible();
-    int yDimVisible = g_simParams.GetYDimVisible();
+    int xDimVisible = g_simDomain.GetXDimVisible();
+    int yDimVisible = g_simDomain.GetYDimVisible();
     float currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     int graphicsWindowWidth = Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
     int graphicsWindowHeight = Window.GetPanel("Graphics")->GetRectIntAbs().m_h;
@@ -633,8 +631,8 @@ void timerEvent(int value)
 
 //BC function for host side
 int ImageFcn_h(int x, int y, Obstruction* obstructions){
-    int xDim = g_simParams.GetXDim();
-    int yDim = g_simParams.GetYDim();
+    int xDim = g_simDomain.GetXDim();
+    int yDim = g_simDomain.GetYDim();
     //if(y == 0 || x == XDIM-1 || y == YDIM-1)
     if (x < 0.1f)
         return 3;//west
@@ -739,10 +737,10 @@ void SetUpCUDA()
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simParams);
-    InitializeDomain(dptr, g_fB_d, g_im_d, u, g_simParams);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simDomain);
+    InitializeDomain(dptr, g_fB_d, g_im_d, u, g_simDomain);
 
-    InitializeFloor(dptr, g_floor_d, g_simParams);
+    InitializeFloor(dptr, g_floor_d, g_simDomain);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -765,15 +763,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
-        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, g_simParams, paused);
+        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, g_simDomain, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition, g_simParams);
+        LightSurface(dptr, g_obst_d, cameraPosition, g_simDomain);
     }
-    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, g_simParams);
-    CleanUpDeviceVBO(dptr, g_simParams);
+    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, g_simDomain);
+    CleanUpDeviceVBO(dptr, g_simDomain);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
@@ -840,8 +838,8 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 {
     int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
     int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    g_simParams.SetXDimVisible(xDimVisible);
-    g_simParams.SetYDimVisible(yDimVisible);
+    g_simDomain.SetXDimVisible(xDimVisible);
+    g_simDomain.SetYDimVisible(yDimVisible);
 }
 
 void Resize(int windowWidth, int windowHeight)
@@ -879,8 +877,8 @@ void Draw()
     int windowHeight = Window.GetHeight();
     Resize(windowWidth, windowHeight);
 
-    int xDimVisible = g_simParams.GetXDimVisible();
-    int yDimVisible = g_simParams.GetYDimVisible();
+    int xDimVisible = g_simDomain.GetXDimVisible();
+    int yDimVisible = g_simDomain.GetYDimVisible();
     float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
     float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
@@ -969,8 +967,8 @@ void Draw()
     g_fpsTracker.Tock();
     float fps = g_fpsTracker.GetFps();
     char fpsReport[256];
-    int xDim = g_simParams.GetXDim();
-    int yDim = g_simParams.GetYDim();
+    int xDim = g_simDomain.GetXDim();
+    int yDim = g_simDomain.GetYDim();
     sprintf(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);

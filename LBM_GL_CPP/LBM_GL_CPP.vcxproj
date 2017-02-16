@@ -193,7 +193,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
-    <CudaCompile Include="SimulationParameters.cu">
+    <CudaCompile Include="Domain.cu">
       <FileType>Document</FileType>
     </CudaCompile>
   </ItemGroup>
@@ -206,7 +206,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="Panel.h" />
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />
-    <ClInclude Include="SimulationParameters.h" />
+    <ClInclude Include="Domain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

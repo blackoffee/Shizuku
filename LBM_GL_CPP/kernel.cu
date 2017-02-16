@@ -276,7 +276,7 @@ __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord,
 
 // Initialize domain using constant velocity
 __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
-    SimulationParameters simParams)
+    Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -299,8 +299,8 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
 
     float xcoord, ycoord, zcoord;
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = 0.f;
     float R(255.f), G(255.f), B(255.f), A(255.f);
@@ -464,7 +464,7 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
 
 // main LBM function including streaming and colliding
 __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
-    Obstruction *obstructions, const float uMax, SimulationParameters simParams)
+    Obstruction *obstructions, const float uMax, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -483,8 +483,8 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
             im = 20; //moving wall
         }
     }
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     float f0, f1, f2, f3, f4, f5, f6, f7, f8;
     f0 = fA[j];
     f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -549,7 +549,7 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
 // main LBM function including streaming and colliding
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int contourVar, const float contMin, const float contMax,
-    const int viewMode, const float uMax, SimulationParameters simParams)
+    const int viewMode, const float uMax, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -557,8 +557,8 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     int im = Im[j];
     float u, v, rho;
 
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     float f0, f1, f2, f3, f4, f5, f6, f7, f8;
     f0 = fA[j];
     f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -579,8 +579,8 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 
     //need to change x,y,z coordinates to NDC (-1 to 1)
     float xcoord, ycoord, zcoord;
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
@@ -641,14 +641,14 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
-__global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
+__global__ void CleanUpVBO(float4* vbo, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     float xcoord, ycoord;
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     if (x >= xDimVisible || y >= yDimVisible)
     {
@@ -663,7 +663,7 @@ __global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
 }
 
 __global__ void PhongLighting(float4* vbo, Obstruction *obstructions, 
-    float3 cameraPosition, SimulationParameters simParams)
+    float3 cameraPosition, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -676,8 +676,8 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     B = color[2];
     A = color[3];
 
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     float3 n = { 0, 0, 0 };
     float slope_x = 0.f;
     float slope_y = 0.f;
@@ -746,13 +746,13 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
 
 
 
-__global__ void InitializeFloorMesh(float4* vbo, float* floor_d, SimulationParameters simParams)
+__global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     float xcoord, ycoord, zcoord;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = -1.f;
@@ -765,11 +765,11 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, SimulationParam
 }
 
 __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
-    const int x, const int y, SimulationParameters simParams)
+    const int x, const int y, Domain simDomain)
 {
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     float3 n = { 0, 0, 1 };
     float slope_x = 0.f;
     float slope_y = 0.f;
@@ -809,13 +809,13 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
 }
 
 __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
-    Obstruction* obstructions, SimulationParameters simParams)
+    Obstruction* obstructions, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     
     if (x < xDimVisible && y < yDimVisible)
     {
@@ -826,7 +826,7 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
         }
         else
         {
-            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight, x, y, simParams);
+            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight, x, y, simDomain);
         }
 
         vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
@@ -835,12 +835,12 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
 }
 
 __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, SimulationParameters simParams)
+    Obstruction* obstructions, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
 
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
@@ -861,7 +861,7 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 }
 
 __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, SimulationParameters simParams)
+    Obstruction* obstructions, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -922,8 +922,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     vbo[j].x = xcoord;
     vbo[j].y = ycoord;
@@ -958,15 +958,15 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
 }
 
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir,
-    Obstruction* obstructions, SimulationParameters simParams)
+    Obstruction* obstructions, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
 
     if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
     {
@@ -1010,11 +1010,11 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
 
 
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
-    SimulationParameters &simParams)
+    Domain &simDomain)
 {
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
-    InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, simParams);
+    InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, simDomain);
 }
 
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
@@ -1034,23 +1034,23 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
     const ContourVariable contVar, const float contMin, const float contMax,
     const ViewMode viewMode, const float uMax, const float omega, const int tStep,
-    SimulationParameters &simParams, const bool paused)
+    Domain &simDomain, const bool paused)
 {
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
 
     for (int i = 0; i < tStep; i++)
     {
-        MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, uMax, simParams);
+        MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, uMax, simDomain);
         if (!paused)
         {
-            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, uMax, simParams);
+            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, uMax, simDomain);
         }
     }
     UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax,
-        viewMode, uMax, simParams);
+        viewMode, uMax, simDomain);
 }
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
@@ -1059,61 +1059,61 @@ void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst);
 }
 
-void CleanUpDeviceVBO(float4* vis, SimulationParameters &simParams)
+void CleanUpDeviceVBO(float4* vis, Domain &simDomain)
 {
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(MAX_XDIM / BLOCKSIZEX, MAX_YDIM / BLOCKSIZEY);
-    CleanUpVBO << <grid, threads>> >(vis, simParams);
+    CleanUpVBO << <grid, threads>> >(vis, simDomain);
 }
 
 void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
-    SimulationParameters &simParams)
+    Domain &simDomain)
 {
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, simParams);
+    PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, simDomain);
 }
 
-void InitializeFloor(float4* vis, float* floor_d, SimulationParameters &simParams)
+void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain)
 {
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, simParams);
+    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, simDomain);
 }
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition,
-    SimulationParameters &simParams)
+    Domain &simDomain)
 {
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, incidentLight1, obst_d, simParams);
+        (vis, incidentLight1, obst_d, simDomain);
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
-        (vis, floor_d, obst_d, simParams);
+        (vis, floor_d, obst_d, simDomain);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simParams);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain);
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, simParams);
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, simDomain);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
-    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d, SimulationParameters &simParams)
+    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d, Domain &simDomain)
 {
-    int xDim = simParams.GetXDim();
-    int yDim = simParams.GetYDim();
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
     float4 intersectionCoord{ 0, 0, 0, 1e6 };
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    RayCast << <grid, threads >> >(vis, rayCastIntersect_d, rayOrigin, rayDir, obst_d, simParams);
+    RayCast << <grid, threads >> >(vis, rayCastIntersect_d, rayOrigin, rayDir, obst_d, simDomain);
     cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
     if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
     {

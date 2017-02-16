@@ -3,7 +3,7 @@
 #include "cuda_runtime.h"
 #include "common.h"
 
-class SimulationParameters
+class Domain
 {
     int m_xDim;
     int m_yDim;
@@ -11,7 +11,7 @@ class SimulationParameters
     int m_yDimVisible;
 
 public:
-    SimulationParameters();
+    Domain();
 
     __host__ __device__ int GetXDim();
     __host__ __device__ int GetYDim();

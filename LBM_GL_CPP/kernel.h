@@ -6,30 +6,30 @@
 #include <stdio.h>
 #include <cstring>
 #include "common.h"
-#include "SimulationParameters.h"
+#include "Domain.h"
 
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
-    SimulationParameters &simParams);
+    Domain &simDomain);
 
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d);
 
 void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
     const ContourVariable contVar, const float contMin, const float contMax,
     const ViewMode viewMode, const float uMax, const float omega, const int tStep,
-    SimulationParameters &simParams, const bool paused);
+    Domain &simDomain, const bool paused);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst);
 
-void CleanUpDeviceVBO(float4* vis, SimulationParameters &simParams);
+void CleanUpDeviceVBO(float4* vis, Domain &simDomain);
 
 void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition, 
-    SimulationParameters &simParams);
+    Domain &simDomain);
 
-void InitializeFloor(float4* vis, float* floor_d, SimulationParameters &simParams);
+void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain);
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
-    const float3 cameraPosition, SimulationParameters &simParams);
+    const float3 cameraPosition, Domain &simDomain);
 
 int RayCastMouseClick(float3 &selectedElementCoord, float4* vis, float4* rayCastIntersect_d, float3 rayOrigin,
-    float3 rayDir, Obstruction* obst_d, SimulationParameters &simParams);
+    float3 rayDir, Obstruction* obst_d, Domain &simDomain);
