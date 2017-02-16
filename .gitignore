@@ -29,3 +29,4 @@ packages/*
 [Dd]ebug*/
 [Rr]elease*/
 *.exe
+x64/Release/LBM_GL_CPP.exe
