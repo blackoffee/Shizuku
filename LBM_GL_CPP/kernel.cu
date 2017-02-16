@@ -404,94 +404,58 @@ __device__ void MovingWall(float &f0, float &f1, float &f2,
     ComputeFEqs(f0,f1,f2,f3,f4,f5,f6,f7,f8,rho,u,v);
 }
 
-
-// LBM collision step 
-__device__ void LbmCollide(float &f0, float &f1, float &f2,
-    float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, const float omega, float &Q)
+__device__ float ComputeStrainRateMagnitude(const float f0, const float f1,
+    const float f2, const float f3, const float f4, const float f5, const float f6,
+    const float f7, const float f8, const float rho, const float u, const float v)
 {
-    //float rho,u,v;	
-    float u, v;
-    //rho = f0+f1+f2+f3+f4+f5+f6+f7+f8;
-    u = f1 - f3 + f5 - f6 - f7 + f8;
-    v = f2 - f4 + f5 + f6 - f7 - f8;
-    float m1, m2, m4, m6, m7, m8;
-
-    //	m1 =-4.f*f0 -    f1 -    f2 -    f3 -    f4+ 2.f*f5+ 2.f*f6+ 2.f*f7+ 2.f*f8-(-2.0f*rho+3.0f*(u*u+v*v));
-    m1 = -2.f*f0 + f1 + f2 + f3 + f4 + 4.f*f5 + 4.f*f6 + 4.f*f7 + 4.f*f8 - 3.0f*(u*u + v*v);
-    //m2 = 4.f*f0 -2.f*f1 -2.f*f2 -2.f*f3 -2.f*f4+     f5+     f6+     f7+     f8-(rho-3.0f*(u*u+v*v)); //ep
-    m2 = 3.f*f0 - 3.f*f1 - 3.f*f2 - 3.f*f3 - 3.f*f4 + 3.0f*(u*u + v*v); //ep
-    //m4 =        -2.f*f1        + 2.f*f3        +     f5 -    f6 -    f7+     f8-(-u);//qx_eq
-    m4 = -f1 + f3 + 2.f*f5 - 2.f*f6 - 2.f*f7 + 2.f*f8;//-(-u);//qx_eq
-    m6 = -f2 + f4 + 2.f*f5 + 2.f*f6 - 2.f*f7 - 2.f*f8;//-(-v);//qy_eq
-    m7 = f1 - f2 + f3 - f4 - (u*u - v*v);//pxx_eq
-    m8 = f5 - f6 + f7 - f8 - (u*v);//pxy_eq
-
-    //	m1 =-4.f*f0 -    f1 -    f2 -    f3 -    f4+ 2.f*f5+ 2.f*f6+ 2.f*f7+ 2.f*f8-(-2.0f*rho+3.0f*(u*u+v*v));
-    //	m2 = 4.f*f0 -2.f*f1 -2.f*f2 -2.f*f3 -2.f*f4+     f5+     f6+     f7+     f8-(rho-3.0f*(u*u+v*v)); //ep
-    //	m4 =        -2.f*f1        + 2.f*f3        +     f5 -    f6 -    f7+     f8-(-u);//qx_eq
-    //	m6 =                -2.f*f2        + 2.f*f4+     f5+     f6 -    f7 -    f8-(-v);//qy_eq
-    //	m7 =             f1 -    f2+     f3 -    f4                                -(u*u-v*v);//pxx_eq
-    //	m8 =                                             f5 -    f6+     f7 -    f8-(u*v);//pxy_eq
-
-    float usqr = u*u+v*v;
-    float rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
     float feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8;
     ComputeFEqs(feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8, rho, u, v);
     
     float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
     float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
     float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
-    Q = sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
+    return sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
+}
+
+// LBM collision step 
+__device__ void LbmCollide(float &f0, float &f1, float &f2,
+    float &f3, float &f4, float &f5,
+    float &f6, float &f7, float &f8, const float omega)
+{
+    float u, v;
+    float rho;
+    rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
+    u = f1 - f3 + f5 - f6 - f7 + f8;
+    v = f2 - f4 + f5 + f6 - f7 - f8;
+    float m1, m2, m4, m6, m7, m8;
+
+    m1 = -2.f*f0 + f1 + f2 + f3 + f4 + 4.f*f5 + 4.f*f6 + 4.f*f7 + 4.f*f8 - 3.0f*(u*u + v*v);
+    m2 = 3.f*f0 - 3.f*f1 - 3.f*f2 - 3.f*f3 - 3.f*f4 + 3.0f*(u*u + v*v); //ep
+    m4 = -f1 + f3 + 2.f*f5 - 2.f*f6 - 2.f*f7 + 2.f*f8;;//qx_eq
+    m6 = -f2 + f4 + 2.f*f5 + 2.f*f6 - 2.f*f7 - 2.f*f8;;//qy_eq
+    m7 = f1 - f2 + f3 - f4 - (u*u - v*v);//pxx_eq
+    m8 = f5 - f6 + f7 - f8 - (u*v);//pxy_eq
+
+    float Q = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
+
     float tau0 = 1.f / omega;
-    float CS = SMAG_CONST;// 0.1f;
-    //float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 1000000.0*Q*Q*Q);
+    float CS = SMAG_CONST;
     float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
     float omegaTurb = 1.f / tau;
 
-    f0 = f0 - (-m1 + m2)*0.11111111f;//(-4.f*(m1)/36.0f+4.f *(m2)/36.0f);
+    f0 = f0 - (-m1 + m2)*0.11111111f;
     f1 = f1 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omegaTurb*0.25f);
     f2 = f2 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omegaTurb*0.25f);
     f3 = f3 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omegaTurb*0.25f);
     f4 = f4 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m6 - m7*omegaTurb*0.25f);
-    f5 = f5 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6 + m8*omegaTurb*0.25f);
-    f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 - m8*omegaTurb*0.25f);
-    f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 + m8*omegaTurb*0.25f);
-    f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 - m8*omegaTurb*0.25f);
-
-    //MRT Scheme. Might be slightly more stable, but needs more optimization
-//	float m[9];
-//	float meq[9];
-//	float S[9] = {1.f,1.f,1.f,1.f,1.f,1.f,1.f,omega,omega};
-//		meq[1] = -2.0*rho+3.0*usqr;//e_eq (uses rho, Yu)
-//		meq[2] = rho-3.0*usqr; //epsilon_eq (uses rho, Yu)
-//		meq[4] = -u;//qx_eq
-//		meq[6] = -v;//qy_eq
-//		meq[7] = u*u-v*v;//pxx_eq
-//		meq[8] = u*v;//pxy_eq
-
-////		m[0] = 1*f0+ 1*f1+ 1*f2+ 1*f3+ 1*f4+ 1*f5+ 1*f6+ 1*f7+ 1*f8;
-//		m[1] =-4*f0+-1*f1+-1*f2+-1*f3+-1*f4+ 2*f5+ 2*f6+ 2*f7+ 2*f8;
-//		m[2] = 4*f0+-2*f1+-2*f2+-2*f3+-2*f4+ 1*f5+ 1*f6+ 1*f7+ 1*f8;
-////		m[3] = 0*f0+ 1*f1+ 0*f2+-1*f3+ 0*f4+ 1*f5+-1*f6+-1*f7+ 1*f8;
-//		m[4] = 0*f0+-2*f1+ 0*f2+ 2*f3+ 0*f4+ 1*f5+-1*f6+-1*f7+ 1*f8;
-////		m[5] = 0*f0+ 0*f1+ 1*f2+ 0*f3+-1*f4+ 1*f5+ 1*f6+-1*f7+-1*f8;
-//		m[6] = 0*f0+ 0*f1+-2*f2+ 0*f3+ 2*f4+ 1*f5+ 1*f6+-1*f7+-1*f8;
-//		m[7] = 0*f0+ 1*f1+-1*f2+ 1*f3+-1*f4+ 0*f5+ 0*f6+ 0*f7+ 0*f8;
-//		m[8] = 0*f0+ 0*f1+ 0*f2+ 0*f3+ 0*f4+ 1*f5+-1*f6+ 1*f7+-1*f8;
-//		
-//		f0-=-4*(m[1]-meq[1])*S[1]/36.0+4 *(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
-//		f1-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+-2*(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+   (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
-//		f2-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+-2*(m[6]-meq[6])*S[6]/12.0+-  (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
-//		f3-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+2 *(m[4]-meq[4])*S[4]/12.0+0 *(m[6]-meq[6])*S[6]/12.0+   (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
-//		f4-=-  (m[1]-meq[1])*S[1]/36.0+-2*(m[2]-meq[2])*S[2]/36.0+0 *(m[4]-meq[4])*S[4]/12.0+2 *(m[6]-meq[6])*S[6]/12.0+-  (m[7]-meq[7])*omega/4.0;//+0 *(m[8]-meq[8])*Omega/4.0;
-//		f5-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+   (m[4]-meq[4])*S[4]/12.0+   (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+   (m[8]-meq[8])*omega/4.0;
-//		f6-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+-  (m[4]-meq[4])*S[4]/12.0+   (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+-  (m[8]-meq[8])*omega/4.0;
-//		f7-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+-  (m[4]-meq[4])*S[4]/12.0+-  (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+   (m[8]-meq[8])*omega/4.0;
-//		f8-=2 *(m[1]-meq[1])*S[1]/36.0+   (m[2]-meq[2])*S[2]/36.0+   (m[4]-meq[4])*S[4]/12.0+-  (m[6]-meq[6])*S[6]/12.0+0 *(m[7]-meq[7])*omega/4.0+-  (m[8]-meq[8])*omega/4.0;	
-            
-
-
+    f5 = f5 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6 +
+        m8*omegaTurb*0.25f);
+    f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 -
+        m8*omegaTurb*0.25f);
+    f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 +
+        m8*omegaTurb*0.25f);
+    f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 -
+        m8*omegaTurb*0.25f);
 }
 
 
@@ -565,7 +529,7 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
     else{
         ApplyBCs(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
 
-        LbmCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega, StrainRate);
+        LbmCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega);
 
         fB[f_mem(0, x, y)] = f0;
         fB[f_mem(1, x, y)] = f1;
@@ -577,98 +541,6 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
         fB[f_mem(7, x, y)] = f7;
         fB[f_mem(8, x, y)] = f8;
     }
-
-
-    rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-    u = f1 - f3 + f5 - f6 - f7 + f8;
-    v = f2 - f4 + f5 + f6 - f7 - f8;
-    float usqr = u*u+v*v;
-
-
-    //Prepare data for visualization
-
-    //need to change x,y,z coordinates to NDC (-1 to 1)
-    float xcoord, ycoord, zcoord;
-    int xDimVisible = simParams.GetXDimVisible();
-    int yDimVisible = simParams.GetYDimVisible();
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-
-    if (im == 1) rho = 1.0;
-    zcoord =  (rho - 1.0f) - 0.5f;
-
-    //for color, need to convert 4 bytes (RGBA) to float
-    float variableValue = 0.f;
-
-    //change min/max contour values based on contour variable
-    if (contourVar == ContourVariable::VEL_MAG)
-    {
-        variableValue = sqrt(u*u+v*v);
-    }	
-    else if (contourVar == ContourVariable::VEL_U)
-    {
-        variableValue = u;
-    }	
-    else if (contourVar == ContourVariable::VEL_V)
-    {
-        variableValue = v;
-    }	
-    else if (contourVar == ContourVariable::PRESSURE)
-    {
-        variableValue = rho;
-    }
-    else if (contourVar == ContourVariable::STRAIN_RATE)
-    {
-        variableValue = StrainRate;
-    }
-
-
-    ////Blue to white color scheme
-    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
-    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
-    unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-    unsigned char A = 255;// 255;
-
-
-    ////Rainbow color scheme
-    //signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-    //signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
-    //signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
-    //signed char A = 255;
-
-    if (contourVar == ContourVariable::WATER_RENDERING)
-    {
-        variableValue = StrainRate;
-        R = 100; G = 150; B = 255;
-        A = 100;
-    }
-//	if (viewMode == ViewMode::THREE_DIMENSIONAL)
-//	{
-//		A = 155;
-//	}
-
-//	if (x >= (xDimVisible))
-//	{
-//		zcoord = -1.f;
-//		R = 0; G = 0; B = 0;
-//	}
-    if (im == 1 && viewMode == TWO_DIMENSIONAL){
-        R = 204; G = 204; B = 204;
-        //zcoord = 0.15f;
-    }
-    else if (im != 0 || x == xDimVisible-1)
-    {
-        zcoord = -1.f;
-    }
-    else
-    {
-    }
-
-    float color;
-    char b[] = { R, G, B, A };
-    std::memcpy(&color, &b, sizeof(color));
-
-    //vbo aray to be displayed
-    vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
 
@@ -696,12 +568,9 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
     f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
 
-    float StrainRate = 0.f;
-
     rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
     u = f1 - f3 + f5 - f6 - f7 + f8;
     v = f2 - f4 + f5 + f6 - f7 - f8;
-    float usqr = u*u+v*v;
 
 
     //Prepare data for visualization
@@ -717,6 +586,8 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 
     //for color, need to convert 4 bytes (RGBA) to float
     float variableValue = 0.f;
+
+    float strainRate;
 
     //change min/max contour values based on contour variable
     if (contourVar == ContourVariable::VEL_MAG)
@@ -737,9 +608,9 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     }
     else if (contourVar == ContourVariable::STRAIN_RATE)
     {
-        variableValue = StrainRate;
+        strainRate = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
+        variableValue = strainRate;
     }
-
 
     ////Blue to white color scheme
     unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
@@ -747,39 +618,17 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
     unsigned char A = 255;// 255;
 
-
-    ////Rainbow color scheme
-    //signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
-    //signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
-    //signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
-    //signed char A = 255;
-
     if (contourVar == ContourVariable::WATER_RENDERING)
     {
-        variableValue = StrainRate;
         R = 100; G = 150; B = 255;
         A = 100;
     }
-//	if (viewMode == ViewMode::THREE_DIMENSIONAL)
-//	{
-//		A = 155;
-//	}
-
-//	if (x >= (xDimVisible))
-//	{
-//		zcoord = -1.f;
-//		R = 0; G = 0; B = 0;
-//	}
     if (im == 1 && viewMode == TWO_DIMENSIONAL){
         R = 204; G = 204; B = 204;
-        //zcoord = 0.15f;
     }
     else if (im != 0 || x == xDimVisible-1)
     {
         zcoord = -1.f;
-    }
-    else
-    {
     }
 
     float color;
@@ -1194,14 +1043,13 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
     {
         MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
             contMin, contMax, viewMode, uMax, *simParams);
-        //UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
         if (!paused)
         {
             MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar,
                 contMin, contMax, viewMode, uMax, *simParams);
-            //UpdateSurfaceVbo << <grid, threads >> > (vis, fA_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
         }
     }
+    UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
 }
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
