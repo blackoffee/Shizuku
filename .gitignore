@@ -28,4 +28,4 @@ _ReSharper*/
 packages/*
 [Dd]ebug*/
 [Rr]elease*/
-
+*.exe
