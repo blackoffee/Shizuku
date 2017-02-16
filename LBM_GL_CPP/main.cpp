@@ -799,7 +799,6 @@ void MouseButton(int button, int state, int x, int y)
 
 void MouseMotion(int x, int y)
 {
-    int dx, dy;
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
     if (x >= 0 && x <= windowWidth && y>=0 && y<=windowHeight)

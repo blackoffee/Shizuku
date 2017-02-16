@@ -147,7 +147,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     // map OpenGL buffer object for writing from CUDA
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
-    size_t num_bytes,num_bytes2;
+    size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float3 selectedCoordF;
