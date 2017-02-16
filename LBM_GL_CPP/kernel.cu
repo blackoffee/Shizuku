@@ -7,7 +7,9 @@
  *	Device functions
  */
 
-__global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumber, const Obstruction newObst){
+__global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumber,
+    const Obstruction newObst)
+{
     obstructions[obstNumber].shape = newObst.shape;
     obstructions[obstNumber].r1 = newObst.r1;
     obstructions[obstNumber].x = newObst.x;
@@ -148,6 +150,7 @@ __device__ float3 operator-(const float3 &u, const float3 &v)
 }
 
 __device__ float2 operator-(const float2 &u, const float2 &v)
+
 {
     return make_float2(u.x - v.x, u.y - v.y);
 }
@@ -460,9 +463,8 @@ __device__ void LbmCollide(float &f0, float &f1, float &f2,
 
 
 // main LBM function including streaming and colliding
-__global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, int *Im,
-    Obstruction *obstructions, const int contourVar, const float contMin, const float contMax,
-    const int viewMode, const float uMax, SimulationParameters simParams)
+__global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
+    Obstruction *obstructions, const float uMax, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -1041,12 +1043,10 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
 
     for (int i = 0; i < tStep; i++)
     {
-        MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
-            contMin, contMax, viewMode, uMax, *simParams);
+        MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, uMax, *simParams);
         if (!paused)
         {
-            MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar,
-                contMin, contMax, viewMode, uMax, *simParams);
+            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, uMax, *simParams);
         }
     }
     UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
