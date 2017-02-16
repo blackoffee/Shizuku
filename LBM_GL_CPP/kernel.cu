@@ -671,6 +671,125 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
+
+// main LBM function including streaming and colliding
+__global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
+    const int contourVar, const float contMin, const float contMax,
+    const int viewMode, const float uMax, SimulationParameters simParams)
+{
+    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int y = threadIdx.y + blockIdx.y*blockDim.y;
+    int j = x + y*MAX_XDIM;
+    int im = Im[j];
+    float u, v, rho;
+
+    int xDim = simParams.GetXDim();
+    int yDim = simParams.GetYDim();
+    float f0, f1, f2, f3, f4, f5, f6, f7, f8;
+    f0 = fA[j];
+    f1 = fA[f_mem(1, dmax(x - 1), y)];
+    f3 = fA[f_mem(3, dmin(x + 1, xDim), y)];
+    f2 = fA[f_mem(2, x, y - 1)];
+    f5 = fA[f_mem(5, dmax(x - 1), y - 1)];
+    f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1)];
+    f4 = fA[f_mem(4, x, y + 1)];
+    f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
+    f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
+
+    float StrainRate = 0.f;
+
+    rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
+    u = f1 - f3 + f5 - f6 - f7 + f8;
+    v = f2 - f4 + f5 + f6 - f7 - f8;
+    float usqr = u*u+v*v;
+
+
+    //Prepare data for visualization
+
+    //need to change x,y,z coordinates to NDC (-1 to 1)
+    float xcoord, ycoord, zcoord;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
+    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
+
+    if (im == 1) rho = 1.0;
+    zcoord =  (rho - 1.0f) - 0.5f;
+
+    //for color, need to convert 4 bytes (RGBA) to float
+    float variableValue = 0.f;
+
+    //change min/max contour values based on contour variable
+    if (contourVar == ContourVariable::VEL_MAG)
+    {
+        variableValue = sqrt(u*u+v*v);
+    }	
+    else if (contourVar == ContourVariable::VEL_U)
+    {
+        variableValue = u;
+    }	
+    else if (contourVar == ContourVariable::VEL_V)
+    {
+        variableValue = v;
+    }	
+    else if (contourVar == ContourVariable::PRESSURE)
+    {
+        variableValue = rho;
+    }
+    else if (contourVar == ContourVariable::STRAIN_RATE)
+    {
+        variableValue = StrainRate;
+    }
+
+
+    ////Blue to white color scheme
+    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
+    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
+    unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
+    unsigned char A = 255;// 255;
+
+
+    ////Rainbow color scheme
+    //signed char R = 255 * ((variableValue - minValue) / (maxValue - minValue));
+    //signed char G = 255 - 255 * abs(variableValue - 0.5f*(maxValue + minValue)) / (maxValue - 0.5f*(maxValue + minValue));
+    //signed char B = 255 * ((maxValue - variableValue) / (maxValue - minValue));
+    //signed char A = 255;
+
+    if (contourVar == ContourVariable::WATER_RENDERING)
+    {
+        variableValue = StrainRate;
+        R = 100; G = 150; B = 255;
+        A = 100;
+    }
+//	if (viewMode == ViewMode::THREE_DIMENSIONAL)
+//	{
+//		A = 155;
+//	}
+
+//	if (x >= (xDimVisible))
+//	{
+//		zcoord = -1.f;
+//		R = 0; G = 0; B = 0;
+//	}
+    if (im == 1 && viewMode == TWO_DIMENSIONAL){
+        R = 204; G = 204; B = 204;
+        //zcoord = 0.15f;
+    }
+    else if (im != 0 || x == xDimVisible-1)
+    {
+        zcoord = -1.f;
+    }
+    else
+    {
+    }
+
+    float color;
+    char b[] = { R, G, B, A };
+    std::memcpy(&color, &b, sizeof(color));
+
+    //vbo aray to be displayed
+    vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
+}
+
 __global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
@@ -1075,10 +1194,12 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
     {
         MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
             contMin, contMax, viewMode, uMax, *simParams);
+        //UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
         if (!paused)
         {
             MarchLBM << <grid, threads >> >(vis, fB_d, fA_d, omega, im_d, obst_d, contVar,
                 contMin, contMax, viewMode, uMax, *simParams);
+            //UpdateSurfaceVbo << <grid, threads >> > (vis, fA_d, im_d, contVar, contMin, contMax, viewMode, uMax, *simParams);
         }
     }
 }
