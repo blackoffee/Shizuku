@@ -349,7 +349,7 @@ void InitializeButtonCallBack()
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simParams);
 }
 
 void VelMagButtonCallBack()
@@ -739,10 +739,10 @@ void SetUpCUDA()
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, &g_simParams);
-    InitializeDomain(dptr, g_fB_d, g_im_d, u, &g_simParams);
+    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simParams);
+    InitializeDomain(dptr, g_fB_d, g_im_d, u, g_simParams);
 
-    InitializeFloor(dptr, g_floor_d, &g_simParams);
+    InitializeFloor(dptr, g_floor_d, g_simParams);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -765,15 +765,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
     MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
-        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, &g_simParams, paused);
+        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, g_simParams, paused);
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition, &g_simParams);
+        LightSurface(dptr, g_obst_d, cameraPosition, g_simParams);
     }
-    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, &g_simParams);
-    CleanUpDeviceVBO(dptr, &g_simParams);
+    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, g_simParams);
+    CleanUpDeviceVBO(dptr, g_simParams);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);

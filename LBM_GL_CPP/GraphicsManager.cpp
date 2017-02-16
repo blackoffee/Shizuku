@@ -152,7 +152,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 
     float3 selectedCoordF;
     int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
-        rayOrigin, rayDir, g_obst_d, &g_simParams);
+        rayOrigin, rayDir, g_obst_d, g_simParams);
     if (rayCastResult == 0)
     {
         m_currentZ = selectedCoordF.z;
