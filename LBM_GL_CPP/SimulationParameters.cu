@@ -1,5 +1,41 @@
 #include "SimulationParameters.h"
 
+SimulationParameters::SimulationParameters()
+{
+    m_xDim = BLOCKSIZEX * 2;
+    m_yDim = BLOCKSIZEX;
+    m_xDimVisible = m_xDim;
+    m_yDimVisible = m_yDim;
+    GetXDim = SimulationParameters_GetXDim;
+    GetYDim = SimulationParameters_GetYDim;
+    GetXDimVisible = SimulationParameters_GetXDimVisible;
+    GetYDimVisible = SimulationParameters_GetYDimVisible;
+    SetXDim = SimulationParameters_SetXDim;
+    SetYDim = SimulationParameters_SetYDim;
+    SetXDimVisible = SimulationParameters_SetXDimVisible;
+    SetYDimVisible = SimulationParameters_SetYDimVisible;
+}
+
+__host__ __device__ int SimulationParameters::GetXDim_d()
+{
+    return m_xDim;
+}
+
+__host__ __device__ int SimulationParameters::GetYDim_d()
+{
+    return m_yDim;
+}
+
+__host__ __device__ int SimulationParameters::GetXDimVisible_d()
+{
+    return m_xDimVisible;
+}
+
+__host__ __device__ int SimulationParameters::GetYDimVisible_d()
+{
+    return m_yDimVisible;
+}
+
 void SimulationParameters_init(SimulationParameters* p_this)
 {
     p_this->m_xDim = BLOCKSIZEX * 2;

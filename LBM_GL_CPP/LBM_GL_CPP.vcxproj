@@ -153,6 +153,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <Include>./;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc</Include>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -190,7 +193,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
-    <ClCompile Include="SimulationParameters.cpp" />
+    <CudaCompile Include="SimulationParameters.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FpsTracker.h" />

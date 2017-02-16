@@ -76,7 +76,7 @@ void Init()
 
 void SetUpWindow()
 {
-    SimulationParameters_init(&g_simParams);
+    //SimulationParameters_init(&g_simParams);
 
     int windowWidth = 1200;
     int windowHeight = g_leftPanelHeight+100;

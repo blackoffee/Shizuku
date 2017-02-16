@@ -517,8 +517,8 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
             im = 20; //moving wall
         }
     }
-    int xDim = simParams.m_xDim;
-    int yDim = simParams.m_yDim;
+    int xDim = simParams.GetXDim_d();
+    int yDim = simParams.GetYDim_d();
     float f0, f1, f2, f3, f4, f5, f6, f7, f8;
     f0 = fA[j];
     f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -1070,6 +1070,7 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
     int yDim = simParams->GetYDim(simParams);
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
+
     for (int i = 0; i < tStep; i++)
     {
         MarchLBM << <grid, threads >> >(vis, fA_d, fB_d, omega, im_d, obst_d, contVar,
