@@ -477,8 +477,8 @@ void DrawShapePreview()
     float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
         Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
-    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
-    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
+    int xDimVisible = g_simParams.GetXDimVisible();
+    int yDimVisible = g_simParams.GetYDimVisible();
     float currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     int graphicsWindowWidth = Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
     int graphicsWindowHeight = Window.GetPanel("Graphics")->GetRectIntAbs().m_h;
@@ -633,8 +633,8 @@ void timerEvent(int value)
 
 //BC function for host side
 int ImageFcn_h(int x, int y, Obstruction* obstructions){
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = g_simParams.GetXDim();
+    int yDim = g_simParams.GetYDim();
     //if(y == 0 || x == XDIM-1 || y == YDIM-1)
     if (x < 0.1f)
         return 3;//west
@@ -841,8 +841,8 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 {
     int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
     int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    g_simParams.SetXDimVisible(&g_simParams, xDimVisible);
-    g_simParams.SetYDimVisible(&g_simParams, yDimVisible);
+    g_simParams.SetXDimVisible(xDimVisible);
+    g_simParams.SetYDimVisible(yDimVisible);
 }
 
 void Resize(int windowWidth, int windowHeight)
@@ -878,8 +878,8 @@ void Draw()
     int windowHeight = Window.GetHeight();
     Resize(windowWidth, windowHeight);
 
-    int xDimVisible = g_simParams.GetXDimVisible(&g_simParams);
-    int yDimVisible = g_simParams.GetYDimVisible(&g_simParams);
+    int xDimVisible = g_simParams.GetXDimVisible();
+    int yDimVisible = g_simParams.GetYDimVisible();
     float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
     float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
@@ -968,8 +968,8 @@ void Draw()
     g_fpsTracker.Tock();
     float fps = g_fpsTracker.GetFps();
     char fpsReport[256];
-    int xDim = g_simParams.GetXDim(&g_simParams);
-    int yDim = g_simParams.GetYDim(&g_simParams);
+    int xDim = g_simParams.GetXDim();
+    int yDim = g_simParams.GetYDim();
     sprintf(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);

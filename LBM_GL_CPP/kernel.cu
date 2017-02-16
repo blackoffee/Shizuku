@@ -296,8 +296,8 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
 
     float xcoord, ycoord, zcoord;
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = 0.f;
     float R(255.f), G(255.f), B(255.f), A(255.f);
@@ -517,8 +517,8 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
             im = 20; //moving wall
         }
     }
-    int xDim = simParams.GetXDim_d();
-    int yDim = simParams.GetYDim_d();
+    int xDim = simParams.GetXDim();
+    int yDim = simParams.GetYDim();
     float f0, f1, f2, f3, f4, f5, f6, f7, f8;
     f0 = fA[j];
     f1 = fA[f_mem(1, dmax(x - 1), y)];
@@ -589,8 +589,8 @@ __global__ void MarchLBM(float4* vbo, float* fA, float* fB, const float omega, i
 
     //need to change x,y,z coordinates to NDC (-1 to 1)
     float xcoord, ycoord, zcoord;
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
@@ -677,8 +677,8 @@ __global__ void CleanUpVBO(float4* vbo, SimulationParameters simParams)
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     float xcoord, ycoord;
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     if (x >= xDimVisible || y >= yDimVisible)
     {
@@ -706,8 +706,8 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     B = color[2];
     A = color[3];
 
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     float3 n = { 0, 0, 0 };
     float slope_x = 0.f;
     float slope_y = 0.f;
@@ -781,8 +781,8 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, SimulationParam
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     float xcoord, ycoord, zcoord;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = -1.f;
@@ -798,8 +798,8 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     const int x, const int y, SimulationParameters simParams)
 {
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     float3 n = { 0, 0, 1 };
     float slope_x = 0.f;
     float slope_y = 0.f;
@@ -844,8 +844,8 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     
     if (x < xDimVisible && y < yDimVisible)
     {
@@ -869,8 +869,8 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
 
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
@@ -952,8 +952,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     vbo[j].x = xcoord;
     vbo[j].y = ycoord;
@@ -993,10 +993,10 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;
-    int xDim = simParams.m_xDim;
-    int yDim = simParams.m_yDim;
-    int xDimVisible = simParams.m_xDimVisible;
-    int yDimVisible = simParams.m_yDimVisible;
+    int xDim = simParams.GetXDim();
+    int yDim = simParams.GetYDim();
+    int xDimVisible = simParams.GetXDimVisible();
+    int yDimVisible = simParams.GetYDimVisible();
 
     if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
     {
@@ -1066,8 +1066,8 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
     const ViewMode viewMode, const float uMax, const float omega, const int tStep,
     SimulationParameters* simParams, const bool paused)
 {
-    int xDim = simParams->GetXDim(simParams);
-    int yDim = simParams->GetYDim(simParams);
+    int xDim = simParams->GetXDim();
+    int yDim = simParams->GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
 
@@ -1099,8 +1099,8 @@ void CleanUpDeviceVBO(float4* vis, SimulationParameters* simParams)
 void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
     SimulationParameters* simParams)
 {
-    int xDim = simParams->GetXDim(simParams);
-    int yDim = simParams->GetYDim(simParams);
+    int xDim = simParams->GetXDim();
+    int yDim = simParams->GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, *simParams);
@@ -1108,8 +1108,8 @@ void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
 
 void InitializeFloor(float4* vis, float* floor_d, SimulationParameters* simParams)
 {
-    int xDim = simParams->GetXDim(simParams);
-    int yDim = simParams->GetYDim(simParams);
+    int xDim = simParams->GetXDim();
+    int yDim = simParams->GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     InitializeFloorMesh << <grid, threads >> >(vis, floor_d, *simParams);
@@ -1118,8 +1118,8 @@ void InitializeFloor(float4* vis, float* floor_d, SimulationParameters* simParam
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition,
     SimulationParameters* simParams)
 {
-    int xDim = simParams->GetXDim(simParams);
-    int yDim = simParams->GetYDim(simParams);
+    int xDim = simParams->GetXDim();
+    int yDim = simParams->GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
@@ -1138,8 +1138,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 c
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
     const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d, SimulationParameters* simParams)
 {
-    int xDim = simParams->GetXDim(simParams);
-    int yDim = simParams->GetYDim(simParams);
+    int xDim = simParams->GetXDim();
+    int yDim = simParams->GetYDim();
     float4 intersectionCoord{ 0, 0, 0, 1e6 };
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
