@@ -27,22 +27,23 @@ inline __device__ bool IsInsideObstruction(const float x, const float y,
         {
             float r1 = obstructions[i].r1;
             if (obstructions[i].shape == Obstruction::SQUARE){
-                if (abs(x - obstructions[i].x)<r1 + tolerance && abs(y - obstructions[i].y)<r1 + tolerance)
+                if (abs(x - obstructions[i].x)<r1 + tolerance &&
+                    abs(y - obstructions[i].y)<r1 + tolerance)
                     return true;
             }
             else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
-                float distanceFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)\
+                float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
                     + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
-                if (distanceFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
+                if (distFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
                     return true;
             }
             else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
-                if (abs(x - obstructions[i].x)<r1*2+tolerance &&\
+                if (abs(x - obstructions[i].x)<r1*2+tolerance &&
                     abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return true;
             }
             else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
-                if (abs(y - obstructions[i].y)<r1*2+tolerance &&\
+                if (abs(y - obstructions[i].y)<r1*2+tolerance &&
                     abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return true;
             }
@@ -63,18 +64,18 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
                     return i;//10;
             }
             else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
-                float distanceFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)\
+                float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
                     + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
-                if (distanceFromCenter<r1*r1+0.1f)
+                if (distFromCenter<r1*r1+0.1f)
                     return i;//10;
             }
             else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
-                if (abs(x - obstructions[i].x)<r1*2 &&\
+                if (abs(x - obstructions[i].x)<r1*2 &&
                     abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
             }
             else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
-                if (abs(y - obstructions[i].y)<r1*2 &&\
+                if (abs(y - obstructions[i].y)<r1*2 &&
                     abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
             }
@@ -293,10 +294,14 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     f[j + 2 * offset] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
     f[j + 3 * offset] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
     f[j + 4 * offset] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-    f[j + 5 * offset] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
-    f[j + 6 * offset] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
-    f[j + 7 * offset] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
-    f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);
+    f[j + 5 * offset] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v)
+        - 1.5f*usqr);
+    f[j + 6 * offset] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v)
+        - 1.5f*usqr);
+    f[j + 7 * offset] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v)
+        - 1.5f*usqr);
+    f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v)
+        - 1.5f*usqr);
 
     float xcoord, ycoord, zcoord;
     int xDimVisible = simDomain.GetXDimVisible();
@@ -612,15 +617,18 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     }
     else if (contourVar == ContourVariable::STRAIN_RATE)
     {
-        strainRate = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
+        strainRate = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8,
+            rho, u, v);
         variableValue = strainRate;
     }
 
     ////Blue to white color scheme
-    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
-    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) / (contMax - contMin))));
-    unsigned char B = 255;// 255 * ((maxValue - variableValue) / (maxValue - minValue));
-    unsigned char A = 255;// 255;
+    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) /
+        (contMax - contMin))));
+    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) /
+        (contMax - contMin))));
+    unsigned char B = 255;
+    unsigned char A = 255;
 
     if (contourVar == ContourVariable::WATER_RENDERING)
     {
@@ -702,8 +710,10 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     }
     else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+            (2.f*cellSize);
+        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+            (2.f*cellSize);
         n.x = -slope_x*2.f*cellSize*2.f*cellSize;
         n.y = -slope_y*2.f*cellSize*2.f*cellSize;
         n.z = 2.f*cellSize*2.f*cellSize;
@@ -778,8 +788,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     float cellSize = 2.f / xDimVisible;
     if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) / (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) / (2.f*cellSize);
+        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+            (2.f*cellSize);
+        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+            (2.f*cellSize);
         n.x = -slope_x*2.f*cellSize*2.f*cellSize;
         n.y = -slope_y*2.f*cellSize*2.f*cellSize;
         n.z = 2.f*cellSize*2.f*cellSize;
@@ -794,8 +806,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     float c = -(DotProduct(n, incidentLight));
     refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
 
-    float dx = -refractedLight.x*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth / refractedLight.z;
-    float dy = -refractedLight.y*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth / refractedLight.z;
+    float dx = -refractedLight.x*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth 
+        / refractedLight.z;
+    float dy = -refractedLight.y*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth 
+        / refractedLight.z;
 
     return float2{ (float)x + dx, (float)y + dy };
 }
@@ -828,7 +842,8 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
         }
         else
         {
-            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight, x, y, simDomain);
+            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
+                x, y, simDomain);
         }
 
         vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
@@ -959,8 +974,8 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     }
 }
 
-__global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin, float3 rayDir,
-    Obstruction* obstructions, Domain simDomain)
+__global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
+    float3 rayDir, Obstruction* obstructions, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -979,24 +994,28 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
             float3 se{ vbo[j+1].x, vbo[j+1].y, vbo[j+1].z };
             float3 sw{ vbo[j].x, vbo[j].y, vbo[j].z };
 
-            float3 intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, nw, ne, se);
+            float3 intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+                nw, ne, se);
             if (IsPointInsideTriangle(nw, ne, se, intersection))
             {
                 float distance = Distance(intersection, rayOrigin);
                 if (distance < rayCastIntersect[0].w)
                 {
-                    rayCastIntersect[0] = { intersection.x, intersection.y, intersection.z, distance };
+                    rayCastIntersect[0] = { intersection.x, intersection.y,
+                        intersection.z, distance };
                 }
                 //printf("distance in kernel: %f\n", distance);
             }
             else{
-                intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, ne, se, sw);
+                intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+                    ne, se, sw);
                 if (IsPointInsideTriangle(ne, se, sw, intersection))
                 {
                     float distance = Distance(intersection, rayOrigin);
                     if (distance < rayCastIntersect[0].w)
                     {
-                        rayCastIntersect[0] = { intersection.x, intersection.y, intersection.z, distance };
+                        rayCastIntersect[0] = { intersection.x, intersection.y,
+                            intersection.z, distance };
                     }
                     //printf("distance in kernel: %f\n", distance);
                 }
@@ -1100,8 +1119,8 @@ void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain)
     InitializeFloorMesh << <grid, threads >> >(vis, floor_d, simDomain);
 }
 
-void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 cameraPosition,
-    Domain &simDomain)
+void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
+    const float3 cameraPosition, Domain &simDomain)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1117,7 +1136,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d, const float3 c
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition, simDomain);
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
+        simDomain);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
@@ -1128,18 +1148,22 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     float4 intersectionCoord{ 0, 0, 0, 1e6 };
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    RayCast << <grid, threads >> >(vis, rayCastIntersect_d, rayOrigin, rayDir, obst_d, simDomain);
-    cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+    RayCast << <grid, threads >> >(vis, rayCastIntersect_d, rayOrigin, rayDir,
+        obst_d, simDomain);
+    cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4),
+        cudaMemcpyDeviceToHost); 
     if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
     {
         return 1;
     }
     else
     {
-        cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4), cudaMemcpyDeviceToHost); 
+        cudaMemcpy(&intersectionCoord, rayCastIntersect_d, sizeof(float4),
+            cudaMemcpyDeviceToHost); 
         float4 clearSelectedIndex[1];
         clearSelectedIndex[0] = { 0, 0, 0, 1e6 };
-        cudaMemcpy(rayCastIntersect_d, &clearSelectedIndex[0], sizeof(float4), cudaMemcpyHostToDevice); 
+        cudaMemcpy(rayCastIntersect_d, &clearSelectedIndex[0], sizeof(float4),
+            cudaMemcpyHostToDevice); 
         rayCastIntersectCoord.x = intersectionCoord.x;
         rayCastIntersectCoord.y = intersectionCoord.y;
         rayCastIntersectCoord.z = intersectionCoord.z;
