@@ -476,7 +476,7 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     float3 diffuse2  = 0.1f*cosTheta2*diffuseLightColor2;
     float3 specular1 = cosAlpha*specularLightColor1;
 
-    color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));
+    color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));Domain
     color[1] = color[1]*dmin(1.f,(diffuse1.y+diffuse2.y+specular1.y+lightAmbient));
     color[2] = color[2]*dmin(1.f,(diffuse1.z+diffuse2.z+specular1.z+lightAmbient));
     color[3] = A;

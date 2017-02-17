@@ -184,6 +184,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="LbmNode.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FpsTracker.cpp" />
@@ -201,6 +202,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="FpsTracker.h" />
     <ClInclude Include="GraphicsManager.h" />
     <ClInclude Include="kernel.h" />
+    <ClInclude Include="LbmNode.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Panel.h" />
