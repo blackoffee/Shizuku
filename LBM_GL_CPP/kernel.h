@@ -1,4 +1,3 @@
-#define SMAG_CONST 1.f
 
 #include "cuda_runtime.h"
 #include "cuda.h"

@@ -83,58 +83,6 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
     }
     return -1;
 }
-
-__device__ int dmin(const int a, const int b)
-{
-    if (a<b) return a;
-    else return b - 1;
-}
-__device__ int dmax(const int a)
-{
-    if (a>-1) return a;
-    else return 0;
-}
-__device__ int dmax(const int a, const int b)
-{
-    if (a>b) return a;
-    else return b;
-}
-__device__ float dmin(const float a, const float b)
-{
-    if (a<b) return a;
-    else return b;
-}
-__device__ float dmin(const float a, const float b, const float c, const float d)
-{
-    return dmin(dmin(a, b), dmin(c, d));
-}
-__device__ float dmax(const float a)
-{
-    if (a>0) return a;
-    else return 0;
-}
-__device__ float dmax(const float a, const float b)
-{
-    if (a>b) return a;
-    else return b;
-}
-__device__ float dmax(const float a, const float b, const float c, const float d)
-{
-    return dmax(dmax(a, b), dmax(c, d));
-}
-
-inline __device__ int f_mem(const int f_num, const int x, const int y,
-    const size_t pitch, const int yDim)
-{
-    return (x + y*pitch) + f_num*pitch*yDim;
-}
-
-inline __device__ int f_mem(const int f_num, const int x, const int y)
-{
-
-    return (x + y*MAX_XDIM) + f_num*MAX_XDIM*MAX_YDIM;
-}
-
 __device__ float3 operator+(const float3 &u, const float3 &v)
 {
     return make_float3(u.x + v.x, u.y + v.y, u.z + v.z);
@@ -250,9 +198,6 @@ __device__ float3 GetIntersectionOfRayWithTriangle(const float3 &rayOrigin,
     return rayOrigin + t*rayDir;
 }
 
-
-
-
 __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord,
     const int xDimVisible, const int yDimVisible)
 {
@@ -279,29 +224,12 @@ __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord,
 __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     Domain simDomain)
 {
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float u, v, rho, usqr;
-    rho = 1.f;
-    u = uMax;// u_max;// UMAX;
-    v = 0.0f;
-    usqr = u*u + v*v;
-    int offset = MAX_XDIM*MAX_YDIM;
 
-    f[j + 0 * offset] = 0.4444444444f*(rho - 1.5f*usqr);
-    f[j + 1 * offset] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-    f[j + 2 * offset] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-    f[j + 3 * offset] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
-    f[j + 4 * offset] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
-    f[j + 5 * offset] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v)
-        - 1.5f*usqr);
-    f[j + 6 * offset] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v)
-        - 1.5f*usqr);
-    f[j + 7 * offset] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v)
-        - 1.5f*usqr);
-    f[j + 8 * offset] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v)
-        - 1.5f*usqr);
+    LbmNode lbm;
+    lbm.Initialize(f, 1.f, uMax, 0.f);
+    lbm.WriteDistributions(f, x, y);
 
     float xcoord, ycoord, zcoord;
     int xDimVisible = simDomain.GetXDimVisible();
@@ -312,160 +240,9 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
+    int j = x + y*MAX_XDIM;
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
-
-// rho=1.0 BC for east side
-__device__ void NeumannEast(float &f0, float &f1, float &f2, float &f3, float &f4,
-    float &f5, float &f6, float &f7, float &f8,
-    const int y, const int xDim, const int yDim)
-{
-    if (y == 0){
-        f2 = f4;
-        f5 = f8;
-    }
-    else if (y == yDim - 1){
-        f4 = f2;
-        f8 = f5;
-    }
-    float u, v, rho;
-    v = 0.0;
-    rho = 1.0;
-    u = -rho + ((f0 + f2 + f4) + 2.0f*f1 + 2.0f*f5 + 2.0f*f8);
-
-    f3 = f1 - u*0.66666667f;
-    f7 = f5 + 0.5f*(f2 - f4) - 0.5f*v - u*0.16666667f;
-    f6 = f8 - 0.5f*(f2 - f4) + 0.5f*v - u*0.16666667f;
-}
-
-// u=uMax BC for east side
-__device__ void DirichletWest(float &f0, float &f1, float &f2, float &f3, float &f4,
-    float &f5, float &f6, float &f7, float &f8,
-    const int y, const int xDim, const int yDim, const float uMax)
-{
-    if (y == 0){
-        f2 = f4;
-        f6 = f7;
-    }
-    else if (y == yDim - 1){
-        f4 = f2;
-        f7 = f6;
-    }
-    float u, v;//,rho;
-    u = uMax;//*PoisProf(float(y));
-    v = 0.0f;//0.0;
-    f1 = f3 + u*0.66666667f;
-    f5 = f7 - 0.5f*(f2 - f4) + v*0.5f + u*0.166666667f;
-    f8 = f6 + 0.5f*(f2 - f4) - v*0.5f + u*0.166666667f;
-}
-
-// applies BCs
-__device__ void ApplyBCs(float& f0, float& f1, float& f2, float& f3, float& f4,
-    float& f5, float& f6, float& f7, float& f8,
-    const int y, const int im, const int xDim, const int yDim, const float uMax)
-{
-    if (im == 2)//NeumannEast
-    {
-        NeumannEast(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, xDim, yDim);
-    }
-    else if (im == 3)//DirichletWest
-    {
-        DirichletWest(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, xDim, yDim, uMax);
-    }
-    else if (im == 11)//xsymmetry
-    {
-        f4 = f2;
-        f7 = f6;
-        f8 = f5;
-    }
-    else if (im == 12)//xsymmetry
-    {
-        f2 = f4;
-        f6 = f7;
-        f5 = f8;
-    }
-}
-
-__device__ void ComputeFEqs(float &feq0, float &feq1, float &feq2,
-    float &feq3, float &feq4, float &feq5,
-    float &feq6, float &feq7, float &feq8,
-    const float rho, const float u, const float v)
-{
-    float usqr = u*u+v*v;
-    feq0 = 4.0f/9.0f*(rho-1.5f*usqr);
-    feq1 = 1.0f/9.0f*(rho+3.0f*u+4.5f*u*u-1.5f*usqr);
-    feq2 = 1.0f/9.0f*(rho+3.0f*v+4.5f*v*v-1.5f*usqr);
-    feq3 = 1.0f/9.0f*(rho-3.0f*u+4.5f*u*u-1.5f*usqr);
-    feq4 = 1.0f/9.0f*(rho-3.0f*v+4.5f*v*v-1.5f*usqr);
-    feq5 = 1.0f/36.0f*(rho+3.0f*(u+v)+4.5f*(u+v)*(u+v)-1.5f*usqr);
-    feq6 = 1.0f/36.0f*(rho+3.0f*(-u+v)+4.5f*(-u+v)*(-u+v)-1.5f*usqr);
-    feq7 = 1.0f/36.0f*(rho+3.0f*(-u-v)+4.5f*(-u-v)*(-u-v)-1.5f*usqr);
-    feq8 = 1.0f/36.0f*(rho+3.0f*(u-v)+4.5f*(u-v)*(u-v)-1.5f*usqr);
-}
-
-__device__ void MovingWall(float &f0, float &f1, float &f2,
-    float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8,
-    const float rho, const float u, const float v)
-{
-    float feq[9];
-    ComputeFEqs(f0,f1,f2,f3,f4,f5,f6,f7,f8,rho,u,v);
-}
-
-__device__ float ComputeStrainRateMagnitude(const float f0, const float f1,
-    const float f2, const float f3, const float f4, const float f5, const float f6,
-    const float f7, const float f8, const float rho, const float u, const float v)
-{
-    float feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8;
-    ComputeFEqs(feq0, feq1, feq2, feq3, feq4, feq5, feq6, feq7, feq8, rho, u, v);
-    
-    float qxx = (f1-feq1) + (f3-feq3) + (f5-feq5) + (f6-feq6) + (f7-feq7) + (f8-feq8);
-    float qxy = (f5-feq5) - (f6-feq6) + (f7-feq7) - (f8-feq8)                        ;
-    float qyy = (f5-feq5) + (f2-feq2) + (f6-feq6) + (f7-feq7) + (f4-feq4) + (f8-feq8);
-    return sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
-}
-
-// LBM collision step 
-__device__ void LbmCollide(float &f0, float &f1, float &f2,
-    float &f3, float &f4, float &f5,
-    float &f6, float &f7, float &f8, const float omega)
-{
-    float u, v;
-    float rho;
-    rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-    u = f1 - f3 + f5 - f6 - f7 + f8;
-    v = f2 - f4 + f5 + f6 - f7 - f8;
-    float m1, m2, m4, m6, m7, m8;
-
-    m1 = -2.f*f0 + f1 + f2 + f3 + f4 + 4.f*f5 + 4.f*f6 + 4.f*f7 + 4.f*f8 - 3.0f*(u*u + v*v);
-    m2 = 3.f*f0 - 3.f*f1 - 3.f*f2 - 3.f*f3 - 3.f*f4 + 3.0f*(u*u + v*v); //ep
-    m4 = -f1 + f3 + 2.f*f5 - 2.f*f6 - 2.f*f7 + 2.f*f8;;//qx_eq
-    m6 = -f2 + f4 + 2.f*f5 + 2.f*f6 - 2.f*f7 - 2.f*f8;;//qy_eq
-    m7 = f1 - f2 + f3 - f4 - (u*u - v*v);//pxx_eq
-    m8 = f5 - f6 + f7 - f8 - (u*v);//pxy_eq
-
-    float Q = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
-
-    float tau0 = 1.f / omega;
-    float CS = SMAG_CONST;
-    float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*CS*sqrt(2.f)*Q);
-    float omegaTurb = 1.f / tau;
-
-    f0 = f0 - (-m1 + m2)*0.11111111f;
-    f1 = f1 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omegaTurb*0.25f);
-    f2 = f2 - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omegaTurb*0.25f);
-    f3 = f3 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omegaTurb*0.25f);
-    f4 = f4 - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m6 - m7*omegaTurb*0.25f);
-    f5 = f5 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6 +
-        m8*omegaTurb*0.25f);
-    f6 = f6 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6 -
-        m8*omegaTurb*0.25f);
-    f7 = f7 - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6 +
-        m8*omegaTurb*0.25f);
-    f8 = f8 - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6 -
-        m8*omegaTurb*0.25f);
-}
-
 
 // main LBM function including streaming and colliding
 __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
@@ -475,7 +252,6 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;
     int im = Im[j];
-    float u, v, rho;
     int obstId = FindOverlappingObstruction(x, y, obstructions);
     if (obstId >= 0)
     {
@@ -492,66 +268,29 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     }
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
-    float f0, f1, f2, f3, f4, f5, f6, f7, f8;
-    f0 = fA[j];
-    f1 = fA[f_mem(1, dmax(x - 1), y)];
-    f3 = fA[f_mem(3, dmin(x + 1, xDim), y)];
-    f2 = fA[f_mem(2, x, y - 1)];
-    f5 = fA[f_mem(5, dmax(x - 1), y - 1)];
-    f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1)];
-    f4 = fA[f_mem(4, x, y + 1)];
-    f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
-    f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
 
-    float StrainRate = 0.f;
+    LbmNode lbm;
+    lbm.SetXDim(xDim);
+    lbm.SetYDim(yDim);
+    lbm.ReadIncomingDistributions(fA, x, y);
 
-    if (im == 99)
-    {
-    //do nothing
-    }
-    else if (im == 1 || im == 10){//bounce-back condition
-        //atomicAdd();   //will need this if force is to be computed
-        fB[f_mem(1, x, y)] = f3;
-        fB[f_mem(2, x, y)] = f4;
-        fB[f_mem(3, x, y)] = f1;
-        fB[f_mem(4, x, y)] = f2;
-        fB[f_mem(5, x, y)] = f7;
-        fB[f_mem(6, x, y)] = f8;
-        fB[f_mem(7, x, y)] = f5;
-        fB[f_mem(8, x, y)] = f6;
+    if (im == 1 || im == 10){//bounce-back condition
+        lbm.BounceBackWall();
     }
     else if (im == 20)
     {
-        u = 0.f; v = 0.f, rho = 1.0f;
+        float rho, u, v;
+        rho = 1.0f;
         u = obstructions[FindOverlappingObstruction(x, y, obstructions)].u;
         v = obstructions[FindOverlappingObstruction(x, y, obstructions)].v;
-        MovingWall(f0, f1, f2, f3, f4, f5, f6, f7, f8, rho, u, v);
-        fB[f_mem(1, x, y)] = f3;
-        fB[f_mem(2, x, y)] = f4;
-        fB[f_mem(3, x, y)] = f1;
-        fB[f_mem(4, x, y)] = f2;
-        fB[f_mem(5, x, y)] = f7;
-        fB[f_mem(6, x, y)] = f8;
-        fB[f_mem(7, x, y)] = f5;
-        fB[f_mem(8, x, y)] = f6;
+        lbm.MovingWall(rho, u, v);
     }
     else{
-        ApplyBCs(f0, f1, f2, f3, f4, f5, f6, f7, f8, y, im, xDim, yDim, uMax);
-
-        LbmCollide(f0, f1, f2, f3, f4, f5, f6, f7, f8, omega);
-
-        fB[f_mem(0, x, y)] = f0;
-        fB[f_mem(1, x, y)] = f1;
-        fB[f_mem(2, x, y)] = f2;
-        fB[f_mem(3, x, y)] = f3;
-        fB[f_mem(4, x, y)] = f4;
-        fB[f_mem(5, x, y)] = f5;
-        fB[f_mem(6, x, y)] = f6;
-        fB[f_mem(7, x, y)] = f7;
-        fB[f_mem(8, x, y)] = f8;
+        lbm.ApplyBCs(y, im, xDim, yDim, uMax);
+        lbm.Collide(omega);
     }
+    lbm.WriteDistributions(fB, x, y);
 }
-
 
 // main LBM function including streaming and colliding
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
@@ -566,21 +305,11 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
-    float f0, f1, f2, f3, f4, f5, f6, f7, f8;
-    f0 = fA[j];
-    f1 = fA[f_mem(1, dmax(x - 1), y)];
-    f3 = fA[f_mem(3, dmin(x + 1, xDim), y)];
-    f2 = fA[f_mem(2, x, y - 1)];
-    f5 = fA[f_mem(5, dmax(x - 1), y - 1)];
-    f6 = fA[f_mem(6, dmin(x + 1, xDim), y - 1)];
-    f4 = fA[f_mem(4, x, y + 1)];
-    f7 = fA[f_mem(7, dmin(x + 1, xDim), y + 1)];
-    f8 = fA[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
-
-    rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
-    u = f1 - f3 + f5 - f6 - f7 + f8;
-    v = f2 - f4 + f5 + f6 - f7 - f8;
-
+    LbmNode lbm;
+    lbm.ReadDistributions(fA, x, y);
+    rho = lbm.ComputeRho();
+    u = lbm.ComputeU();
+    v = lbm.ComputeV();
 
     //Prepare data for visualization
 
@@ -617,8 +346,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     }
     else if (contourVar == ContourVariable::STRAIN_RATE)
     {
-        strainRate = ComputeStrainRateMagnitude(f0, f1, f2, f3, f4, f5, f6, f7, f8,
-            rho, u, v);
+        strainRate = lbm.ComputeStrainRateMagnitude();
         variableValue = strainRate;
     }
 
@@ -1084,8 +812,6 @@ void UpdateSolutionVbo(float4* vis, float* f_d, int* im_d,
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
         viewMode, uMax, simDomain);
 }
-
-
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst)
