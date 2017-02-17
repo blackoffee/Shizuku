@@ -213,8 +213,8 @@ __device__ bool IsPointsOnSameSide(const float2 &p1, const float2 &p2,
 __device__ bool IsPointInsideTriangle(const float2 &p, const float2 &a,
     const float2 &b, const float2 &c)
 {
-    if (IsPointsOnSameSide(p, a, b, c) &&\
-        IsPointsOnSameSide(p, b, a, c) &&\
+    if (IsPointsOnSameSide(p, a, b, c) &&
+        IsPointsOnSameSide(p, b, a, c) &&
         IsPointsOnSameSide(p, c, a, b))
     {
         return true;
