@@ -762,8 +762,11 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
     ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
-    MarchSolution(dptr, g_fA_d, g_fB_d, g_im_d, g_obst_d, contourVar,
-        contMin, contMax, viewMode, u, omega, TIMESTEPS_PER_FRAME/2, g_simDomain, paused);
+    MarchSolution(g_fA_d, g_fB_d, g_im_d, g_obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
+        g_simDomain, paused);
+    UpdateSolutionVbo(dptr, g_fB_d, g_im_d, contourVar, contMin, contMax, viewMode,
+        u, g_simDomain);
+ 
     SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)

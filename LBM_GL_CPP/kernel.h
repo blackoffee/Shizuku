@@ -13,10 +13,14 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
 
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d);
 
-void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d, 
+void MarchSolution(float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
+    const float uMax, const float omega, const int tStep, Domain &simDomain,
+    const bool paused);
+
+void UpdateSolutionVbo(float4* vis, float* f_d, int* im_d, 
     const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float uMax, const float omega, const int tStep,
-    Domain &simDomain, const bool paused);
+    const ViewMode viewMode, const float uMax,
+    Domain &simDomain);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst);

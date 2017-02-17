@@ -477,10 +477,12 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
         if (obstructions[obstId].u < 1e-5f && obstructions[obstId].v < 1e-5f)
         {
             im = 1; //bounce back
+            Im[j] = im;
         }
         else
         {
             im = 20; //moving wall
+            Im[j] = im;
         }
     }
     int xDim = simDomain.GetXDim();
@@ -625,7 +627,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
         R = 100; G = 150; B = 255;
         A = 100;
     }
-    if (im == 1 && viewMode == TWO_DIMENSIONAL){
+    if (im == 1 || im == 20){
         R = 204; G = 204; B = 204;
     }
     else if (im != 0 || x == xDimVisible-1)
@@ -1031,10 +1033,9 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
 }
 
 
-void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-    const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float uMax, const float omega, const int tStep,
-    Domain &simDomain, const bool paused)
+void MarchSolution(float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
+    const float uMax, const float omega, const int tStep, Domain &simDomain,
+    const bool paused)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1049,9 +1050,23 @@ void MarchSolution(float4* vis, float* fA_d, float* fB_d, int* im_d, Obstruction
             MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, uMax, simDomain);
         }
     }
-    UpdateSurfaceVbo << <grid, threads >> > (vis, fB_d, im_d, contVar, contMin, contMax,
+}
+
+void UpdateSolutionVbo(float4* vis, float* f_d, int* im_d,
+    const ContourVariable contVar, const float contMin, const float contMax,
+    const ViewMode viewMode, const float uMax,
+    Domain &simDomain)
+{
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
+    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
+
+    UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
         viewMode, uMax, simDomain);
 }
+
+
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst)
