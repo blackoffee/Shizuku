@@ -91,9 +91,9 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
     float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        min(m_parent->GetRectIntAbs().m_w, MAX_XDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        min(m_parent->GetRectIntAbs().m_h, MAX_YDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_h), MAX_YDIM*m_scaleFactor);
     xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
         graphicsToSimDomainScalingFactorX;
     yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
@@ -107,9 +107,9 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut,
     int yDimVisible = g_simDomain.GetYDimVisible();
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        min(m_parent->GetRectIntAbs().m_w, MAX_XDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        min(m_parent->GetRectIntAbs().m_h, MAX_YDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_h), MAX_YDIM*m_scaleFactor);
     xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
         graphicsToSimDomainScalingFactorX;
     yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
@@ -347,13 +347,13 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
             int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
             int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
             dxi = dxf*static_cast<float>(xDimVisible) / 
-                min(m_parent->GetRectFloatAbs().m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
+                std::min(m_parent->GetRectFloatAbs().m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
             dyi = dyf*static_cast<float>(yDimVisible) / 
-                min(m_parent->GetRectFloatAbs().m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
+                std::min(m_parent->GetRectFloatAbs().m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
             obst.x += dxi;
             obst.y += dyi;
-            float u = max(-0.1f,min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
-            float v = max(-0.1f,min(0.1f,static_cast<float>(dyi) / (TIMESTEPS_PER_FRAME)));
+            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
+            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(dyi) / (TIMESTEPS_PER_FRAME)));
             obst.u = u;
             obst.v = v;
             m_obstructions[m_currentObstId] = obst;
@@ -372,8 +372,8 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
             Obstruction obst = m_obstructions[m_currentObstId];
             obst.x += simX2-simX1;
             obst.y += simY2-simY1;
-            float u = max(-0.1f,min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
-            float v = max(-0.1f,min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
             obst.u = u;
             obst.v = v;
             obst.state = Obstruction::ACTIVE;

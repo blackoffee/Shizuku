@@ -1,5 +1,5 @@
-#include <GL/glew.h>
-#include <GL/freeglut.h>
+#include <GLEW/glew.h>
+#include <GLUT/freeglut.h>
 #include "cuda_runtime.h"
 #include "cuda_gl_interop.h"
 #include "device_launch_parameters.h"
@@ -832,7 +832,7 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
     float leftPanelW = static_cast<float>(leftPanelWidth);
     heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW
         +scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
-    heightOut = max(heightOut, leftPanelHeight);
+    heightOut = std::max(heightOut, leftPanelHeight);
     widthOut = heightOut*aspectRatio+leftPanelW;
 }
 

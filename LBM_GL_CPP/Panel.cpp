@@ -471,13 +471,13 @@ void SliderBar::Drag(int x, int y, float dx, float dy, int button)
     //dx and dy are coming in as float abs coordinates
     if (m_orientation == VERTICAL)
     {
-        rect.m_y = max(m_parent->GetRectFloatAbs().m_y, 
-            min(m_parent->GetRectFloatAbs().m_y + m_parent->GetRectFloatAbs().m_h - rect.m_h, rect.m_y + dy));
+        rect.m_y = std::max(m_parent->GetRectFloatAbs().m_y, 
+            std::min(m_parent->GetRectFloatAbs().m_y + m_parent->GetRectFloatAbs().m_h - rect.m_h, rect.m_y + dy));
     }
     else
     { 
-        rect.m_x = max(m_parent->GetRectFloatAbs().m_x,
-            min(m_parent->GetRectFloatAbs().m_x + m_parent->GetRectFloatAbs().m_w - rect.m_w, rect.m_x + dx));
+        rect.m_x = std::max(m_parent->GetRectFloatAbs().m_x,
+            std::min(m_parent->GetRectFloatAbs().m_x + m_parent->GetRectFloatAbs().m_w - rect.m_w, rect.m_x + dx));
     }
     SetSize_Absolute(rect);
     UpdateValue();
