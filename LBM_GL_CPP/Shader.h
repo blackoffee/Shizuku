@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <GLEW/glew.h>
-#include <GLFW/glfw3.h>
 
 class Shader
 {
@@ -79,6 +78,10 @@ public:
 
     ShaderProgram()
     {
+    }
+
+    void Init()
+    {
         ProgramID = glCreateProgram();
     }
 
@@ -105,6 +108,11 @@ public:
     void Use()
     {
         glUseProgram(ProgramID);
+    }
+
+    void Unset()
+    {
+        glUseProgram(0);
     }
 };
 

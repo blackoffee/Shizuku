@@ -2,6 +2,8 @@
 
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -86,6 +88,10 @@ public:
     void Wheel(const int button, const int dir, const int x, const int y);
    
     void UpdateViewTransformations();
+
+    glm::vec4 GetViewportMatrix();
+    glm::mat4 GetModelMatrix();
+    glm::mat4 GetProjectionMatrix();
 
 };
 

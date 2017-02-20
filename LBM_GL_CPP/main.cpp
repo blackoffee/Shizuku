@@ -5,6 +5,8 @@
 #include "device_launch_parameters.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <stdio.h>
 #include <iostream>
@@ -19,6 +21,7 @@
 #include "common.h"
 #include "Domain.h"
 #include "FpsTracker.h"
+#include "Shader.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -40,6 +43,7 @@ ButtonGroup shapeButtons;
 ButtonGroup viewButtons;
 
 //GL buffers
+GLuint g_vaoSolutionField;
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 cudaGraphicsResource *g_cudaSolutionField;
@@ -51,6 +55,8 @@ int* g_im_d;
 Obstruction* g_obst_d;
 
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
+
+ShaderProgram g_shader;
 
 
 // forward declarations
@@ -73,6 +79,16 @@ void Init()
     glViewport(0,0,windowWidth,windowHeight);
 
 }
+
+
+void CompileShaderPrograms()
+{
+    g_shader.Init();
+    g_shader.CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
+    g_shader.CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+}
+
+
 
 void SetUpWindow()
 {
@@ -543,6 +559,10 @@ void DrawShapePreview()
  */
 void CreateVBO(GLuint *vbo, cudaGraphicsResource **vbo_res, unsigned int size, unsigned int vbo_res_flags)
 {
+
+    glGenVertexArrays(1, &g_vaoSolutionField);
+    glBindVertexArray(g_vaoSolutionField);
+
     glGenBuffers(1, vbo);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
 
@@ -919,6 +939,18 @@ void Draw()
         glRotatef(rotateTransforms.z,0,0,1);
     }
 
+    // Update transformation matrices in graphics manager for mouse ray casting
+    graphicsManager->UpdateViewTransformations();
+    // Update Obstruction size based on current slider value
+    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    graphicsManager->SetCurrentObstSize(currentObstSize);
+
+    glm::vec4 viewportMatrix = graphicsManager->GetViewportMatrix();
+    glm::mat4 modelMatrix = graphicsManager->GetModelMatrix();
+    glm::mat4 projectionMatrix = graphicsManager->GetProjectionMatrix();
+
+
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -926,14 +958,29 @@ void Draw()
     glLoadIdentity();
 
     //Draw solution field
+    glBindVertexArray(g_vaoSolutionField);
     glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
-    glVertexPointer(3, GL_FLOAT, 16, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glColor3f(1.0, 0.0, 0.0);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 16, (GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    //glVertexPointer(3, GL_FLOAT, 16, 0);
+    //glEnableClientState(GL_VERTEX_ARRAY);
+    //glColor3f(1.0, 0.0, 0.0);
+    //glEnableClientState(GL_COLOR_ARRAY);
+    //glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
     ContourVariable contourVar = graphicsManager->GetContourVar();
+
+    g_shader.Use();
+    GLint viewportMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "viewportMatrix");
+    GLint modelMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "modelMatrix");
+    GLint projectionMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "projectionMatrix");
+    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
         //Draw floor
@@ -942,19 +989,15 @@ void Draw()
     }
     //Draw water surface
     glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    g_shader.Unset();
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    glBindVertexArray(0);
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
         std::cout << "OpenGL error: " << err << std::endl;
     }
 
-
-    // Update transformation matrices in graphics manager for mouse ray casting
-    graphicsManager->UpdateViewTransformations();
-    // Update Obstruction size based on current slider value
-    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    graphicsManager->SetCurrentObstSize(currentObstSize);
 
 
     glDisable(GL_DEPTH_TEST);
@@ -986,6 +1029,7 @@ int main(int argc,char **argv)
 
     glutInit(&argc,argv);
 
+
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
@@ -1002,6 +1046,9 @@ int main(int argc,char **argv)
     glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
     Init();
+
+    CompileShaderPrograms();
+
     SetUpGLInterop();
     SetUpCUDA();
 
