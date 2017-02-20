@@ -1,6 +1,8 @@
 #pragma once
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -168,6 +170,9 @@ public:
    
     FW_API void UpdateViewTransformations();
     FW_API void UpdateGraphicsInputs();
+    FW_API glm::vec4 GetViewportMatrix();
+    FW_API glm::mat4 GetModelMatrix();
+    FW_API glm::mat4 GetProjectionMatrix();
 
     FW_API void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
     FW_API void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);

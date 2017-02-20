@@ -5,6 +5,8 @@
 #include "device_launch_parameters.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <stdio.h>
 #include <iostream>
@@ -20,6 +22,7 @@
 #include "common.h"
 #include "Domain.h"
 #include "FpsTracker.h"
+#include "Shader.h"
 
 
 const int g_leftPanelWidth(350);
@@ -33,7 +36,10 @@ Domain g_simDomain;
 Panel Window;
 Mouse theMouse;
 
+GLuint g_vaoSolutionField;
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
+
+ShaderProgram g_shader;
 
 void Init()
 {
@@ -44,6 +50,16 @@ void Init()
     glViewport(0,0,windowWidth,windowHeight);
 
 }
+
+
+void CompileShaderPrograms()
+{
+    g_shader.Init();
+    g_shader.CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
+    g_shader.CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+}
+
+
 
 void SetUpWindow(Panel &rootPanel)
 {
@@ -531,6 +547,10 @@ void DrawShapePreview(Panel &rootPanel)
  *	GL Interop Functions
  */
 
+    glGenVertexArrays(1, &g_vaoSolutionField);
+    glBindVertexArray(g_vaoSolutionField);
+
+
 void SetUpGLInterop(Panel &rootPanel)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
@@ -701,6 +721,7 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
     cudaLbm.SetOmega(omega);
 }
 
+
 void CheckGLError()
 {
     GLenum err;
@@ -720,15 +741,14 @@ void UpdateWindowTitle(const int fps, Domain &domain)
     glutSetWindowTitle(fpsReport);
 }
 
+
 void Draw()
 {
     g_fpsTracker.Tick();
     
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    graphicsManager->UpdateViewTransformations();
     graphicsManager->UpdateGraphicsInputs();
-
     Resize(Window.GetWidth(), Window.GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
@@ -759,6 +779,7 @@ int main(int argc,char **argv)
 
     glutInit(&argc,argv);
 
+
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
@@ -775,8 +796,10 @@ int main(int argc,char **argv)
     glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
     Init();
+    CompileShaderPrograms();
     SetUpGLInterop(Window);
     SetUpCUDA(Window);
+
 
     glutMainLoop();
 
