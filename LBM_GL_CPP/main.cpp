@@ -964,7 +964,7 @@ void Draw()
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 16, (GLvoid*)(3*sizeof(GLfloat)));
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
     //glVertexPointer(3, GL_FLOAT, 16, 0);
