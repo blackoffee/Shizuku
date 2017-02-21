@@ -57,6 +57,7 @@ Obstruction* g_obst_d;
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 ShaderProgram g_shader;
+ShaderProgram g_computeShader;
 
 
 // forward declarations
@@ -86,6 +87,10 @@ void CompileShaderPrograms()
     g_shader.Init();
     g_shader.CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
     g_shader.CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+
+    g_computeShader.Init();
+    g_computeShader.CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+
 }
 
 
@@ -791,7 +796,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition, g_simDomain);
+        //LightSurface(dptr, g_obst_d, cameraPosition, g_simDomain);
     }
     LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, g_simDomain);
     CleanUpDeviceVBO(dptr, g_simDomain);
@@ -914,6 +919,35 @@ void Draw()
         -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
 
     RunCuda(&g_cudaSolutionField, cameraPosition);
+
+
+
+    //// Compute shader
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
+
+    g_computeShader.Use();
+
+    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
+    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
+    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
+    glUniform1i(maxXDimLocation, MAX_XDIM);
+    glUniform1i(xDimVisibleLocation, xDimVisible);
+    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+
+    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    g_computeShader.Unset();
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+
+
+
+
+
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
