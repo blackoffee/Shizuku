@@ -11,7 +11,9 @@ uniform int maxXDim;
 uniform int maxyDim;
 uniform vec3 cameraPosition;
 
-subroutine void VboUpdate(uvec3 workUnit);
+subroutine void VboUpdate_t(uvec3 workUnit);
+
+subroutine uniform VboUpdate_t VboUpdate;
 
 
 vec4 unpackColor(float f)
@@ -58,7 +60,7 @@ float DotProduct(vec3 v1, vec3 v2)
     return dot(v1,v2);
 }
 
-subroutine(VboUpdate) void PhongLighting(uvec3 workUnit)
+subroutine(VboUpdate_t) void PhongLighting(uvec3 workUnit)
 {
 	uint x = workUnit.x;
 	uint y = workUnit.y;
@@ -118,12 +120,14 @@ subroutine(VboUpdate) void PhongLighting(uvec3 workUnit)
     positions[j].w = packColor(finalColor);
 }
 
+subroutine(VboUpdate_t) void DoNothing(uvec3 workUnit)
+{
+}
 
 void main()
 {
 
-	//VboUpdate(gl_GlobalInvocationID);
-    PhongLighting(gl_GlobalInvocationID);
+	VboUpdate(gl_GlobalInvocationID);
 
 
 

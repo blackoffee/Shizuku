@@ -741,6 +741,9 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
     glUniform1i(xDimVisibleLocation, xDimVisible);
     glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
+    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
+        "PhongLighting");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
 
     glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
