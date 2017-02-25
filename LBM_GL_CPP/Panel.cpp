@@ -289,6 +289,10 @@ void Panel::DrawAll()
     }
 }
 
+Panel::~Panel()
+{
+
+}
 
 Panel* Panel::GetPanel(const std::string name)
 {
@@ -347,6 +351,58 @@ Slider* Panel::GetSlider(const std::string name)
     return NULL;
 }
 
+void Panel::SetBackgroundColor(Color color)
+{
+    m_backgroundColor = color;
+}
+
+void Panel::SetForegroundColor(Color color)
+{
+    m_foregroundColor = color;
+}
+
+Color Panel::GetBackgroundColor()
+{
+    return m_backgroundColor;
+}
+
+Color Panel::GetForegroundColor()
+{
+    return m_foregroundColor;
+}
+
+void Panel::SetMinValue(float value)
+{
+    m_minValue = value;
+}
+
+void Panel::SetMaxValue(float value)
+{
+    m_maxValue = value;
+}
+
+float Panel::GetMinValue()
+{
+    return m_minValue;
+}
+
+float Panel::GetMaxValue()
+{
+    return m_maxValue;
+}
+
+std::string Panel::GetDisplayText()
+{
+    return m_displayText;
+}
+
+void Panel::SetDisplayText(std::string displayText)
+{
+    m_displayText = displayText;
+}
+
+
+
 Button* Panel::CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
     const std::string name, const Color color)
 {
@@ -392,14 +448,14 @@ Button::Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinit
     const std::string name, const Color color, Panel* parent) 
     : Panel(rectFloat, sizeDefinition, name, color, parent)
 {
-    m_displayText = this->GetName();
+    SetDisplayText(GetName());
 }
 
 Button::Button(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition, 
     const std::string name, const Color color, Panel* parent) 
     : Panel(rectInt, sizeDefinition, name, color, parent)
 {
-    m_displayText = this->GetName();
+    SetDisplayText(GetName());
 }
 
 void Button::ClickDown(Mouse mouse)
@@ -418,13 +474,14 @@ SliderBar::SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeD
     const std::string name, const Color color, Slider* parent) 
     : Panel(rectFloat, sizeDefinition, name, color, parent)
 {
-    m_backgroundColor = Color::GRAY;
+    SetBackgroundColor(Color::GRAY);
 }
 
 void SliderBar::Draw()
 {
     RectFloat rect = this->GetRectFloatAbs();
-    glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
+    Color backgroundColor = GetBackgroundColor();
+    glColor3f(backgroundColor.r, backgroundColor.g, backgroundColor.b);
     glBegin(GL_QUADS);
     glVertex2f(rect.m_x, rect.m_y + rect.m_h);
     glVertex2f(rect.m_x, rect.m_y);
@@ -432,7 +489,8 @@ void SliderBar::Draw()
     glVertex2f(rect.m_x + rect.m_w, rect.m_y + rect.m_h);
     glEnd();
 
-    glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
+    Color foregroundColor = GetForegroundColor();
+    glColor3f(foregroundColor.r, foregroundColor.g, foregroundColor.b);
     float outlineWidth = 0.003f;
     glBegin(GL_QUADS);
     glVertex2f(rect.m_x + outlineWidth, rect.m_y + rect.m_h - outlineWidth*2.f);
@@ -447,13 +505,13 @@ void SliderBar::UpdateValue()
     RectFloat rect = this->GetRectFloatAbs();
     if (m_orientation == VERTICAL)
     {
-        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*
+        m_value = m_parent->GetMinValue() + (m_parent->GetMaxValue() - m_parent->GetMinValue())*
             (rect.GetCentroidY() - (m_parent->GetRectFloatAbs().m_y+rect.m_h*0.5f)) /
             (m_parent->GetRectFloatAbs().m_h-rect.m_h);
     }
     else
     {
-        m_value = m_parent->m_minValue + (m_parent->m_maxValue - m_parent->m_minValue)*
+        m_value = m_parent->GetMinValue() + (m_parent->GetMaxValue() - m_parent->GetMinValue())*
             (rect.GetCentroidX() - (m_parent->GetRectFloatAbs().m_x+rect.m_w*0.5f)) /
             (m_parent->GetRectFloatAbs().m_w-rect.m_w);
     }
@@ -565,15 +623,15 @@ void Slider::Draw()
         SliderBar* higherSliderBar;
         if (m_sliderBar1->GetValue() < m_sliderBar2->GetValue())
         {
-            lowerColor = m_sliderBar1->m_foregroundColor;
-            higherColor = m_sliderBar2->m_foregroundColor;
+            lowerColor = m_sliderBar1->GetForegroundColor();
+            higherColor = m_sliderBar2->GetForegroundColor();
             lowerSliderBar = m_sliderBar1;
             higherSliderBar = m_sliderBar2;
         }
         else
         {
-            lowerColor = m_sliderBar2->m_foregroundColor;
-            higherColor = m_sliderBar1->m_foregroundColor;
+            lowerColor = m_sliderBar2->GetForegroundColor();
+            higherColor = m_sliderBar1->GetForegroundColor();
             lowerSliderBar = m_sliderBar2;
             higherSliderBar = m_sliderBar1;
         }
@@ -703,7 +761,7 @@ void ButtonGroup::ExclusiveEnable(Button* button)
         if (*it == button)
         {
             (*it)->m_highlighted = true;
-            (*it)->m_backgroundColor = Color::LIGHT_GRAY;
+            (*it)->SetBackgroundColor(Color::LIGHT_GRAY);
             if (sliderForButton != NULL)
             {
                 sliderForButton->Show();
@@ -712,7 +770,7 @@ void ButtonGroup::ExclusiveEnable(Button* button)
         else
         {
             (*it)->m_highlighted = false;
-            (*it)->m_backgroundColor = Color::GRAY;
+            (*it)->SetBackgroundColor(Color::GRAY);
             if (sliderForButton != NULL)
             {
                 sliderForButton->Hide();
@@ -792,4 +850,12 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
     }
     return panelThatPointIsIn;
 }
+
+
+void test()
+{
+    std::cout<<"Hello";
+}
+
+
 

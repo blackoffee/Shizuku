@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LBM_GL_CPP", "LBM_GL_CPP\LB
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utest_LBM_GL_CPP", "utest_LBM_GL_CPP\utest_LBM_GL_CPP.vcxproj", "{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLUT_Window_Manager", "GLUT_Window_Manager\GLUT_Window_Manager.vcxproj", "{7633F095-C71C-49BF-A436-D13DB1BD6B3A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -40,6 +42,16 @@ Global
 		{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}.Release|Win32.ActiveCfg = Release|Win32
 		{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}.Release|Win32.Build.0 = Release|Win32
 		{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}.Release|x64.ActiveCfg = Release|x64
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|Win32.Build.0 = Debug|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|x64.ActiveCfg = Debug|x64
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Release|Win32.ActiveCfg = Release|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Release|Win32.Build.0 = Release|Win32
+		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

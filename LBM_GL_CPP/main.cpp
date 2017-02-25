@@ -144,25 +144,25 @@ void SetUpWindow()
     inputsPanel->CreateButton(RectFloat(-0.9f, -1.f+0.09f , 1.8f, 0.3f ),
         Panel::DEF_REL, "Initialize", Color(Color::GRAY));
 
-    Window.GetPanel("Label_InletV")->m_displayText = "Inlet Velocity";
+    Window.GetPanel("Label_InletV")->SetDisplayText("Inlet Velocity");
     Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.7f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
-    Window.GetSlider("Slider_InletV")->m_maxValue = 0.125f;
-    Window.GetSlider("Slider_InletV")->m_minValue = 0.f;
+    Window.GetSlider("Slider_InletV")->SetMaxValue(0.125f);
+    Window.GetSlider("Slider_InletV")->SetMinValue(0.f);
     Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
-    Window.GetPanel("Label_Visc")->m_displayText = "Viscosity";
+    Window.GetPanel("Label_Visc")->SetDisplayText("Viscosity");
     Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-0.85f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
-    Window.GetSlider("Slider_Visc")->m_maxValue = 1.8f;
-    Window.GetSlider("Slider_Visc")->m_minValue = 1.99f;
+    Window.GetSlider("Slider_Visc")->SetMaxValue(1.8f);
+    Window.GetSlider("Slider_Visc")->SetMinValue(1.99f);
     Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
-    Window.GetPanel("Label_Resolution")->m_displayText = "Resolution";
+    Window.GetPanel("Label_Resolution")->SetDisplayText("Resolution");
     Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
-    Window.GetSlider("Slider_Resolution")->m_maxValue = 1.f;
-    Window.GetSlider("Slider_Resolution")->m_minValue = 6.f;
+    Window.GetSlider("Slider_Resolution")->SetMaxValue(1.f);
+    Window.GetSlider("Slider_Resolution")->SetMinValue(6.f);
     Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 
@@ -174,7 +174,7 @@ void SetUpWindow()
     RectFloat contourSliderPosition{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f, 1.8f, sliderH};
     outputsPanel->CreateSubPanel(RectFloat{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f+sliderH, 0.5f, sliderH}
         , Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
-    Window.GetPanel("Label_Contour")->m_displayText = "Contour Color";
+    Window.GetPanel("Label_Contour")->SetDisplayText("Contour Color");
     float contourSliderBarWidth = 0.1f;
     float contourSliderBarHeight = 2.f;
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
@@ -182,10 +182,10 @@ void SetUpWindow()
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*2.f;
-    Window.GetSlider(sliderName)->m_minValue = 0.f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*2.f);
+    Window.GetSlider(sliderName)->SetMinValue(0.f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 
@@ -199,10 +199,10 @@ void SetUpWindow()
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*1.8f;
-    Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.8f);
+    Window.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -217,10 +217,10 @@ void SetUpWindow()
         contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f-contourSliderBarWidth*0.5f, -1.f,
         contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*1.f;
-    Window.GetSlider(sliderName)->m_minValue = -INITIAL_UMAX*1.f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.f);
+    Window.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -235,10 +235,10 @@ void SetUpWindow()
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(0.35f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = INITIAL_UMAX*0.1f;
-    Window.GetSlider(sliderName)->m_minValue = 0.f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*0.1f);
+    Window.GetSlider(sliderName)->SetMinValue(0.f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -253,10 +253,10 @@ void SetUpWindow()
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = 1.05f;
-    Window.GetSlider(sliderName)->m_minValue = 0.95f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(1.05f);
+    Window.GetSlider(sliderName)->SetMinValue(0.95f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -271,10 +271,10 @@ void SetUpWindow()
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
     Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->m_maxValue = 1.05f;
-    Window.GetSlider(sliderName)->m_minValue = 0.95f;
-    Window.GetSlider(sliderName)->m_sliderBar1->m_foregroundColor = Color::BLUE;
-    Window.GetSlider(sliderName)->m_sliderBar2->m_foregroundColor = Color::WHITE;
+    Window.GetSlider(sliderName)->SetMaxValue(1.05f);
+    Window.GetSlider(sliderName)->SetMinValue(0.95f);
+    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
     Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
     Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     Window.GetSlider(sliderName)->Hide();
@@ -290,7 +290,7 @@ void SetUpWindow()
         "Slider_Size", Color(Color::LIGHT_GRAY));
     drawingPanel->CreateSubPanel(RectFloat(-0.9f,0.9f-sliderH*0.75f, 0.5f, sliderH*0.75f), Panel::DEF_REL,
         "Label_Size", Color(Color::DARK_GRAY));
-    Window.GetPanel("Label_Size")->m_displayText = "Size";
+    Window.GetPanel("Label_Size")->SetDisplayText("Size");
 
     float leftEnd = -0.9f;
     float width = 1.8f;
@@ -305,8 +305,8 @@ void SetUpWindow()
         "Vert. Line", Color(Color::GRAY));
     Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
-    Window.GetSlider("Slider_Size")->m_maxValue = 15.f;
-    Window.GetSlider("Slider_Size")->m_minValue = 1.f;
+    Window.GetSlider("Slider_Size")->SetMaxValue(15.f);
+    Window.GetSlider("Slider_Size")->SetMinValue(1.f);
     Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstSize(currentObstSize);

@@ -8,15 +8,25 @@
 #include "RectFloat.h"
 #include "RectInt.h"
 
+
+#ifdef LBM_GL_CPP_EXPORTS  
+#define FW_API __declspec(dllexport)   
+#else  
+#define FW_API __declspec(dllimport)   
+#endif  
+
+FW_API void test();
+
+
 class Color
 {
 public:
-    enum ColorName{WHITE,BLACK,RED,GREEN,BLUE,DARK_GRAY,GRAY,LIGHT_GRAY};
+    FW_API enum ColorName{WHITE,BLACK,RED,GREEN,BLUE,DARK_GRAY,GRAY,LIGHT_GRAY};
     float r = 1.f;
     float g = 1.f;
     float b = 1.f;
-    Color();
-    Color(ColorName color);
+    FW_API Color();
+    FW_API Color(ColorName color);
 };
 
 class Button;
@@ -26,66 +36,81 @@ class Mouse;
 
 class Panel
 {
+public:
+    enum SizeDefinitionMethod {DEF_ABS, DEF_REL};
 private:
     std::string m_name;
     RectInt m_rectInt_abs; //absolute coordinates in Window
     RectInt m_rectInt_rel; //relative coordinates wrt to parent
     RectFloat m_rectFloat_abs; //absolute coordinates in window. this is the one used for drawing, so always want to keep this up-to-date.
     RectFloat m_rectFloat_rel;
+    Color m_backgroundColor;
+    Color m_foregroundColor;
+    float m_minValue = 1.f;
+    float m_maxValue = 0.f;
+    std::string m_displayText = "";
+    SizeDefinitionMethod m_sizeDefinition;
 public:
-    enum SizeDefinitionMethod {DEF_ABS, DEF_REL};
     std::vector<Panel*> m_subPanels;
     std::vector<Button*> m_buttons;
     std::vector<Slider*> m_sliders;
     Panel* m_parent = NULL; //pointer to parent frame
-
-    Color m_backgroundColor;
-    Color m_foregroundColor;
-    SizeDefinitionMethod m_sizeDefinition;
     GraphicsManager* m_graphicsManager = NULL;
     bool m_draw = true;
     void(*m_callBack)() = NULL;
-    std::string m_displayText = "";
     //these two members below should ideally be in Slider class
-    float m_minValue = 1.f;
-    float m_maxValue = 0.f;
 
 
 
-    Panel();
-    Panel(const RectInt rectInt  , const SizeDefinitionMethod sizeDefinition,
+    FW_API Panel();
+    FW_API Panel(const RectInt rectInt  , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
-    Panel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API Panel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
 
-    std::string GetName();
-    void SetName(const std::string name);
+    FW_API std::string GetName();
+    FW_API void SetName(const std::string name);
 
-    void SetSize_Relative(const RectFloat);
-    void SetSize_Absolute(const RectFloat);
-    void SetSize_Absolute(const RectInt);
+    FW_API void SetSize_Relative(const RectFloat);
+    FW_API void SetSize_Absolute(const RectFloat);
+    FW_API void SetSize_Absolute(const RectInt);
 
-    RectFloat GetRectFloatAbs();
-    RectInt GetRectIntAbs();
+    FW_API RectFloat GetRectFloatAbs();
+    FW_API RectInt GetRectIntAbs();
 
-    int GetWidth();
-    int GetHeight();
-    Panel* GetRootPanel();
-    Panel* GetPanel(const std::string name);
-    Button* GetButton(const std::string name);
-    Slider* GetSlider(const std::string name);
+    FW_API int GetWidth();
+    FW_API int GetHeight();
+    FW_API Panel* GetRootPanel();
+    FW_API Panel* GetPanel(const std::string name);
+    FW_API Button* GetButton(const std::string name);
+    FW_API Slider* GetSlider(const std::string name);
 
-    void CreateGraphicsManager();
+    
+    FW_API void SetBackgroundColor(Color color);
+    FW_API void SetForegroundColor(Color color);
+    FW_API Color GetBackgroundColor();
+    FW_API Color GetForegroundColor();
 
-    Panel* CreateSubPanel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API void SetMinValue(float value);
+    FW_API void SetMaxValue(float value);
+    FW_API float GetMinValue();
+    FW_API float GetMaxValue();
+
+    FW_API std::string GetDisplayText();
+    FW_API void SetDisplayText(std::string displayText);
+
+
+    FW_API void CreateGraphicsManager();
+
+    FW_API Panel* CreateSubPanel(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
-    Panel* CreateSubPanel(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+    FW_API Panel* CreateSubPanel(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
-    Button* CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API Button* CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
-    Button* CreateButton(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+    FW_API Button* CreateButton(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
-    Slider* CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API Slider* CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
 
     RectFloat RectIntAbsToRectFloatAbs();
@@ -95,12 +120,14 @@ public:
     virtual void Update();
     virtual void UpdateAll();
     
-    virtual void Draw(); //draw current panel only
-    virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
+    FW_API virtual void Draw(); //draw current panel only
+    FW_API virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
     virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
     virtual void Wheel(const int button, const int dir, const int x, const int y);
     virtual void ClickDown(Mouse mouse);
+
+    FW_API ~Panel();
 };
 
 class Button : public Panel
@@ -109,9 +136,9 @@ public:
     bool m_highlighted = false;
     
     using Panel::Panel;
-    Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
-    Button(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+    FW_API Button(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
 
     virtual void ClickDown(Mouse mouse);
@@ -126,15 +153,15 @@ public:
     Orientation m_orientation = HORIZONTAL;
     float m_value = 0.5f;
 
-    SliderBar();
-    SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API SliderBar();
+    FW_API SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Slider* parent = NULL);
-    SliderBar(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+    FW_API SliderBar(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Slider* parent = NULL);
 
-    void Draw();
-    void UpdateValue();
-    float GetValue();
+    FW_API void Draw();
+    FW_API void UpdateValue();
+    FW_API float GetValue();
     virtual void Drag(int x, int y, float dx, float dy, int button);
 };
 
@@ -145,31 +172,31 @@ public:
     SliderBar* m_sliderBar1 = NULL;
     SliderBar* m_sliderBar2 = NULL;
 
-    Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
-    Slider(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
+    FW_API Slider(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
 
-    void CreateSliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
+    FW_API void CreateSliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
 
-    void UpdateAll();
+    FW_API void UpdateAll();
     
-    void Draw();
-    void DrawAll();
-    void Hide();
-    void Show();
+    FW_API void Draw();
+    FW_API void DrawAll();
+    FW_API void Hide();
+    FW_API void Show();
 };
 
 class ButtonGroup
 {
 public:
     std::vector<Button*> m_buttons;
-    ButtonGroup();
-    ButtonGroup(std::vector<Button*> &buttons);
+    FW_API ButtonGroup();
+    FW_API ButtonGroup(std::vector<Button*> &buttons);
 
-    void ExclusiveEnable(Button* button);
-    Button* GetCurrentEnabledButton();
+    FW_API void ExclusiveEnable(Button* button);
+    FW_API Button* GetCurrentEnabledButton();
 };
 
-Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);
+FW_API Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);
