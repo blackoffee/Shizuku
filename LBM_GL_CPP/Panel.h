@@ -113,19 +113,19 @@ public:
     FW_API Slider* CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
 
-    RectFloat RectIntAbsToRectFloatAbs();
-    RectFloat RectFloatRelToRectFloatAbs();
-    RectFloat RectFloatAbsToRectFloatRel();
+    FW_API RectFloat RectIntAbsToRectFloatAbs();
+    FW_API RectFloat RectFloatRelToRectFloatAbs();
+    FW_API RectFloat RectFloatAbsToRectFloatRel();
 
-    virtual void Update();
-    virtual void UpdateAll();
+    FW_API virtual void Update();
+    FW_API virtual void UpdateAll();
     
     FW_API virtual void Draw(); //draw current panel only
     FW_API virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
-    virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
-    virtual void Wheel(const int button, const int dir, const int x, const int y);
-    virtual void ClickDown(Mouse mouse);
+    FW_API virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
+    FW_API virtual void Wheel(const int button, const int dir, const int x, const int y);
+    FW_API virtual void ClickDown(Mouse mouse);
 
     FW_API ~Panel();
 };
