@@ -9,6 +9,13 @@
 #include "Common.h"
 #include "kernel.h"
 
+
+#ifdef LBM_GL_CPP_EXPORTS  
+#define FW_API __declspec(dllexport)   
+#else  
+#define FW_API __declspec(dllimport)   
+#endif  
+
 class Panel;
 class Mouse;
 
@@ -36,57 +43,60 @@ private:
     GLdouble m_projectionMatrix[16];
     ContourVariable m_contourVar;
 
-    void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
-    void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
-    void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
-    int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse);
-    void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
-    void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
-    void AddObstruction(Mouse mouse);
-    void AddObstruction(const int simX, const int simY);
-    void RemoveObstruction(Mouse mouse);
-    void RemoveObstruction(const int simX, const int simY);
-    void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);
-    int FindUnusedObstructionId();
-    int FindClosestObstructionId(Mouse mouse);
-    int FindClosestObstructionId(const int simX, const int simY);
-    int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
-    bool IsInClosestObstruction(Mouse mouse);
- 
+
 public:
     float4* m_rayCastIntersect_d;
 
-    GraphicsManager(Panel* panel);
+    FW_API GraphicsManager(Panel* panel);
 
-    float3 GetRotationTransforms();
-    float3 GetTranslationTransforms();
+    FW_API float3 GetRotationTransforms();
+    FW_API float3 GetTranslationTransforms();
 
-    void SetCurrentObstSize(const float size);
+    FW_API void SetCurrentObstSize(const float size);
 
-    Obstruction::Shape GetCurrentObstShape();
-    void SetCurrentObstShape(const Obstruction::Shape shape);
+    FW_API Obstruction::Shape GetCurrentObstShape();
+    FW_API void SetCurrentObstShape(const Obstruction::Shape shape);
 
-    ViewMode GetViewMode();
-    void SetViewMode(const ViewMode viewMode);
+    FW_API ViewMode GetViewMode();
+    FW_API void SetViewMode(const ViewMode viewMode);
 
-    ContourVariable GetContourVar();
-    void SetContourVar(const ContourVariable contourVar);
+    FW_API ContourVariable GetContourVar();
+    FW_API void SetContourVar(const ContourVariable contourVar);
 
-    void SetObstructionsPointer(Obstruction* obst);
+    FW_API void SetObstructionsPointer(Obstruction* obst);
 
-    bool IsPaused();
-    void TogglePausedState();
+    FW_API bool IsPaused();
+    FW_API void TogglePausedState();
 
-    float GetScaleFactor();
-    void SetScaleFactor(const float scaleFactor);
+    FW_API float GetScaleFactor();
+    FW_API void SetScaleFactor(const float scaleFactor);
 
-    void ClickDown(Mouse mouse);
-    void Drag(const int xi, const int yi, const float dxf, const float dyf,
+    FW_API void ClickDown(Mouse mouse);
+
+
+    FW_API void Drag(const int xi, const int yi, const float dxf, const float dyf,
         const int button);
-    void Wheel(const int button, const int dir, const int x, const int y);
+    FW_API void Wheel(const int button, const int dir, const int x, const int y);
    
-    void UpdateViewTransformations();
+    FW_API void UpdateViewTransformations();
 
+    FW_API void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
+    FW_API void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
+    FW_API void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
+    FW_API int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, Mouse mouse);
+    FW_API void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse);
+    FW_API void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
+    FW_API void AddObstruction(Mouse mouse);
+    FW_API void AddObstruction(const int simX, const int simY);
+    FW_API void RemoveObstruction(Mouse mouse);
+    FW_API void RemoveObstruction(const int simX, const int simY);
+    FW_API void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);
+    FW_API int FindUnusedObstructionId();
+    FW_API int FindClosestObstructionId(Mouse mouse);
+    FW_API int FindClosestObstructionId(const int simX, const int simY);
+    FW_API int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
+    FW_API bool IsInClosestObstruction(Mouse mouse);
+ 
 };
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,

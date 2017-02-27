@@ -13,6 +13,7 @@
 #include <time.h>
 #include <algorithm>
 
+#include "main.h"
 #include "kernel.h"
 #include "Mouse.h"
 #include "Panel.h"
@@ -52,18 +53,6 @@ Obstruction* g_obst_d;
 
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
-
-// forward declarations
-void SetUpButtons();
-void WaterRenderingButtonCallBack();
-void SquareButtonCallBack();
-void ThreeDButtonCallBack();
-
-void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area,
-    int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
-void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth,
-    int windowWidth, int windowHeight, float scaleUp);
-
 void Init()
 {
     glEnable(GL_LIGHT0);
@@ -74,17 +63,17 @@ void Init()
 
 }
 
-void SetUpWindow()
+void SetUpWindow(Panel &rootPanel)
 {
     int windowWidth = 1200;
     int windowHeight = g_leftPanelHeight+100;
 
-    Window.SetSize_Absolute(RectInt(200, 100, windowWidth, windowHeight));
-    Window.m_draw = false;
-    Window.SetName("Main Window");
-    theMouse.SetBasePanel(&Window);
+    rootPanel.SetSize_Absolute(RectInt(200, 100, windowWidth, windowHeight));
+    rootPanel.m_draw = false;
+    rootPanel.SetName("Main Window");
+    theMouse.SetBasePanel(&rootPanel);
 
-    Panel* CDV = Window.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
+    Panel* CDV = rootPanel.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
         "CDV", Color(Color::DARK_GRAY));
     Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -0.9f, 2.f, 0.5f), Panel::DEF_REL,
         "Outputs", Color(Color::DARK_GRAY));
@@ -114,12 +103,12 @@ void SetUpWindow()
     viewModePanel->CreateButton(RectFloat(-0.50f, -1.f  +0.04f, 0.35f, 2.f),
         Panel::DEF_REL, "2D", Color(Color::GRAY));
 
-    Window.CreateSubPanel(RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight),
+    rootPanel.CreateSubPanel(RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight),
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
-    Window.GetPanel("Graphics")->m_draw = false;
-    Window.GetPanel("Graphics")->CreateGraphicsManager();
-    Window.GetPanel("Graphics")->m_graphicsManager->SetObstructionsPointer(&g_obstructions[0]);
-    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
+    rootPanel.GetPanel("Graphics")->m_draw = false;
+    rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetObstructionsPointer(&g_obstructions[0]);
+    float scaleUp = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
 
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
@@ -144,26 +133,26 @@ void SetUpWindow()
     inputsPanel->CreateButton(RectFloat(-0.9f, -1.f+0.09f , 1.8f, 0.3f ),
         Panel::DEF_REL, "Initialize", Color(Color::GRAY));
 
-    Window.GetPanel("Label_InletV")->SetDisplayText("Inlet Velocity");
-    Window.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.7f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetPanel("Label_InletV")->SetDisplayText("Inlet Velocity");
+    rootPanel.GetSlider("Slider_InletV")->CreateSliderBar(RectFloat(0.7f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_InletV", Color(Color::GRAY));
-    Window.GetSlider("Slider_InletV")->SetMaxValue(0.125f);
-    Window.GetSlider("Slider_InletV")->SetMinValue(0.f);
-    Window.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider("Slider_InletV")->SetMaxValue(0.125f);
+    rootPanel.GetSlider("Slider_InletV")->SetMinValue(0.f);
+    rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->UpdateValue();
 
-    Window.GetPanel("Label_Visc")->SetDisplayText("Viscosity");
-    Window.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-0.85f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetPanel("Label_Visc")->SetDisplayText("Viscosity");
+    rootPanel.GetSlider("Slider_Visc")->CreateSliderBar(RectFloat(-0.85f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Visc", Color(Color::GRAY));
-    Window.GetSlider("Slider_Visc")->SetMaxValue(1.8f);
-    Window.GetSlider("Slider_Visc")->SetMinValue(1.99f);
-    Window.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider("Slider_Visc")->SetMaxValue(1.8f);
+    rootPanel.GetSlider("Slider_Visc")->SetMinValue(1.99f);
+    rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
-    Window.GetPanel("Label_Resolution")->SetDisplayText("Resolution");
-    Window.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetPanel("Label_Resolution")->SetDisplayText("Resolution");
+    rootPanel.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
-    Window.GetSlider("Slider_Resolution")->SetMaxValue(1.f);
-    Window.GetSlider("Slider_Resolution")->SetMinValue(6.f);
-    Window.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider("Slider_Resolution")->SetMaxValue(1.f);
+    rootPanel.GetSlider("Slider_Resolution")->SetMinValue(6.f);
+    rootPanel.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 
     std::string VarName = "Velocity Magnitude";
@@ -174,20 +163,20 @@ void SetUpWindow()
     RectFloat contourSliderPosition{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f, 1.8f, sliderH};
     outputsPanel->CreateSubPanel(RectFloat{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f+sliderH, 0.5f, sliderH}
         , Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
-    Window.GetPanel("Label_Contour")->SetDisplayText("Contour Color");
+    rootPanel.GetPanel("Label_Contour")->SetDisplayText("Contour Color");
     float contourSliderBarWidth = 0.1f;
     float contourSliderBarHeight = 2.f;
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-1.f, -1, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-1.f, -1, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*2.f);
-    Window.GetSlider(sliderName)->SetMinValue(0.f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*2.f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(0.f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
 
     VarName = "X Velocity";
     labelName = "Label_"+VarName;
@@ -195,17 +184,17 @@ void SetUpWindow()
     sliderBarName1 = VarName+"Max";
     sliderBarName2 = VarName+"Min";
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.85f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.85f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.8f);
-    Window.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
-    Window.GetSlider(sliderName)->Hide();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.8f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
 
     VarName = "Y Velocity";
     labelName = "Label_"+VarName;
@@ -213,17 +202,17 @@ void SetUpWindow()
     sliderBarName1 = VarName+"Max";
     sliderBarName2 = VarName+"Min";
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.65f, -1.f, contourSliderBarWidth,
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.65f, -1.f, contourSliderBarWidth,
         contourSliderBarHeight), Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f-contourSliderBarWidth*0.5f, -1.f,
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.65f-contourSliderBarWidth*0.5f, -1.f,
         contourSliderBarWidth, contourSliderBarHeight), Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.f);
-    Window.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
-    Window.GetSlider(sliderName)->Hide();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*1.f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(-INITIAL_UMAX*1.f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
 
     VarName = "StrainRate";
     labelName = "Label_"+VarName;
@@ -231,17 +220,17 @@ void SetUpWindow()
     sliderBarName1 = VarName+"Max";
     sliderBarName2 = VarName+"Min";
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.9f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.9f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(0.35f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(0.35f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*0.1f);
-    Window.GetSlider(sliderName)->SetMinValue(0.f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
-    Window.GetSlider(sliderName)->Hide();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(INITIAL_UMAX*0.1f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(0.f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
 
     VarName = "Pressure";
     labelName = "Label_"+VarName;
@@ -249,17 +238,17 @@ void SetUpWindow()
     sliderBarName1 = VarName+"Max";
     sliderBarName2 = VarName+"Min";
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(1.05f);
-    Window.GetSlider(sliderName)->SetMinValue(0.95f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
-    Window.GetSlider(sliderName)->Hide();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(1.05f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(0.95f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
 
     VarName = "Water Rendering";
     labelName = "Label_"+VarName;
@@ -267,30 +256,30 @@ void SetUpWindow()
     sliderBarName1 = VarName+"Max";
     sliderBarName2 = VarName+"Min";
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
-    Window.GetSlider(sliderName)->SetMaxValue(1.05f);
-    Window.GetSlider(sliderName)->SetMinValue(0.95f);
-    Window.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
-    Window.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
-    Window.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
-    Window.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
-    Window.GetSlider(sliderName)->Hide();
+    rootPanel.GetSlider(sliderName)->SetMaxValue(1.05f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(0.95f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
 
 
     //Drawing panel
-    Panel* drawingPreview = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
+    Panel* drawingPreview = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
         Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
-    Panel* drawingButtons = Window.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
+    Panel* drawingButtons = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
         Panel::DEF_REL, "DrawingButtons", Color(Color::DARK_GRAY));
 
     drawingPanel->CreateSlider(RectFloat(-0.9f, 0.9f-sliderH*0.75f*2,1.8f, sliderH*0.75f), Panel::DEF_REL,
         "Slider_Size", Color(Color::LIGHT_GRAY));
     drawingPanel->CreateSubPanel(RectFloat(-0.9f,0.9f-sliderH*0.75f, 0.5f, sliderH*0.75f), Panel::DEF_REL,
         "Label_Size", Color(Color::DARK_GRAY));
-    Window.GetPanel("Label_Size")->SetDisplayText("Size");
+    rootPanel.GetPanel("Label_Size")->SetDisplayText("Size");
 
     float leftEnd = -0.9f;
     float width = 1.8f;
@@ -303,189 +292,189 @@ void SetUpWindow()
         "Hor. Line" , Color(Color::GRAY));
     drawingButtons->CreateButton(RectFloat(-0.9f,-0.2f-0.16f , 1.8f, 0.3f ), Panel::DEF_REL,
         "Vert. Line", Color(Color::GRAY));
-    Window.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
-    Window.GetSlider("Slider_Size")->SetMaxValue(15.f);
-    Window.GetSlider("Slider_Size")->SetMinValue(1.f);
-    Window.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
-    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstSize(currentObstSize);
+    rootPanel.GetSlider("Slider_Size")->SetMaxValue(15.f);
+    rootPanel.GetSlider("Slider_Size")->SetMinValue(1.f);
+    rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
+    float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstSize(currentObstSize);
 
 
-    SetUpButtons();
-    WaterRenderingButtonCallBack(); //default is water rendering
-    SquareButtonCallBack(); //default is square shape
-    ThreeDButtonCallBack();
+    SetUpButtons(rootPanel);
+    WaterRenderingButtonCallBack(rootPanel); //default is water rendering
+    SquareButtonCallBack(rootPanel); //default is square shape
+    ThreeDButtonCallBack(rootPanel);
 }
 
 /*----------------------------------------------------------------------------------------
  *	Button setup
  */
 
-Slider* GetCurrentContourSlider()
+Slider* GetCurrentContourSlider(Panel &rootPanel)
 {
-    if (Window.GetSlider("Velocity Magnitude")->m_draw == true)
-        return Window.GetSlider("Velocity Magnitude");
-    else if (Window.GetSlider("X Velocity")->m_draw == true)
-        return Window.GetSlider("X Velocity");
-    else if (Window.GetSlider("Y Velocity")->m_draw == true) 
-        return Window.GetSlider("Y Velocity");
-    else if (Window.GetSlider("StrainRate")->m_draw == true) 
-        return Window.GetSlider("StrainRate");
-    else if (Window.GetSlider("Pressure")->m_draw == true) 
-        return Window.GetSlider("Pressure");
-    else if (Window.GetSlider("Water Rendering")->m_draw == true) 
-        return Window.GetSlider("Water Rendering");
+    if (rootPanel.GetSlider("Velocity Magnitude")->m_draw == true)
+        return rootPanel.GetSlider("Velocity Magnitude");
+    else if (rootPanel.GetSlider("X Velocity")->m_draw == true)
+        return rootPanel.GetSlider("X Velocity");
+    else if (rootPanel.GetSlider("Y Velocity")->m_draw == true) 
+        return rootPanel.GetSlider("Y Velocity");
+    else if (rootPanel.GetSlider("StrainRate")->m_draw == true) 
+        return rootPanel.GetSlider("StrainRate");
+    else if (rootPanel.GetSlider("Pressure")->m_draw == true) 
+        return rootPanel.GetSlider("Pressure");
+    else if (rootPanel.GetSlider("Water Rendering")->m_draw == true) 
+        return rootPanel.GetSlider("Water Rendering");
 }
 
 
-void InitializeButtonCallBack()
+void InitializeButtonCallBack(Panel &rootPanel)
 {
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simDomain);
 }
 
-void VelMagButtonCallBack()
+void VelMagButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("Velocity Magnitude"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_MAG);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("Velocity Magnitude"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_MAG);
 }
 
-void VelXButtonCallBack()
+void VelXButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("X Velocity"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_U);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("X Velocity"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_U);
 }
 
-void VelYButtonCallBack()
+void VelYButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("Y Velocity"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_V);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("Y Velocity"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_V);
 }
 
-void StrainRateButtonCallBack()
+void StrainRateButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("StrainRate"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(STRAIN_RATE);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("StrainRate"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(STRAIN_RATE);
 }
 
-void PressureButtonCallBack()
+void PressureButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("Pressure"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(PRESSURE);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("Pressure"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(PRESSURE);
 }
 
-void WaterRenderingButtonCallBack()
+void WaterRenderingButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(Window.GetButton("Water Rendering"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetContourVar(WATER_RENDERING);
+    contourButtons.ExclusiveEnable(rootPanel.GetButton("Water Rendering"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(WATER_RENDERING);
 }
 
-void SquareButtonCallBack()
+void SquareButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(Window.GetButton("Square"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::SQUARE);
+    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Square"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::SQUARE);
 }
 
-void CircleButtonCallBack()
+void CircleButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(Window.GetButton("Circle"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::CIRCLE);
+    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Circle"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::CIRCLE);
 }
 
-void HorLineButtonCallBack()
+void HorLineButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(Window.GetButton("Hor. Line"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
+    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
 }
 
-void VertLineButtonCallBack()
+void VertLineButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(Window.GetButton("Vert. Line"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
+    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
 }
 
-void ThreeDButtonCallBack()
+void ThreeDButtonCallBack(Panel &rootPanel)
 {
-    viewButtons.ExclusiveEnable(Window.GetButton("3D"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetViewMode(THREE_DIMENSIONAL);
+    viewButtons.ExclusiveEnable(rootPanel.GetButton("3D"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(THREE_DIMENSIONAL);
 }
 
-void TwoDButtonCallBack()
+void TwoDButtonCallBack(Panel &rootPanel)
 {
-    viewButtons.ExclusiveEnable(Window.GetButton("2D"));
-    Window.GetPanel("Graphics")->m_graphicsManager->SetViewMode(TWO_DIMENSIONAL);
+    viewButtons.ExclusiveEnable(rootPanel.GetButton("2D"));
+    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(TWO_DIMENSIONAL);
 }
 
-void SetUpButtons()
+void SetUpButtons(Panel &rootPanel)
 {
-    Window.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
-    Window.GetButton("Velocity Magnitude")->m_callBack = VelMagButtonCallBack;
-    Window.GetButton("X Velocity")->m_callBack = VelXButtonCallBack;
-    Window.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
-    Window.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
-    Window.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
-    Window.GetButton("Water Rendering")->m_callBack = WaterRenderingButtonCallBack;
+    rootPanel.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
+    rootPanel.GetButton("Velocity Magnitude")->m_callBack = VelMagButtonCallBack;
+    rootPanel.GetButton("X Velocity")->m_callBack = VelXButtonCallBack;
+    rootPanel.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
+    rootPanel.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
+    rootPanel.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
+    rootPanel.GetButton("Water Rendering")->m_callBack = WaterRenderingButtonCallBack;
 
     std::vector<Button*> buttons = {
-        Window.GetButton("Velocity Magnitude"),
-        Window.GetButton("X Velocity"),
-        Window.GetButton("Y Velocity"),
-        Window.GetButton("StrainRate"),
-        Window.GetButton("Pressure"),
-        Window.GetButton("Water Rendering") };
+        rootPanel.GetButton("Velocity Magnitude"),
+        rootPanel.GetButton("X Velocity"),
+        rootPanel.GetButton("Y Velocity"),
+        rootPanel.GetButton("StrainRate"),
+        rootPanel.GetButton("Pressure"),
+        rootPanel.GetButton("Water Rendering") };
     contourButtons = ButtonGroup(buttons);
 
     //Shape buttons
-    Window.GetButton("Square")->m_callBack = SquareButtonCallBack;
-    Window.GetButton("Circle")->m_callBack = CircleButtonCallBack;
-    Window.GetButton("Hor. Line")->m_callBack = HorLineButtonCallBack;
-    Window.GetButton("Vert. Line")->m_callBack = VertLineButtonCallBack;
+    rootPanel.GetButton("Square")->m_callBack = SquareButtonCallBack;
+    rootPanel.GetButton("Circle")->m_callBack = CircleButtonCallBack;
+    rootPanel.GetButton("Hor. Line")->m_callBack = HorLineButtonCallBack;
+    rootPanel.GetButton("Vert. Line")->m_callBack = VertLineButtonCallBack;
 
     std::vector<Button*> buttons2 = {
-        Window.GetButton("Square"),
-        Window.GetButton("Circle"),
-        Window.GetButton("Hor. Line"),
-        Window.GetButton("Vert. Line") };
+        rootPanel.GetButton("Square"),
+        rootPanel.GetButton("Circle"),
+        rootPanel.GetButton("Hor. Line"),
+        rootPanel.GetButton("Vert. Line") };
     shapeButtons = ButtonGroup(buttons2);
 
-    Window.GetButton("3D")->m_callBack = ThreeDButtonCallBack;
-    Window.GetButton("2D")->m_callBack = TwoDButtonCallBack;
+    rootPanel.GetButton("3D")->m_callBack = ThreeDButtonCallBack;
+    rootPanel.GetButton("2D")->m_callBack = TwoDButtonCallBack;
     
     std::vector<Button*> buttons3 = {
-        Window.GetButton("2D"),
-        Window.GetButton("3D")
+        rootPanel.GetButton("2D"),
+        rootPanel.GetButton("3D")
     };
     viewButtons = ButtonGroup(buttons3);
 
 }
 
-void DrawShapePreview()
+void DrawShapePreview(Panel &rootPanel)
 {
-    Panel* previewPanel = Window.GetPanel("DrawingPreview");
+    Panel* previewPanel = rootPanel.GetPanel("DrawingPreview");
     float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
     float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
-    int windowWidth = Window.GetWidth();
-    int windowHeight = Window.GetHeight();
+    int windowWidth = rootPanel.GetWidth();
+    int windowHeight = rootPanel.GetHeight();
     float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
-        Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
+        rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
     int xDimVisible = g_simDomain.GetXDimVisible();
     int yDimVisible = g_simDomain.GetYDimVisible();
-    float currentSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    int graphicsWindowWidth = Window.GetPanel("Graphics")->GetRectIntAbs().m_w;
-    int graphicsWindowHeight = Window.GetPanel("Graphics")->GetRectIntAbs().m_h;
+    float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
+    int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
     int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (xDimVisible); //r1x in pixels
     int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (yDimVisible); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->m_graphicsManager;
     Obstruction::Shape currentShape = graphicsManager->GetCurrentObstShape();
     glColor3f(0.8f,0.8f,0.8f);
     switch (currentShape)
@@ -746,7 +735,7 @@ void SetUpCUDA()
 
 }
 
-void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
+void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, Panel &rootPanel)
 {
     // map OpenGL buffer object for writing from CUDA
     float4 *dptr;
@@ -754,13 +743,13 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
     size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    float omega = Window.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
-    float contMin = GetCurrentContourSlider()->m_sliderBar1->GetValue();
-    float contMax = GetCurrentContourSlider()->m_sliderBar2->GetValue();
-    bool paused = Window.GetPanel("Graphics")->m_graphicsManager->IsPaused();
-    ContourVariable contourVar = Window.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
-    ViewMode viewMode = Window.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
+    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    float contMin = GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
+    float contMax = GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
+    bool paused = rootPanel.GetPanel("Graphics")->m_graphicsManager->IsPaused();
+    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
+    ViewMode viewMode = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
     MarchSolution(g_fA_d, g_fB_d, g_im_d, g_obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
         g_simDomain, paused);
@@ -785,7 +774,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition)
 void Draw2D()
 {
     Window.DrawAll();
-    DrawShapePreview();
+    DrawShapePreview(Window);
 }
 
 
@@ -893,7 +882,7 @@ void Draw()
     float3 cameraPosition = { -xTranslation - translateTransforms.x, 
         -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
 
-    RunCuda(&g_cudaSolutionField, cameraPosition);
+    RunCuda(&g_cudaSolutionField, cameraPosition, Window);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -982,7 +971,7 @@ void Draw()
 
 int main(int argc,char **argv)
 {
-    SetUpWindow();
+    SetUpWindow(Window);
 
     glutInit(&argc,argv);
 

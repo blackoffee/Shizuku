@@ -443,6 +443,11 @@ void Panel::ClickDown(Mouse mouse)
     }
 }
 
+void Panel::ClickDown()
+{
+}
+
+
 
 Button::Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition, 
     const std::string name, const Color color, Panel* parent) 
@@ -462,7 +467,15 @@ void Button::ClickDown(Mouse mouse)
 {
     if (m_callBack != NULL)
     {
-        m_callBack();
+        m_callBack(*GetRootPanel());
+    }
+}
+
+void Button::ClickDown()
+{
+    if (m_callBack != NULL)
+    {
+        m_callBack(*GetRootPanel());
     }
 }
 

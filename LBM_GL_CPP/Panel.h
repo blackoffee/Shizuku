@@ -57,7 +57,7 @@ public:
     Panel* m_parent = NULL; //pointer to parent frame
     GraphicsManager* m_graphicsManager = NULL;
     bool m_draw = true;
-    void(*m_callBack)() = NULL;
+    void(*m_callBack)(Panel &rootPanel) = NULL;
     //these two members below should ideally be in Slider class
 
 
@@ -126,6 +126,7 @@ public:
     FW_API virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
     FW_API virtual void Wheel(const int button, const int dir, const int x, const int y);
     FW_API virtual void ClickDown(Mouse mouse);
+    FW_API virtual void ClickDown();
 
     FW_API ~Panel();
 };
@@ -142,6 +143,7 @@ public:
         const std::string name, const Color color, Panel* parent = NULL);
 
     virtual void ClickDown(Mouse mouse);
+    virtual void ClickDown();
 };
 
 class Slider;
