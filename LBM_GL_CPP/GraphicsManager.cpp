@@ -4,8 +4,175 @@
 
 
 extern Obstruction* g_obst_d;
+extern Obstruction g_obstructions[MAXOBSTS];
 extern Domain g_simDomain;
 extern cudaGraphicsResource *g_cudaSolutionField;
+
+
+CudaLbm::CudaLbm()
+{
+}
+
+CudaLbm::CudaLbm(int maxX, int maxY)
+{
+    m_maxX = maxX;
+    m_maxY = maxY;
+}
+
+float* CudaLbm::GetFA()
+{
+    return m_fA_d;
+}
+
+float* CudaLbm::GetFB()
+{
+    return m_fB_d;
+}
+
+int* CudaLbm::GetImage()
+{
+    return m_Im_d;
+}
+
+float* CudaLbm::GetFloorTemp()
+{
+    return m_FloorTemp_d;
+}
+
+Obstruction* CudaLbm::GetObst()
+{
+    return m_obst_d;
+}
+
+cudaGraphicsResource* CudaLbm::GetCudaSolutionGraphicsResource()
+{
+    return m_cudaSolutionGraphicsResource;
+}
+
+void CudaLbm::AllocateDeviceMemory()
+{
+    size_t memsize_lbm, memsize_int, memsize_float, memsize_inputs;
+
+    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
+    memsize_lbm = domainSize*sizeof(float)*9;
+    memsize_int = domainSize*sizeof(int);
+    memsize_float = domainSize*sizeof(float);
+    memsize_inputs = sizeof(g_obstructions);
+
+    float* fA_h = new float[domainSize * 9];
+    float* fB_h = new float[domainSize * 9];
+    float* floor_h = new float[domainSize];
+    int* im_h = new int[domainSize];
+
+    cudaMalloc((void **)&m_fA_d, memsize_lbm);
+    cudaMalloc((void **)&m_fB_d, memsize_lbm);
+    cudaMalloc((void **)&m_FloorTemp_d, memsize_float);
+    cudaMalloc((void **)&m_Im_d, memsize_int);
+    cudaMalloc((void **)&m_obst_d, memsize_inputs);
+}
+
+void CudaLbm::DeallocateDeviceMemory()
+{
+    cudaFree(m_fA_d);
+    cudaFree(m_fB_d);
+    cudaFree(m_Im_d);
+    cudaFree(m_FloorTemp_d);
+    cudaFree(m_obst_d);
+}
+
+void CudaLbm::InitializeDeviceMemory()
+{
+    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
+    size_t memsize_lbm, memsize_float, memsize_inputs;
+    memsize_lbm = domainSize*sizeof(float)*9;
+    memsize_float = domainSize*sizeof(float);
+
+    float* f_h = new float[domainSize*9];
+    for (int i = 0; i < domainSize * 9; i++)
+    {
+        f_h[i] = 0;
+    }
+    cudaMemcpy(m_fA_d, f_h, memsize_lbm, cudaMemcpyHostToDevice);
+    cudaMemcpy(m_fB_d, f_h, memsize_lbm, cudaMemcpyHostToDevice);
+    delete[] f_h;
+    float* floor_h = new float[domainSize];
+    for (int i = 0; i < domainSize; i++)
+    {
+        floor_h[i] = 0;
+    }
+    cudaMemcpy(m_FloorTemp_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
+    delete[] floor_h;
+
+    UpdateDeviceImage();
+
+    for (int i = 0; i < MAXOBSTS; i++)
+    {
+        g_obstructions[i].r1 = 0;
+        g_obstructions[i].x = 0;
+        g_obstructions[i].y = -1000;
+        g_obstructions[i].state = Obstruction::REMOVED;
+    }	
+    g_obstructions[0].r1 = 6.5;
+    g_obstructions[0].x = 30;// g_xDim*0.2f;
+    g_obstructions[0].y = 42;// g_yDim*0.3f;
+    g_obstructions[0].u = 0;// g_yDim*0.3f;
+    g_obstructions[0].v = 0;// g_yDim*0.3f;
+    g_obstructions[0].shape = Obstruction::SQUARE;
+    g_obstructions[0].state = Obstruction::NEW;
+
+    g_obstructions[1].r1 = 4.5;
+    g_obstructions[1].x = 30;// g_xDim*0.2f;
+    g_obstructions[1].y = 100;// g_yDim*0.3f;
+    g_obstructions[1].u = 0;// g_yDim*0.3f;
+    g_obstructions[1].v = 0;// g_yDim*0.3f;
+    g_obstructions[1].shape = Obstruction::VERTICAL_LINE;
+    g_obstructions[1].state = Obstruction::NEW;
+
+    memsize_inputs = sizeof(g_obstructions);
+    cudaMemcpy(m_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
+}
+
+void CudaLbm::UpdateDeviceImage()
+{
+    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
+    int* im_h = new int[domainSize];
+    for (int i = 0; i < domainSize; i++)
+    {
+        int x = i%MAX_XDIM;
+        int y = i/MAX_XDIM;
+        im_h[i] = ImageFcn(x, y);
+    }
+    size_t memsize_int = domainSize*sizeof(int);
+    cudaMemcpy(m_Im_d, im_h, memsize_int, cudaMemcpyHostToDevice);
+    delete[] im_h;
+}
+
+int CudaLbm::ImageFcn(const int x, const int y){
+    int xDim = g_simDomain.GetXDim();
+    int yDim = g_simDomain.GetYDim();
+    if (x < 0.1f)
+        return 3;//west
+    else if ((xDim - x) < 1.1f)
+        return 2;//east
+    else if ((yDim - y) < 1.1f)
+        return 11;//11;//xsymmetry top
+    else if (y < 0.1f)
+        return 12;//12;//xsymmetry bottom
+    return 0;
+}
+
+void CudaLbm::SetUpGLInterOp()
+{
+    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
+    GenerateIndexListForSurfaceAndFloor(m_elementArrayIndexBuffer);
+    unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+    unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+    CreateVBO(&m_vboSolutionField, &m_cudaSolutionGraphicsResource, solutionMemorySize+floorSize,
+        cudaGraphicsMapFlagsWriteDiscard);
+}
+
+
+
 
 GraphicsManager::GraphicsManager(Panel* panel)
 {

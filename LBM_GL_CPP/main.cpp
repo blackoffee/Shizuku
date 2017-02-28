@@ -44,6 +44,7 @@ ButtonGroup viewButtons;
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 cudaGraphicsResource *g_cudaSolutionField;
+CudaLbm g_cudaLbm;
 
 float* g_fA_d;
 float* g_fB_d;
@@ -651,75 +652,23 @@ void UpdateDeviceImage()
 
 void SetUpCUDA()
 {
-    size_t memsize, memsize_int, memsize_float, memsize_inputs;
+    g_cudaLbm.AllocateDeviceMemory();
+    g_cudaLbm.InitializeDeviceMemory();
 
-    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
-    memsize = domainSize*sizeof(float)*9;
-    memsize_int = domainSize*sizeof(int);
-    memsize_float = domainSize*sizeof(float);
-    memsize_inputs = sizeof(g_obstructions);
-
-    float* fA_h = new float[domainSize * 9];
-    float* fB_h = new float[domainSize * 9];
-    float* floor_h = new float[domainSize];
-    int* im_h = new int[domainSize];
     float4 rayCastIntersect{ 0, 0, 0, 1e6 };
 
-    cudaMalloc((void **)&g_fA_d, memsize);
-    cudaMalloc((void **)&g_fB_d, memsize);
-    cudaMalloc((void **)&g_floor_d, memsize_float);
-    cudaMalloc((void **)&g_im_d, memsize_int);
-    cudaMalloc((void **)&g_obst_d, memsize_inputs);
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     cudaMalloc((void **)&graphicsManager->m_rayCastIntersect_d, sizeof(float4));
 
-    for (int i = 0; i < domainSize*9; i++)
-    {
-        fA_h[i] = 0;
-        fB_h[i] = 0;
-    }
-    for (int i = 0; i < MAXOBSTS; i++)
-    {
-        g_obstructions[i].r1 = 0;
-        g_obstructions[i].x = 0;
-        g_obstructions[i].y = -1000;
-        g_obstructions[i].state = Obstruction::REMOVED;
-    }	
-    g_obstructions[0].r1 = 6.5;
-    g_obstructions[0].x = 30;// g_xDim*0.2f;
-    g_obstructions[0].y = 42;// g_yDim*0.3f;
-    g_obstructions[0].u = 0;// g_yDim*0.3f;
-    g_obstructions[0].v = 0;// g_yDim*0.3f;
-    g_obstructions[0].shape = Obstruction::SQUARE;
-    g_obstructions[0].state = Obstruction::NEW;
-
-    g_obstructions[1].r1 = 4.5;
-    g_obstructions[1].x = 30;// g_xDim*0.2f;
-    g_obstructions[1].y = 100;// g_yDim*0.3f;
-    g_obstructions[1].u = 0;// g_yDim*0.3f;
-    g_obstructions[1].v = 0;// g_yDim*0.3f;
-    g_obstructions[1].shape = Obstruction::VERTICAL_LINE;
-    g_obstructions[1].state = Obstruction::NEW;
-
-    for (int i = 0; i < domainSize; i++)
-    {
-        floor_h[i] = 0;
-    }
-
-    UpdateDeviceImage();
-    
-    cudaMemcpy(g_fA_d, fA_h, memsize, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_fB_d, fB_h, memsize, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_floor_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
     cudaMemcpy(graphicsManager->m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
 
-    delete[] fA_h;
-    delete[] fB_h;
-    delete[] floor_h;
-
-    //writeInputs();
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+
+    g_fA_d = g_cudaLbm.GetFA();
+    g_fB_d = g_cudaLbm.GetFB();
+    g_im_d = g_cudaLbm.GetImage();
+    g_floor_d = g_cudaLbm.GetFloorTemp();
+    g_obst_d = g_cudaLbm.GetObst();
 
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
@@ -751,18 +700,24 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     ContourVariable contourVar = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
     ViewMode viewMode = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
-    MarchSolution(g_fA_d, g_fB_d, g_im_d, g_obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
+    float* fA_d = g_cudaLbm.GetFA();
+    float* fB_d = g_cudaLbm.GetFB();
+    float* floorTemp_d = g_cudaLbm.GetFloorTemp();
+    int* Im_d = g_cudaLbm.GetImage();
+    Obstruction* obst_d = g_cudaLbm.GetObst();
+
+    MarchSolution(fA_d, fB_d, Im_d, obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
         g_simDomain, paused);
-    UpdateSolutionVbo(dptr, g_fB_d, g_im_d, contourVar, contMin, contMax, viewMode,
+    UpdateSolutionVbo(dptr, fB_d, Im_d, contourVar, contMin, contMax, viewMode,
         u, g_simDomain);
  
-    SetObstructionVelocitiesToZero(g_obstructions, g_obst_d);
+    SetObstructionVelocitiesToZero(g_obstructions, obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, g_obst_d, cameraPosition, g_simDomain);
+        LightSurface(dptr, obst_d, cameraPosition, g_simDomain);
     }
-    LightFloor(dptr, g_floor_d, g_obst_d,cameraPosition, g_simDomain);
+    LightFloor(dptr, floorTemp_d, obst_d,cameraPosition, g_simDomain);
     CleanUpDeviceVBO(dptr, g_simDomain);
 
     // unmap buffer object

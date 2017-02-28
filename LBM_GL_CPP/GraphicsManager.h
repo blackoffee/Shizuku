@@ -1,11 +1,16 @@
 #pragma once
-
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "cuda_runtime.h"
+#include "cuda_gl_interop.h"
+#include "helper_cuda.h"
+#include "helper_cuda_gl.h"
+#include "device_launch_parameters.h"
+
 #include "Common.h"
 #include "kernel.h"
 
@@ -18,6 +23,53 @@
 
 class Panel;
 class Mouse;
+
+void CreateVBO(GLuint *vbo, cudaGraphicsResource **vbo_res, unsigned int size,
+    unsigned int vbo_res_flags);
+void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res);
+void GenerateIndexListForSurfaceAndFloor(GLuint &arrayIndexBuffer);
+void CleanUpIndexList(GLuint &arrayIndexBuffer);
+
+class CudaLbm
+{
+private:
+    cudaGraphicsResource* m_cudaSolutionGraphicsResource;
+    GLuint m_vboSolutionField;
+    GLuint m_elementArrayIndexBuffer;
+    int m_maxX;
+    int m_maxY;
+    float* m_fA_d;
+    float* m_fB_d;
+    int* m_Im_d;
+    float* m_FloorTemp_d;
+    Obstruction* m_obst_d;
+public:
+    CudaLbm();
+    CudaLbm(int maxX, int maxY);
+    float* GetFA();
+    float* GetFB();
+    int* GetImage();
+    float* GetFloorTemp();
+    Obstruction* GetObst();
+    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    void AllocateDeviceMemory();
+    void InitializeDeviceMemory();
+    void DeallocateDeviceMemory();
+    void UpdateDeviceImage();
+    int ImageFcn(const int x, const int y);
+
+    void SetUpGLInterOp();
+    void CleanUpGLInterOp();
+    
+};
+
+class Graphics
+{
+public:
+
+};
+
+
 
 class GraphicsManager
 {
