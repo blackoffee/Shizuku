@@ -94,6 +94,7 @@ private:
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
     ContourVariable m_contourVar;
+    CudaLbm m_cudaLbm;
 
 
 public:
@@ -122,6 +123,8 @@ public:
 
     FW_API float GetScaleFactor();
     FW_API void SetScaleFactor(const float scaleFactor);
+
+    FW_API CudaLbm* GetCudaLbm();
 
     FW_API void ClickDown(Mouse mouse);
 

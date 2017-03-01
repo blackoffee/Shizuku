@@ -44,13 +44,6 @@ ButtonGroup viewButtons;
 GLuint g_vboSolutionField;
 GLuint g_elementArrayIndexBuffer;
 cudaGraphicsResource *g_cudaSolutionField;
-CudaLbm g_cudaLbm;
-
-float* g_fA_d;
-float* g_fB_d;
-float* g_floor_d;
-int* g_im_d;
-Obstruction* g_obst_d;
 
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
@@ -336,8 +329,15 @@ void InitializeButtonCallBack(Panel &rootPanel)
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+
+    float* fA_d = cudaLbm->GetFA();
+    float* fB_d = cudaLbm->GetFB();
+    int* im_d = cudaLbm->GetImage();
+
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simDomain);
+    InitializeDomain(dptr, fA_d, im_d, u, g_simDomain);
 }
 
 void VelMagButtonCallBack(Panel &rootPanel)
@@ -635,50 +635,35 @@ int ImageFcn_h(int x, int y, Obstruction* obstructions){
     return 0;
 }
 
-void UpdateDeviceImage()
-{
-    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
-    int* im_h = new int[domainSize];
-    for (int i = 0; i < domainSize; i++)
-    {
-        int x = i%MAX_XDIM;
-        int y = i/MAX_XDIM;
-        im_h[i] = ImageFcn_h(x, y, g_obstructions);
-    }
-    size_t memsize_int = domainSize*sizeof(int);
-    cudaMemcpy(g_im_d, im_h, memsize_int, cudaMemcpyHostToDevice);
-    delete[] im_h;
-}
-
 void SetUpCUDA()
 {
-    g_cudaLbm.AllocateDeviceMemory();
-    g_cudaLbm.InitializeDeviceMemory();
-
     float4 rayCastIntersect{ 0, 0, 0, 1e6 };
 
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     cudaMalloc((void **)&graphicsManager->m_rayCastIntersect_d, sizeof(float4));
-
     cudaMemcpy(graphicsManager->m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    cudaLbm->AllocateDeviceMemory();
+    cudaLbm->InitializeDeviceMemory();
 
     float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
 
-    g_fA_d = g_cudaLbm.GetFA();
-    g_fB_d = g_cudaLbm.GetFB();
-    g_im_d = g_cudaLbm.GetImage();
-    g_floor_d = g_cudaLbm.GetFloorTemp();
-    g_obst_d = g_cudaLbm.GetObst();
+    float* fA_d = cudaLbm->GetFA();
+    float* fB_d = cudaLbm->GetFB();
+    int* im_d = cudaLbm->GetImage();
+    float* floor_d = cudaLbm->GetFloorTemp();
+    Obstruction* obst_d = cudaLbm->GetObst();
 
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
-    InitializeDomain(dptr, g_fA_d, g_im_d, u, g_simDomain);
-    InitializeDomain(dptr, g_fB_d, g_im_d, u, g_simDomain);
+    InitializeDomain(dptr, fA_d, im_d, u, g_simDomain);
+    InitializeDomain(dptr, fB_d, im_d, u, g_simDomain);
 
-    InitializeFloor(dptr, g_floor_d, g_simDomain);
+    InitializeFloor(dptr, floor_d, g_simDomain);
 
     cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
 
@@ -700,11 +685,13 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     ContourVariable contourVar = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
     ViewMode viewMode = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
 
-    float* fA_d = g_cudaLbm.GetFA();
-    float* fB_d = g_cudaLbm.GetFB();
-    float* floorTemp_d = g_cudaLbm.GetFloorTemp();
-    int* Im_d = g_cudaLbm.GetImage();
-    Obstruction* obst_d = g_cudaLbm.GetObst();
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    float* fA_d = cudaLbm->GetFA();
+    float* fB_d = cudaLbm->GetFB();
+    float* floorTemp_d = cudaLbm->GetFloorTemp();
+    int* Im_d = cudaLbm->GetImage();
+    Obstruction* obst_d = cudaLbm->GetObst();
 
     MarchSolution(fA_d, fB_d, Im_d, obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
         g_simDomain, paused);
@@ -808,7 +795,10 @@ void Resize(int windowWidth, int windowHeight)
 
     glViewport(0, 0, windowWidth, windowHeight);
 
-    UpdateDeviceImage();
+    //UpdateDeviceImage();
+
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
 }
 
