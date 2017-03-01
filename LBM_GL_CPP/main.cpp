@@ -653,7 +653,7 @@ void SetUpCUDA()
     float* fB_d = cudaLbm->GetFB();
     int* im_d = cudaLbm->GetImage();
     float* floor_d = cudaLbm->GetFloorTemp();
-    Obstruction* obst_d = cudaLbm->GetObst();
+    Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
     float4 *dptr;
     cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
@@ -691,14 +691,15 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     float* fB_d = cudaLbm->GetFB();
     float* floorTemp_d = cudaLbm->GetFloorTemp();
     int* Im_d = cudaLbm->GetImage();
-    Obstruction* obst_d = cudaLbm->GetObst();
+    Obstruction* obst_d = cudaLbm->GetDeviceObst();
+    Obstruction* obst_h = cudaLbm->GetHostObst();
 
     MarchSolution(fA_d, fB_d, Im_d, obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
         g_simDomain, paused);
     UpdateSolutionVbo(dptr, fB_d, Im_d, contourVar, contMin, contMax, viewMode,
         u, g_simDomain);
  
-    SetObstructionVelocitiesToZero(g_obstructions, obst_d);
+    SetObstructionVelocitiesToZero(obst_h, obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {

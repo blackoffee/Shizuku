@@ -38,9 +38,14 @@ float* CudaLbm::GetFloorTemp()
     return m_FloorTemp_d;
 }
 
-Obstruction* CudaLbm::GetObst()
+Obstruction* CudaLbm::GetDeviceObst()
 {
     return m_obst_d;
+}
+
+Obstruction* CudaLbm::GetHostObst()
+{
+    return &m_obst_h[MAXOBSTS];
 }
 
 cudaGraphicsResource* CudaLbm::GetCudaSolutionGraphicsResource()
@@ -56,7 +61,7 @@ void CudaLbm::AllocateDeviceMemory()
     memsize_lbm = domainSize*sizeof(float)*9;
     memsize_int = domainSize*sizeof(int);
     memsize_float = domainSize*sizeof(float);
-    memsize_inputs = sizeof(g_obstructions);
+    memsize_inputs = sizeof(m_obst_h);
 
     float* fA_h = new float[domainSize * 9];
     float* fB_h = new float[domainSize * 9];
@@ -106,29 +111,29 @@ void CudaLbm::InitializeDeviceMemory()
 
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        g_obstructions[i].r1 = 0;
-        g_obstructions[i].x = 0;
-        g_obstructions[i].y = -1000;
-        g_obstructions[i].state = Obstruction::REMOVED;
+        m_obst_h[i].r1 = 0;
+        m_obst_h[i].x = 0;
+        m_obst_h[i].y = -1000;
+        m_obst_h[i].state = Obstruction::REMOVED;
     }	
-    g_obstructions[0].r1 = 6.5;
-    g_obstructions[0].x = 30;// g_xDim*0.2f;
-    g_obstructions[0].y = 42;// g_yDim*0.3f;
-    g_obstructions[0].u = 0;// g_yDim*0.3f;
-    g_obstructions[0].v = 0;// g_yDim*0.3f;
-    g_obstructions[0].shape = Obstruction::SQUARE;
-    g_obstructions[0].state = Obstruction::NEW;
+    m_obst_h[0].r1 = 6.5;
+    m_obst_h[0].x = 30;// g_xDim*0.2f;
+    m_obst_h[0].y = 42;// g_yDim*0.3f;
+    m_obst_h[0].u = 0;// g_yDim*0.3f;
+    m_obst_h[0].v = 0;// g_yDim*0.3f;
+    m_obst_h[0].shape = Obstruction::SQUARE;
+    m_obst_h[0].state = Obstruction::NEW;
 
-    g_obstructions[1].r1 = 4.5;
-    g_obstructions[1].x = 30;// g_xDim*0.2f;
-    g_obstructions[1].y = 100;// g_yDim*0.3f;
-    g_obstructions[1].u = 0;// g_yDim*0.3f;
-    g_obstructions[1].v = 0;// g_yDim*0.3f;
-    g_obstructions[1].shape = Obstruction::VERTICAL_LINE;
-    g_obstructions[1].state = Obstruction::NEW;
+    m_obst_h[1].r1 = 4.5;
+    m_obst_h[1].x = 30;// g_xDim*0.2f;
+    m_obst_h[1].y = 100;// g_yDim*0.3f;
+    m_obst_h[1].u = 0;// g_yDim*0.3f;
+    m_obst_h[1].v = 0;// g_yDim*0.3f;
+    m_obst_h[1].shape = Obstruction::VERTICAL_LINE;
+    m_obst_h[1].state = Obstruction::NEW;
 
-    memsize_inputs = sizeof(g_obstructions);
-    cudaMemcpy(m_obst_d, g_obstructions, memsize_inputs, cudaMemcpyHostToDevice);
+    memsize_inputs = sizeof(m_obst_h);
+    cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice);
 }
 
 void CudaLbm::UpdateDeviceImage()
@@ -226,7 +231,7 @@ Obstruction::Shape GraphicsManager::GetCurrentObstShape()
 
 void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
 {
-    m_obstructions = obst;
+    m_obstructions = m_cudaLbm.GetHostObst();
 }
 
 bool GraphicsManager::IsPaused()
@@ -322,7 +327,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
 
     float3 selectedCoordF;
-    Obstruction* obst_d = GetCudaLbm()->GetObst();
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
         rayOrigin, rayDir, obst_d, g_simDomain);
     if (rayCastResult == 0)
@@ -475,7 +480,7 @@ void GraphicsManager::AddObstruction(Mouse mouse)
     Obstruction obst = { m_currentObstShape, xi, yi, m_currentObstSize, 0, 0, 0, Obstruction::NEW };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
-    Obstruction* obst_d = GetCudaLbm()->GetObst();
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     UpdateDeviceObstructions(obst_d, obstId, obst);
 }
 
@@ -484,7 +489,7 @@ void GraphicsManager::AddObstruction(const int simX, const int simY)
     Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, Obstruction::NEW  };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
-    Obstruction* obst_d = GetCudaLbm()->GetObst();
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     UpdateDeviceObstructions(obst_d, obstId, obst);
 }
 
@@ -494,7 +499,7 @@ void GraphicsManager::RemoveObstruction(Mouse mouse)
     if (obstId < 0) return;
     //Obstruction obst = m_obstructions[obstId];// { g_currentShape, -100, -100, 0, 0, Obstruction::NEW };
     m_obstructions[obstId].state = Obstruction::REMOVED;
-    Obstruction* obst_d = GetCudaLbm()->GetObst();
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId]);
 }
 
@@ -504,7 +509,7 @@ void GraphicsManager::RemoveObstruction(const int simX, const int simY)
     if (obstId >= 0)
     {
         m_obstructions[obstId].state = Obstruction::REMOVED;
-        Obstruction* obst_d = GetCudaLbm()->GetObst();
+        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId]);
     }
 }
@@ -533,7 +538,7 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
             obst.u = u;
             obst.v = v;
             m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetObst();
+            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
             UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
         }
         else
@@ -555,7 +560,7 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
             obst.v = v;
             obst.state = Obstruction::ACTIVE;
             m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetObst();
+            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
             UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
         }
     }

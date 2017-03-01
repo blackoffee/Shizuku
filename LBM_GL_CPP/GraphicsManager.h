@@ -43,6 +43,7 @@ private:
     int* m_Im_d;
     float* m_FloorTemp_d;
     Obstruction* m_obst_d;
+    Obstruction m_obst_h[MAXOBSTS];
 public:
     CudaLbm();
     CudaLbm(int maxX, int maxY);
@@ -50,7 +51,8 @@ public:
     float* GetFB();
     int* GetImage();
     float* GetFloorTemp();
-    Obstruction* GetObst();
+    Obstruction* GetDeviceObst();
+    Obstruction* GetHostObst();
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
