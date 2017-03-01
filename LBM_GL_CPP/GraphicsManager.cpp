@@ -3,7 +3,6 @@
 #include "kernel.h"
 
 
-extern Obstruction g_obstructions[MAXOBSTS];
 extern Domain g_simDomain;
 extern cudaGraphicsResource *g_cudaSolutionField;
 
@@ -181,6 +180,7 @@ void CudaLbm::SetUpGLInterOp()
 GraphicsManager::GraphicsManager(Panel* panel)
 {
     m_parent = panel;
+    m_obstructions = m_cudaLbm.GetHostObst();
 }
 
 float3 GraphicsManager::GetRotationTransforms()

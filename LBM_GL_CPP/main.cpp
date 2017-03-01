@@ -31,8 +31,6 @@ FpsTracker g_fpsTracker;
 //simulation inputs
 Domain g_simDomain;
 
-Obstruction g_obstructions[MAXOBSTS];
-
 Panel Window;
 Mouse theMouse;
 
@@ -101,7 +99,6 @@ void SetUpWindow(Panel &rootPanel)
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
     rootPanel.GetPanel("Graphics")->m_draw = false;
     rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetObstructionsPointer(&g_obstructions[0]);
     float scaleUp = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
 
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
