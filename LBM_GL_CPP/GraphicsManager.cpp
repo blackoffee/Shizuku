@@ -45,7 +45,7 @@ Obstruction* CudaLbm::GetDeviceObst()
 
 Obstruction* CudaLbm::GetHostObst()
 {
-    return &m_obst_h[MAXOBSTS];
+    return &m_obst_h[0];
 }
 
 cudaGraphicsResource* CudaLbm::GetCudaSolutionGraphicsResource()
