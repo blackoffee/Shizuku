@@ -24,12 +24,6 @@
 class Panel;
 class Mouse;
 
-void CreateVBO(GLuint *vbo, cudaGraphicsResource **vbo_res, unsigned int size,
-    unsigned int vbo_res_flags);
-void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res);
-void GenerateIndexListForSurfaceAndFloor(GLuint &arrayIndexBuffer);
-void CleanUpIndexList(GLuint &arrayIndexBuffer);
-
 class CudaLbm
 {
 private:
