@@ -4,7 +4,6 @@
 
 
 extern Domain g_simDomain;
-extern cudaGraphicsResource *g_cudaSolutionField;
 
 
 CudaLbm::CudaLbm()
@@ -47,10 +46,6 @@ Obstruction* CudaLbm::GetHostObst()
     return &m_obst_h[0];
 }
 
-cudaGraphicsResource* CudaLbm::GetCudaSolutionGraphicsResource()
-{
-    return m_cudaSolutionGraphicsResource;
-}
 
 void CudaLbm::AllocateDeviceMemory()
 {
@@ -164,23 +159,110 @@ int CudaLbm::ImageFcn(const int x, const int y){
     return 0;
 }
 
-void CudaLbm::SetUpGLInterOp()
+Graphics::Graphics()
 {
-    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-    GenerateIndexListForSurfaceAndFloor(m_elementArrayIndexBuffer);
-    unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    CreateVBO(&m_vboSolutionField, &m_cudaSolutionGraphicsResource, solutionMemorySize+floorSize,
-        cudaGraphicsMapFlagsWriteDiscard);
+
 }
 
+void Graphics::CreateCudaLbm()
+{
+    m_cudaLbm = new CudaLbm;
+}
+
+CudaLbm* Graphics::GetCudaLbm()
+{
+    return m_cudaLbm;
+}
+
+cudaGraphicsResource* Graphics::GetCudaSolutionGraphicsResource()
+{
+    return m_cudaGraphicsResource;
+}
+
+void Graphics::SetUpGLInterOp(unsigned int size)
+{
+    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
+    CreateVbo(size, cudaGraphicsMapFlagsWriteDiscard);
+    CreateElementArrayBuffer();
+}
+
+void Graphics::CleanUpGLInterOp()
+{
+    DeleteVbo();
+    DeleteElementArrayBuffer();
+}
+
+void Graphics::CreateVbo(unsigned int size, unsigned int vboResFlags)
+{
+    glGenBuffers(1, &m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, m_vbo, vboResFlags);
+}
+
+void Graphics::DeleteVbo()
+{
+    cudaGraphicsUnregisterResource(m_cudaGraphicsResource);
+    glBindBuffer(1, m_vbo);
+    glDeleteBuffers(1, &m_vbo);
+    m_vbo = 0;
+}
+
+void Graphics::CreateElementArrayBuffer()
+{
+    int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    int numberOfNodes = MAX_XDIM*MAX_YDIM;
+    GLuint* elementIndices = new GLuint[numberOfElements * 4 * 2];
+    for (int j = 0; j < MAX_YDIM-1; j++){
+        for (int i = 0; i < MAX_XDIM-1; i++){
+            //going clockwise, since y orientation will be flipped when rendered
+            elementIndices[j*(MAX_XDIM-1)*4+i*4+0] = (i)+(j)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*4+i*4+1] = (i+1)+(j)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*4+i*4+2] = (i+1)+(j+1)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*4+i*4+3] = (i)+(j+1)*MAX_XDIM;
+        }
+    }
+    for (int j = 0; j < MAX_YDIM-1; j++){
+        for (int i = 0; i < MAX_XDIM-1; i++){
+            //going clockwise, since y orientation will be flipped when rendered
+            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+0] = numberOfNodes+(i)+(j)*MAX_XDIM;
+            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+1] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
+            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+2] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+3] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
+        }
+    }
+    glGenBuffers(1, &m_elementArrayBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*4*2, elementIndices, GL_DYNAMIC_DRAW);
+    free(elementIndices);
+}
+
+void Graphics::DeleteElementArrayBuffer(){
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDeleteBuffers(1, &m_elementArrayBuffer);
+}
+
+GLuint Graphics::GetElementArrayBuffer()
+{
+    return m_elementArrayBuffer;
+}
+
+GLuint Graphics::GetVbo()
+{
+    return m_vbo;
+}
 
 
 
 GraphicsManager::GraphicsManager(Panel* panel)
 {
     m_parent = panel;
-    m_obstructions = m_cudaLbm.GetHostObst();
+    m_graphics = new Graphics;
+    m_graphics->CreateCudaLbm();
+    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
 }
 
 float3 GraphicsManager::GetRotationTransforms()
@@ -231,7 +313,7 @@ Obstruction::Shape GraphicsManager::GetCurrentObstShape()
 
 void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
 {
-    m_obstructions = m_cudaLbm.GetHostObst();
+    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
 }
 
 bool GraphicsManager::IsPaused()
@@ -256,8 +338,14 @@ void GraphicsManager::SetScaleFactor(const float scaleFactor)
 
 CudaLbm* GraphicsManager::GetCudaLbm()
 {
-    return &m_cudaLbm;
+    return m_graphics->GetCudaLbm();
 }
+
+Graphics* GraphicsManager::GetGraphics()
+{
+    return m_graphics;
+}
+
 
 void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse)
 {
@@ -321,10 +409,11 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     int returnVal = 0;
 
     // map OpenGL buffer object for writing from CUDA
+    cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
     float4 *dptr;
-    cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
     float3 selectedCoordF;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
@@ -342,7 +431,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
         returnVal = 1;
     }
 
-    cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
     return returnVal;
 }

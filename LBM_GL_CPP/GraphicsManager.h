@@ -33,9 +33,6 @@ void CleanUpIndexList(GLuint &arrayIndexBuffer);
 class CudaLbm
 {
 private:
-    cudaGraphicsResource* m_cudaSolutionGraphicsResource;
-    GLuint m_vboSolutionField;
-    GLuint m_elementArrayIndexBuffer;
     int m_maxX;
     int m_maxY;
     float* m_fA_d;
@@ -53,22 +50,35 @@ public:
     float* GetFloorTemp();
     Obstruction* GetDeviceObst();
     Obstruction* GetHostObst();
-    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
     void DeallocateDeviceMemory();
     void UpdateDeviceImage();
     int ImageFcn(const int x, const int y);
 
-    void SetUpGLInterOp();
-    void CleanUpGLInterOp();
-    
+   
 };
 
 class Graphics
 {
+    CudaLbm* m_cudaLbm;
+    cudaGraphicsResource* m_cudaGraphicsResource;
+    GLuint m_vbo;
+    GLuint m_elementArrayBuffer;
 public:
+    Graphics();
 
+    void CreateCudaLbm();
+    CudaLbm* GetCudaLbm();
+    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    GLuint GetVbo();
+    GLuint GetElementArrayBuffer();
+    void CreateVbo(unsigned int size, unsigned int vboResFlags);
+    void DeleteVbo();
+    void CreateElementArrayBuffer();
+    void DeleteElementArrayBuffer();
+    void SetUpGLInterOp(unsigned int size);
+    void CleanUpGLInterOp();
 };
 
 
@@ -96,8 +106,7 @@ private:
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
     ContourVariable m_contourVar;
-    CudaLbm m_cudaLbm;
-
+    Graphics* m_graphics;
 
 public:
     float4* m_rayCastIntersect_d;
@@ -127,6 +136,7 @@ public:
     FW_API void SetScaleFactor(const float scaleFactor);
 
     FW_API CudaLbm* GetCudaLbm();
+    FW_API Graphics* GetGraphics();
 
     FW_API void ClickDown(Mouse mouse);
 

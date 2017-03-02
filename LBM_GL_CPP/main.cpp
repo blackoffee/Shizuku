@@ -38,11 +38,6 @@ ButtonGroup contourButtons;
 ButtonGroup shapeButtons;
 ButtonGroup viewButtons;
 
-//GL buffers
-GLuint g_vboSolutionField;
-GLuint g_elementArrayIndexBuffer;
-cudaGraphicsResource *g_cudaSolutionField;
-
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 void Init()
@@ -321,12 +316,14 @@ Slider* GetCurrentContourSlider(Panel &rootPanel)
 
 void InitializeButtonCallBack(Panel &rootPanel)
 {
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->m_graphicsManager;
+    Graphics* graphics = graphicsManager->GetGraphics();
+    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
     float4 *dptr;
-    cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
 
     float* fA_d = cudaLbm->GetFA();
@@ -588,18 +585,28 @@ void CleanUpIndexList(GLuint &arrayIndexBuffer){
 void SetUpGLInterop()
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-    GenerateIndexListForSurfaceAndFloor(g_elementArrayIndexBuffer);
+//    GenerateIndexListForSurfaceAndFloor(g_elementArrayIndexBuffer);
     unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize,
-        cudaGraphicsMapFlagsWriteDiscard);
+//    CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize,
+//        cudaGraphicsMapFlagsWriteDiscard);
+
+    
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    graphicsManager->GetGraphics()->SetUpGLInterOp(solutionMemorySize+floorSize);
+
 
 }
 
 void CleanUpGLInterop()
 {
-    CleanUpIndexList(g_elementArrayIndexBuffer);
-    DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
+//    CleanUpIndexList(g_elementArrayIndexBuffer);
+//    DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
+
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    graphicsManager->GetGraphics()->CleanUpGLInterOp();
+
+
 }
 
 
@@ -652,17 +659,19 @@ void SetUpCUDA()
     float* floor_d = cudaLbm->GetFloorTemp();
     Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
+    Graphics* graphics = graphicsManager->GetGraphics();
+    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
     float4 *dptr;
-    cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
     InitializeDomain(dptr, fA_d, im_d, u, g_simDomain);
     InitializeDomain(dptr, fB_d, im_d, u, g_simDomain);
 
     InitializeFloor(dptr, floor_d, g_simDomain);
 
-    cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
 }
 
@@ -670,9 +679,9 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
 {
     // map OpenGL buffer object for writing from CUDA
     float4 *dptr;
-    cudaGraphicsMapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsMapResources(1, vbo_resource, 0);
     size_t num_bytes;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, g_cudaSolutionField);
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
 
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
@@ -706,7 +715,7 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     CleanUpDeviceVBO(dptr, g_simDomain);
 
     // unmap buffer object
-    cudaGraphicsUnmapResources(1, &g_cudaSolutionField, 0);
+    cudaGraphicsUnmapResources(1, vbo_resource, 0);
 
 }
 
@@ -825,7 +834,9 @@ void Draw()
     float3 cameraPosition = { -xTranslation - translateTransforms.x, 
         -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
 
-    RunCuda(&g_cudaSolutionField, cameraPosition, Window);
+    Graphics* graphics = graphicsManager->GetGraphics();
+    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
+    RunCuda(&cudaSolutionField, cameraPosition, Window);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -858,8 +869,10 @@ void Draw()
     glLoadIdentity();
 
     //Draw solution field
-    glBindBuffer(GL_ARRAY_BUFFER, g_vboSolutionField);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_elementArrayIndexBuffer);
+    GLuint vbo = graphics->GetVbo();
+    GLuint elementArrayBuffer = graphics->GetElementArrayBuffer();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBuffer);
     glVertexPointer(3, GL_FLOAT, 16, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
     glColor3f(1.0, 0.0, 0.0);
