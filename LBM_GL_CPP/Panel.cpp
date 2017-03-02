@@ -351,6 +351,31 @@ Slider* Panel::GetSlider(const std::string name)
     return NULL;
 }
 
+ButtonGroup* Panel::GetButtonGroup(const std::string name)
+{
+    for (std::vector<Panel*>::iterator it = m_subPanels.begin(); it != m_subPanels.end(); ++it)
+    {
+        ButtonGroup* buttonGroupSearchResult = (*it)->GetButtonGroup(name);
+        if (buttonGroupSearchResult != NULL)
+        {
+            return buttonGroupSearchResult;
+        }
+    }
+    for (std::vector<ButtonGroup*>::iterator it = m_buttonGroups.begin(); it != m_buttonGroups.end(); ++it)
+    {
+        if ((*it)->GetName() == name)
+        {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
+void Panel::SetCallback(void(*callback)(Panel &rootPanel))
+{
+    m_callback = callback;
+}
+
 void Panel::SetBackgroundColor(Color color)
 {
     m_backgroundColor = color;
@@ -419,6 +444,13 @@ Slider* Panel::CreateSlider(const RectFloat rectFloat, const SizeDefinitionMetho
     return slider;
 }
 
+ButtonGroup* Panel::CreateButtonGroup(const std::string name, std::vector<Button*> &buttons)
+{
+    ButtonGroup* buttonGroup = new ButtonGroup(name, buttons);
+    m_buttonGroups.push_back(buttonGroup);
+    return buttonGroup;
+}
+
 void Panel::Drag(const int x, const int y, const float dx, const float dy, const int button)
 {
     if (m_graphicsManager != NULL)
@@ -465,17 +497,17 @@ Button::Button(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
 
 void Button::ClickDown(Mouse mouse)
 {
-    if (m_callBack != NULL)
+    if (m_callback != NULL)
     {
-        m_callBack(*GetRootPanel());
+        m_callback(*GetRootPanel());
     }
 }
 
 void Button::ClickDown()
 {
-    if (m_callBack != NULL)
+    if (m_callback != NULL)
     {
-        m_callBack(*GetRootPanel());
+        m_callback(*GetRootPanel());
     }
 }
 
@@ -758,9 +790,20 @@ ButtonGroup::ButtonGroup()
 {
 }
 
-ButtonGroup::ButtonGroup(std::vector<Button*> &buttons)
+ButtonGroup::ButtonGroup(const std::string name, std::vector<Button*> &buttons)
 {
+    m_name = name;
     m_buttons = buttons;
+}
+
+std::string ButtonGroup::GetName()
+{
+    return m_name;
+}
+
+void ButtonGroup::AddButton(Button* button)
+{
+    m_buttons.push_back(button);
 }
 
 void ButtonGroup::ExclusiveEnable(Button* button)

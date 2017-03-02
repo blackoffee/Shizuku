@@ -33,6 +33,7 @@ class Button;
 class Slider;
 class GraphicsManager;
 class Mouse;
+class ButtonGroup;
 
 class Panel
 {
@@ -50,17 +51,17 @@ private:
     float m_maxValue = 0.f;
     std::string m_displayText = "";
     SizeDefinitionMethod m_sizeDefinition;
+protected:
+    void(*m_callback)(Panel &rootPanel) = NULL;
 public:
     std::vector<Panel*> m_subPanels;
     std::vector<Button*> m_buttons;
     std::vector<Slider*> m_sliders;
+    std::vector<ButtonGroup*> m_buttonGroups;
     Panel* m_parent = NULL; //pointer to parent frame
     GraphicsManager* m_graphicsManager = NULL;
     bool m_draw = true;
-    void(*m_callBack)(Panel &rootPanel) = NULL;
     //these two members below should ideally be in Slider class
-
-
 
     FW_API Panel();
     FW_API Panel(const RectInt rectInt  , const SizeDefinitionMethod sizeDefinition,
@@ -84,7 +85,9 @@ public:
     FW_API Panel* GetPanel(const std::string name);
     FW_API Button* GetButton(const std::string name);
     FW_API Slider* GetSlider(const std::string name);
+    FW_API ButtonGroup* GetButtonGroup(const std::string name);
 
+    FW_API void SetCallback(void(*callback)(Panel &rootPanel));
     
     FW_API void SetBackgroundColor(Color color);
     FW_API void SetForegroundColor(Color color);
@@ -112,6 +115,7 @@ public:
         const std::string name, const Color color);
     FW_API Slider* CreateSlider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color);
+    FW_API ButtonGroup* CreateButtonGroup(const std::string name, std::vector<Button*> &buttons);
 
     FW_API RectFloat RectIntAbsToRectFloatAbs();
     FW_API RectFloat RectFloatRelToRectFloatAbs();
@@ -192,11 +196,15 @@ public:
 
 class ButtonGroup
 {
-public:
+    std::string m_name;
     std::vector<Button*> m_buttons;
+public:
     FW_API ButtonGroup();
-    FW_API ButtonGroup(std::vector<Button*> &buttons);
+    FW_API ButtonGroup(const std::string name, std::vector<Button*> &buttons);
 
+    FW_API std::string GetName();
+    FW_API void AddButton(Button* button);
+    FW_API std::vector<Button*> GetButtons(Button* button);
     FW_API void ExclusiveEnable(Button* button);
     FW_API Button* GetCurrentEnabledButton();
 };

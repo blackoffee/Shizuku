@@ -34,10 +34,6 @@ Domain g_simDomain;
 Panel Window;
 Mouse theMouse;
 
-ButtonGroup contourButtons;
-ButtonGroup shapeButtons;
-ButtonGroup viewButtons;
-
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 void Init()
@@ -336,85 +332,97 @@ void InitializeButtonCallBack(Panel &rootPanel)
 
 void VelMagButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("Velocity Magnitude"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("Velocity Magnitude"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_MAG);
 }
 
 void VelXButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("X Velocity"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("X Velocity"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_U);
 }
 
 void VelYButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("Y Velocity"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("Y Velocity"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_V);
 }
 
 void StrainRateButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("StrainRate"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("StrainRate"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(STRAIN_RATE);
 }
 
 void PressureButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("Pressure"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("Pressure"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(PRESSURE);
 }
 
 void WaterRenderingButtonCallBack(Panel &rootPanel)
 {
-    contourButtons.ExclusiveEnable(rootPanel.GetButton("Water Rendering"));
+    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    contourButtons->ExclusiveEnable(rootPanel.GetButton("Water Rendering"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(WATER_RENDERING);
 }
 
 void SquareButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Square"));
+    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    shapeButtons->ExclusiveEnable(rootPanel.GetButton("Square"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::SQUARE);
 }
 
 void CircleButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Circle"));
+    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    shapeButtons->ExclusiveEnable(rootPanel.GetButton("Circle"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::CIRCLE);
 }
 
 void HorLineButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
+    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    shapeButtons->ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
 }
 
 void VertLineButtonCallBack(Panel &rootPanel)
 {
-    shapeButtons.ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
+    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    shapeButtons->ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
 }
 
 void ThreeDButtonCallBack(Panel &rootPanel)
 {
-    viewButtons.ExclusiveEnable(rootPanel.GetButton("3D"));
+    ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
+    viewModeButtons->ExclusiveEnable(rootPanel.GetButton("3D"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(THREE_DIMENSIONAL);
 }
 
 void TwoDButtonCallBack(Panel &rootPanel)
 {
-    viewButtons.ExclusiveEnable(rootPanel.GetButton("2D"));
+    ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
+    viewModeButtons->ExclusiveEnable(rootPanel.GetButton("2D"));
     rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(TWO_DIMENSIONAL);
 }
 
 void SetUpButtons(Panel &rootPanel)
 {
-    rootPanel.GetButton("Initialize")->m_callBack = InitializeButtonCallBack;
-    rootPanel.GetButton("Velocity Magnitude")->m_callBack = VelMagButtonCallBack;
-    rootPanel.GetButton("X Velocity")->m_callBack = VelXButtonCallBack;
-    rootPanel.GetButton("Y Velocity")->m_callBack = VelYButtonCallBack;
-    rootPanel.GetButton("StrainRate")->m_callBack = StrainRateButtonCallBack;
-    rootPanel.GetButton("Pressure"  )->m_callBack = PressureButtonCallBack;
-    rootPanel.GetButton("Water Rendering")->m_callBack = WaterRenderingButtonCallBack;
+    rootPanel.GetButton("Initialize")->SetCallback(InitializeButtonCallBack);
+    rootPanel.GetButton("Velocity Magnitude")->SetCallback(VelMagButtonCallBack);
+    rootPanel.GetButton("X Velocity")->SetCallback(VelXButtonCallBack);
+    rootPanel.GetButton("Y Velocity")->SetCallback(VelYButtonCallBack);
+    rootPanel.GetButton("StrainRate")->SetCallback(StrainRateButtonCallBack);
+    rootPanel.GetButton("Pressure"  )->SetCallback(PressureButtonCallBack);
+    rootPanel.GetButton("Water Rendering")->SetCallback(WaterRenderingButtonCallBack);
 
     std::vector<Button*> buttons = {
         rootPanel.GetButton("Velocity Magnitude"),
@@ -423,29 +431,29 @@ void SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("StrainRate"),
         rootPanel.GetButton("Pressure"),
         rootPanel.GetButton("Water Rendering") };
-    contourButtons = ButtonGroup(buttons);
+    ButtonGroup* contourButtonGroup = rootPanel.CreateButtonGroup("ContourButtons", buttons);
 
     //Shape buttons
-    rootPanel.GetButton("Square")->m_callBack = SquareButtonCallBack;
-    rootPanel.GetButton("Circle")->m_callBack = CircleButtonCallBack;
-    rootPanel.GetButton("Hor. Line")->m_callBack = HorLineButtonCallBack;
-    rootPanel.GetButton("Vert. Line")->m_callBack = VertLineButtonCallBack;
+    rootPanel.GetButton("Square")->SetCallback(SquareButtonCallBack);
+    rootPanel.GetButton("Circle")->SetCallback(CircleButtonCallBack);
+    rootPanel.GetButton("Hor. Line")->SetCallback(HorLineButtonCallBack);
+    rootPanel.GetButton("Vert. Line")->SetCallback(VertLineButtonCallBack);
 
     std::vector<Button*> buttons2 = {
         rootPanel.GetButton("Square"),
         rootPanel.GetButton("Circle"),
         rootPanel.GetButton("Hor. Line"),
         rootPanel.GetButton("Vert. Line") };
-    shapeButtons = ButtonGroup(buttons2);
+    ButtonGroup* shapeButtonGroup = rootPanel.CreateButtonGroup("ShapeButtons", buttons2);
 
-    rootPanel.GetButton("3D")->m_callBack = ThreeDButtonCallBack;
-    rootPanel.GetButton("2D")->m_callBack = TwoDButtonCallBack;
+    rootPanel.GetButton("3D")->SetCallback(ThreeDButtonCallBack);
+    rootPanel.GetButton("2D")->SetCallback(TwoDButtonCallBack);
     
     std::vector<Button*> buttons3 = {
         rootPanel.GetButton("2D"),
         rootPanel.GetButton("3D")
     };
-    viewButtons = ButtonGroup(buttons3);
+    ButtonGroup* viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
 
 }
 
