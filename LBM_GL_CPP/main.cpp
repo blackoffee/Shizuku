@@ -525,90 +525,21 @@ void DrawShapePreview(Panel &rootPanel)
 /*----------------------------------------------------------------------------------------
  *	GL Interop Functions
  */
-void CreateVBO(GLuint *vbo, cudaGraphicsResource **vbo_res, unsigned int size, unsigned int vbo_res_flags)
-{
-    glGenBuffers(1, vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, *vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    cudaGraphicsGLRegisterBuffer(vbo_res, *vbo, vbo_res_flags);
-}
-
-void DeleteVBO(GLuint *vbo, cudaGraphicsResource *vbo_res)
-{
-    cudaGraphicsUnregisterResource(vbo_res);
-    glBindBuffer(1, *vbo);
-    glDeleteBuffers(1, vbo);
-
-    *vbo = 0;
-}
-
-
-void GenerateIndexListForSurfaceAndFloor(GLuint &arrayIndexBuffer)
-{
-    int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
-    int numberOfNodes = MAX_XDIM*MAX_YDIM;
-    GLuint* elementIndices = new GLuint[numberOfElements * 4 * 2];
-    for (int j = 0; j < MAX_YDIM-1; j++){
-        for (int i = 0; i < MAX_XDIM-1; i++){
-            //going clockwise, since y orientation will be flipped when rendered
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+0] = (i)+(j)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+1] = (i+1)+(j)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+2] = (i+1)+(j+1)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+3] = (i)+(j+1)*MAX_XDIM;
-        }
-    }
-    for (int j = 0; j < MAX_YDIM-1; j++){
-        for (int i = 0; i < MAX_XDIM-1; i++){
-            //going clockwise, since y orientation will be flipped when rendered
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+0] = numberOfNodes+(i)+(j)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+1] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+2] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+3] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
-        }
-    }
-
-    glGenBuffers(1, &arrayIndexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arrayIndexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*4*2, elementIndices, GL_DYNAMIC_DRAW);
-    free(elementIndices);
-}
-
-void CleanUpIndexList(GLuint &arrayIndexBuffer){
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDeleteBuffers(1, &arrayIndexBuffer);
-}
-
 
 void SetUpGLInterop()
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-//    GenerateIndexListForSurfaceAndFloor(g_elementArrayIndexBuffer);
     unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-//    CreateVBO(&g_vboSolutionField, &g_cudaSolutionField, solutionMemorySize+floorSize,
-//        cudaGraphicsMapFlagsWriteDiscard);
-
-    
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     graphicsManager->GetGraphics()->SetUpGLInterOp(solutionMemorySize+floorSize);
-
-
 }
 
 void CleanUpGLInterop()
 {
-//    CleanUpIndexList(g_elementArrayIndexBuffer);
-//    DeleteVBO(&g_vboSolutionField, g_cudaSolutionField);
-
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
     graphicsManager->GetGraphics()->CleanUpGLInterOp();
-
-
 }
-
 
 void timerEvent(int value)
 {
@@ -622,23 +553,6 @@ void timerEvent(int value)
 /*----------------------------------------------------------------------------------------
  *	CUDA calls
  */
-
-//BC function for host side
-int ImageFcn_h(int x, int y, Obstruction* obstructions){
-    int xDim = g_simDomain.GetXDim();
-    int yDim = g_simDomain.GetYDim();
-    //if(y == 0 || x == XDIM-1 || y == YDIM-1)
-    if (x < 0.1f)
-        return 3;//west
-    else if ((xDim - x) < 1.1f)
-        return 2;//east
-    else if ((yDim - y) < 1.1f)
-        return 11;//11;//xsymmetry top
-    else if (y < 0.1f)
-        return 12;//12;//xsymmetry bottom
-    return 0;
-}
-
 void SetUpCUDA()
 {
     float4 rayCastIntersect{ 0, 0, 0, 1e6 };
