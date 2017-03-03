@@ -13,7 +13,6 @@
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
 
-Panel windowPanel;
 
 class Command
 {
@@ -28,6 +27,7 @@ public:
 
 class Window
 {
+    static Panel* m_windowPanel;
     static Panel* m_currentPanel;
     static int m_previousMouseX;
     static int m_previousMouseY;
@@ -36,6 +36,7 @@ public:
     Window();
     Window(const int width, const int height);
 
+    Panel* GetWindowPanel();
     static float GetFloatCoordX(const int x);
     static float GetFloatCoordY(const int y);
     void InitializeGL();
@@ -68,14 +69,21 @@ Window::Window(const int width, const int height)
 {
 }
 
+Panel* Window::m_windowPanel = new Panel;
+
+Panel* Window::GetWindowPanel()
+{
+    return m_windowPanel;
+}
+
 float Window::GetFloatCoordX(const int x)
 {
-    int width = windowPanel.GetWidth();
+    int width = m_windowPanel->GetWidth();
     return static_cast<float>(x)/width*2.f - 1.f;
 }
 float Window::GetFloatCoordY(const int y)
 {
-    int height = windowPanel.GetHeight();
+    int height = m_windowPanel->GetHeight();
     return static_cast<float>(y)/height*2.f - 1.f;
 }
 
@@ -97,9 +105,9 @@ void Window::timerEvent(int value)
 
 void Window::Resize(const int width, const int height)
 {
-    float scaleUp = windowPanel.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
-    int windowWidth = windowPanel.GetWidth();
-    int windowHeight = windowPanel.GetHeight();
+    float scaleUp = m_windowPanel->GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
+    int windowWidth = m_windowPanel->GetWidth();
+    int windowHeight = m_windowPanel->GetHeight();
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
 
@@ -107,12 +115,12 @@ void Window::Resize(const int width, const int height)
     //theMouse.m_winH = windowHeight;
 
     RectInt rect = { 200, 100, width, height };
-    windowPanel.SetSize_Absolute(rect);
+    m_windowPanel->SetSize_Absolute(rect);
     rect = { 0, windowHeight - g_leftPanelHeight, g_leftPanelWidth, g_leftPanelHeight };
-    windowPanel.GetPanel("CDV")->SetSize_Absolute(rect);
+    m_windowPanel->GetPanel("CDV")->SetSize_Absolute(rect);
     rect = { g_leftPanelWidth, 0, windowWidth - g_leftPanelWidth, windowHeight };
-    windowPanel.GetPanel("Graphics")->SetSize_Absolute(rect);
-    windowPanel.UpdateAll();
+    m_windowPanel->GetPanel("Graphics")->SetSize_Absolute(rect);
+    m_windowPanel->UpdateAll();
 
     glViewport(0, 0, windowWidth, windowHeight);
 
@@ -122,10 +130,10 @@ void Window::Resize(const int width, const int height)
 void Window::MouseButton(const int button, const int state,
     const int x, const int y)
 {
-    int windowHeight = windowPanel.GetHeight();
+    int windowHeight = m_windowPanel->GetHeight();
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(windowHeight-y);
-    Window::m_currentPanel = GetPanelThatPointIsIn(&windowPanel, xf, yf);
+    Window::m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
     std::cout << Window::m_currentPanel->GetName();
 
     Window::m_currentPanel->ClickDown();
@@ -158,9 +166,9 @@ void Window::MouseWheel(const int button, const int direction,
 
 void Window::DrawLoop()
 {
-    Resize(windowPanel.GetWidth(), windowPanel.GetHeight());
+    Resize(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
     glOrtho(-1, 1, -1, 1, -100, 20);
-    windowPanel.DrawAll();
+    m_windowPanel->DrawAll();
 
     glutSwapBuffers();
 }
@@ -169,8 +177,8 @@ void Window::InitializeGLUT(int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-    int width = windowPanel.GetWidth();
-    int height = windowPanel.GetHeight();
+    int width = m_windowPanel->GetWidth();
+    int height = m_windowPanel->GetHeight();
     glutInitWindowSize(width,height);
     glutInitWindowPosition(50,30);
 
@@ -201,7 +209,7 @@ int main(int argc, char **argv)
     int initialWindowHeight = g_leftPanelHeight+100;
     Window window(initialWindowWidth,initialWindowHeight);
 
-    SetUpWindow(windowPanel);
+    SetUpWindow(*window.GetWindowPanel());
 
     window.InitializeGLUT(argc, argv);
     window.InitializeGL();
