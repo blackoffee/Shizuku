@@ -90,7 +90,7 @@ void SetUpWindow(Panel &rootPanel)
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
     rootPanel.GetPanel("Graphics")->m_draw = false;
     rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
-    float scaleUp = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
+    float scaleUp = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
 
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
@@ -280,7 +280,7 @@ void SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider("Slider_Size")->SetMinValue(1.f);
     rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstSize(currentObstSize);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstSize(currentObstSize);
 
 
     SetUpButtons(rootPanel);
@@ -312,7 +312,7 @@ Slider* GetCurrentContourSlider(Panel &rootPanel)
 
 void InitializeButtonCallBack(Panel &rootPanel)
 {
-    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     Graphics* graphics = graphicsManager->GetGraphics();
     cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
     float4 *dptr;
@@ -334,84 +334,84 @@ void VelMagButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Velocity Magnitude"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_MAG);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_MAG);
 }
 
 void VelXButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("X Velocity"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_U);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_U);
 }
 
 void VelYButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Y Velocity"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(VEL_V);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_V);
 }
 
 void StrainRateButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("StrainRate"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(STRAIN_RATE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(STRAIN_RATE);
 }
 
 void PressureButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Pressure"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(PRESSURE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(PRESSURE);
 }
 
 void WaterRenderingButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Water Rendering"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetContourVar(WATER_RENDERING);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(WATER_RENDERING);
 }
 
 void SquareButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Square"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::SQUARE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::SQUARE);
 }
 
 void CircleButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Circle"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::CIRCLE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::CIRCLE);
 }
 
 void HorLineButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
 }
 
 void VertLineButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
 }
 
 void ThreeDButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
     viewModeButtons->ExclusiveEnable(rootPanel.GetButton("3D"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(THREE_DIMENSIONAL);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(THREE_DIMENSIONAL);
 }
 
 void TwoDButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
     viewModeButtons->ExclusiveEnable(rootPanel.GetButton("2D"));
-    rootPanel.GetPanel("Graphics")->m_graphicsManager->SetViewMode(TWO_DIMENSIONAL);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(TWO_DIMENSIONAL);
 }
 
 void SetUpButtons(Panel &rootPanel)
@@ -477,7 +477,7 @@ void DrawShapePreview(Panel &rootPanel)
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     Obstruction::Shape currentShape = graphicsManager->GetCurrentObstShape();
     glColor3f(0.8f,0.8f,0.8f);
     switch (currentShape)
@@ -534,18 +534,18 @@ void DrawShapePreview(Panel &rootPanel)
  *	GL Interop Functions
  */
 
-void SetUpGLInterop()
+void SetUpGLInterop(Panel &rootPanel)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
     unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->GetGraphics()->SetUpGLInterOp(solutionMemorySize+floorSize);
 }
 
-void CleanUpGLInterop()
+void CleanUpGLInterop(Panel &rootPanel)
 {
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->GetGraphics()->CleanUpGLInterOp();
 }
 
@@ -561,11 +561,11 @@ void timerEvent(int value)
 /*----------------------------------------------------------------------------------------
  *	CUDA calls
  */
-void SetUpCUDA()
+void SetUpCUDA(Panel &rootPanel)
 {
     float4 rayCastIntersect{ 0, 0, 0, 1e6 };
 
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     cudaMalloc((void **)&graphicsManager->m_rayCastIntersect_d, sizeof(float4));
     cudaMemcpy(graphicsManager->m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
 
@@ -573,7 +573,7 @@ void SetUpCUDA()
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();
 
-    float u = Window.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
 
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
@@ -609,11 +609,11 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
     float contMin = GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
     float contMax = GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
-    bool paused = rootPanel.GetPanel("Graphics")->m_graphicsManager->IsPaused();
-    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetContourVar();
-    ViewMode viewMode = rootPanel.GetPanel("Graphics")->m_graphicsManager->GetViewMode();
+    bool paused = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->IsPaused();
+    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetContourVar();
+    ViewMode viewMode = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetViewMode();
 
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
@@ -679,7 +679,7 @@ void Keyboard(unsigned char key, int /*x*/, int /*y*/)
     switch (key)
     {
     case (' ') :
-        GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+        GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
         graphicsManager->TogglePausedState();
         break;
     }
@@ -707,7 +707,7 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 void Resize(int windowWidth, int windowHeight)
 {
-    float scaleUp = Window.GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
+    float scaleUp = Window.GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
         windowWidth, windowHeight, scaleUp);
 
@@ -726,7 +726,7 @@ void Resize(int windowWidth, int windowHeight)
 
     //UpdateDeviceImage();
 
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
 }
@@ -736,7 +736,7 @@ void Draw()
     g_fpsTracker.Tick();
 
     float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->m_graphicsManager;
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->SetScaleFactor(scaleUp);
 
     int windowWidth = Window.GetWidth();
@@ -869,8 +869,8 @@ int main(int argc,char **argv)
     glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
     Init();
-    SetUpGLInterop();
-    SetUpCUDA();
+    SetUpGLInterop(Window);
+    SetUpCUDA(Window);
 
     glutMainLoop();
 

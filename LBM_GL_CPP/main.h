@@ -39,3 +39,6 @@ FW_API void TwoDButtonCallBack(Panel &rootPanel);
 FW_API void SetUpButtons(Panel &rootPanel);
 FW_API void DrawShapePreview(Panel &rootPanel);
 
+FW_API void SetUpGLInterop(Panel &rootPanel);
+FW_API void CleanUpGLInterop(Panel &rootPanel);
+FW_API void SetUpCUDA(Panel &rootPanel);

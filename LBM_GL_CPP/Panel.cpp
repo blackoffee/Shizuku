@@ -371,6 +371,11 @@ ButtonGroup* Panel::GetButtonGroup(const std::string name)
     return NULL;
 }
 
+GraphicsManager* Panel::GetGraphicsManager()
+{
+    return m_graphicsManager;
+}
+
 void Panel::SetCallback(void(*callback)(Panel &rootPanel))
 {
     m_callback = callback;

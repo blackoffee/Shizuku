@@ -51,6 +51,7 @@ private:
     float m_maxValue = 0.f;
     std::string m_displayText = "";
     SizeDefinitionMethod m_sizeDefinition;
+    GraphicsManager* m_graphicsManager = NULL;
 protected:
     void(*m_callback)(Panel &rootPanel) = NULL;
 public:
@@ -59,7 +60,6 @@ public:
     std::vector<Slider*> m_sliders;
     std::vector<ButtonGroup*> m_buttonGroups;
     Panel* m_parent = NULL; //pointer to parent frame
-    GraphicsManager* m_graphicsManager = NULL;
     bool m_draw = true;
     //these two members below should ideally be in Slider class
 
@@ -86,6 +86,8 @@ public:
     FW_API Button* GetButton(const std::string name);
     FW_API Slider* GetSlider(const std::string name);
     FW_API ButtonGroup* GetButtonGroup(const std::string name);
+
+    FW_API GraphicsManager* GetGraphicsManager();
 
     FW_API void SetCallback(void(*callback)(Panel &rootPanel));
     
