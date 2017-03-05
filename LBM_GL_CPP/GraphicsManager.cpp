@@ -6,6 +6,7 @@
 CudaLbm::CudaLbm()
 {
     m_domain = new Domain;
+    m_isPaused = false;
 }
 
 CudaLbm::CudaLbm(int maxX, int maxY)
@@ -67,6 +68,16 @@ void CudaLbm::SetInletVelocity(float velocity)
 void CudaLbm::SetOmega(float omega)
 {
     m_omega = omega;
+}
+
+void CudaLbm::SetPausedState(bool isPaused)
+{
+    m_isPaused = isPaused;
+}
+
+bool CudaLbm::IsPaused()
+{
+    return m_isPaused;
 }
 
 
@@ -316,6 +327,26 @@ ViewMode GraphicsManager::GetViewMode()
 void GraphicsManager::SetViewMode(const ViewMode viewMode)
 {
     m_viewMode = viewMode;
+}
+
+float GraphicsManager::GetContourMinValue()
+{
+    return m_contourMinValue;
+}
+
+float GraphicsManager::GetContourMaxValue()
+{
+    return m_contourMaxValue;
+}
+
+void GraphicsManager::SetContourMinValue(const float contourMinValue)
+{
+    m_contourMinValue = contourMinValue;
+}
+
+void GraphicsManager::SetContourMaxValue(const float contourMaxValue)
+{
+    m_contourMinValue = contourMaxValue;
 }
 
 ContourVariable GraphicsManager::GetContourVar()

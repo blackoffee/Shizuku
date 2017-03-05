@@ -608,16 +608,20 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
 
-    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
-    float contMin = GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
-    float contMax = GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
-    bool paused = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->IsPaused();
-    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetContourVar();
-    ViewMode viewMode = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetViewMode();
-
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+
+    UpdateLbmInputs(*cudaLbm, rootPanel);
+    float u = cudaLbm->GetInletVelocity();
+    float omega = cudaLbm->GetOmega();
+
+    UpdateGraphicsInputs(*graphicsManager, rootPanel);
+    float contMin = graphicsManager->GetContourMinValue();// GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
+    float contMax = graphicsManager->GetContourMaxValue();//GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
+    bool paused = cudaLbm->IsPaused();
+    ContourVariable contourVar = graphicsManager->GetContourVar();
+    ViewMode viewMode = graphicsManager->GetViewMode();
+
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
     float* floorTemp_d = cudaLbm->GetFloorTemp();
@@ -683,8 +687,10 @@ void Keyboard(unsigned char key, int /*x*/, int /*y*/)
     switch (key)
     {
     case (' ') :
-        GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
-        graphicsManager->TogglePausedState();
+        GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
+        CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+        bool currentPausedState = cudaLbm->IsPaused();
+        cudaLbm->SetPausedState(!currentPausedState);
         break;
     }
 }
@@ -742,9 +748,24 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
     //get simulation inputs
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    bool paused = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->IsPaused();
     cudaLbm.SetInletVelocity(u);
     cudaLbm.SetOmega(omega);
+    cudaLbm.SetPausedState(paused);
 }
+
+void UpdateGraphicsInputs(GraphicsManager &graphicsManager, Panel &rootPanel)
+{
+    float contMin = GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
+    float contMax = GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
+    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetContourVar();
+    ViewMode viewMode = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetViewMode();
+    graphicsManager.SetContourMinValue(contMin);
+    graphicsManager.SetContourMaxValue(contMax);
+    graphicsManager.SetContourVar(contourVar);
+    graphicsManager.SetViewMode(viewMode);
+}
+
 
 void Draw()
 {

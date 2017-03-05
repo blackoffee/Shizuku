@@ -38,6 +38,7 @@ private:
     Obstruction m_obst_h[MAXOBSTS];
     float m_inletVelocity;
     float m_omega;
+    bool m_isPaused;
 public:
     CudaLbm();
     CudaLbm(int maxX, int maxY);
@@ -52,6 +53,8 @@ public:
     float GetOmega();
     void SetInletVelocity(float velocity);
     void SetOmega(float omega);
+    void SetPausedState(bool isPaused);
+    bool IsPaused();
 
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
@@ -108,6 +111,8 @@ private:
     GLint m_viewport[4];
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
+    float m_contourMinValue;
+    float m_contourMaxValue;
     ContourVariable m_contourVar;
     Graphics* m_graphics;
 
@@ -127,6 +132,10 @@ public:
     FW_API ViewMode GetViewMode();
     FW_API void SetViewMode(const ViewMode viewMode);
 
+    FW_API float GetContourMinValue();
+    FW_API float GetContourMaxValue();
+    FW_API void SetContourMinValue(const float contourMinValue);
+    FW_API void SetContourMaxValue(const float contourMaxValue);
     FW_API ContourVariable GetContourVar();
     FW_API void SetContourVar(const ContourVariable contourVar);
 
