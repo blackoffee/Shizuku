@@ -42,29 +42,29 @@ private:
     bool m_isPaused;
     int m_timeStepsPerFrame;
 public:
-    CudaLbm();
-    CudaLbm(int maxX, int maxY);
-    Domain* GetDomain();
-    float* GetFA();
-    float* GetFB();
-    int* GetImage();
-    float* GetFloorTemp();
-    Obstruction* GetDeviceObst();
-    Obstruction* GetHostObst();
-    float GetInletVelocity();
-    float GetOmega();
-    void SetInletVelocity(float velocity);
-    void SetOmega(float omega);
-    void SetPausedState(bool isPaused);
-    bool IsPaused();
-    int GetTimeStepsPerFrame();
-    void SetTimeStepsPerFrame(const int timeSteps);
+    FW_API CudaLbm();
+    FW_API CudaLbm(int maxX, int maxY);
+    FW_API Domain* GetDomain();
+    FW_API float* GetFA();
+    FW_API float* GetFB();
+    FW_API int* GetImage();
+    FW_API float* GetFloorTemp();
+    FW_API Obstruction* GetDeviceObst();
+    FW_API Obstruction* GetHostObst();
+    FW_API float GetInletVelocity();
+    FW_API float GetOmega();
+    FW_API void SetInletVelocity(float velocity);
+    FW_API void SetOmega(float omega);
+    FW_API void SetPausedState(bool isPaused);
+    FW_API bool IsPaused();
+    FW_API int GetTimeStepsPerFrame();
+    FW_API void SetTimeStepsPerFrame(const int timeSteps);
 
-    void AllocateDeviceMemory();
-    void InitializeDeviceMemory();
-    void DeallocateDeviceMemory();
-    void UpdateDeviceImage();
-    int ImageFcn(const int x, const int y);
+    FW_API void AllocateDeviceMemory();
+    FW_API void InitializeDeviceMemory();
+    FW_API void DeallocateDeviceMemory();
+    FW_API void UpdateDeviceImage();
+    FW_API int ImageFcn(const int x, const int y);
 
    
 };
@@ -76,21 +76,22 @@ class Graphics
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
 public:
-    Graphics();
+    FW_API Graphics();
 
-    void CreateCudaLbm();
-    CudaLbm* GetCudaLbm();
-    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
-    GLuint GetVbo();
-    GLuint GetElementArrayBuffer();
-    void CreateVbo(unsigned int size, unsigned int vboResFlags);
-    void DeleteVbo();
-    void CreateElementArrayBuffer();
-    void DeleteElementArrayBuffer();
-    void SetUpGLInterOp(unsigned int size);
-    void CleanUpGLInterOp();
+    FW_API void CreateCudaLbm();
+    FW_API CudaLbm* GetCudaLbm();
+    FW_API cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    FW_API GLuint GetVbo();
+    FW_API GLuint GetElementArrayBuffer();
+    FW_API void CreateVbo(unsigned int size, unsigned int vboResFlags);
+    FW_API void DeleteVbo();
+    FW_API void CreateElementArrayBuffer();
+    FW_API void DeleteElementArrayBuffer();
+    FW_API void SetUpGLInterOp(unsigned int size);
+    FW_API void CleanUpGLInterOp();
+    FW_API void SetUpCuda();
 
-    void RenderVbo(bool renderFloor, Domain &domain);
+    FW_API void RenderVbo(bool renderFloor, Domain &domain);
 };
 
 
@@ -112,7 +113,6 @@ private:
     ViewMode m_viewMode;
     Obstruction* m_obstructions;
     Panel* m_parent;
-    bool m_paused = 0;
     float m_scaleFactor = 1.f;
     GLint m_viewport[4];
     GLdouble m_modelMatrix[16];
@@ -146,9 +146,6 @@ public:
     FW_API void SetContourVar(const ContourVariable contourVar);
 
     FW_API void SetObstructionsPointer(Obstruction* obst);
-
-    FW_API bool IsPaused();
-    FW_API void TogglePausedState();
 
     FW_API float GetScaleFactor();
     FW_API void SetScaleFactor(const float scaleFactor);

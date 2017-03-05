@@ -17,8 +17,7 @@
 
 FW_API void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area,
     int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
-FW_API void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth,
-    int windowWidth, int windowHeight, float scaleUp);
+FW_API void UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, int leftPanelHeight, int leftPanelWidth);
 
 FW_API void SetUpWindow(Panel &rootPanel);
 FW_API Slider* GetCurrentContourSlider(Panel &rootPanel);
@@ -45,5 +44,6 @@ FW_API void UpdateGraphicsInputs(GraphicsManager &graphicsManager, Panel &rootPa
 FW_API void SetUpGLInterop(Panel &rootPanel);
 FW_API void CleanUpGLInterop(Panel &rootPanel);
 FW_API void SetUpCUDA(Panel &rootPanel);
+FW_API void Draw2D(Panel &rootPanel);
 
-void Resize(int width, int height);
+void Resize(const int width, const int height);

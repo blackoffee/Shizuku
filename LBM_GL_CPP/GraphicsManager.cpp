@@ -410,16 +410,6 @@ void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
 }
 
-bool GraphicsManager::IsPaused()
-{
-    return m_paused;
-}
-
-void GraphicsManager::TogglePausedState()
-{
-    m_paused = !m_paused;
-}
-
 float GraphicsManager::GetScaleFactor()
 {
     return m_scaleFactor;
@@ -448,7 +438,6 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
 
     int windowWidth = rootPanel->GetWidth();
     int windowHeight = rootPanel->GetHeight();
-    Resize(windowWidth, windowHeight);
 
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();

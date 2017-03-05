@@ -91,10 +91,6 @@ void SetUpWindow(Panel &rootPanel)
     rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
     float scaleUp = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
 
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, scaleUp);
-
-
     float sliderH = 1.4f/3.f/2.f;
     float sliderBarW = 0.1f;
     float sliderBarH = 2.f;
@@ -659,12 +655,14 @@ void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int
     widthOut = heightOut*aspectRatio+leftPanelW;
 }
 
-void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelWidth,
-    int windowWidth, int windowHeight, float scaleUp)
+void UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, int leftPanelHeight, int leftPanelWidth)
 {
+    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    float scaleUp = graphicsManager->GetScaleFactor();
+    int windowWidth = rootPanel.GetWidth();
+    int windowHeight = rootPanel.GetHeight();
     int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
     int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     cudaLbm->GetDomain()->SetXDimVisible(xDimVisible);
     cudaLbm->GetDomain()->SetYDimVisible(yDimVisible);
@@ -672,9 +670,7 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 
 void Resize(int windowWidth, int windowHeight)
 {
-    float scaleUp = Window.GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, scaleUp);
+    UpdateDomainDimensionsBasedOnWindowSize(Window, g_leftPanelHeight, g_leftPanelWidth);
 
     theMouse.m_winW = windowWidth;
     theMouse.m_winH = windowHeight;
@@ -727,21 +723,23 @@ void UpdateWindowTitle(const int fps, Domain &domain)
 void Draw()
 {
     g_fpsTracker.Tick();
-
+    
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    graphicsManager->UpdateViewTransformations();
+    graphicsManager->UpdateGraphicsInputs();
+
+    Resize(Window.GetWidth(), Window.GetHeight());
+
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
 
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
 
     bool renderFloor = graphicsManager->ShouldRenderFloor();
     Graphics* graphics = graphicsManager->GetGraphics();
     Domain domain = *cudaLbm->GetDomain();
     graphics->RenderVbo(renderFloor, domain);
-
-    // Update transformation matrices in graphics manager for mouse ray casting
-    graphicsManager->UpdateViewTransformations();
-    graphicsManager->UpdateGraphicsInputs();
 
     CheckGLError();
 

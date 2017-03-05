@@ -108,11 +108,7 @@ void Window::Resize(const int width, const int height)
     float scaleUp = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
     int windowWidth = m_windowPanel->GetWidth();
     int windowHeight = m_windowPanel->GetHeight();
-    UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
-        windowWidth, windowHeight, scaleUp);
-
-    //theMouse.m_winW = windowWidth;
-    //theMouse.m_winH = windowHeight;
+    UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, g_leftPanelHeight, g_leftPanelWidth);
 
     RectInt rect = { 200, 100, width, height };
     m_windowPanel->SetSize_Absolute(rect);
@@ -123,9 +119,6 @@ void Window::Resize(const int width, const int height)
     m_windowPanel->UpdateAll();
 
     glViewport(0, 0, windowWidth, windowHeight);
-
-    //UpdateDeviceImage();
-
 }
 void Window::MouseButton(const int button, const int state,
     const int x, const int y)
@@ -166,9 +159,24 @@ void Window::MouseWheel(const int button, const int direction,
 
 void Window::DrawLoop()
 {
+    GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    graphicsManager->UpdateViewTransformations();
+    graphicsManager->UpdateGraphicsInputs();
+
     Resize(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
-    glOrtho(-1, 1, -1, 1, -100, 20);
-    m_windowPanel->DrawAll();
+
+    graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
+
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+    graphicsManager->RunCuda();
+
+    bool renderFloor = graphicsManager->ShouldRenderFloor();
+    Graphics* graphics = graphicsManager->GetGraphics();
+    Domain domain = *cudaLbm->GetDomain();
+    graphics->RenderVbo(renderFloor, domain);
+
+    Draw2D(*m_windowPanel);
 
     glutSwapBuffers();
 }
