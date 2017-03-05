@@ -346,7 +346,7 @@ void GraphicsManager::SetContourMinValue(const float contourMinValue)
 
 void GraphicsManager::SetContourMaxValue(const float contourMaxValue)
 {
-    m_contourMinValue = contourMaxValue;
+    m_contourMaxValue = contourMaxValue;
 }
 
 ContourVariable GraphicsManager::GetContourVar()
