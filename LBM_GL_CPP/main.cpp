@@ -327,7 +327,8 @@ void InitializeButtonCallBack(Panel &rootPanel)
     int* im_d = cudaLbm->GetImage();
 
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    InitializeDomain(dptr, fA_d, im_d, u, g_simDomain);
+    Domain* domain = cudaLbm->GetDomain();
+    InitializeDomain(dptr, fA_d, im_d, u, *domain);
 }
 
 void VelMagButtonCallBack(Panel &rootPanel)
@@ -467,8 +468,10 @@ void DrawShapePreview(Panel &rootPanel)
     float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
         rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
+    int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
     float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
     int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
@@ -477,7 +480,6 @@ void DrawShapePreview(Panel &rootPanel)
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     Obstruction::Shape currentShape = graphicsManager->GetCurrentObstShape();
     glColor3f(0.8f,0.8f,0.8f);
     switch (currentShape)
@@ -588,10 +590,11 @@ void SetUpCUDA(Panel &rootPanel)
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
-    InitializeDomain(dptr, fA_d, im_d, u, g_simDomain);
-    InitializeDomain(dptr, fB_d, im_d, u, g_simDomain);
+    Domain* domain = cudaLbm->GetDomain();
+    InitializeDomain(dptr, fA_d, im_d, u, *domain);
+    InitializeDomain(dptr, fB_d, im_d, u, *domain);
 
-    InitializeFloor(dptr, floor_d, g_simDomain);
+    InitializeFloor(dptr, floor_d, *domain);
 
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
@@ -622,19 +625,20 @@ void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, 
     Obstruction* obst_d = cudaLbm->GetDeviceObst();
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
+    Domain* domain = cudaLbm->GetDomain();
     MarchSolution(fA_d, fB_d, Im_d, obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
-        g_simDomain, paused);
+        *domain, paused);
     UpdateSolutionVbo(dptr, fB_d, Im_d, contourVar, contMin, contMax, viewMode,
-        u, g_simDomain);
+        u, *domain);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d);
 
     if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
     {
-        LightSurface(dptr, obst_d, cameraPosition, g_simDomain);
+        LightSurface(dptr, obst_d, cameraPosition, *domain);
     }
-    LightFloor(dptr, floorTemp_d, obst_d,cameraPosition, g_simDomain);
-    CleanUpDeviceVBO(dptr, g_simDomain);
+    LightFloor(dptr, floorTemp_d, obst_d,cameraPosition, *domain);
+    CleanUpDeviceVBO(dptr, *domain);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, vbo_resource, 0);
@@ -701,8 +705,10 @@ void UpdateDomainDimensionsBasedOnWindowSize(int leftPanelHeight, int leftPanelW
 {
     int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
     int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    g_simDomain.SetXDimVisible(xDimVisible);
-    g_simDomain.SetYDimVisible(yDimVisible);
+    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    cudaLbm->GetDomain()->SetXDimVisible(xDimVisible);
+    cudaLbm->GetDomain()->SetYDimVisible(yDimVisible);
 }
 
 void Resize(int windowWidth, int windowHeight)
@@ -731,6 +737,15 @@ void Resize(int windowWidth, int windowHeight)
 
 }
 
+void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
+{
+    //get simulation inputs
+    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    cudaLbm.SetInletVelocity(u);
+    cudaLbm.SetOmega(omega);
+}
+
 void Draw()
 {
     g_fpsTracker.Tick();
@@ -743,8 +758,10 @@ void Draw()
     int windowHeight = Window.GetHeight();
     Resize(windowWidth, windowHeight);
 
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
+    int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
+
     float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
         - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
     float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
@@ -755,6 +772,8 @@ void Draw()
     float3 rotateTransforms = graphicsManager->GetRotationTransforms();
     float3 cameraPosition = { -xTranslation - translateTransforms.x, 
         -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
+
+
 
     Graphics* graphics = graphicsManager->GetGraphics();
     cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
@@ -837,8 +856,9 @@ void Draw()
     g_fpsTracker.Tock();
     float fps = g_fpsTracker.GetFps();
     char fpsReport[256];
-    int xDim = g_simDomain.GetXDim();
-    int yDim = g_simDomain.GetYDim();
+
+    int xDim = cudaLbm->GetDomain()->GetXDim();
+    int yDim = cudaLbm->GetDomain()->GetYDim();
     sprintf(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);

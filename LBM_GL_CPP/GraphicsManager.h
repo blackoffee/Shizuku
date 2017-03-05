@@ -29,21 +29,30 @@ class CudaLbm
 private:
     int m_maxX;
     int m_maxY;
+    Domain* m_domain;
     float* m_fA_d;
     float* m_fB_d;
     int* m_Im_d;
     float* m_FloorTemp_d;
     Obstruction* m_obst_d;
     Obstruction m_obst_h[MAXOBSTS];
+    float m_inletVelocity;
+    float m_omega;
 public:
     CudaLbm();
     CudaLbm(int maxX, int maxY);
+    Domain* GetDomain();
     float* GetFA();
     float* GetFB();
     int* GetImage();
     float* GetFloorTemp();
     Obstruction* GetDeviceObst();
     Obstruction* GetHostObst();
+    float GetInletVelocity();
+    float GetOmega();
+    void SetInletVelocity(float velocity);
+    void SetOmega(float omega);
+
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
     void DeallocateDeviceMemory();

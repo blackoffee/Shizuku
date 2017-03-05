@@ -61,6 +61,7 @@ Panel* Window::m_currentPanel = NULL;
 int Window::m_previousMouseX = 0;
 int Window::m_previousMouseY = 0;
 int Window::m_currentMouseButton = 0;
+Panel* Window::m_windowPanel = new Panel;
 
 Window::Window()
 {
@@ -69,7 +70,6 @@ Window::Window(const int width, const int height)
 {
 }
 
-Panel* Window::m_windowPanel = new Panel;
 
 Panel* Window::GetWindowPanel()
 {
@@ -105,7 +105,7 @@ void Window::timerEvent(int value)
 
 void Window::Resize(const int width, const int height)
 {
-    float scaleUp = m_windowPanel->GetPanel("Graphics")->m_graphicsManager->GetScaleFactor();
+    float scaleUp = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
     int windowWidth = m_windowPanel->GetWidth();
     int windowHeight = m_windowPanel->GetHeight();
     UpdateDomainDimensionsBasedOnWindowSize(g_leftPanelHeight, g_leftPanelWidth,
@@ -208,11 +208,18 @@ int main(int argc, char **argv)
     int initialWindowWidth = 1200;
     int initialWindowHeight = g_leftPanelHeight+100;
     Window window(initialWindowWidth,initialWindowHeight);
+    Panel* windowPanel = window.GetWindowPanel();
 
-    SetUpWindow(*window.GetWindowPanel());
+    SetUpWindow(*windowPanel);
 
     window.InitializeGLUT(argc, argv);
     window.InitializeGL();
+
+    GraphicsManager* graphicsManager = window.GetWindowPanel()
+        ->GetPanel("Graphics")->GetGraphicsManager();
+    Graphics* graphics = graphicsManager->GetGraphics();
+    SetUpGLInterop(*windowPanel);
+    SetUpCUDA(*windowPanel);
 
     window.Display();
 

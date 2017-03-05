@@ -3,17 +3,20 @@
 #include "kernel.h"
 
 
-extern Domain g_simDomain;
-
-
 CudaLbm::CudaLbm()
 {
+    m_domain = new Domain;
 }
 
 CudaLbm::CudaLbm(int maxX, int maxY)
 {
     m_maxX = maxX;
     m_maxY = maxY;
+}
+
+Domain* CudaLbm::GetDomain()
+{
+    return m_domain;
 }
 
 float* CudaLbm::GetFA()
@@ -44,6 +47,26 @@ Obstruction* CudaLbm::GetDeviceObst()
 Obstruction* CudaLbm::GetHostObst()
 {
     return &m_obst_h[0];
+}
+
+float CudaLbm::GetInletVelocity()
+{
+    return m_inletVelocity;
+}
+
+float CudaLbm::GetOmega()
+{
+    return m_omega;
+}
+
+void CudaLbm::SetInletVelocity(float velocity)
+{
+    m_inletVelocity = velocity;
+}
+
+void CudaLbm::SetOmega(float omega)
+{
+    m_omega = omega;
 }
 
 
@@ -146,8 +169,8 @@ void CudaLbm::UpdateDeviceImage()
 }
 
 int CudaLbm::ImageFcn(const int x, const int y){
-    int xDim = g_simDomain.GetXDim();
-    int yDim = g_simDomain.GetYDim();
+    int xDim = GetDomain()->GetXDim();
+    int yDim = GetDomain()->GetYDim();
     if (x < 0.1f)
         return 3;//west
     else if ((xDim - x) < 1.1f)
@@ -349,8 +372,8 @@ Graphics* GraphicsManager::GetGraphics()
 
 void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
     float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
@@ -367,8 +390,8 @@ void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mous
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, 
     const float xf, const float yf)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();    
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
         std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
@@ -402,8 +425,8 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
     Mouse mouse)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
     int returnVal = 0;
@@ -417,8 +440,9 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 
     float3 selectedCoordF;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+    Domain* domain = GetCudaLbm()->GetDomain();
     int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
-        rayOrigin, rayDir, obst_d, g_simDomain);
+        rayOrigin, rayDir, obst_d, *domain);
     if (rayCastResult == 0)
     {
         m_currentZ = selectedCoordF.z;
@@ -439,7 +463,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 // get simulation coordinates from mouse ray casting on plane on m_currentZ
 void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
 
@@ -454,7 +478,7 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mous
 void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, 
     const int mouseX, const int mouseY)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
@@ -606,8 +630,8 @@ void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 void GraphicsManager::MoveObstruction(const int xi, const int yi,
     const float dxf, const float dyf)
 {
-    int xDimVisible = g_simDomain.GetXDimVisible();
-    int yDimVisible = g_simDomain.GetYDimVisible();
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     if (m_currentObstId > -1)
     {
         if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
