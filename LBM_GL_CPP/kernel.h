@@ -6,19 +6,20 @@
 #include "common.h"
 #include "Domain.h"
 #include "LbmNode.h"
+#include "GraphicsManager.h"
+
+class CudaLbm;
 
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     Domain &simDomain);
 
 void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d);
 
-void MarchSolution(float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-    const float uMax, const float omega, const int tStep, Domain &simDomain,
-    const bool paused);
+void MarchSolution(CudaLbm* cudaLbm);
 
-void UpdateSolutionVbo(float4* vis, float* f_d, int* im_d, 
+void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, 
     const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float uMax, Domain &simDomain);
+    const ViewMode viewMode);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst);

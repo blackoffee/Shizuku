@@ -1,12 +1,14 @@
 #include "GraphicsManager.h"
 #include "Mouse.h"
 #include "kernel.h"
+#include "main.h"
 
 
 CudaLbm::CudaLbm()
 {
     m_domain = new Domain;
     m_isPaused = false;
+    m_timeStepsPerFrame = TIMESTEPS_PER_FRAME / 2;
 }
 
 CudaLbm::CudaLbm(int maxX, int maxY)
@@ -79,6 +81,17 @@ bool CudaLbm::IsPaused()
 {
     return m_isPaused;
 }
+
+int CudaLbm::GetTimeStepsPerFrame()
+{
+    return m_timeStepsPerFrame;
+}
+
+void CudaLbm::SetTimeStepsPerFrame(const int timeSteps)
+{
+    m_timeStepsPerFrame = timeSteps;
+}
+
 
 
 void CudaLbm::AllocateDeviceMemory()
@@ -289,6 +302,33 @@ GLuint Graphics::GetVbo()
     return m_vbo;
 }
 
+void Graphics::RenderVbo(bool renderFloor, Domain &domain)
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    //Draw solution field
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    glVertexPointer(3, GL_FLOAT, 16, 0);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glColor3f(1.0, 0.0, 0.0);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+    int yDimVisible = domain.GetYDimVisible();
+    if (renderFloor)
+    {
+        //Draw floor
+        glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
+            BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+    }
+    //Draw water surface
+    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
 
 
 GraphicsManager::GraphicsManager(Panel* panel)
@@ -398,6 +438,101 @@ CudaLbm* GraphicsManager::GetCudaLbm()
 Graphics* GraphicsManager::GetGraphics()
 {
     return m_graphics;
+}
+
+void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth)
+{
+    Panel* rootPanel = m_parent->GetRootPanel();
+    float scaleUp = rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    SetScaleFactor(scaleUp);
+
+    int windowWidth = rootPanel->GetWidth();
+    int windowHeight = rootPanel->GetHeight();
+    Resize(windowWidth, windowHeight);
+
+    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
+
+    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
+        - static_cast<float>(leftPanelWidth)) / windowWidth*2.f;
+    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
+        / windowHeight*2.f;
+
+    //get view transformations
+    float3 cameraPosition = { m_translate_x, 
+        m_translate_y, - m_translate_z };
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glTranslatef(xTranslation,yTranslation,0.f);
+    glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
+        (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
+
+
+    if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
+    {
+        glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
+    }
+    else
+    {
+        gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
+        glTranslatef(m_translate_x, m_translate_y, -2+m_translate_z);
+        glRotatef(-m_rotate_x,1,0,0);
+        glRotatef(m_rotate_z,0,0,1);
+    }
+}
+
+void GraphicsManager::RunCuda()
+{
+    // map OpenGL buffer object for writing from CUDA
+    CudaLbm* cudaLbm = GetCudaLbm();
+    Graphics* graphics = GetGraphics();
+    cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
+    Panel* rootPanel = m_parent->GetRootPanel();
+
+    float4 *dptr;
+
+    cudaGraphicsMapResources(1, &vbo_resource, 0);
+    size_t num_bytes;
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
+
+    UpdateLbmInputs(*cudaLbm, *rootPanel);
+    float u = cudaLbm->GetInletVelocity();
+    float omega = cudaLbm->GetOmega();
+
+    float* floorTemp_d = cudaLbm->GetFloorTemp();
+    Obstruction* obst_d = cudaLbm->GetDeviceObst();
+    Obstruction* obst_h = cudaLbm->GetHostObst();
+
+    Domain* domain = cudaLbm->GetDomain();
+    MarchSolution(cudaLbm);
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
+ 
+    SetObstructionVelocitiesToZero(obst_h, obst_d);
+    float3 cameraPosition = { m_translate_x, 
+        m_translate_y, - m_translate_z };
+
+    if (ShouldRenderFloor())
+    {
+        LightSurface(dptr, obst_d, cameraPosition, *domain);
+    }
+    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
+    CleanUpDeviceVBO(dptr, *domain);
+
+    // unmap buffer object
+    cudaGraphicsUnmapResources(1, &vbo_resource, 0);
+
+}
+
+bool GraphicsManager::ShouldRenderFloor()
+{
+    if (m_viewMode == ViewMode::THREE_DIMENSIONAL || m_contourVar == ContourVariable::WATER_RENDERING)
+    {
+        return true;
+    }
+    return false;
 }
 
 
@@ -803,6 +938,15 @@ void GraphicsManager::UpdateViewTransformations()
     glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
     glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
 }
+
+void GraphicsManager::UpdateGraphicsInputs()
+{
+    Panel* rootPanel = m_parent->GetRootPanel();
+    m_contourMinValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar1->GetValue();
+    m_contourMaxValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar2->GetValue();
+    m_currentObstSize = rootPanel->GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+}
+
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,
     const float x2, const float y2)

@@ -45,3 +45,5 @@ FW_API void UpdateGraphicsInputs(GraphicsManager &graphicsManager, Panel &rootPa
 FW_API void SetUpGLInterop(Panel &rootPanel);
 FW_API void CleanUpGLInterop(Panel &rootPanel);
 FW_API void SetUpCUDA(Panel &rootPanel);
+
+void Resize(int width, int height);

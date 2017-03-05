@@ -780,37 +780,45 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
 }
 
 
-void MarchSolution(float* fA_d, float* fB_d, int* im_d, Obstruction* obst_d,
-    const float uMax, const float omega, const int tStep, Domain &simDomain,
-    const bool paused)
+void MarchSolution(CudaLbm* cudaLbm)
 {
-    int xDim = simDomain.GetXDim();
-    int yDim = simDomain.GetYDim();
+    Domain* simDomain = cudaLbm->GetDomain();
+    int xDim = simDomain->GetXDim();
+    int yDim = simDomain->GetYDim();
+    int tStep = cudaLbm->GetTimeStepsPerFrame();
+    float* fA_d = cudaLbm->GetFA();
+    float* fB_d = cudaLbm->GetFB();
+    int* im_d = cudaLbm->GetImage();
+    Obstruction* obst_d = cudaLbm->GetDeviceObst();
+    float u = cudaLbm->GetInletVelocity();
+    float omega = cudaLbm->GetOmega();
+
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-
     for (int i = 0; i < tStep; i++)
     {
-        MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, uMax, simDomain);
-        if (!paused)
+        MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, u, *simDomain);
+        if (!cudaLbm->IsPaused())
         {
-            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, uMax, simDomain);
+            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
         }
     }
 }
 
-void UpdateSolutionVbo(float4* vis, float* f_d, int* im_d,
-    const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float uMax,
-    Domain &simDomain)
+void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable contVar,
+    const float contMin, const float contMax, const ViewMode viewMode)
 {
-    int xDim = simDomain.GetXDim();
-    int yDim = simDomain.GetYDim();
+    Domain* simDomain = cudaLbm->GetDomain();
+    int xDim = simDomain->GetXDim();
+    int yDim = simDomain->GetYDim();
+    float* f_d = cudaLbm->GetFA();
+    int* im_d = cudaLbm->GetImage();
+    float u = cudaLbm->GetInletVelocity();
+
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
-        viewMode, uMax, simDomain);
+        viewMode, u, *simDomain);
 }
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,

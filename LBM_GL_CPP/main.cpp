@@ -21,7 +21,6 @@
 #include "Domain.h"
 #include "FpsTracker.h"
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
@@ -600,60 +599,14 @@ void SetUpCUDA(Panel &rootPanel)
 
 }
 
-void RunCuda(struct cudaGraphicsResource **vbo_resource, float3 cameraPosition, Panel &rootPanel)
+void Draw2D(Panel &rootPanel)
 {
-    // map OpenGL buffer object for writing from CUDA
-    float4 *dptr;
-    cudaGraphicsMapResources(1, vbo_resource, 0);
-    size_t num_bytes;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, *vbo_resource);
-
-    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-
-    UpdateLbmInputs(*cudaLbm, rootPanel);
-    float u = cudaLbm->GetInletVelocity();
-    float omega = cudaLbm->GetOmega();
-
-    UpdateGraphicsInputs(*graphicsManager, rootPanel);
-    float contMin = graphicsManager->GetContourMinValue();// GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
-    float contMax = graphicsManager->GetContourMaxValue();//GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
-    bool paused = cudaLbm->IsPaused();
-    ContourVariable contourVar = graphicsManager->GetContourVar();
-    ViewMode viewMode = graphicsManager->GetViewMode();
-
-    float* fA_d = cudaLbm->GetFA();
-    float* fB_d = cudaLbm->GetFB();
-    float* floorTemp_d = cudaLbm->GetFloorTemp();
-    int* Im_d = cudaLbm->GetImage();
-    Obstruction* obst_d = cudaLbm->GetDeviceObst();
-    Obstruction* obst_h = cudaLbm->GetHostObst();
-
-    Domain* domain = cudaLbm->GetDomain();
-    MarchSolution(fA_d, fB_d, Im_d, obst_d, u, omega, TIMESTEPS_PER_FRAME/2, 
-        *domain, paused);
-    UpdateSolutionVbo(dptr, fB_d, Im_d, contourVar, contMin, contMax, viewMode,
-        u, *domain);
- 
-    SetObstructionVelocitiesToZero(obst_h, obst_d);
-
-    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
-    {
-        LightSurface(dptr, obst_d, cameraPosition, *domain);
-    }
-    LightFloor(dptr, floorTemp_d, obst_d,cameraPosition, *domain);
-    CleanUpDeviceVBO(dptr, *domain);
-
-    // unmap buffer object
-    cudaGraphicsUnmapResources(1, vbo_resource, 0);
-
-}
-
-
-void Draw2D()
-{
-    Window.DrawAll();
-    DrawShapePreview(Window);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-1,1,-1,1,-100,20);
+    rootPanel.DrawAll();
+    DrawShapePreview(rootPanel);
 }
 
 
@@ -748,144 +701,58 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
     //get simulation inputs
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     float omega = rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
-    bool paused = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->IsPaused();
     cudaLbm.SetInletVelocity(u);
     cudaLbm.SetOmega(omega);
-    cudaLbm.SetPausedState(paused);
 }
 
-void UpdateGraphicsInputs(GraphicsManager &graphicsManager, Panel &rootPanel)
+void CheckGLError()
 {
-    float contMin = GetCurrentContourSlider(rootPanel)->m_sliderBar1->GetValue();
-    float contMax = GetCurrentContourSlider(rootPanel)->m_sliderBar2->GetValue();
-    ContourVariable contourVar = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetContourVar();
-    ViewMode viewMode = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetViewMode();
-    graphicsManager.SetContourMinValue(contMin);
-    graphicsManager.SetContourMaxValue(contMax);
-    graphicsManager.SetContourVar(contourVar);
-    graphicsManager.SetViewMode(viewMode);
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
 }
 
+void UpdateWindowTitle(const int fps, Domain &domain)
+{
+    char fpsReport[256];
+    int xDim = domain.GetXDim();
+    int yDim = domain.GetYDim();
+    sprintf(fpsReport, 
+        "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
+        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
+    glutSetWindowTitle(fpsReport);
+}
 
 void Draw()
 {
     g_fpsTracker.Tick();
 
-    float scaleUp = Window.GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-    GraphicsManager *graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
-    graphicsManager->SetScaleFactor(scaleUp);
-
-    int windowWidth = Window.GetWidth();
-    int windowHeight = Window.GetHeight();
-    Resize(windowWidth, windowHeight);
-
+    GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
-    int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
+    graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
 
-    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
-        - static_cast<float>(g_leftPanelWidth)) / windowWidth*2.f;
-    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
-        / windowHeight*2.f;
+    graphicsManager->RunCuda();
 
-    //get view transformations
-    float3 translateTransforms = graphicsManager->GetTranslationTransforms();
-    float3 rotateTransforms = graphicsManager->GetRotationTransforms();
-    float3 cameraPosition = { -xTranslation - translateTransforms.x, 
-        -yTranslation - translateTransforms.y, +2 - translateTransforms.z };
-
-
-
+    bool renderFloor = graphicsManager->ShouldRenderFloor();
     Graphics* graphics = graphicsManager->GetGraphics();
-    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
-    RunCuda(&cudaSolutionField, cameraPosition, Window);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
-        (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
-
-    ViewMode viewMode = graphicsManager->GetViewMode();
-    if (viewMode == ViewMode::TWO_DIMENSIONAL)
-    {
-        glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
-    }
-    else
-    {
-        gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
-        glTranslatef(translateTransforms.x, translateTransforms.y, -2+translateTransforms.z);
-        glRotatef(-rotateTransforms.x,1,0,0);
-        glRotatef(rotateTransforms.z,0,0,1);
-    }
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    //Draw solution field
-    GLuint vbo = graphics->GetVbo();
-    GLuint elementArrayBuffer = graphics->GetElementArrayBuffer();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBuffer);
-    glVertexPointer(3, GL_FLOAT, 16, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glColor3f(1.0, 0.0, 0.0);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-    ContourVariable contourVar = graphicsManager->GetContourVar();
-    if (viewMode == ViewMode::THREE_DIMENSIONAL || contourVar == ContourVariable::WATER_RENDERING)
-    {
-        //Draw floor
-        glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
-            BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
-    }
-    //Draw water surface
-    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cout << "OpenGL error: " << err << std::endl;
-    }
-
+    Domain domain = *cudaLbm->GetDomain();
+    graphics->RenderVbo(renderFloor, domain);
 
     // Update transformation matrices in graphics manager for mouse ray casting
     graphicsManager->UpdateViewTransformations();
-    // Update Obstruction size based on current slider value
-    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    graphicsManager->SetCurrentObstSize(currentObstSize);
+    graphicsManager->UpdateGraphicsInputs();
 
+    CheckGLError();
 
-    glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-1,1,-1,1,-100,20);
-
-    Draw2D();
+    Draw2D(Window);
 
     glutSwapBuffers();
 
     //Compute and display FPS
     g_fpsTracker.Tock();
     float fps = g_fpsTracker.GetFps();
-    char fpsReport[256];
-
-    int xDim = cudaLbm->GetDomain()->GetXDim();
-    int yDim = cudaLbm->GetDomain()->GetYDim();
-    sprintf(fpsReport, 
-        "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
-    glutSetWindowTitle(fpsReport);
-
-
+    UpdateWindowTitle(fps, domain);
 }
 
 int main(int argc,char **argv)

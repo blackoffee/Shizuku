@@ -13,6 +13,7 @@
 
 #include "Common.h"
 #include "kernel.h"
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
 #ifdef LBM_GL_CPP_EXPORTS  
@@ -39,6 +40,7 @@ private:
     float m_inletVelocity;
     float m_omega;
     bool m_isPaused;
+    int m_timeStepsPerFrame;
 public:
     CudaLbm();
     CudaLbm(int maxX, int maxY);
@@ -55,6 +57,8 @@ public:
     void SetOmega(float omega);
     void SetPausedState(bool isPaused);
     bool IsPaused();
+    int GetTimeStepsPerFrame();
+    void SetTimeStepsPerFrame(const int timeSteps);
 
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
@@ -85,6 +89,8 @@ public:
     void DeleteElementArrayBuffer();
     void SetUpGLInterOp(unsigned int size);
     void CleanUpGLInterOp();
+
+    void RenderVbo(bool renderFloor, Domain &domain);
 };
 
 
@@ -150,14 +156,18 @@ public:
     FW_API CudaLbm* GetCudaLbm();
     FW_API Graphics* GetGraphics();
 
-    FW_API void ClickDown(Mouse mouse);
+    FW_API void CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth);
+    FW_API void RunCuda();
+    FW_API bool ShouldRenderFloor();
 
+    FW_API void ClickDown(Mouse mouse);
 
     FW_API void Drag(const int xi, const int yi, const float dxf, const float dyf,
         const int button);
     FW_API void Wheel(const int button, const int dir, const int x, const int y);
    
     FW_API void UpdateViewTransformations();
+    FW_API void UpdateGraphicsInputs();
 
     FW_API void GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse);
     FW_API void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
