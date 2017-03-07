@@ -730,6 +730,13 @@ void GraphicsManager::Drag(const int xi, const int yi, const float dxf,
     }
 }
 
+void GraphicsManager::Pan(const float dx, const float dy)
+{
+    m_translate_x += dx;
+    m_translate_y += dy;
+}
+
+
 void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
 {
     if (dir > 0){

@@ -16,26 +16,96 @@ const int g_leftPanelHeight(500);
 
 class Command
 {
+    Panel* m_rootPanel;
 public:
+    enum State {ACTIVE, UNACTIVE};
+    State m_state;
     Command();
-
     void Start();
     void Track();
     void End();
+    void Initialize(Panel &rootPanel);
+    Panel* GetRootPanel();
+    GraphicsManager* GetGraphicsManager();
 };
 
 Command::Command()
 {
 }
 
+void Command::Initialize(Panel &rootPanel)
+{
+    m_rootPanel = &rootPanel;
+}
+
+Panel* Command::GetRootPanel()
+{
+    return m_rootPanel;
+}
+
+GraphicsManager* Command::GetGraphicsManager()
+{
+    return m_rootPanel->GetPanel("Graphics")->GetGraphicsManager();
+}
+
+
 class Window;
 
-class Zoom
+class Zoom : public Command
 {
 public:
     Zoom();
     void Start(Panel &rootPanel, const int dir, const float mag);
 };
+
+Zoom::Zoom()
+{
+}
+
+void Zoom::Start(Panel &rootPanel, const int dir, const float mag)
+{
+    GetGraphicsManager()->Zoom(dir, mag);
+}
+
+
+class Pan : public Command
+{
+    float m_initialX;
+    float m_initialY;
+public:
+    Pan();
+    void Start(const float initialX, const float initialY);
+    void Track(const float currentX, const float currentY);
+    void End();
+};
+
+Pan::Pan()
+{
+    m_state = UNACTIVE;
+}
+
+void Pan::Start(const float initialX, const float initialY)
+{
+    m_state = ACTIVE;
+    m_initialX = initialX;
+    m_initialY = initialY;
+}
+
+void Pan::Track(const float currentX, const float currentY)
+{
+    float dx = currentX - m_initialX;
+    float dy = currentY - m_initialY;
+    if (m_state == ACTIVE)
+    {
+        GetGraphicsManager()->Pan(dx, dy);
+    }
+}
+
+void Pan::End()
+{
+    m_state = UNACTIVE;
+}
+
 
 class Window
 {
@@ -46,6 +116,7 @@ private:
     static int m_previousMouseY;
     static int m_currentMouseButton;
     static Zoom m_zoom;
+    static Pan m_pan;
 public:
     Window();
     Window(const int width, const int height);
@@ -77,22 +148,19 @@ int Window::m_previousMouseY = 0;
 int Window::m_currentMouseButton = 0;
 Panel* Window::m_windowPanel = new Panel;
 Zoom Window::m_zoom = Zoom();
+Pan Window::m_pan = Pan();
 
-Zoom::Zoom()
-{
-}
 
-void Zoom::Start(Panel &rootPanel, const int dir, const float mag)
-{
-    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    graphicsManager->Zoom(dir, mag);
-}
 
 Window::Window()
 {
+    m_zoom.Initialize(*m_windowPanel);
+    m_pan.Initialize(*m_windowPanel);
 }
 Window::Window(const int width, const int height)
 {
+    m_zoom.Initialize(*m_windowPanel);
+    m_pan.Initialize(*m_windowPanel);
 }
 
 
@@ -151,25 +219,52 @@ void Window::MouseButton(const int button, const int state,
     int windowHeight = m_windowPanel->GetHeight();
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(windowHeight-y);
-    Window::m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-    std::cout << Window::m_currentPanel->GetName();
+    m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
+//    std::cout << Window::m_currentPanel->GetName();
 
-    Window::m_currentPanel->ClickDown();
-    m_currentMouseButton = button;
-    m_previousMouseX = x;
-    m_previousMouseY = y;
-}
-void Window::MouseMotion(const int x, const int y)
-{
-    float dx = GetFloatCoordX(x) - GetFloatCoordX(m_previousMouseX);
-    float dy = GetFloatCoordY(y) - GetFloatCoordY(m_previousMouseY);
+//    Window::m_currentPanel->ClickDown();
+//    m_currentMouseButton = button;
+//    m_previousMouseX = x;
+//    m_previousMouseY = y;
 
     if (m_currentPanel != NULL)
     {
-        m_currentPanel->Drag(x, y, dx, -dy, m_currentMouseButton);
+        if (m_currentPanel->GetGraphicsManager() != NULL)
+        {
+            if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+            {
+                m_pan.Start(xf, yf);
+            }
+            else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_UP)
+            {
+                m_pan.End();
+            }
+        }
     }
-    m_previousMouseX = x;
-    m_previousMouseY = y;
+
+}
+void Window::MouseMotion(const int x, const int y)
+{
+    int windowHeight = m_windowPanel->GetHeight();
+    float xf = GetFloatCoordX(x);
+    float yf = GetFloatCoordY(windowHeight-y);
+
+//    if (m_currentPanel != NULL)
+//    {
+//        m_currentPanel->Drag(x, y, dx, -dy, m_currentMouseButton);
+//    }
+//    m_previousMouseX = x;
+//    m_previousMouseY = y;
+
+    if (m_currentPanel != NULL)
+    {
+        if (m_currentPanel->GetGraphicsManager() != NULL)
+        {
+            m_pan.Track(xf, yf);
+        }
+    }
+
+
 }
 void Window::Keyboard(const unsigned char key,
     const int /*x*/, const int /*y*/)

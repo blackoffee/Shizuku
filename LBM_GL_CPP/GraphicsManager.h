@@ -163,6 +163,7 @@ public:
         const int button);
     FW_API void Wheel(const int button, const int dir, const int x, const int y);
     FW_API void Zoom(const int dir, const float mag);
+    FW_API void Pan(const float dx, const float dy);
    
     FW_API void UpdateViewTransformations();
     FW_API void UpdateGraphicsInputs();
