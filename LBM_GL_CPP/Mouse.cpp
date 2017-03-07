@@ -87,14 +87,3 @@ void Mouse::Wheel(int button, int dir, int x, int y)
         return;
     }
 }
-
-
-float intCoordToFloatCoord(int x, int xDim)
-{
-    return (static_cast<float> (x) / xDim)*2.f - 1.f;
-}
-
-int floatCoordToIntCoord(float x, int xDim)
-{
-    return static_cast<int> ((x+1.f)/2.f*xDim);
-}

@@ -912,11 +912,13 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
     return panelThatPointIsIn;
 }
 
-
-void test()
+float intCoordToFloatCoord(const int x, const int xDim)
 {
-    std::cout<<"Hello";
+    return (static_cast<float> (x) / xDim)*2.f - 1.f;
 }
 
-
+int floatCoordToIntCoord(const float x, const int xDim)
+{
+    return static_cast<int> ((x+1.f)/2.f*xDim);
+}
 

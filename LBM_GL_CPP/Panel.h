@@ -211,4 +211,8 @@ public:
     FW_API Button* GetCurrentEnabledButton();
 };
 
+
+FW_API float intCoordToFloatCoord(const int x, const int xDim);
+FW_API int floatCoordToIntCoord(const float x, const int xDim);
+
 FW_API Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y);

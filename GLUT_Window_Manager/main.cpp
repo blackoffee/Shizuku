@@ -24,14 +24,28 @@ public:
     void End();
 };
 
+Command::Command()
+{
+}
+
+class Window;
+
+class Zoom
+{
+public:
+    Zoom();
+    void Start(Panel &rootPanel, const int dir, const float mag);
+};
 
 class Window
 {
+private:
     static Panel* m_windowPanel;
     static Panel* m_currentPanel;
     static int m_previousMouseX;
     static int m_previousMouseY;
     static int m_currentMouseButton;
+    static Zoom m_zoom;
 public:
     Window();
     Window(const int width, const int height);
@@ -62,6 +76,17 @@ int Window::m_previousMouseX = 0;
 int Window::m_previousMouseY = 0;
 int Window::m_currentMouseButton = 0;
 Panel* Window::m_windowPanel = new Panel;
+Zoom Window::m_zoom = Zoom();
+
+Zoom::Zoom()
+{
+}
+
+void Zoom::Start(Panel &rootPanel, const int dir, const float mag)
+{
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    graphicsManager->Zoom(dir, mag);
+}
 
 Window::Window()
 {
@@ -154,7 +179,13 @@ void Window::Keyboard(const unsigned char key,
 void Window::MouseWheel(const int button, const int direction,
     const int x, const int y)
 {
-
+    float xf = intCoordToFloatCoord(x, m_windowPanel->GetWidth());
+    float yf = intCoordToFloatCoord(y, m_windowPanel->GetHeight());
+    Panel* panel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
+    if (panel->GetGraphicsManager() != NULL)
+    {
+        m_zoom.Start(*m_windowPanel, direction, 0.3f);
+    }
 }
 
 void Window::DrawLoop()

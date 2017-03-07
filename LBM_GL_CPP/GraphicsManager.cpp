@@ -741,6 +741,18 @@ void GraphicsManager::Wheel(const int button, const int dir, const int x, const 
     }
 }
 
+void GraphicsManager::Zoom(const int dir, const float mag)
+{
+    if (dir > 0){
+        m_translate_z -= mag;
+    }
+    else
+    {
+        m_translate_z += mag;
+    }   
+}
+
+
 void GraphicsManager::AddObstruction(Mouse mouse)
 {
     int xi, yi;

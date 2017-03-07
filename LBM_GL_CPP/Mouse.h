@@ -33,8 +33,4 @@ public:
 
     void Wheel(int button, int dir, int x, int y);
 };
-
-float intCoordToFloatCoord(int x, int xDim);
-int floatCoordToIntCoord(float x, int xDim);
-
 #endif

@@ -162,6 +162,7 @@ public:
     FW_API void Drag(const int xi, const int yi, const float dxf, const float dyf,
         const int button);
     FW_API void Wheel(const int button, const int dir, const int x, const int y);
+    FW_API void Zoom(const int dir, const float mag);
    
     FW_API void UpdateViewTransformations();
     FW_API void UpdateGraphicsInputs();
