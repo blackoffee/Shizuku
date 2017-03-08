@@ -552,8 +552,8 @@ void DrawShapePreview(Panel &rootPanel)
  *	GL Interop Functions
  */
 
-    glGenVertexArrays(1, &g_vaoSolutionField);
-    glBindVertexArray(g_vaoSolutionField);
+//    glGenVertexArrays(1, &g_vaoSolutionField);
+//    glBindVertexArray(g_vaoSolutionField);
 
 
 void SetUpGLInterop(Panel &rootPanel)
@@ -728,33 +728,6 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
 
 
 
-    //// Compute shader
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
-
-    g_computeShader.Use();
-
-    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
-    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
-    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
-    glUniform1i(maxXDimLocation, MAX_XDIM);
-    glUniform1i(xDimVisibleLocation, xDimVisible);
-    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
-        "PhongLighting");
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
-
-    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    g_computeShader.Unset();
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    
-
-
-
 
 
 
@@ -789,6 +762,37 @@ void Draw()
     Resize(Window.GetWidth(), Window.GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
+
+
+//    //// Compute shader
+
+//    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
+
+//    g_computeShader.Use();
+
+//    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
+//    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
+//    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
+//    glUniform1i(maxXDimLocation, MAX_XDIM);
+//    glUniform1i(xDimVisibleLocation, xDimVisible);
+//    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+//    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
+//        "PhongLighting");
+//    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
+
+//    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
+//    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+//    g_computeShader.Unset();
+
+//    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+
+
+
+
+
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
