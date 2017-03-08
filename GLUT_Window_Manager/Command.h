@@ -58,3 +58,15 @@ public:
     void End(Button* button);
 };
 
+class SliderDrag : public Command
+{
+    float m_initialX;
+    float m_initialY;
+    SliderBar* m_sliderBar;
+public:
+    SliderDrag();
+    void Start(SliderBar* sliderBar, const float currentX, const float currentY);
+    void Track(const float currentX, const float currentY);
+    void End();
+};
+

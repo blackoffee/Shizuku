@@ -11,6 +11,7 @@ Zoom Window::m_zoom = Zoom();
 Pan Window::m_pan = Pan();
 Rotate Window::m_rotate = Rotate();
 ButtonPress Window::m_buttonPress = ButtonPress();
+SliderDrag Window::m_sliderDrag = SliderDrag();
 
 Window::Window()
 {
@@ -103,6 +104,7 @@ void Window::MouseButton(const int button, const int state,
         {
             m_pan.End();
             m_rotate.End();
+            m_sliderDrag.End();
         }
     }
     else
@@ -122,6 +124,15 @@ void Window::MouseButton(const int button, const int state,
         }
         else if (panelType == "class SliderBar")
         {
+            SliderBar* sliderBar = dynamic_cast<SliderBar*>(m_currentPanel);
+            if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+            {
+                m_sliderDrag.Start(sliderBar, xf, yf);
+            }
+            else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+            {
+                m_sliderDrag.End();
+            }
         }
     }
 
@@ -131,14 +142,18 @@ void Window::MouseMotion(const int x, const int y)
     int windowHeight = m_windowPanel->GetHeight();
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(windowHeight-y);
-
-    if (m_currentPanel != NULL)
+    if (m_currentPanel == NULL)
     {
-        if (m_currentPanel->GetGraphicsManager() != NULL)
-        {
-            m_pan.Track(xf, yf);
-            m_rotate.Track(xf, yf);
-        }
+        return;
+    }
+    if (m_currentPanel->GetGraphicsManager() != NULL)
+    {
+        m_pan.Track(xf, yf);
+        m_rotate.Track(xf, yf);
+    }
+    else
+    {
+        m_sliderDrag.Track(xf, yf);
     }
 
 
