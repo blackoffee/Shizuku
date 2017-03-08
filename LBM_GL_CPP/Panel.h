@@ -90,6 +90,7 @@ public:
     FW_API GraphicsManager* GetGraphicsManager();
 
     FW_API void SetCallback(void(*callback)(Panel &rootPanel));
+    FW_API void Callback();
     
     FW_API void SetBackgroundColor(Color color);
     FW_API void SetForegroundColor(Color color);

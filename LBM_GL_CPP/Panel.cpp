@@ -381,6 +381,14 @@ void Panel::SetCallback(void(*callback)(Panel &rootPanel))
     m_callback = callback;
 }
 
+void Panel::Callback()
+{
+    if (m_callback != NULL)
+    {
+        m_callback(*GetRootPanel());
+    }
+}
+
 void Panel::SetBackgroundColor(Color color)
 {
     m_backgroundColor = color;

@@ -1,4 +1,5 @@
 #pragma once
+#include <typeinfo>
 #include "main.h"
 #include "command.h"
 
@@ -13,6 +14,7 @@ private:
     static Zoom m_zoom;
     static Pan m_pan;
     static Rotate m_rotate;
+    static ButtonPress m_buttonPress;
     static int m_leftPanelWidth;
     static int m_leftPanelHeight;
 public:

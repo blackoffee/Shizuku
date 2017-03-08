@@ -21,7 +21,7 @@ class Zoom : public Command
 {
 public:
     Zoom();
-    void Start(Panel &rootPanel, const int dir, const float mag);
+    void Start(const int dir, const float mag);
 };
 
 
@@ -47,3 +47,14 @@ public:
     void Track(const float currentX, const float currentY);
     void End();
 };
+
+
+class ButtonPress : public Command
+{
+    Button* m_button;
+public:
+    ButtonPress();
+    void Start(Button* button);
+    void End(Button* button);
+};
+

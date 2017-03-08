@@ -10,6 +10,7 @@ Panel* Window::m_windowPanel = new Panel;
 Zoom Window::m_zoom = Zoom();
 Pan Window::m_pan = Pan();
 Rotate Window::m_rotate = Rotate();
+ButtonPress Window::m_buttonPress = ButtonPress();
 
 Window::Window()
 {
@@ -74,6 +75,7 @@ void Window::Resize(const int width, const int height)
 
     glViewport(0, 0, windowWidth, windowHeight);
 }
+
 void Window::MouseButton(const int button, const int state,
     const int x, const int y)
 {
@@ -82,24 +84,44 @@ void Window::MouseButton(const int button, const int state,
     float yf = GetFloatCoordY(windowHeight-y);
     m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
     int mod = glutGetModifiers();
-    if (m_currentPanel != NULL)
+    if (m_currentPanel == NULL)
     {
-        if (m_currentPanel->GetGraphicsManager() != NULL)
+        return;
+    }
+    if (m_currentPanel->GetGraphicsManager() != NULL)
+    {
+        if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN
+            && mod == GLUT_ACTIVE_CTRL)
         {
-            if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN
-                && mod == GLUT_ACTIVE_CTRL)
+            m_pan.Start(xf, yf);
+        }
+        else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+        {
+            m_rotate.Start(xf, yf);
+        }
+        else
+        {
+            m_pan.End();
+            m_rotate.End();
+        }
+    }
+    else
+    {
+        std::string panelType = typeid(*m_currentPanel).name();
+        if (panelType == "class Button")
+        {
+            Button* buttonPanel = dynamic_cast<Button*>(m_currentPanel);
+            if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
             {
-                m_pan.Start(xf, yf);
+                m_buttonPress.Start(buttonPanel);
             }
-            else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+            else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
             {
-                m_rotate.Start(xf, yf);
+                m_buttonPress.End(buttonPanel);
             }
-            else
-            {
-                m_pan.End();
-                m_rotate.End();
-            }
+        }
+        else if (panelType == "class SliderBar")
+        {
         }
     }
 
@@ -134,7 +156,7 @@ void Window::MouseWheel(const int button, const int direction,
     Panel* panel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
     if (panel->GetGraphicsManager() != NULL)
     {
-        m_zoom.Start(*m_windowPanel, direction, 0.3f);
+        m_zoom.Start(direction, 0.3f);
     }
 }
 

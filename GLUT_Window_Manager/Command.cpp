@@ -23,7 +23,7 @@ Zoom::Zoom()
 {
 }
 
-void Zoom::Start(Panel &rootPanel, const int dir, const float mag)
+void Zoom::Start(const int dir, const float mag)
 {
     GetGraphicsManager()->Zoom(dir, mag);
 }
@@ -89,3 +89,22 @@ void Rotate::End()
     m_state = UNACTIVE;
 }
 
+ButtonPress::ButtonPress()
+{
+    m_state = UNACTIVE;
+}
+
+void ButtonPress::Start(Button* button)
+{
+    m_button = button;
+    m_state = ACTIVE;
+}
+
+void ButtonPress::End(Button* button)
+{
+    if (m_button == button)
+    {
+        m_button->Callback();
+    }
+    m_state = UNACTIVE;
+}
