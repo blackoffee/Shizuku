@@ -736,6 +736,11 @@ void GraphicsManager::Pan(const float dx, const float dy)
     m_translate_y += dy;
 }
 
+void GraphicsManager::Rotate(const float dx, const float dy)
+{
+    m_rotate_x += dy;
+    m_rotate_z += dx;
+}
 
 void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
 {

@@ -99,9 +99,51 @@ void Pan::Track(const float currentX, const float currentY)
     {
         GetGraphicsManager()->Pan(dx, dy);
     }
+    m_initialX = currentX;
+    m_initialY = currentY;
 }
 
 void Pan::End()
+{
+    m_state = UNACTIVE;
+}
+
+class Rotate : public Command
+{
+    float m_initialX;
+    float m_initialY;
+public:
+    Rotate();
+    void Start(const float initialX, const float initialY);
+    void Track(const float currentX, const float currentY);
+    void End();
+};
+
+Rotate::Rotate()
+{
+    m_state = UNACTIVE;
+}
+
+void Rotate::Start(const float initialX, const float initialY)
+{
+    m_state = ACTIVE;
+    m_initialX = initialX;
+    m_initialY = initialY;
+}
+
+void Rotate::Track(const float currentX, const float currentY)
+{
+    float dx = (currentX - m_initialX)*45.f;
+    float dy = (currentY - m_initialY)*45.f;
+    if (m_state == ACTIVE)
+    {
+        GetGraphicsManager()->Rotate(dx, dy);
+    }
+    m_initialX = currentX;
+    m_initialY = currentY;
+}
+
+void Rotate::End()
 {
     m_state = UNACTIVE;
 }
@@ -117,6 +159,7 @@ private:
     static int m_currentMouseButton;
     static Zoom m_zoom;
     static Pan m_pan;
+    static Rotate m_rotate;
 public:
     Window();
     Window(const int width, const int height);
@@ -149,6 +192,7 @@ int Window::m_currentMouseButton = 0;
 Panel* Window::m_windowPanel = new Panel;
 Zoom Window::m_zoom = Zoom();
 Pan Window::m_pan = Pan();
+Rotate Window::m_rotate = Rotate();
 
 
 
@@ -156,11 +200,13 @@ Window::Window()
 {
     m_zoom.Initialize(*m_windowPanel);
     m_pan.Initialize(*m_windowPanel);
+    m_rotate.Initialize(*m_windowPanel);
 }
 Window::Window(const int width, const int height)
 {
     m_zoom.Initialize(*m_windowPanel);
     m_pan.Initialize(*m_windowPanel);
+    m_rotate.Initialize(*m_windowPanel);
 }
 
 
@@ -220,24 +266,24 @@ void Window::MouseButton(const int button, const int state,
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(windowHeight-y);
     m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-//    std::cout << Window::m_currentPanel->GetName();
-
-//    Window::m_currentPanel->ClickDown();
-//    m_currentMouseButton = button;
-//    m_previousMouseX = x;
-//    m_previousMouseY = y;
-
+    int mod = glutGetModifiers();
     if (m_currentPanel != NULL)
     {
         if (m_currentPanel->GetGraphicsManager() != NULL)
         {
-            if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+            if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN
+                && mod == GLUT_ACTIVE_CTRL)
             {
                 m_pan.Start(xf, yf);
             }
-            else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_UP)
+            else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+            {
+                m_rotate.Start(xf, yf);
+            }
+            else
             {
                 m_pan.End();
+                m_rotate.End();
             }
         }
     }
@@ -249,18 +295,12 @@ void Window::MouseMotion(const int x, const int y)
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(windowHeight-y);
 
-//    if (m_currentPanel != NULL)
-//    {
-//        m_currentPanel->Drag(x, y, dx, -dy, m_currentMouseButton);
-//    }
-//    m_previousMouseX = x;
-//    m_previousMouseY = y;
-
     if (m_currentPanel != NULL)
     {
         if (m_currentPanel->GetGraphicsManager() != NULL)
         {
             m_pan.Track(xf, yf);
+            m_rotate.Track(xf, yf);
         }
     }
 
