@@ -76,3 +76,15 @@ public:
     AddObstruction();
     void Start(const float currentX, const float currentY);
 };
+
+class MoveObstruction : public Command
+{
+    int m_currentObst;
+    float m_initialX;
+    float m_initialY;
+public:
+    MoveObstruction();
+    void Start(const float currentX, const float currentY);
+    void Track(const float currentX, const float currentY);
+    void End();
+};

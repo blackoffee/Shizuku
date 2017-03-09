@@ -156,3 +156,35 @@ void AddObstruction::Start(const float currentX, const float currentY)
 }
 
 
+MoveObstruction::MoveObstruction()
+{
+    m_currentObst = -1;
+    m_state = UNACTIVE;
+}
+
+void MoveObstruction::Start(const float currentX, const float currentY)
+{
+    m_initialX = currentX;
+    m_initialY = currentY;
+    m_currentObst = GetGraphicsManager()->PickObstruction(currentX, currentY);
+    m_state = ACTIVE;
+}
+
+void MoveObstruction::Track(const float currentX, const float currentY)
+{
+    if (m_state == ACTIVE)
+    {
+        float dx = currentX - m_initialX;
+        float dy = currentY - m_initialY;
+        GetGraphicsManager()->MoveObstruction(m_currentObst, currentX, currentY, dx, dy);
+    }
+    m_initialX = currentX;
+    m_initialY = currentY;
+}
+
+void MoveObstruction::End()
+{
+    m_currentObst = -1;
+    m_state = UNACTIVE;
+}
+
