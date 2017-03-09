@@ -165,7 +165,8 @@ public:
     FW_API void Zoom(const int dir, const float mag);
     FW_API void Pan(const float dx, const float dy);
     FW_API void Rotate(const float dx, const float dy);
-    FW_API void PickObstruction(const float xf, const float yf);
+    FW_API void PickObstruction2D(const int mouseX, const int mouseY);
+    FW_API void PickObstruction3D(const int mouseX, const int mouseY);
     FW_API void UnpickObstruction();
     FW_API void MoveObstruction(const float dx, const float dy);
    
@@ -177,7 +178,9 @@ public:
     FW_API void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
     FW_API int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, 
         const int mouseX, const int mouseY);
-    FW_API void GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
+    FW_API void GetSimCoordFromMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
+    FW_API void GetSimCoordFromMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY,
+        const float planeZ);
     FW_API void AddObstruction(const int simX, const int simY);
     FW_API void RemoveObstruction(const int simX, const int simY);
     FW_API void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);

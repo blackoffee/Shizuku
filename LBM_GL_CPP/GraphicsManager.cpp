@@ -615,14 +615,20 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     return returnVal;
 }
 
-void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, 
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     const int mouseX, const int mouseY)
+{
+    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, m_currentZ);
+}
+
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
+    const int mouseX, const int mouseY, const float planeZ)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
-    float t = (m_currentZ - rayOrigin.z)/rayDir.z;
+    float t = (planeZ - rayOrigin.z)/rayDir.z;
     float xf = rayOrigin.x + t*rayDir.x;
     float yf = rayOrigin.y + t*rayDir.y;
 
@@ -677,7 +683,7 @@ void GraphicsManager::ClickDown(Mouse mouse)
         {
             m_currentObstId = -1;
             m_currentZ = -0.5f;
-            GetSimCoordFrom2DMouseRay(simX, simY, mouseX, mouseY);
+            GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
             AddObstruction(simX, simY);
         }
         else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
@@ -729,14 +735,25 @@ void GraphicsManager::Rotate(const float dx, const float dy)
     m_rotate_z += dx;
 }
 
-void GraphicsManager::PickObstruction(const float xf, const float yf)
+void GraphicsManager::PickObstruction2D(const int mouseX, const int mouseY)
 {
     m_currentObstId = -1;
-//    int x{ 0 }, y{ 0 }, z{ 0 };
-//    if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
-//    {
-//        m_currentObstId = FindClosestObstructionId(x, y);
-//    }
+    int simX, simY;
+    GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
+    if (IsInClosestObstruction(mouseX, mouseY))
+    {
+        m_currentObstId = FindClosestObstructionId(simX, simY);
+    }
+}
+
+void GraphicsManager::PickObstruction3D(const int mouseX, const int mouseY)
+{
+    m_currentObstId = -1;
+    int simX, simY;
+    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY))
+    {
+        m_currentObstId = FindClosestObstructionId(simX, simY);
+    }
 }
 
 
@@ -817,8 +834,8 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
             int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
             dxi = dxf*static_cast<float>(windowWidth) / 2.f;
             dyi = dyf*static_cast<float>(windowHeight) / 2.f;
-            GetSimCoordFrom2DMouseRay(simX1, simY1, xi-dxi, yi-dyi);
-            GetSimCoordFrom2DMouseRay(simX2, simY2, xi, yi);
+            GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
+            GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
             Obstruction obst = m_obstructions[m_currentObstId];
             obst.x += simX2-simX1;
             obst.y += simY2-simY1;
