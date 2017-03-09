@@ -165,8 +165,8 @@ public:
     FW_API void Zoom(const int dir, const float mag);
     FW_API void Pan(const float dx, const float dy);
     FW_API void Rotate(const float dx, const float dy);
-    FW_API void PickObstruction2D(const int mouseX, const int mouseY);
-    FW_API void PickObstruction3D(const int mouseX, const int mouseY);
+    FW_API int PickObstruction2D(const int mouseX, const int mouseY);
+    FW_API int PickObstruction3D(const int mouseX, const int mouseY);
     FW_API void UnpickObstruction();
     FW_API void MoveObstruction(const float dx, const float dy);
    

@@ -735,25 +735,25 @@ void GraphicsManager::Rotate(const float dx, const float dy)
     m_rotate_z += dx;
 }
 
-void GraphicsManager::PickObstruction2D(const int mouseX, const int mouseY)
+int GraphicsManager::PickObstruction2D(const int mouseX, const int mouseY)
 {
-    m_currentObstId = -1;
     int simX, simY;
     GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
     if (IsInClosestObstruction(mouseX, mouseY))
     {
-        m_currentObstId = FindClosestObstructionId(simX, simY);
+        return FindClosestObstructionId(simX, simY);
     }
+    return -1;
 }
 
-void GraphicsManager::PickObstruction3D(const int mouseX, const int mouseY)
+int GraphicsManager::PickObstruction3D(const int mouseX, const int mouseY)
 {
-    m_currentObstId = -1;
     int simX, simY;
     if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY))
     {
-        m_currentObstId = FindClosestObstructionId(simX, simY);
+        return FindClosestObstructionId(simX, simY);
     }
+    return -1;
 }
 
 
