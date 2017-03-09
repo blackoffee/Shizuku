@@ -70,3 +70,9 @@ public:
     void End();
 };
 
+class AddObstruction : public Command
+{
+public:
+    AddObstruction();
+    void Start(const float currentX, const float currentY);
+};

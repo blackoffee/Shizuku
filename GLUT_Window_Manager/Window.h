@@ -16,6 +16,7 @@ private:
     static Rotate m_rotate;
     static ButtonPress m_buttonPress;
     static SliderDrag m_sliderDrag;
+    static AddObstruction m_addObstruction;
     static int m_leftPanelWidth;
     static int m_leftPanelHeight;
 public:

@@ -12,18 +12,21 @@ Pan Window::m_pan = Pan();
 Rotate Window::m_rotate = Rotate();
 ButtonPress Window::m_buttonPress = ButtonPress();
 SliderDrag Window::m_sliderDrag = SliderDrag();
+AddObstruction Window::m_addObstruction = AddObstruction();
 
 Window::Window()
 {
     m_zoom.Initialize(*m_windowPanel);
     m_pan.Initialize(*m_windowPanel);
     m_rotate.Initialize(*m_windowPanel);
+    m_addObstruction.Initialize(*m_windowPanel);
 }
 Window::Window(const int width, const int height)
 {
     m_zoom.Initialize(*m_windowPanel);
     m_pan.Initialize(*m_windowPanel);
     m_rotate.Initialize(*m_windowPanel);
+    m_addObstruction.Initialize(*m_windowPanel);
 }
 
 
@@ -99,6 +102,10 @@ void Window::MouseButton(const int button, const int state,
         else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
         {
             m_rotate.Start(xf, yf);
+        }
+        else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+        {
+            m_addObstruction.Start(x, windowHeight-y);
         }
         else
         {
@@ -179,12 +186,12 @@ void Window::DrawLoop()
 {
     GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    graphicsManager->UpdateViewTransformations();
     graphicsManager->UpdateGraphicsInputs();
 
     Resize(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
+    graphicsManager->UpdateViewTransformations();
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();

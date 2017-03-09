@@ -141,3 +141,18 @@ void SliderDrag::End()
     m_sliderBar = NULL;
     m_state = UNACTIVE;
 }
+
+AddObstruction::AddObstruction()
+{
+    m_state = UNACTIVE;
+}
+
+void AddObstruction::Start(const float currentX, const float currentY)
+{
+    GraphicsManager* graphicsManager = GetGraphicsManager();
+    int simX, simY;
+    graphicsManager->GetSimCoordFromMouseRay(simX, simY, currentX, currentY, -0.5f);
+    graphicsManager->AddObstruction(simX, simY);
+}
+
+
