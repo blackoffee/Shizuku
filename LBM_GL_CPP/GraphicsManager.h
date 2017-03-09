@@ -165,10 +165,11 @@ public:
     FW_API void Zoom(const int dir, const float mag);
     FW_API void Pan(const float dx, const float dy);
     FW_API void Rotate(const float dx, const float dy);
-    FW_API int PickObstruction2D(const int mouseX, const int mouseY);
-    FW_API int PickObstruction3D(const int mouseX, const int mouseY);
+    FW_API int PickObstruction(const float mouseXf, const float mouseYf);
+    FW_API int PickObstruction(const int mouseX, const int mouseY);
     FW_API void UnpickObstruction();
-    FW_API void MoveObstruction(const float dx, const float dy);
+    FW_API void MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
+        const float dxf, const float dyf);
    
     FW_API void UpdateViewTransformations();
     FW_API void UpdateGraphicsInputs();

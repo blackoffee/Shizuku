@@ -706,25 +706,49 @@ void GraphicsManager::Rotate(const float dx, const float dy)
     m_rotate_z += dx;
 }
 
-int GraphicsManager::PickObstruction2D(const int mouseX, const int mouseY)
+int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
+{
+    
+    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
+    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    return PickObstruction(mouseX, mouseY);
+}
+
+int GraphicsManager::PickObstruction(const int mouseX, const int mouseY)
 {
     int simX, simY;
-    GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
-    if (IsInClosestObstruction(mouseX, mouseY))
+    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
     {
         return FindClosestObstructionId(simX, simY);
     }
     return -1;
 }
 
-int GraphicsManager::PickObstruction3D(const int mouseX, const int mouseY)
+
+void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
+    const float dxf, const float dyf)
 {
-    int simX, simY;
-    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY))
-    {
-        return FindClosestObstructionId(simX, simY);
-    }
-    return -1;
+    int simX1, simY1, simX2, simY2;
+    int xi, yi, dxi, dyi;
+    int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+    int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+    xi = floatCoordToIntCoord(mouseXf, windowWidth);
+    yi = floatCoordToIntCoord(mouseYf, windowHeight);
+    dxi = dxf*static_cast<float>(windowWidth) / 2.f;
+    dyi = dyf*static_cast<float>(windowHeight) / 2.f;
+    GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
+    GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
+    Obstruction obst = m_obstructions[obstId];
+    obst.x += simX2-simX1;
+    obst.y += simY2-simY1;
+    float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+    float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+    obst.u = u;
+    obst.v = v;
+    obst.state = Obstruction::ACTIVE;
+    m_obstructions[obstId] = obst;
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+    UpdateDeviceObstructions(obst_d, obstId, obst);  
 }
 
 
@@ -777,48 +801,25 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     if (m_currentObstId > -1)
     {
-        if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
-        {
-            Obstruction obst = m_obstructions[m_currentObstId];
-            float dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-            dxi = dxf*static_cast<float>(xDimVisible) / 
-                std::min(m_parent->GetRectFloatAbs().m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
-            dyi = dyf*static_cast<float>(yDimVisible) / 
-                std::min(m_parent->GetRectFloatAbs().m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
-            obst.x += dxi;
-            obst.y += dyi;
-            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
-            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(dyi) / (TIMESTEPS_PER_FRAME)));
-            obst.u = u;
-            obst.v = v;
-            m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-            UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
-        }
-        else
-        {
-            int simX1, simY1, simX2, simY2;
-            int dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-            dxi = dxf*static_cast<float>(windowWidth) / 2.f;
-            dyi = dyf*static_cast<float>(windowHeight) / 2.f;
-            GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
-            GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
-            Obstruction obst = m_obstructions[m_currentObstId];
-            obst.x += simX2-simX1;
-            obst.y += simY2-simY1;
-            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
-            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
-            obst.u = u;
-            obst.v = v;
-            obst.state = Obstruction::ACTIVE;
-            m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-            UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
-        }
+        int simX1, simY1, simX2, simY2;
+        int dxi, dyi;
+        int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+        int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+        dxi = dxf*static_cast<float>(windowWidth) / 2.f;
+        dyi = dyf*static_cast<float>(windowHeight) / 2.f;
+        GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
+        GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
+        Obstruction obst = m_obstructions[m_currentObstId];
+        obst.x += simX2-simX1;
+        obst.y += simY2-simY1;
+        float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+        float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+        obst.u = u;
+        obst.v = v;
+        obst.state = Obstruction::ACTIVE;
+        m_obstructions[m_currentObstId] = obst;
+        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+        UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
     }
 }
 
