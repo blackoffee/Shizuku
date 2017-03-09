@@ -726,12 +726,12 @@ void Draw()
     
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    graphicsManager->UpdateViewTransformations();
     graphicsManager->UpdateGraphicsInputs();
 
     Resize(Window.GetWidth(), Window.GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
+    graphicsManager->UpdateViewTransformations();
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
