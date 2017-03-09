@@ -37,10 +37,12 @@ Panel Window;
 Mouse theMouse;
 
 GLuint g_vaoSolutionField;
+GLuint g_vaoSolutionField;
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
 
 ShaderProgram g_shader;
 ShaderProgram g_computeShader;
+
 
 void Init()
 {
@@ -552,6 +554,10 @@ void DrawShapePreview(Panel &rootPanel)
  *	GL Interop Functions
  */
 
+    glGenVertexArrays(1, &g_vaoSolutionField);
+    glBindVertexArray(g_vaoSolutionField);
+
+
 //    glGenVertexArrays(1, &g_vaoSolutionField);
 //    glBindVertexArray(g_vaoSolutionField);
 
@@ -770,6 +776,37 @@ void Draw()
 
 //    g_computeShader.Use();
 
+    //// Compute shader
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
+
+    g_computeShader.Use();
+
+    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
+    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
+    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
+    glUniform1i(maxXDimLocation, MAX_XDIM);
+    glUniform1i(xDimVisibleLocation, xDimVisible);
+    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
+        "PhongLighting");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
+
+    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    g_computeShader.Unset();
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+
+
+
+
+
+
+
 //    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
 //    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
 //    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
@@ -787,9 +824,42 @@ void Draw()
 //    g_computeShader.Unset();
 
 //    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    graphicsManager->UpdateViewTransformations();
+    // Update Obstruction size based on current slider value
+    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    graphicsManager->SetCurrentObstSize(currentObstSize);
+
+    glm::vec4 viewportMatrix = graphicsManager->GetViewportMatrix();
+    glm::mat4 modelMatrix = graphicsManager->GetModelMatrix();
+    glm::mat4 projectionMatrix = graphicsManager->GetProjectionMatrix();
+
+
+
     
 
+    glBindVertexArray(g_vaoSolutionField);
 
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    //glVertexPointer(3, GL_FLOAT, 16, 0);
+    //glEnableClientState(GL_VERTEX_ARRAY);
+    //glColor3f(1.0, 0.0, 0.0);
+    //glEnableClientState(GL_COLOR_ARRAY);
+    //glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+
+    g_shader.Use();
+    GLint viewportMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "viewportMatrix");
+    GLint modelMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "modelMatrix");
+    GLint projectionMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "projectionMatrix");
+    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    g_shader.Unset();
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    glBindVertexArray(0);
 
 
 
