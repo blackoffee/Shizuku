@@ -642,60 +642,31 @@ void GraphicsManager::ClickDown(Mouse mouse)
     int mouseX = mouse.GetX();
     int mouseY = mouse.GetY();
     int simX, simY;
-    if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
+    if (mouse.m_lmb == 1)
     {
-        GetSimCoordFromMouseCoord(simX, simY, mouseX, mouseY);
-        if (mouse.m_rmb == 1)
+        m_currentObstId = -1;
+        int simX, simY;
+        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
         {
-            AddObstruction(simX, simY);
-        }
-        else if (mouse.m_mmb == 1)
-        {
-            if (IsInClosestObstruction(mouseX, mouseY))
-            {
-                RemoveObstruction(simX, simY);
-            }
-        }
-        else if (mouse.m_lmb == 1)
-        {
-            if (IsInClosestObstruction(mouseX, mouseY))
-            {
-                m_currentObstId = FindClosestObstructionId(simX, simY);
-            }
-            else
-            {
-                m_currentObstId = -1;
-            }
+            m_currentObstId = FindClosestObstructionId(simX, simY);
         }
     }
-    else
+    else if (mouse.m_rmb == 1)
     {
-        if (mouse.m_lmb == 1)
-        {
-            m_currentObstId = -1;
-            int simX, simY;
-            if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
-            {
-                m_currentObstId = FindClosestObstructionId(simX, simY);
-            }
+        m_currentObstId = -1;
+        m_currentZ = -0.5f;
+        GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
+        AddObstruction(simX, simY);
+    }
+    else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
+    {
+        m_currentObstId = -1;
+        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
+        {            
+            m_currentObstId = FindClosestObstructionId(simX, simY);
+            RemoveObstruction(simX, simY);
         }
-        else if (mouse.m_rmb == 1)
-        {
-            m_currentObstId = -1;
-            m_currentZ = -0.5f;
-            GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
-            AddObstruction(simX, simY);
-        }
-        else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
-        {
-            m_currentObstId = -1;
-            if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
-            {            
-                m_currentObstId = FindClosestObstructionId(simX, simY);
-                RemoveObstruction(simX, simY);
-            }
-    
-        }
+
     }
 }
 
