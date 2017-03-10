@@ -5,7 +5,7 @@ class Command
 {
     Panel* m_rootPanel;
 public:
-    enum State {ACTIVE, UNACTIVE};
+    enum State {ACTIVE, INACTIVE};
     State m_state;
     Command();
     void Start();

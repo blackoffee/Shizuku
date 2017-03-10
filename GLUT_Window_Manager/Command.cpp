@@ -32,7 +32,7 @@ void Zoom::Start(const int dir, const float mag)
 
 Pan::Pan()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void Pan::Start(const float initialX, const float initialY)
@@ -56,13 +56,13 @@ void Pan::Track(const float currentX, const float currentY)
 
 void Pan::End()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 
 Rotate::Rotate()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void Rotate::Start(const float initialX, const float initialY)
@@ -86,12 +86,12 @@ void Rotate::Track(const float currentX, const float currentY)
 
 void Rotate::End()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 ButtonPress::ButtonPress()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void ButtonPress::Start(Button* button)
@@ -106,12 +106,12 @@ void ButtonPress::End(Button* button)
     {
         m_button->Callback();
     }
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 SliderDrag::SliderDrag()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
     m_sliderBar = NULL;
 }
 
@@ -139,12 +139,12 @@ void SliderDrag::Track(const float currentX, const float currentY)
 void SliderDrag::End()
 {
     m_sliderBar = NULL;
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 AddObstruction::AddObstruction()
 {
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void AddObstruction::Start(const float currentX, const float currentY)
@@ -158,7 +158,7 @@ void AddObstruction::Start(const float currentX, const float currentY)
 RemoveObstruction::RemoveObstruction()
 {
     m_currentObst = -1;
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void RemoveObstruction::Start(const float currentX, const float currentY)
@@ -171,7 +171,7 @@ void RemoveObstruction::Start(const float currentX, const float currentY)
     }
     else
     {
-        m_state = UNACTIVE;
+        m_state = INACTIVE;
     }
 }
 
@@ -186,13 +186,13 @@ void RemoveObstruction::End(const float currentX, const float currentY)
         }
     }
     m_currentObst = -1;
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 MoveObstruction::MoveObstruction()
 {
     m_currentObst = -1;
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
 void MoveObstruction::Start(const float currentX, const float currentY)
@@ -206,7 +206,7 @@ void MoveObstruction::Start(const float currentX, const float currentY)
     }
     else
     {
-        m_state = UNACTIVE;
+        m_state = INACTIVE;
     }
 }
 
@@ -225,6 +225,6 @@ void MoveObstruction::Track(const float currentX, const float currentY)
 void MoveObstruction::End()
 {
     m_currentObst = -1;
-    m_state = UNACTIVE;
+    m_state = INACTIVE;
 }
 
