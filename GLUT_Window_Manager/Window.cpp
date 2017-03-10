@@ -13,6 +13,7 @@ Rotate Window::m_rotate = Rotate();
 ButtonPress Window::m_buttonPress = ButtonPress();
 SliderDrag Window::m_sliderDrag = SliderDrag();
 AddObstruction Window::m_addObstruction = AddObstruction();
+RemoveObstruction Window::m_removeObstruction = RemoveObstruction();
 MoveObstruction Window::m_moveObstruction = MoveObstruction();
 
 Window::Window()
@@ -21,6 +22,7 @@ Window::Window()
     m_pan.Initialize(*m_windowPanel);
     m_rotate.Initialize(*m_windowPanel);
     m_addObstruction.Initialize(*m_windowPanel);
+    m_removeObstruction.Initialize(*m_windowPanel);
     m_moveObstruction.Initialize(*m_windowPanel);
 }
 Window::Window(const int width, const int height)
@@ -29,6 +31,7 @@ Window::Window(const int width, const int height)
     m_pan.Initialize(*m_windowPanel);
     m_rotate.Initialize(*m_windowPanel);
     m_addObstruction.Initialize(*m_windowPanel);
+    m_removeObstruction.Initialize(*m_windowPanel);
     m_moveObstruction.Initialize(*m_windowPanel);
 }
 
@@ -105,6 +108,7 @@ void Window::MouseButton(const int button, const int state,
         else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
         {
             m_rotate.Start(xf, yf);
+            m_removeObstruction.Start(xf, yf);
         }
         else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
         {
@@ -120,6 +124,7 @@ void Window::MouseButton(const int button, const int state,
             m_rotate.End();
             m_sliderDrag.End();
             m_moveObstruction.End();
+            m_removeObstruction.End(xf, yf);
         }
     }
     else

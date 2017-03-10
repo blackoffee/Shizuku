@@ -708,7 +708,6 @@ void GraphicsManager::Rotate(const float dx, const float dy)
 
 int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
 {
-    
     int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
     int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
     return PickObstruction(mouseX, mouseY);
@@ -786,6 +785,11 @@ void GraphicsManager::AddObstruction(const int simX, const int simY)
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 {
     int obstId = FindObstructionPointIsInside(simX,simY,1.f);
+    RemoveSpecifiedObstruction(obstId);
+}
+
+void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
+{
     if (obstId >= 0)
     {
         m_obstructions[obstId].state = Obstruction::REMOVED;

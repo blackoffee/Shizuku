@@ -77,6 +77,16 @@ public:
     void Start(const float currentX, const float currentY);
 };
 
+class RemoveObstruction : public Command
+{
+    int m_currentObst;
+public:
+    RemoveObstruction();
+    void Start(const float currentX, const float currentY);
+    void End(const float currentX, const float currentY);
+};
+
+
 class MoveObstruction : public Command
 {
     int m_currentObst;

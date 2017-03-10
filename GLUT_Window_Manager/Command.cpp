@@ -155,6 +155,31 @@ void AddObstruction::Start(const float currentX, const float currentY)
     graphicsManager->AddObstruction(simX, simY);
 }
 
+RemoveObstruction::RemoveObstruction()
+{
+    m_state = UNACTIVE;
+}
+
+void RemoveObstruction::Start(const float currentX, const float currentY)
+{
+    GraphicsManager* graphicsManager = GetGraphicsManager();
+    m_currentObst = graphicsManager->PickObstruction(currentX, currentY);
+    int simX, simY;
+    graphicsManager->GetSimCoordFromMouseRay(simX, simY, currentX, currentY, -0.5f);
+    graphicsManager->RemoveObstruction(simX, simY);
+    m_state = ACTIVE;
+}
+
+void RemoveObstruction::End(const float currentX, const float currentY)
+{
+    GraphicsManager* graphicsManager = GetGraphicsManager();
+    if (m_currentObst == graphicsManager->PickObstruction(currentX, currentY))
+    {
+        graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
+    }
+    m_currentObst = -1;
+    m_state = UNACTIVE;
+}
 
 MoveObstruction::MoveObstruction()
 {

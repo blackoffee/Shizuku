@@ -184,6 +184,7 @@ public:
         const float planeZ);
     FW_API void AddObstruction(const int simX, const int simY);
     FW_API void RemoveObstruction(const int simX, const int simY);
+    FW_API void RemoveSpecifiedObstruction(const int obstId);
     FW_API void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);
     FW_API int FindUnusedObstructionId();
     FW_API int FindClosestObstructionId(const int simX, const int simY);
