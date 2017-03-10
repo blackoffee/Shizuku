@@ -157,6 +157,7 @@ void AddObstruction::Start(const float currentX, const float currentY)
 
 RemoveObstruction::RemoveObstruction()
 {
+    m_currentObst = -1;
     m_state = UNACTIVE;
 }
 
@@ -164,18 +165,25 @@ void RemoveObstruction::Start(const float currentX, const float currentY)
 {
     GraphicsManager* graphicsManager = GetGraphicsManager();
     m_currentObst = graphicsManager->PickObstruction(currentX, currentY);
-    int simX, simY;
-    graphicsManager->GetSimCoordFromMouseRay(simX, simY, currentX, currentY, -0.5f);
-    graphicsManager->RemoveObstruction(simX, simY);
-    m_state = ACTIVE;
+        if (m_currentObst >= 0)
+    {
+        m_state = ACTIVE;
+    }
+    else
+    {
+        m_state = UNACTIVE;
+    }
 }
 
 void RemoveObstruction::End(const float currentX, const float currentY)
 {
     GraphicsManager* graphicsManager = GetGraphicsManager();
-    if (m_currentObst == graphicsManager->PickObstruction(currentX, currentY))
+    if (m_state == ACTIVE)
     {
-        graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
+        if (m_currentObst == graphicsManager->PickObstruction(currentX, currentY))
+        {
+            graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
+        }
     }
     m_currentObst = -1;
     m_state = UNACTIVE;
@@ -192,7 +200,14 @@ void MoveObstruction::Start(const float currentX, const float currentY)
     m_initialX = currentX;
     m_initialY = currentY;
     m_currentObst = GetGraphicsManager()->PickObstruction(currentX, currentY);
-    m_state = ACTIVE;
+    if (m_currentObst >= 0)
+    {
+        m_state = ACTIVE;
+    }
+    else
+    {
+        m_state = UNACTIVE;
+    }
 }
 
 void MoveObstruction::Track(const float currentX, const float currentY)
