@@ -112,7 +112,7 @@ void Window::MouseButton(const int button, const int state,
         }
         else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
         {
-            m_addObstruction.Start(x, windowHeight-y);
+            m_addObstruction.Start(xf, yf);
         }
         else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
         {

@@ -621,6 +621,14 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, m_currentZ);
 }
 
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
+    const float mouseXf, const float mouseYf, const float planeZ)
+{
+    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
+    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, planeZ);
+}
+
 void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
     const int mouseX, const int mouseY, const float planeZ)
 {
