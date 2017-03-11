@@ -16,6 +16,37 @@ AddObstruction Window::m_addObstruction = AddObstruction();
 RemoveObstruction Window::m_removeObstruction = RemoveObstruction();
 MoveObstruction Window::m_moveObstruction = MoveObstruction();
 
+
+void ResizeWrapper(const int x, const int y)
+{
+    Window::Instance().Resize(x, y);
+}
+
+void MouseButtonWrapper(const int button, const int state, const int x, const int y)
+{
+    Window::Instance().MouseButton(button, state, x, y);
+}
+
+void MouseMotionWrapper(const int x, const int y)
+{
+    Window::Instance().MouseMotion(x, y);
+}
+
+void MouseWheelWrapper(const int button, const int direction, const int x, const int y)
+{
+    Window::Instance().MouseWheel(button, direction, x, y);
+}
+
+void KeyboardWrapper(const unsigned char key, const int x, const int y)
+{
+    Window::Instance().Keyboard(key, x, y);
+}
+
+void DrawLoopWrapper()
+{
+    Window::Instance().DrawLoop();
+}
+
 Window::Window()
 {
     m_zoom.Initialize(*m_windowPanel);
@@ -59,12 +90,12 @@ void Window::InitializeGL()
     glViewport(0,0,800,600);
 }
 
-void Window::timerEvent(int value)
+void TimerEvent(int value)
 {
     if (glutGetWindow())
     {
         glutPostRedisplay();
-        glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
+        glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
     }
 }
 
@@ -202,7 +233,7 @@ void Window::DrawLoop()
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     graphicsManager->UpdateGraphicsInputs();
 
-    Resize(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
+    ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
     graphicsManager->UpdateViewTransformations();
@@ -231,14 +262,14 @@ void Window::InitializeGLUT(int argc, char **argv)
 
     glutCreateWindow("New Window management");
 
-    glutReshapeFunc(&Window::Resize);
-    glutMouseFunc(&Window::MouseButton);
-    glutMotionFunc(&Window::MouseMotion);
-    glutKeyboardFunc(&Window::Keyboard);
-    glutMouseWheelFunc(&Window::MouseWheel);
+    glutReshapeFunc(ResizeWrapper);
+    glutMouseFunc(MouseButtonWrapper);
+    glutMotionFunc(MouseMotionWrapper);
+    glutKeyboardFunc(KeyboardWrapper);
+    glutMouseWheelFunc(MouseWheelWrapper);
 
-    glutDisplayFunc(&Window::DrawLoop);
-    glutTimerFunc(REFRESH_DELAY, &Window::timerEvent, 0);
+    glutDisplayFunc(DrawLoopWrapper);
+    glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
 
 }
 

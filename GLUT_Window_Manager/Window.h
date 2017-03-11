@@ -29,21 +29,34 @@ public:
     static float GetFloatCoordX(const int x);
     static float GetFloatCoordY(const int y);
     void InitializeGL();
-    static void timerEvent(int value);
-    static void Resize(const int width, const int height);
+    //static void timerEvent(int value);
+    void Resize(const int width, const int height);
 
-    static void MouseButton(const int button, const int state,
+    void MouseButton(const int button, const int state,
         const int x, const int y);
 
-    static void MouseMotion(const int x, const int y);
-    static void Keyboard(const unsigned char key,
+    void MouseMotion(const int x, const int y);
+    void Keyboard(const unsigned char key,
         const int /*x*/, const int /*y*/);
-    static void MouseWheel(const int button, const int direction,
+    void MouseWheel(const int button, const int direction,
         const int x, const int y);
 
-    static void DrawLoop();
+    void DrawLoop();
     void InitializeGLUT(int argc, char **argv);
     void Display();
+
+    static Window& Instance()
+    {
+        static Window s_window = Window(1200,300);
+        return s_window;
+    }
 };
 
 
+void ResizeWrapper(const int x, const int y);
+void MouseButtonWrapper(const int button, const int state, const int x, const int y);
+void MouseMotionWrapper(const int x, const int y);
+void MouseWheelWrapper(const int button, const int direction, const int x, const int y);
+void KeyboardWrapper(const unsigned char key, const int x, const int y);
+
+void DrawLoopWrapper();
