@@ -6,8 +6,8 @@
 class Window
 {
 private:
-    static Panel* m_windowPanel;
-    static Panel* m_currentPanel;
+    Panel* m_windowPanel;
+    Panel* m_currentPanel;
     static int m_previousMouseX;
     static int m_previousMouseY;
     static int m_currentMouseButton;
@@ -23,11 +23,10 @@ private:
     static int m_leftPanelHeight;
 public:
     Window();
-    Window(const int width, const int height);
 
     Panel* GetWindowPanel();
-    static float GetFloatCoordX(const int x);
-    static float GetFloatCoordY(const int y);
+    float GetFloatCoordX(const int x);
+    float GetFloatCoordY(const int y);
     void InitializeGL();
     //static void timerEvent(int value);
     void Resize(const int width, const int height);
@@ -47,7 +46,7 @@ public:
 
     static Window& Instance()
     {
-        static Window s_window = Window(1200,300);
+        static Window s_window = Window();
         return s_window;
     }
 };

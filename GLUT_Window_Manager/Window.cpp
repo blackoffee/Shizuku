@@ -2,11 +2,9 @@
 
 int Window::m_leftPanelWidth(350);
 int Window::m_leftPanelHeight(500);
-Panel* Window::m_currentPanel = NULL;
 int Window::m_previousMouseX = 0;
 int Window::m_previousMouseY = 0;
 int Window::m_currentMouseButton = 0;
-Panel* Window::m_windowPanel = new Panel;
 Zoom Window::m_zoom = Zoom();
 Pan Window::m_pan = Pan();
 Rotate Window::m_rotate = Rotate();
@@ -49,6 +47,8 @@ void DrawLoopWrapper()
 
 Window::Window()
 {
+    m_currentPanel = NULL;
+    m_windowPanel = new Panel;
     m_zoom.Initialize(*m_windowPanel);
     m_pan.Initialize(*m_windowPanel);
     m_rotate.Initialize(*m_windowPanel);
@@ -56,16 +56,6 @@ Window::Window()
     m_removeObstruction.Initialize(*m_windowPanel);
     m_moveObstruction.Initialize(*m_windowPanel);
 }
-Window::Window(const int width, const int height)
-{
-    m_zoom.Initialize(*m_windowPanel);
-    m_pan.Initialize(*m_windowPanel);
-    m_rotate.Initialize(*m_windowPanel);
-    m_addObstruction.Initialize(*m_windowPanel);
-    m_removeObstruction.Initialize(*m_windowPanel);
-    m_moveObstruction.Initialize(*m_windowPanel);
-}
-
 
 Panel* Window::GetWindowPanel()
 {

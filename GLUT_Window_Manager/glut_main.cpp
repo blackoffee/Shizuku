@@ -16,18 +16,17 @@ int main(int argc, char **argv)
 {
     int initialWindowWidth = 1200;
     int initialWindowHeight = 600;
-    Window window(initialWindowWidth,initialWindowHeight);
-    Panel* windowPanel = window.GetWindowPanel();
+    Panel* windowPanel = Window::Instance().GetWindowPanel();
 
     SetUpWindow(*windowPanel);
 
-    window.InitializeGLUT(argc, argv);
-    window.InitializeGL();
+    Window::Instance().InitializeGLUT(argc, argv);
+    Window::Instance().InitializeGL();
 
     SetUpGLInterop(*windowPanel);
     SetUpCUDA(*windowPanel);
 
-    window.Display();
+    Window::Instance().Display();
 
     return 0;
 }
