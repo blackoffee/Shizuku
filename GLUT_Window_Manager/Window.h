@@ -8,27 +8,25 @@ class Window
 private:
     Panel* m_windowPanel;
     Panel* m_currentPanel;
-    static int m_previousMouseX;
-    static int m_previousMouseY;
-    static int m_currentMouseButton;
-    static Zoom m_zoom;
-    static Pan m_pan;
-    static Rotate m_rotate;
-    static ButtonPress m_buttonPress;
-    static SliderDrag m_sliderDrag;
-    static AddObstruction m_addObstruction;
-    static RemoveObstruction m_removeObstruction;
-    static MoveObstruction m_moveObstruction;
-    static int m_leftPanelWidth;
-    static int m_leftPanelHeight;
+    int m_previousMouseX;
+    int m_previousMouseY;
+    int m_currentMouseButton;
+    Zoom m_zoom;
+    Pan m_pan;
+    Rotate m_rotate;
+    ButtonPress m_buttonPress;
+    SliderDrag m_sliderDrag;
+    AddObstruction m_addObstruction;
+    RemoveObstruction m_removeObstruction;
+    MoveObstruction m_moveObstruction;
+    int m_leftPanelWidth;
+    int m_leftPanelHeight;
 public:
     Window();
-
     Panel* GetWindowPanel();
     float GetFloatCoordX(const int x);
     float GetFloatCoordY(const int y);
     void InitializeGL();
-    //static void timerEvent(int value);
     void Resize(const int width, const int height);
 
     void MouseButton(const int button, const int state,
@@ -51,11 +49,9 @@ public:
     }
 };
 
-
 void ResizeWrapper(const int x, const int y);
 void MouseButtonWrapper(const int button, const int state, const int x, const int y);
 void MouseMotionWrapper(const int x, const int y);
 void MouseWheelWrapper(const int button, const int direction, const int x, const int y);
 void KeyboardWrapper(const unsigned char key, const int x, const int y);
-
 void DrawLoopWrapper();

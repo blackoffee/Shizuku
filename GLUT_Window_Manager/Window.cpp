@@ -1,20 +1,5 @@
 #include "Window.h"
 
-int Window::m_leftPanelWidth(350);
-int Window::m_leftPanelHeight(500);
-int Window::m_previousMouseX = 0;
-int Window::m_previousMouseY = 0;
-int Window::m_currentMouseButton = 0;
-Zoom Window::m_zoom = Zoom();
-Pan Window::m_pan = Pan();
-Rotate Window::m_rotate = Rotate();
-ButtonPress Window::m_buttonPress = ButtonPress();
-SliderDrag Window::m_sliderDrag = SliderDrag();
-AddObstruction Window::m_addObstruction = AddObstruction();
-RemoveObstruction Window::m_removeObstruction = RemoveObstruction();
-MoveObstruction Window::m_moveObstruction = MoveObstruction();
-
-
 void ResizeWrapper(const int x, const int y)
 {
     Window::Instance().Resize(x, y);
@@ -45,16 +30,20 @@ void DrawLoopWrapper()
     Window::Instance().DrawLoop();
 }
 
-Window::Window()
+Window::Window() :
+    m_currentPanel(NULL),
+    m_windowPanel(new Panel),
+    m_leftPanelWidth(350),
+    m_leftPanelHeight(500),
+    m_zoom(Zoom(*m_windowPanel)),
+    m_pan(Pan(*m_windowPanel)),
+    m_rotate(Rotate(*m_windowPanel)),
+    m_buttonPress(ButtonPress(*m_windowPanel)),
+    m_sliderDrag(SliderDrag(*m_windowPanel)),
+    m_addObstruction(AddObstruction(*m_windowPanel)),
+    m_removeObstruction(RemoveObstruction(*m_windowPanel)),
+    m_moveObstruction(MoveObstruction(*m_windowPanel))
 {
-    m_currentPanel = NULL;
-    m_windowPanel = new Panel;
-    m_zoom.Initialize(*m_windowPanel);
-    m_pan.Initialize(*m_windowPanel);
-    m_rotate.Initialize(*m_windowPanel);
-    m_addObstruction.Initialize(*m_windowPanel);
-    m_removeObstruction.Initialize(*m_windowPanel);
-    m_moveObstruction.Initialize(*m_windowPanel);
 }
 
 Panel* Window::GetWindowPanel()

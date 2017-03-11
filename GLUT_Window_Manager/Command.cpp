@@ -1,7 +1,8 @@
 #include "Command.h"
 
-Command::Command()
+Command::Command(Panel &rootPanel)
 {
+    m_rootPanel = &rootPanel;
 }
 
 void Command::Initialize(Panel &rootPanel)
@@ -19,8 +20,9 @@ GraphicsManager* Command::GetGraphicsManager()
     return m_rootPanel->GetPanel("Graphics")->GetGraphicsManager();
 }
 
-Zoom::Zoom()
+Zoom::Zoom(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
 }
 
 void Zoom::Start(const int dir, const float mag)
@@ -30,8 +32,9 @@ void Zoom::Start(const int dir, const float mag)
 
 
 
-Pan::Pan()
+Pan::Pan(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 
@@ -60,8 +63,9 @@ void Pan::End()
 }
 
 
-Rotate::Rotate()
+Rotate::Rotate(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 
@@ -89,8 +93,9 @@ void Rotate::End()
     m_state = INACTIVE;
 }
 
-ButtonPress::ButtonPress()
+ButtonPress::ButtonPress(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 
@@ -109,8 +114,9 @@ void ButtonPress::End(Button* button)
     m_state = INACTIVE;
 }
 
-SliderDrag::SliderDrag()
+SliderDrag::SliderDrag(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
     m_sliderBar = NULL;
 }
@@ -142,8 +148,9 @@ void SliderDrag::End()
     m_state = INACTIVE;
 }
 
-AddObstruction::AddObstruction()
+AddObstruction::AddObstruction(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 
@@ -155,8 +162,9 @@ void AddObstruction::Start(const float currentX, const float currentY)
     graphicsManager->AddObstruction(simX, simY);
 }
 
-RemoveObstruction::RemoveObstruction()
+RemoveObstruction::RemoveObstruction(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_currentObst = -1;
     m_state = INACTIVE;
 }
@@ -189,8 +197,9 @@ void RemoveObstruction::End(const float currentX, const float currentY)
     m_state = INACTIVE;
 }
 
-MoveObstruction::MoveObstruction()
+MoveObstruction::MoveObstruction(Panel &rootPanel) : Command(rootPanel)
 {
+    m_rootPanel = &rootPanel;
     m_currentObst = -1;
     m_state = INACTIVE;
 }

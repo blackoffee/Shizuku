@@ -14,8 +14,6 @@
 
 int main(int argc, char **argv)
 {
-    int initialWindowWidth = 1200;
-    int initialWindowHeight = 600;
     Panel* windowPanel = Window::Instance().GetWindowPanel();
 
     SetUpWindow(*windowPanel);
