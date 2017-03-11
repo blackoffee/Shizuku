@@ -525,12 +525,12 @@ bool GraphicsManager::ShouldRenderFloor()
 }
 
 
-void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, Mouse mouse)
+void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, const int mouseX, const int mouseY)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    float xf = intCoordToFloatCoord(mouse.m_x, mouse.m_winW);
-    float yf = intCoordToFloatCoord(mouse.m_y, mouse.m_winH);
+    float xf = intCoordToFloatCoord(mouseX, m_parent->GetRootPanel()->GetWidth());
+    float yf = intCoordToFloatCoord(mouseY, m_parent->GetRootPanel()->GetHeight());
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
         std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
@@ -578,12 +578,12 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
-    Mouse mouse)
+    const int mouseX, const int mouseY)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     float3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
+    GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
     int returnVal = 0;
 
     // map OpenGL buffer object for writing from CUDA
@@ -615,29 +615,28 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     return returnVal;
 }
 
-// get simulation coordinates from mouse ray casting on plane on m_currentZ
-void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, Mouse mouse)
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
+    const int mouseX, const int mouseY)
 {
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    float3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, mouse.GetX(), mouse.GetY());
-
-    float t = (m_currentZ - rayOrigin.z)/rayDir.z;
-    float xf = rayOrigin.x + t*rayDir.x;
-    float yf = rayOrigin.y + t*rayDir.y;
-
-    xOut = (xf + 1.f)*0.5f*xDimVisible;
-    yOut = (yf + 1.f)*0.5f*xDimVisible;
+    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, m_currentZ);
 }
 
-void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut, 
-    const int mouseX, const int mouseY)
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
+    const float mouseXf, const float mouseYf, const float planeZ)
+{
+    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
+    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, planeZ);
+}
+
+void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
+    const int mouseX, const int mouseY, const float planeZ)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
-    float t = (m_currentZ - rayOrigin.z)/rayDir.z;
+    float t = (planeZ - rayOrigin.z)/rayDir.z;
     float xf = rayOrigin.x + t*rayDir.x;
     float yf = rayOrigin.y + t*rayDir.y;
 
@@ -648,61 +647,34 @@ void GraphicsManager::GetSimCoordFrom2DMouseRay(int &xOut, int &yOut,
 void GraphicsManager::ClickDown(Mouse mouse)
 {
     int mod = glutGetModifiers();
-    if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
+    int mouseX = mouse.GetX();
+    int mouseY = mouse.GetY();
+    int simX, simY;
+    if (mouse.m_lmb == 1)
     {
-        if (mouse.m_rmb == 1)
+        m_currentObstId = -1;
+        int simX, simY;
+        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
         {
-            AddObstruction(mouse);
-        }
-        else if (mouse.m_mmb == 1)
-        {
-            if (IsInClosestObstruction(mouse))
-            {
-                RemoveObstruction(mouse);
-            }
-        }
-        else if (mouse.m_lmb == 1)
-        {
-            if (IsInClosestObstruction(mouse))
-            {
-                m_currentObstId = FindClosestObstructionId(mouse);
-            }
-            else
-            {
-                m_currentObstId = -1;
-            }
+            m_currentObstId = FindClosestObstructionId(simX, simY);
         }
     }
-    else
+    else if (mouse.m_rmb == 1)
     {
-        if (mouse.m_lmb == 1)
-        {
-            m_currentObstId = -1;
-            int x{ 0 }, y{ 0 }, z{ 0 };
-            if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
-            {
-                m_currentObstId = FindClosestObstructionId(x, y);
-            }
+        m_currentObstId = -1;
+        m_currentZ = -0.5f;
+        GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
+        AddObstruction(simX, simY);
+    }
+    else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
+    {
+        m_currentObstId = -1;
+        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
+        {            
+            m_currentObstId = FindClosestObstructionId(simX, simY);
+            RemoveObstruction(simX, simY);
         }
-        else if (mouse.m_rmb == 1)
-        {
-            m_currentObstId = -1;
-            int x{ 0 }, y{ 0 }, z{ 0 };
-            m_currentZ = -0.5f;
-            GetSimCoordFrom2DMouseRay(x, y, mouse);
-            AddObstruction(x,y);
-        }
-        else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
-        {
-            m_currentObstId = -1;
-            int x{ 0 }, y{ 0 }, z{ 0 };
-            if (GetSimCoordFrom3DMouseClickOnObstruction(x, y, mouse) == 0)
-            {            
-                m_currentObstId = FindClosestObstructionId(x, y);
-                RemoveObstruction(x,y);
-            }
-    
-        }
+
     }
 }
 
@@ -742,6 +714,51 @@ void GraphicsManager::Rotate(const float dx, const float dy)
     m_rotate_z += dx;
 }
 
+int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
+{
+    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
+    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    return PickObstruction(mouseX, mouseY);
+}
+
+int GraphicsManager::PickObstruction(const int mouseX, const int mouseY)
+{
+    int simX, simY;
+    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
+    {
+        return FindClosestObstructionId(simX, simY);
+    }
+    return -1;
+}
+
+
+void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
+    const float dxf, const float dyf)
+{
+    int simX1, simY1, simX2, simY2;
+    int xi, yi, dxi, dyi;
+    int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+    int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+    xi = floatCoordToIntCoord(mouseXf, windowWidth);
+    yi = floatCoordToIntCoord(mouseYf, windowHeight);
+    dxi = dxf*static_cast<float>(windowWidth) / 2.f;
+    dyi = dyf*static_cast<float>(windowHeight) / 2.f;
+    GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
+    GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
+    Obstruction obst = m_obstructions[obstId];
+    obst.x += simX2-simX1;
+    obst.y += simY2-simY1;
+    float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+    float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+    obst.u = u;
+    obst.v = v;
+    obst.state = Obstruction::ACTIVE;
+    m_obstructions[obstId] = obst;
+    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+    UpdateDeviceObstructions(obst_d, obstId, obst);  
+}
+
+
 void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
 {
     if (dir > 0){
@@ -764,18 +781,6 @@ void GraphicsManager::Zoom(const int dir, const float mag)
     }   
 }
 
-
-void GraphicsManager::AddObstruction(Mouse mouse)
-{
-    int xi, yi;
-    GetSimCoordFromMouseCoord(xi, yi, mouse);
-    Obstruction obst = { m_currentObstShape, xi, yi, m_currentObstSize, 0, 0, 0, Obstruction::NEW };
-    int obstId = FindUnusedObstructionId();
-    m_obstructions[obstId] = obst;
-    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-    UpdateDeviceObstructions(obst_d, obstId, obst);
-}
-
 void GraphicsManager::AddObstruction(const int simX, const int simY)
 {
     Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, Obstruction::NEW  };
@@ -785,19 +790,14 @@ void GraphicsManager::AddObstruction(const int simX, const int simY)
     UpdateDeviceObstructions(obst_d, obstId, obst);
 }
 
-void GraphicsManager::RemoveObstruction(Mouse mouse)
-{
-    int obstId = FindClosestObstructionId(mouse);
-    if (obstId < 0) return;
-    //Obstruction obst = m_obstructions[obstId];// { g_currentShape, -100, -100, 0, 0, Obstruction::NEW };
-    m_obstructions[obstId].state = Obstruction::REMOVED;
-    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-    UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId]);
-}
-
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 {
     int obstId = FindObstructionPointIsInside(simX,simY,1.f);
+    RemoveSpecifiedObstruction(obstId);
+}
+
+void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
+{
     if (obstId >= 0)
     {
         m_obstructions[obstId].state = Obstruction::REMOVED;
@@ -813,48 +813,25 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
     if (m_currentObstId > -1)
     {
-        if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
-        {
-            Obstruction obst = m_obstructions[m_currentObstId];
-            float dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-            dxi = dxf*static_cast<float>(xDimVisible) / 
-                std::min(m_parent->GetRectFloatAbs().m_w, xDimVisible*m_scaleFactor/windowWidth*2.f);
-            dyi = dyf*static_cast<float>(yDimVisible) / 
-                std::min(m_parent->GetRectFloatAbs().m_h, yDimVisible*m_scaleFactor/windowHeight*2.f);
-            obst.x += dxi;
-            obst.y += dyi;
-            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(dxi) / (TIMESTEPS_PER_FRAME)));
-            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(dyi) / (TIMESTEPS_PER_FRAME)));
-            obst.u = u;
-            obst.v = v;
-            m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-            UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
-        }
-        else
-        {
-            int simX1, simY1, simX2, simY2;
-            int dxi, dyi;
-            int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-            int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-            dxi = dxf*static_cast<float>(windowWidth) / 2.f;
-            dyi = dyf*static_cast<float>(windowHeight) / 2.f;
-            GetSimCoordFrom2DMouseRay(simX1, simY1, xi-dxi, yi-dyi);
-            GetSimCoordFrom2DMouseRay(simX2, simY2, xi, yi);
-            Obstruction obst = m_obstructions[m_currentObstId];
-            obst.x += simX2-simX1;
-            obst.y += simY2-simY1;
-            float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
-            float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
-            obst.u = u;
-            obst.v = v;
-            obst.state = Obstruction::ACTIVE;
-            m_obstructions[m_currentObstId] = obst;
-            Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-            UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
-        }
+        int simX1, simY1, simX2, simY2;
+        int dxi, dyi;
+        int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+        int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+        dxi = dxf*static_cast<float>(windowWidth) / 2.f;
+        dyi = dyf*static_cast<float>(windowHeight) / 2.f;
+        GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
+        GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
+        Obstruction obst = m_obstructions[m_currentObstId];
+        obst.x += simX2-simX1;
+        obst.y += simY2-simY1;
+        float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
+        float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+        obst.u = u;
+        obst.v = v;
+        obst.state = Obstruction::ACTIVE;
+        m_obstructions[m_currentObstId] = obst;
+        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+        UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
     }
 }
 
@@ -873,26 +850,6 @@ int GraphicsManager::FindUnusedObstructionId()
     return 0;
 }
 
-int GraphicsManager::FindClosestObstructionId(Mouse mouse)
-{
-    int xi, yi;
-    GetSimCoordFromMouseCoord(xi, yi, mouse);
-    float dist = 999999999999.f;
-    int closestObstId = -1;
-    for (int i = 0; i < MAXOBSTS; i++)
-    {
-        if (m_obstructions[i].state != Obstruction::REMOVED)
-        {
-            float newDist = GetDistanceBetweenTwoPoints(xi, yi, m_obstructions[i].x, m_obstructions[i].y);
-            if (newDist < dist)
-            {
-                dist = newDist;
-                closestObstId = i;
-            }
-        }
-    }
-    return closestObstId;
-}
 
 int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
 {
@@ -935,12 +892,12 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     return closestObstId;
 }
 
-bool GraphicsManager::IsInClosestObstruction(Mouse mouse)
+bool GraphicsManager::IsInClosestObstruction(const int mouseX, const int mouseY)
 {
-    int closestObstId = FindClosestObstructionId(mouse);
-    int xi, yi;
-    GetSimCoordFromMouseCoord(xi, yi, mouse);
-    float dist = GetDistanceBetweenTwoPoints(xi, yi, m_obstructions[closestObstId].x, 
+    int simX, simY;
+    GetSimCoordFromMouseCoord(simX, simY, mouseX, mouseY);
+    int closestObstId = FindClosestObstructionId(simX, simY);
+    float dist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[closestObstId].x, 
         m_obstructions[closestObstId].y);
     return (dist < m_obstructions[closestObstId].r1);
 }

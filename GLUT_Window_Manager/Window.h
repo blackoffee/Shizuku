@@ -6,41 +6,46 @@
 class Window
 {
 private:
-    static Panel* m_windowPanel;
-    static Panel* m_currentPanel;
-    static int m_previousMouseX;
-    static int m_previousMouseY;
-    static int m_currentMouseButton;
-    static Zoom m_zoom;
-    static Pan m_pan;
-    static Rotate m_rotate;
-    static ButtonPress m_buttonPress;
-    static SliderDrag m_sliderDrag;
-    static int m_leftPanelWidth;
-    static int m_leftPanelHeight;
+    Panel* m_windowPanel;
+    Panel* m_currentPanel;
+    Zoom m_zoom;
+    Pan m_pan;
+    Rotate m_rotate;
+    ButtonPress m_buttonPress;
+    SliderDrag m_sliderDrag;
+    AddObstruction m_addObstruction;
+    RemoveObstruction m_removeObstruction;
+    MoveObstruction m_moveObstruction;
+    int m_leftPanelWidth;
+    int m_leftPanelHeight;
 public:
     Window();
-    Window(const int width, const int height);
-
     Panel* GetWindowPanel();
-    static float GetFloatCoordX(const int x);
-    static float GetFloatCoordY(const int y);
+    float GetFloatCoordX(const int x);
+    float GetFloatCoordY(const int y);
     void InitializeGL();
-    static void timerEvent(int value);
-    static void Resize(const int width, const int height);
-
-    static void MouseButton(const int button, const int state,
+    void Resize(const int width, const int height);
+    void MouseButton(const int button, const int state,
         const int x, const int y);
-
-    static void MouseMotion(const int x, const int y);
-    static void Keyboard(const unsigned char key,
+    void MouseMotion(const int x, const int y);
+    void Keyboard(const unsigned char key,
         const int /*x*/, const int /*y*/);
-    static void MouseWheel(const int button, const int direction,
+    void MouseWheel(const int button, const int direction,
         const int x, const int y);
-
-    static void DrawLoop();
+    void DrawLoop();
     void InitializeGLUT(int argc, char **argv);
     void Display();
+
+    static Window& Instance()
+    {
+        static Window s_window = Window();
+        return s_window;
+    }
 };
 
-
+void ResizeWrapper(const int x, const int y);
+void MouseButtonWrapper(const int button, const int state, const int x, const int y);
+void MouseMotionWrapper(const int x, const int y);
+void MouseWheelWrapper(const int button, const int direction, const int x, const int y);
+void KeyboardWrapper(const unsigned char key, const int x, const int y);
+void DrawLoopWrapper();

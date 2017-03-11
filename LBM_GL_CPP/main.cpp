@@ -768,6 +768,7 @@ void Draw()
     Resize(Window.GetWidth(), Window.GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
+    graphicsManager->UpdateViewTransformations();
 
 
 //    //// Compute shader

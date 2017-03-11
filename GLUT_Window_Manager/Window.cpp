@@ -1,31 +1,50 @@
 #include "Window.h"
 
-int Window::m_leftPanelWidth(350);
-int Window::m_leftPanelHeight(500);
-Panel* Window::m_currentPanel = NULL;
-int Window::m_previousMouseX = 0;
-int Window::m_previousMouseY = 0;
-int Window::m_currentMouseButton = 0;
-Panel* Window::m_windowPanel = new Panel;
-Zoom Window::m_zoom = Zoom();
-Pan Window::m_pan = Pan();
-Rotate Window::m_rotate = Rotate();
-ButtonPress Window::m_buttonPress = ButtonPress();
-SliderDrag Window::m_sliderDrag = SliderDrag();
-
-Window::Window()
+void ResizeWrapper(const int x, const int y)
 {
-    m_zoom.Initialize(*m_windowPanel);
-    m_pan.Initialize(*m_windowPanel);
-    m_rotate.Initialize(*m_windowPanel);
-}
-Window::Window(const int width, const int height)
-{
-    m_zoom.Initialize(*m_windowPanel);
-    m_pan.Initialize(*m_windowPanel);
-    m_rotate.Initialize(*m_windowPanel);
+    Window::Instance().Resize(x, y);
 }
 
+void MouseButtonWrapper(const int button, const int state, const int x, const int y)
+{
+    Window::Instance().MouseButton(button, state, x, y);
+}
+
+void MouseMotionWrapper(const int x, const int y)
+{
+    Window::Instance().MouseMotion(x, y);
+}
+
+void MouseWheelWrapper(const int button, const int direction, const int x, const int y)
+{
+    Window::Instance().MouseWheel(button, direction, x, y);
+}
+
+void KeyboardWrapper(const unsigned char key, const int x, const int y)
+{
+    Window::Instance().Keyboard(key, x, y);
+}
+
+void DrawLoopWrapper()
+{
+    Window::Instance().DrawLoop();
+}
+
+Window::Window() :
+    m_currentPanel(NULL),
+    m_windowPanel(new Panel),
+    m_leftPanelWidth(350),
+    m_leftPanelHeight(500),
+    m_zoom(Zoom(*m_windowPanel)),
+    m_pan(Pan(*m_windowPanel)),
+    m_rotate(Rotate(*m_windowPanel)),
+    m_buttonPress(ButtonPress(*m_windowPanel)),
+    m_sliderDrag(SliderDrag(*m_windowPanel)),
+    m_addObstruction(AddObstruction(*m_windowPanel)),
+    m_removeObstruction(RemoveObstruction(*m_windowPanel)),
+    m_moveObstruction(MoveObstruction(*m_windowPanel))
+{
+}
 
 Panel* Window::GetWindowPanel()
 {
@@ -50,12 +69,12 @@ void Window::InitializeGL()
     glViewport(0,0,800,600);
 }
 
-void Window::timerEvent(int value)
+void TimerEvent(int value)
 {
     if (glutGetWindow())
     {
         glutPostRedisplay();
-        glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
+        glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
     }
 }
 
@@ -99,12 +118,23 @@ void Window::MouseButton(const int button, const int state,
         else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
         {
             m_rotate.Start(xf, yf);
+            m_removeObstruction.Start(xf, yf);
+        }
+        else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+        {
+            m_addObstruction.Start(xf, yf);
+        }
+        else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+        {
+            m_moveObstruction.Start(xf, yf);
         }
         else
         {
             m_pan.End();
             m_rotate.End();
             m_sliderDrag.End();
+            m_moveObstruction.End();
+            m_removeObstruction.End(xf, yf);
         }
     }
     else
@@ -135,8 +165,8 @@ void Window::MouseButton(const int button, const int state,
             }
         }
     }
-
 }
+
 void Window::MouseMotion(const int x, const int y)
 {
     int windowHeight = m_windowPanel->GetHeight();
@@ -150,6 +180,7 @@ void Window::MouseMotion(const int x, const int y)
     {
         m_pan.Track(xf, yf);
         m_rotate.Track(xf, yf);
+        m_moveObstruction.Track(xf, yf);
     }
     else
     {
@@ -159,7 +190,7 @@ void Window::MouseMotion(const int x, const int y)
 
 }
 void Window::Keyboard(const unsigned char key,
-    const int /*x*/, const int /*y*/)
+    const int x, const int y)
 {
     
 }
@@ -179,12 +210,12 @@ void Window::DrawLoop()
 {
     GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    graphicsManager->UpdateViewTransformations();
     graphicsManager->UpdateGraphicsInputs();
 
-    Resize(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
+    ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
+    graphicsManager->UpdateViewTransformations();
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
@@ -210,14 +241,14 @@ void Window::InitializeGLUT(int argc, char **argv)
 
     glutCreateWindow("New Window management");
 
-    glutReshapeFunc(&Window::Resize);
-    glutMouseFunc(&Window::MouseButton);
-    glutMotionFunc(&Window::MouseMotion);
-    glutKeyboardFunc(&Window::Keyboard);
-    glutMouseWheelFunc(&Window::MouseWheel);
+    glutReshapeFunc(ResizeWrapper);
+    glutMouseFunc(MouseButtonWrapper);
+    glutMotionFunc(MouseMotionWrapper);
+    glutKeyboardFunc(KeyboardWrapper);
+    glutMouseWheelFunc(MouseWheelWrapper);
 
-    glutDisplayFunc(&Window::DrawLoop);
-    glutTimerFunc(REFRESH_DELAY, &Window::timerEvent, 0);
+    glutDisplayFunc(DrawLoopWrapper);
+    glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
 
 }
 
