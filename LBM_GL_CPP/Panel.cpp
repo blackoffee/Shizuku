@@ -597,6 +597,11 @@ float SliderBar::GetValue()
     return m_value;
 }
 
+SliderBar::Orientation SliderBar::GetOrientation()
+{
+    return m_orientation;
+}
+
 void SliderBar::Drag(int x, int y, float dx, float dy, int button)
 {
     RectFloat rect = this->GetRectFloatAbs();
@@ -661,7 +666,7 @@ void Slider::Draw()
     RectFloat rect = this->GetRectFloatAbs();
     if (m_sliderBar2 == NULL)
     {
-        if (m_sliderBar1->m_orientation == SliderBar::VERTICAL)
+        if (m_sliderBar1->GetOrientation() == SliderBar::VERTICAL)
         {
             minColor = Color::BLUE;
             maxColor = Color::WHITE;
@@ -710,7 +715,7 @@ void Slider::Draw()
             lowerSliderBar = m_sliderBar2;
             higherSliderBar = m_sliderBar1;
         }
-        if (m_sliderBar1->m_orientation == SliderBar::VERTICAL)
+        if (m_sliderBar1->GetOrientation() == SliderBar::VERTICAL)
         {
             glBegin(GL_QUADS);
             glColor3f(lowerColor.r, lowerColor.g, lowerColor.b);

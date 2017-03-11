@@ -8,15 +8,11 @@
 #include "RectFloat.h"
 #include "RectInt.h"
 
-
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
 #else  
 #define FW_API __declspec(dllimport)   
 #endif  
-
-FW_API void test();
-
 
 class Color
 {
@@ -160,9 +156,10 @@ class SliderBar : public Panel
 {
 public:
     enum Orientation {VERTICAL, HORIZONTAL};
-    Orientation m_orientation = HORIZONTAL;
+private:
     float m_value = 0.5f;
-
+    Orientation m_orientation = HORIZONTAL;
+public:
     FW_API SliderBar();
     FW_API SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Slider* parent = NULL);
@@ -172,13 +169,13 @@ public:
     FW_API void Draw();
     FW_API void UpdateValue();
     FW_API float GetValue();
+    FW_API Orientation GetOrientation();
     virtual void Drag(int x, int y, float dx, float dy, int button);
 };
 
 class Slider : public Panel
 {
 public:
-    float m_currentValue;
     SliderBar* m_sliderBar1 = NULL;
     SliderBar* m_sliderBar2 = NULL;
 
@@ -212,7 +209,6 @@ public:
     FW_API void ExclusiveEnable(Button* button);
     FW_API Button* GetCurrentEnabledButton();
 };
-
 
 FW_API float intCoordToFloatCoord(const int x, const int xDim);
 FW_API int floatCoordToIntCoord(const float x, const int xDim);
