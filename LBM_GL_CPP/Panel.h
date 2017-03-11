@@ -54,12 +54,12 @@ private:
     GraphicsManager* m_graphicsManager = NULL;
 protected:
     void(*m_callback)(Panel &rootPanel) = NULL;
-public:
     std::vector<Panel*> m_subPanels;
     std::vector<Button*> m_buttons;
     std::vector<Slider*> m_sliders;
     std::vector<ButtonGroup*> m_buttonGroups;
     Panel* m_parent = NULL; //pointer to parent frame
+public:
     bool m_draw = true;
     //these two members below should ideally be in Slider class
 
@@ -86,12 +86,13 @@ public:
     FW_API Button* GetButton(const std::string name);
     FW_API Slider* GetSlider(const std::string name);
     FW_API ButtonGroup* GetButtonGroup(const std::string name);
+    FW_API std::vector<Panel*>& GetSubPanels();
+    FW_API std::vector<Button*>& GetButtons();
+    FW_API std::vector<Slider*>& GetSliders();
+    FW_API std::vector<ButtonGroup*>& GetButtonGroups();
 
     FW_API GraphicsManager* GetGraphicsManager();
 
-    FW_API void SetCallback(void(*callback)(Panel &rootPanel));
-    FW_API void Callback();
-    
     FW_API void SetBackgroundColor(Color color);
     FW_API void SetForegroundColor(Color color);
     FW_API Color GetBackgroundColor();
@@ -104,7 +105,6 @@ public:
 
     FW_API std::string GetDisplayText();
     FW_API void SetDisplayText(std::string displayText);
-
 
     FW_API void CreateGraphicsManager();
 
@@ -142,7 +142,8 @@ class Button : public Panel
 {
 public:
     bool m_highlighted = false;
-    
+    FW_API void SetCallback(void(*callback)(Panel &rootPanel));
+    FW_API void Callback();
     using Panel::Panel;
     FW_API Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);

@@ -6,7 +6,6 @@ Color::Color()
     r = 1.f; g = 1.f; b = 1.f; 
 }
 
-//ColorName{WHITE,BLACK,RED,GREEN,BLUE,DARK_GRAY,GRAY,LIGHT_GRAY};
 Color::Color(ColorName color)
 {
     r = 1.f; g = 1.f; b = 1.f; 
@@ -32,7 +31,6 @@ Color::Color(ColorName color)
 
 Panel::Panel()
 {
-    m_name = "None";
 }
 
 Panel::Panel(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
@@ -371,23 +369,31 @@ ButtonGroup* Panel::GetButtonGroup(const std::string name)
     return NULL;
 }
 
+std::vector<Panel*>& Panel::GetSubPanels()
+{
+    return m_subPanels;
+}
+
+std::vector<Button*>& Panel::GetButtons()
+{
+    return m_buttons;
+}
+
+std::vector<Slider*>& Panel::GetSliders()
+{
+    return m_sliders;
+}
+
+std::vector<ButtonGroup*>& Panel::GetButtonGroups()
+{
+    return m_buttonGroups;
+}
+
 GraphicsManager* Panel::GetGraphicsManager()
 {
     return m_graphicsManager;
 }
 
-void Panel::SetCallback(void(*callback)(Panel &rootPanel))
-{
-    m_callback = callback;
-}
-
-void Panel::Callback()
-{
-    if (m_callback != NULL)
-    {
-        m_callback(*GetRootPanel());
-    }
-}
 
 void Panel::SetBackgroundColor(Color color)
 {
@@ -438,8 +444,6 @@ void Panel::SetDisplayText(std::string displayText)
 {
     m_displayText = displayText;
 }
-
-
 
 Button* Panel::CreateButton(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
     const std::string name, const Color color)
@@ -492,8 +496,6 @@ void Panel::ClickDown()
 {
 }
 
-
-
 Button::Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition, 
     const std::string name, const Color color, Panel* parent) 
     : Panel(rectFloat, sizeDefinition, name, color, parent)
@@ -506,6 +508,19 @@ Button::Button(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition,
     : Panel(rectInt, sizeDefinition, name, color, parent)
 {
     SetDisplayText(GetName());
+}
+
+void Button::SetCallback(void(*callback)(Panel &rootPanel))
+{
+    m_callback = callback;
+}
+
+void Button::Callback()
+{
+    if (m_callback != NULL)
+    {
+        m_callback(*GetRootPanel());
+    }
 }
 
 void Button::ClickDown(Mouse mouse)
@@ -561,17 +576,18 @@ void SliderBar::Draw()
 void SliderBar::UpdateValue()
 {
     RectFloat rect = this->GetRectFloatAbs();
+    RectFloat parentRect = m_parent->GetRectFloatAbs();
     if (m_orientation == VERTICAL)
     {
         m_value = m_parent->GetMinValue() + (m_parent->GetMaxValue() - m_parent->GetMinValue())*
-            (rect.GetCentroidY() - (m_parent->GetRectFloatAbs().m_y+rect.m_h*0.5f)) /
-            (m_parent->GetRectFloatAbs().m_h-rect.m_h);
+            (rect.GetCentroidY() - (parentRect.m_y+rect.m_h*0.5f)) /
+            (parentRect.m_h-rect.m_h);
     }
     else
     {
         m_value = m_parent->GetMinValue() + (m_parent->GetMaxValue() - m_parent->GetMinValue())*
-            (rect.GetCentroidX() - (m_parent->GetRectFloatAbs().m_x+rect.m_w*0.5f)) /
-            (m_parent->GetRectFloatAbs().m_w-rect.m_w);
+            (rect.GetCentroidX() - (parentRect.m_x+rect.m_w*0.5f)) /
+            (parentRect.m_w-rect.m_w);
     }
 }
 
@@ -584,16 +600,17 @@ float SliderBar::GetValue()
 void SliderBar::Drag(int x, int y, float dx, float dy, int button)
 {
     RectFloat rect = this->GetRectFloatAbs();
+    RectFloat parentRect = m_parent->GetRectFloatAbs();
     //dx and dy are coming in as float abs coordinates
     if (m_orientation == VERTICAL)
     {
-        rect.m_y = std::max(m_parent->GetRectFloatAbs().m_y, 
-            std::min(m_parent->GetRectFloatAbs().m_y + m_parent->GetRectFloatAbs().m_h - rect.m_h, rect.m_y + dy));
+        rect.m_y = std::max(parentRect.m_y, 
+            std::min(parentRect.m_y + parentRect.m_h - rect.m_h, rect.m_y + dy));
     }
     else
     { 
-        rect.m_x = std::max(m_parent->GetRectFloatAbs().m_x,
-            std::min(m_parent->GetRectFloatAbs().m_x + m_parent->GetRectFloatAbs().m_w - rect.m_w, rect.m_x + dx));
+        rect.m_x = std::max(parentRect.m_x,
+            std::min(parentRect.m_x + parentRect.m_w - rect.m_w, rect.m_x + dx));
     }
     SetSize_Absolute(rect);
     UpdateValue();
@@ -860,8 +877,6 @@ Button* ButtonGroup::GetCurrentEnabledButton()
     return NULL;
 }
 
-
-
 bool IsPointInRect(float x, float y, RectFloat rect, float tol = 0.0f)
 {
     if (x+tol > rect.m_x && x-tol<rect.m_x + rect.m_w 
@@ -871,6 +886,7 @@ bool IsPointInRect(float x, float y, RectFloat rect, float tol = 0.0f)
 }
 
 
+
 Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
 {
     Panel* panelThatPointIsIn = NULL; 
@@ -878,7 +894,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
     {
         panelThatPointIsIn = parentPanel;
         Panel* temp;
-        for (std::vector<Panel*>::iterator it = parentPanel->m_subPanels.begin(); it != parentPanel->m_subPanels.end(); ++it)
+        for (std::vector<Panel*>::iterator it = parentPanel->GetSubPanels().begin(); it != parentPanel->GetSubPanels().end(); ++it)
         {
             temp = GetPanelThatPointIsIn(*it, x, y);
             if (temp != NULL)// && temp->m_draw == true)   //OK to ignore the m_draw for now. For sliders, it affects the contour sliders. Need to differentiate between draw=false and inactive objects
@@ -886,7 +902,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
                 panelThatPointIsIn = temp;
             }
         }
-        for (std::vector<Button*>::iterator it = parentPanel->m_buttons.begin(); it != parentPanel->m_buttons.end(); ++it)
+        for (std::vector<Button*>::iterator it = parentPanel->GetButtons().begin(); it != parentPanel->GetButtons().end(); ++it)
         {
             temp = GetPanelThatPointIsIn(*it, x, y);
             if (temp != NULL && temp->m_draw == true)
@@ -894,7 +910,7 @@ Panel* GetPanelThatPointIsIn(Panel* parentPanel, float x, float y)
                 panelThatPointIsIn = temp;
             }
         }
-        for (std::vector<Slider*>::iterator it = parentPanel->m_sliders.begin(); it != parentPanel->m_sliders.end(); ++it)
+        for (std::vector<Slider*>::iterator it = parentPanel->GetSliders().begin(); it != parentPanel->GetSliders().end(); ++it)
         {
             temp = GetPanelThatPointIsIn(*it, x, y);
             if (temp != NULL && temp->m_draw == true)
