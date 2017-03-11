@@ -21,14 +21,10 @@
 #include "Domain.h"
 #include "FpsTracker.h"
 
-
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
 
 FpsTracker g_fpsTracker;
-
-//simulation inputs
-Domain g_simDomain;
 
 Panel Window;
 Mouse theMouse;

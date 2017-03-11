@@ -5,11 +5,6 @@ Command::Command(Panel &rootPanel)
     m_rootPanel = &rootPanel;
 }
 
-void Command::Initialize(Panel &rootPanel)
-{
-    m_rootPanel = &rootPanel;
-}
-
 Panel* Command::GetRootPanel()
 {
     return m_rootPanel;

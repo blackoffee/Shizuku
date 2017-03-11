@@ -8,15 +8,11 @@
 #include "RectFloat.h"
 #include "RectInt.h"
 
-
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
 #else  
 #define FW_API __declspec(dllimport)   
 #endif  
-
-FW_API void test();
-
 
 class Color
 {
@@ -54,12 +50,12 @@ private:
     GraphicsManager* m_graphicsManager = NULL;
 protected:
     void(*m_callback)(Panel &rootPanel) = NULL;
-public:
     std::vector<Panel*> m_subPanels;
     std::vector<Button*> m_buttons;
     std::vector<Slider*> m_sliders;
     std::vector<ButtonGroup*> m_buttonGroups;
     Panel* m_parent = NULL; //pointer to parent frame
+public:
     bool m_draw = true;
     //these two members below should ideally be in Slider class
 
@@ -86,12 +82,13 @@ public:
     FW_API Button* GetButton(const std::string name);
     FW_API Slider* GetSlider(const std::string name);
     FW_API ButtonGroup* GetButtonGroup(const std::string name);
+    FW_API std::vector<Panel*>& GetSubPanels();
+    FW_API std::vector<Button*>& GetButtons();
+    FW_API std::vector<Slider*>& GetSliders();
+    FW_API std::vector<ButtonGroup*>& GetButtonGroups();
 
     FW_API GraphicsManager* GetGraphicsManager();
 
-    FW_API void SetCallback(void(*callback)(Panel &rootPanel));
-    FW_API void Callback();
-    
     FW_API void SetBackgroundColor(Color color);
     FW_API void SetForegroundColor(Color color);
     FW_API Color GetBackgroundColor();
@@ -104,7 +101,6 @@ public:
 
     FW_API std::string GetDisplayText();
     FW_API void SetDisplayText(std::string displayText);
-
 
     FW_API void CreateGraphicsManager();
 
@@ -142,7 +138,8 @@ class Button : public Panel
 {
 public:
     bool m_highlighted = false;
-    
+    FW_API void SetCallback(void(*callback)(Panel &rootPanel));
+    FW_API void Callback();
     using Panel::Panel;
     FW_API Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
@@ -159,9 +156,10 @@ class SliderBar : public Panel
 {
 public:
     enum Orientation {VERTICAL, HORIZONTAL};
-    Orientation m_orientation = HORIZONTAL;
+private:
     float m_value = 0.5f;
-
+    Orientation m_orientation = HORIZONTAL;
+public:
     FW_API SliderBar();
     FW_API SliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Slider* parent = NULL);
@@ -171,13 +169,13 @@ public:
     FW_API void Draw();
     FW_API void UpdateValue();
     FW_API float GetValue();
+    FW_API Orientation GetOrientation();
     virtual void Drag(int x, int y, float dx, float dy, int button);
 };
 
 class Slider : public Panel
 {
 public:
-    float m_currentValue;
     SliderBar* m_sliderBar1 = NULL;
     SliderBar* m_sliderBar2 = NULL;
 
@@ -211,7 +209,6 @@ public:
     FW_API void ExclusiveEnable(Button* button);
     FW_API Button* GetCurrentEnabledButton();
 };
-
 
 FW_API float intCoordToFloatCoord(const int x, const int xDim);
 FW_API int floatCoordToIntCoord(const float x, const int xDim);

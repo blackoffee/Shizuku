@@ -13,7 +13,6 @@ public:
     void Start();
     void Track();
     void End();
-    void Initialize(Panel &rootPanel);
     Panel* GetRootPanel();
     GraphicsManager* GetGraphicsManager();
 };
