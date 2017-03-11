@@ -934,21 +934,6 @@ glm::mat4 GraphicsManager::GetProjectionMatrix()
 }
 
 
-glm::vec4 GraphicsManager::GetViewportMatrix()
-{
-    return glm::make_vec4(m_viewport);
-}
-
-glm::mat4 GraphicsManager::GetModelMatrix()
-{
-    return glm::make_mat4(m_modelMatrix);
-}
-
-glm::mat4 GraphicsManager::GetProjectionMatrix()
-{
-    return glm::make_mat4(m_projectionMatrix);
-}
-
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,
     const float x2, const float y2)

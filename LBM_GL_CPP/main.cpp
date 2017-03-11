@@ -5,8 +5,6 @@
 #include "device_launch_parameters.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <stdio.h>
 #include <iostream>
@@ -22,7 +20,6 @@
 #include "common.h"
 #include "Domain.h"
 #include "FpsTracker.h"
-#include "Shader.h"
 
 
 const int g_leftPanelWidth(350);
@@ -36,13 +33,7 @@ Domain g_simDomain;
 Panel Window;
 Mouse theMouse;
 
-GLuint g_vaoSolutionField;
-GLuint g_vaoSolutionField;
 const int g_glutMouseYOffset = 10; //hack to get better mouse precision
-
-ShaderProgram g_shader;
-ShaderProgram g_computeShader;
-
 
 void Init()
 {
@@ -53,20 +44,6 @@ void Init()
     glViewport(0,0,windowWidth,windowHeight);
 
 }
-
-
-void CompileShaderPrograms()
-{
-    g_shader.Init();
-    g_shader.CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
-    g_shader.CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
-
-    g_computeShader.Init();
-    g_computeShader.CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
-
-}
-
-
 
 void SetUpWindow(Panel &rootPanel)
 {
@@ -554,14 +531,6 @@ void DrawShapePreview(Panel &rootPanel)
  *	GL Interop Functions
  */
 
-    glGenVertexArrays(1, &g_vaoSolutionField);
-    glBindVertexArray(g_vaoSolutionField);
-
-
-//    glGenVertexArrays(1, &g_vaoSolutionField);
-//    glBindVertexArray(g_vaoSolutionField);
-
-
 void SetUpGLInterop(Panel &rootPanel)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
@@ -732,12 +701,6 @@ void UpdateLbmInputs(CudaLbm &cudaLbm, Panel &rootPanel)
     cudaLbm.SetOmega(omega);
 }
 
-
-
-
-
-
-
 void CheckGLError()
 {
     GLenum err;
@@ -757,7 +720,6 @@ void UpdateWindowTitle(const int fps, Domain &domain)
     glutSetWindowTitle(fpsReport);
 }
 
-
 void Draw()
 {
     g_fpsTracker.Tick();
@@ -765,105 +727,11 @@ void Draw()
     GraphicsManager* graphicsManager = Window.GetPanel("Graphics")->GetGraphicsManager();
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     graphicsManager->UpdateGraphicsInputs();
+
     Resize(Window.GetWidth(), Window.GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(g_leftPanelWidth);
     graphicsManager->UpdateViewTransformations();
-
-
-//    //// Compute shader
-
-//    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
-
-//    g_computeShader.Use();
-
-    //// Compute shader
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_vboSolutionField);
-
-    g_computeShader.Use();
-
-    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
-    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
-    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
-    glUniform1i(maxXDimLocation, MAX_XDIM);
-    glUniform1i(xDimVisibleLocation, xDimVisible);
-    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
-        "PhongLighting");
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
-
-    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    g_computeShader.Unset();
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    
-
-
-
-
-
-
-
-//    GLint maxXDimLocation = glGetUniformLocation(g_computeShader.ProgramID, "maxXDim");
-//    GLint xDimVisibleLocation = glGetUniformLocation(g_computeShader.ProgramID, "xDimVisible");
-//    GLint cameraPositionLocation = glGetUniformLocation(g_computeShader.ProgramID, "cameraPosition");
-//    glUniform1i(maxXDimLocation, MAX_XDIM);
-//    glUniform1i(xDimVisibleLocation, xDimVisible);
-//    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-//    GLuint VboUpdateSubroutine = glGetSubroutineIndex(g_computeShader.ProgramID, GL_COMPUTE_SHADER,
-//        "PhongLighting");
-//    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &VboUpdateSubroutine);
-
-//    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
-//    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-//    g_computeShader.Unset();
-
-//    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    graphicsManager->UpdateViewTransformations();
-    // Update Obstruction size based on current slider value
-    float currentObstSize = Window.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    graphicsManager->SetCurrentObstSize(currentObstSize);
-
-    glm::vec4 viewportMatrix = graphicsManager->GetViewportMatrix();
-    glm::mat4 modelMatrix = graphicsManager->GetModelMatrix();
-    glm::mat4 projectionMatrix = graphicsManager->GetProjectionMatrix();
-
-
-
-    
-
-    glBindVertexArray(g_vaoSolutionField);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3*sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    //glVertexPointer(3, GL_FLOAT, 16, 0);
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glColor3f(1.0, 0.0, 0.0);
-    //glEnableClientState(GL_COLOR_ARRAY);
-    //glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-
-    g_shader.Use();
-    GLint viewportMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "viewportMatrix");
-    GLint modelMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "modelMatrix");
-    GLint projectionMatrixLocation = glGetUniformLocation(g_shader.ProgramID, "projectionMatrix");
-    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-    g_shader.Unset();
-    //glDisableClientState(GL_VERTEX_ARRAY);
-    glBindVertexArray(0);
-
-
-
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
@@ -891,7 +759,6 @@ int main(int argc,char **argv)
 
     glutInit(&argc,argv);
 
-
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
     int windowWidth = Window.GetWidth();
     int windowHeight = Window.GetHeight();
@@ -908,10 +775,8 @@ int main(int argc,char **argv)
     glutTimerFunc(REFRESH_DELAY, timerEvent, 0);
 
     Init();
-    CompileShaderPrograms();
     SetUpGLInterop(Window);
     SetUpCUDA(Window);
-
 
     glutMainLoop();
 
