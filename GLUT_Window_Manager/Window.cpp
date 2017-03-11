@@ -165,8 +165,8 @@ void Window::MouseButton(const int button, const int state,
             }
         }
     }
-
 }
+
 void Window::MouseMotion(const int x, const int y)
 {
     int windowHeight = m_windowPanel->GetHeight();
@@ -190,7 +190,7 @@ void Window::MouseMotion(const int x, const int y)
 
 }
 void Window::Keyboard(const unsigned char key,
-    const int /*x*/, const int /*y*/)
+    const int x, const int y)
 {
     
 }
