@@ -15,6 +15,7 @@
 
 #include "Common.h"
 #include "kernel.h"
+#include "Shader.h"
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
@@ -77,6 +78,7 @@ class Graphics
     cudaGraphicsResource* m_cudaGraphicsResource;
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
+    ShaderProgram m_shaderProgram;
 public:
     FW_API Graphics();
 
@@ -92,6 +94,7 @@ public:
     FW_API void SetUpGLInterOp(unsigned int size);
     FW_API void CleanUpGLInterOp();
     FW_API void SetUpCuda();
+    FW_API ShaderProgram& GetShaderProgram();
 
     FW_API void RenderVbo(bool renderFloor, Domain &domain);
 };

@@ -5,6 +5,8 @@
 #include "device_launch_parameters.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <stdio.h>
 #include <iostream>

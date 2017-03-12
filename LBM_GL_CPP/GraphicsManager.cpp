@@ -302,6 +302,11 @@ GLuint Graphics::GetVbo()
     return m_vbo;
 }
 
+ShaderProgram& Graphics::GetShaderProgram()
+{
+    return m_shaderProgram;
+}
+
 void Graphics::RenderVbo(bool renderFloor, Domain &domain)
 {
     glEnable(GL_BLEND);
