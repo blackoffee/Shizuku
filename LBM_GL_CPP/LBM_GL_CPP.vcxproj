@@ -198,6 +198,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <CudaCompile Include="Domain.cu">
       <FileType>Document</FileType>
     </CudaCompile>

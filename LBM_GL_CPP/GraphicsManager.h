@@ -97,7 +97,6 @@ public:
     FW_API void SetUpCuda();
     FW_API ShaderProgram* GetShaderProgram();
     FW_API void RunComputeShader(const float3 cameraPosition);
-    FW_API void RunVertexShader();
     FW_API void RunVertexShader(glm::mat4 modelMatrix, glm::mat4 projectionMatrix);
     FW_API void RenderVbo(bool renderFloor, Domain &domain);
 };
