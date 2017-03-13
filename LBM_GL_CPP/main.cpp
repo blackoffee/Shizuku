@@ -591,6 +591,9 @@ void SetUpCUDA(Panel &rootPanel)
 
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
+
+    //graphics->GetShaderProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+
 }
 
 void Draw2D(Panel &rootPanel)
@@ -707,7 +710,7 @@ void CheckGLError()
     }
 }
 
-void UpdateWindowTitle(const int fps, Domain &domain)
+void UpdateWindowTitle(const float fps, Domain &domain)
 {
     char fpsReport[256];
     int xDim = domain.GetXDim();
@@ -733,6 +736,8 @@ void Draw()
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
+    //graphicsManager->RunComputeShader();
+    //graphicsManager->RunVertexShader();
 
     bool renderFloor = graphicsManager->ShouldRenderFloor();
     Graphics* graphics = graphicsManager->GetGraphics();
