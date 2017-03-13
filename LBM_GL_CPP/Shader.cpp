@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-Shader::Shader(const GLchar* vertexPath, const GLenum shaderType, const GLuint Program)
+Shader::Shader(const GLchar* filePath, const GLenum shaderType, const GLuint Program)
 {
     // 1. Retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
@@ -10,7 +10,7 @@ Shader::Shader(const GLchar* vertexPath, const GLenum shaderType, const GLuint P
     try
     {
         // Open files
-        vShaderFile.open(vertexPath);
+        vShaderFile.open(filePath);
         std::stringstream vShaderStream;
         // Read file's buffer contents into streams
         vShaderStream << vShaderFile.rdbuf();
@@ -58,28 +58,33 @@ GLuint Shader::GetId()
     return shaderID;
 }
 
-ShaderProgram::ShaderProgram()
+void ShaderProgram::Initialize()
 {
     ProgramID = glCreateProgram();
 }
 
-void ShaderProgram::CreateShader(const GLchar* vertexPath, const GLenum shaderType)
+GLuint ShaderProgram::GetId()
+{
+    return ProgramID;
+}
+
+void ShaderProgram::CreateShader(const GLchar* filePath, const GLenum shaderType)
 {
     if (shaderType == GL_VERTEX_SHADER)
     {
-        this->vertexShader = &Shader(vertexPath, shaderType, ProgramID);
+        this->vertexShader = &Shader(filePath, shaderType, ProgramID);
     }
     else if (shaderType == GL_FRAGMENT_SHADER)
     {
-        this->fragmentShader = &Shader(vertexPath, shaderType, ProgramID);
+        this->fragmentShader = &Shader(filePath, shaderType, ProgramID);
     }
     else if (shaderType == GL_GEOMETRY_SHADER)
     {
-        this->geometryShader = &Shader(vertexPath, shaderType, ProgramID);
+        this->geometryShader = &Shader(filePath, shaderType, ProgramID);
     }
     else if (shaderType == GL_COMPUTE_SHADER)
     {
-        this->computeShader = &Shader(vertexPath, shaderType, ProgramID);
+        this->computeShader = &Shader(filePath, shaderType, ProgramID);
     }
 }
 

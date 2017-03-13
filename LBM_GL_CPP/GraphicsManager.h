@@ -76,9 +76,10 @@ class Graphics
 {
     CudaLbm* m_cudaLbm;
     cudaGraphicsResource* m_cudaGraphicsResource;
+    GLuint m_vao;
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
-    ShaderProgram m_shaderProgram;
+    ShaderProgram* m_shaderProgram;
 public:
     FW_API Graphics();
 
@@ -94,8 +95,10 @@ public:
     FW_API void SetUpGLInterOp(unsigned int size);
     FW_API void CleanUpGLInterOp();
     FW_API void SetUpCuda();
-    FW_API ShaderProgram& GetShaderProgram();
-
+    FW_API ShaderProgram* GetShaderProgram();
+    FW_API void RunComputeShader(const float3 cameraPosition);
+    FW_API void RunVertexShader();
+    FW_API void RunVertexShader(glm::mat4 modelMatrix, glm::mat4 projectionMatrix);
     FW_API void RenderVbo(bool renderFloor, Domain &domain);
 };
 
@@ -106,12 +109,8 @@ class GraphicsManager
 private:
     float m_currentZ = -1000.f;
     //view transformations
-    float m_rotate_x = 60.f;
-    float m_rotate_y = 0.f;
-    float m_rotate_z = 30.f;
-    float m_translate_x = 0.f;
-    float m_translate_y = 0.8f;
-    float m_translate_z = -0.2f;
+    float3 m_rotate;
+    float3 m_translate;
     int m_currentObstId = -1;
     float m_currentObstSize = 0.f;
     Obstruction::Shape m_currentObstShape = Obstruction::SQUARE;
@@ -160,6 +159,8 @@ public:
 
     FW_API void CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth);
     FW_API void RunCuda();
+    FW_API void RunComputeShader();
+    FW_API void RunVertexShader();
     FW_API bool ShouldRenderFloor();
 
     FW_API void ClickDown(Mouse mouse);

@@ -11,22 +11,26 @@ class Shader
     GLuint shaderID;
 public:
     // Constructor generates the shader on the fly
-    Shader(const GLchar* vertexPath, const GLenum shaderType, const GLuint Program);
+    Shader(const GLchar* filePath, const GLenum shaderType, const GLuint Program);
     GLuint GetId();
 };
 
 
 class ShaderProgram
 {
-public:
     GLuint ProgramID;
+public:
     Shader *vertexShader;
     Shader *fragmentShader;
     Shader *geometryShader;
     Shader *computeShader;
 
-    ShaderProgram();
-    void CreateShader(const GLchar* vertexPath, const GLenum shaderType);
+    ShaderProgram()
+        : vertexShader(NULL), fragmentShader(NULL), geometryShader(NULL), computeShader(NULL)
+    {}
+    void Initialize();
+    GLuint GetId();
+    void CreateShader(const GLchar* filePath, const GLenum shaderType);
     void Use();
     void Unset();
 };

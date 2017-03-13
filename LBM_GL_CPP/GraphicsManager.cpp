@@ -208,7 +208,7 @@ int CudaLbm::ImageFcn(const int x, const int y){
 
 Graphics::Graphics()
 {
-
+    m_shaderProgram = new ShaderProgram;
 }
 
 void Graphics::CreateCudaLbm()
@@ -241,11 +241,16 @@ void Graphics::CleanUpGLInterOp()
 
 void Graphics::CreateVbo(unsigned int size, unsigned int vboResFlags)
 {
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
+
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
     glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindVertexArray(0);
 
     cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, m_vbo, vboResFlags);
 }
@@ -302,7 +307,7 @@ GLuint Graphics::GetVbo()
     return m_vbo;
 }
 
-ShaderProgram& Graphics::GetShaderProgram()
+ShaderProgram* Graphics::GetShaderProgram()
 {
     return m_shaderProgram;
 }
@@ -315,14 +320,20 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    glBindVertexArray(m_vao);
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glVertexPointer(3, GL_FLOAT, 16, 0);
+    //glEnableVertexAttribArray(0);
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    //glEnableVertexAttribArray(1);
+    //glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableClientState(GL_VERTEX_ARRAY);
     glColor3f(1.0, 0.0, 0.0);
     glEnableClientState(GL_COLOR_ARRAY);
     glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
+    glBindVertexArray(0);
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
     {
@@ -332,7 +343,64 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain)
     }
     //Draw water surface
     glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+void Graphics::RunComputeShader(const float3 cameraPosition)
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_vbo);
+    ShaderProgram* shader = GetShaderProgram();
+
+    if (shader->computeShader == NULL)
+    {
+        shader->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+    }
+
+    shader->Use();
+
+    GLint maxXDimLocation = glGetUniformLocation(shader->GetId(), "maxXDim");
+    GLint xDimVisibleLocation = glGetUniformLocation(shader->GetId(), "xDimVisible");
+    GLint cameraPositionLocation = glGetUniformLocation(shader->GetId(), "cameraPosition");
+    glUniform1i(maxXDimLocation, MAX_XDIM);
+    Domain domain = *m_cudaLbm->GetDomain();
+    glUniform1i(xDimVisibleLocation, domain.GetXDimVisible());
+    glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+    GLuint vboUpdateSubroutine = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "PhongLighting");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &vboUpdateSubroutine);
+
+    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader->Unset();
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void Graphics::RunVertexShader(glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
+{
+    ShaderProgram* shader = GetShaderProgram();
+
+    if (shader->vertexShader == NULL)
+    {
+        shader->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
+    }
+    if (shader->fragmentShader == NULL)
+    {
+        shader->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+    }
+
+    shader->Use();
+    GLint viewportMatrixLocation = glGetUniformLocation(shader->GetId(), "viewportMatrix");
+    GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");
+    GLint projectionMatrixLocation = glGetUniformLocation(shader->GetId(), "projectionMatrix");
+    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    shader->Unset();
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    glBindVertexArray(0);
 }
 
 
@@ -342,16 +410,18 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_graphics = new Graphics;
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
+    m_rotate = { 60.f, 0.f, 30.f };
+    m_translate = { 0.f, 0.8f, 0.2f };
 }
 
 float3 GraphicsManager::GetRotationTransforms()
 {
-    return float3{ m_rotate_x, m_rotate_y, m_rotate_z };
+    return m_rotate;
 }
 
 float3 GraphicsManager::GetTranslationTransforms()
 {
-    return float3{ m_translate_x, m_translate_y, m_translate_z };
+    return m_translate;
 }
 
 void GraphicsManager::SetCurrentObstSize(const float size)
@@ -453,8 +523,8 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
         / windowHeight*2.f;
 
     //get view transformations
-    float3 cameraPosition = { m_translate_x, 
-        m_translate_y, - m_translate_z };
+    float3 cameraPosition = { m_translate.x, 
+        m_translate.y, - m_translate.z };
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -472,9 +542,9 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     else
     {
         gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
-        glTranslatef(m_translate_x, m_translate_y, -2+m_translate_z);
-        glRotatef(-m_rotate_x,1,0,0);
-        glRotatef(m_rotate_z,0,0,1);
+        glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
+        glRotatef(-m_rotate.x,1,0,0);
+        glRotatef(m_rotate.z,0,0,1);
     }
 }
 
@@ -505,13 +575,12 @@ void GraphicsManager::RunCuda()
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d);
-    float3 cameraPosition = { m_translate_x, 
-        m_translate_y, - m_translate_z };
+    float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
-    if (ShouldRenderFloor())
-    {
-        LightSurface(dptr, obst_d, cameraPosition, *domain);
-    }
+//    if (ShouldRenderFloor())
+//    {
+//        LightSurface(dptr, obst_d, cameraPosition, *domain);
+//    }
     LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
     CleanUpDeviceVBO(dptr, *domain);
 
@@ -519,6 +588,17 @@ void GraphicsManager::RunCuda()
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);
 
 }
+
+void GraphicsManager::RunComputeShader()
+{
+    GetGraphics()->RunComputeShader(m_translate);
+}
+
+void GraphicsManager::RunVertexShader()
+{
+    GetGraphics()->RunVertexShader(GetModelMatrix(), GetProjectionMatrix());
+}
+
 
 bool GraphicsManager::ShouldRenderFloor()
 {
@@ -695,13 +775,13 @@ void GraphicsManager::Drag(const int xi, const int yi, const float dxf,
         int mod = glutGetModifiers();
         if (mod == GLUT_ACTIVE_CTRL)
         {
-            m_translate_x += dxf;
-            m_translate_y += dyf;
+            m_translate.x += dxf;
+            m_translate.y += dyf;
         }
         else
         {
-            m_rotate_x += dyf*45.f;
-            m_rotate_z += dxf*45.f;
+            m_rotate.x += dyf*45.f;
+            m_rotate.z += dxf*45.f;
         }
 
     }
@@ -709,14 +789,14 @@ void GraphicsManager::Drag(const int xi, const int yi, const float dxf,
 
 void GraphicsManager::Pan(const float dx, const float dy)
 {
-    m_translate_x += dx;
-    m_translate_y += dy;
+    m_translate.x += dx;
+    m_translate.y += dy;
 }
 
 void GraphicsManager::Rotate(const float dx, const float dy)
 {
-    m_rotate_x += dy;
-    m_rotate_z += dx;
+    m_rotate.x += dy;
+    m_rotate.z += dx;
 }
 
 int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
@@ -767,22 +847,22 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
 void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
 {
     if (dir > 0){
-        m_translate_z -= 0.3f;
+        m_translate.z -= 0.3f;
     }
     else
     {
-        m_translate_z += 0.3f;
+        m_translate.z += 0.3f;
     }
 }
 
 void GraphicsManager::Zoom(const int dir, const float mag)
 {
     if (dir > 0){
-        m_translate_z -= mag;
+        m_translate.z -= mag;
     }
     else
     {
-        m_translate_z += mag;
+        m_translate.z += mag;
     }   
 }
 
