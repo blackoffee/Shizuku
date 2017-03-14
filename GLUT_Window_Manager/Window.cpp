@@ -208,8 +208,8 @@ void Window::MouseWheel(const int button, const int direction,
 
 void Window::DrawLoop()
 {
+    m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     graphicsManager->UpdateGraphicsInputs();
 
     ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
@@ -219,15 +219,16 @@ void Window::DrawLoop()
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
-
-    bool renderFloor = graphicsManager->ShouldRenderFloor();
-    Graphics* graphics = graphicsManager->GetGraphics();
-    Domain domain = *cudaLbm->GetDomain();
-    graphics->RenderVbo(renderFloor, domain);
+    graphicsManager->RunComputeShader();
+    graphicsManager->RenderVboUsingShaders();
 
     Draw2D(*m_windowPanel);
 
     glutSwapBuffers();
+    m_fpsTracker.Tock();
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    Domain domain = *cudaLbm->GetDomain();
+    UpdateWindowTitle(m_fpsTracker.GetFps(), domain);
 }
 
 void Window::InitializeGLUT(int argc, char **argv)

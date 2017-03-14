@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 
     SetUpGLInterop(*windowPanel);
     SetUpCUDA(*windowPanel);
+    SetUpShaders(*windowPanel);
 
     Window::Instance().Display();
 

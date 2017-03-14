@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include "main.h"
 #include "command.h"
+#include "FpsTracker.h"
 
 class Window
 {
@@ -18,6 +19,7 @@ private:
     MoveObstruction m_moveObstruction;
     int m_leftPanelWidth;
     int m_leftPanelHeight;
+    FpsTracker m_fpsTracker;
 public:
     Window();
     Panel* GetWindowPanel();
