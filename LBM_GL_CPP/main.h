@@ -44,6 +44,8 @@ FW_API void UpdateGraphicsInputs(GraphicsManager &graphicsManager, Panel &rootPa
 FW_API void SetUpGLInterop(Panel &rootPanel);
 FW_API void CleanUpGLInterop(Panel &rootPanel);
 FW_API void SetUpCUDA(Panel &rootPanel);
+FW_API void SetUpShaders(Panel &rootPanel);
 FW_API void Draw2D(Panel &rootPanel);
+FW_API void UpdateWindowTitle(const float fps, Domain &domain);
 
 void Resize(const int width, const int height);

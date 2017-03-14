@@ -1,6 +1,12 @@
 #pragma once
 #include <time.h>
 
+#ifdef LBM_GL_CPP_EXPORTS  
+#define FW_API __declspec(dllexport)   
+#else  
+#define FW_API __declspec(dllimport)   
+#endif  
+
 class FpsTracker
 {
 private:
@@ -9,9 +15,9 @@ private:
     int m_frameLimit;
     float m_fps;
 public:
-    FpsTracker();
-    void Tick();
-    void Tock();
-    float GetFps();
+    FW_API FpsTracker();
+    FW_API void Tick();
+    FW_API void Tock();
+    FW_API float GetFps();
 };
 
