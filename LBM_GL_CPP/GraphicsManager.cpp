@@ -226,7 +226,7 @@ cudaGraphicsResource* Graphics::GetCudaSolutionGraphicsResource()
     return m_cudaGraphicsResource;
 }
 
-void Graphics::SetUpGLInterOp(unsigned int size)
+void Graphics::CreateVboForCudaInterop(unsigned int size)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
     CreateVbo(size, cudaGraphicsMapFlagsWriteDiscard);
@@ -260,7 +260,9 @@ void Graphics::DeleteVbo()
     cudaGraphicsUnregisterResource(m_cudaGraphicsResource);
     glBindBuffer(1, m_vbo);
     glDeleteBuffers(1, &m_vbo);
+    glDeleteVertexArrays(1, &m_vao);
     m_vbo = 0;
+    m_vao = 0;
 }
 
 void Graphics::CreateElementArrayBuffer()
@@ -312,7 +314,15 @@ ShaderProgram* Graphics::GetShaderProgram()
     return m_shaderProgram;
 }
 
-void Graphics::RenderVbo(bool renderFloor, Domain &domain)
+void Graphics::CompileShaders()
+{
+    GetShaderProgram()->Initialize();
+    GetShaderProgram()->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
+    GetShaderProgram()->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+    //GetShaderProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+}
+
+void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -324,16 +334,12 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain)
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-    glVertexPointer(3, GL_FLOAT, 16, 0);
-    //glEnableVertexAttribArray(0);
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
-    //glEnableVertexAttribArray(1);
-    //glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableClientState(GL_VERTEX_ARRAY);
-    glColor3f(1.0, 0.0, 0.0);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 16, (char *)NULL + 12);
-    glBindVertexArray(0);
+
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
     {
@@ -343,7 +349,8 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain)
     }
     //Draw water surface
     glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
-    //glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindVertexArray(0);
 }
 
 void Graphics::RunComputeShader(const float3 cameraPosition)
@@ -378,28 +385,20 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Graphics::RunVertexShader(glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
+void Graphics::RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
+    glm::mat4 projectionMatrix)
 {
     ShaderProgram* shader = GetShaderProgram();
 
-    if (shader->vertexShader == NULL)
-    {
-        shader->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
-    }
-    if (shader->fragmentShader == NULL)
-    {
-        shader->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
-    }
-
     shader->Use();
-    GLint viewportMatrixLocation = glGetUniformLocation(shader->GetId(), "viewportMatrix");
     GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");
     GLint projectionMatrixLocation = glGetUniformLocation(shader->GetId(), "projectionMatrix");
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
+    RenderVbo(renderFloor, domain, modelMatrix, projectionMatrix);
+
     shader->Unset();
-    //glDisableClientState(GL_VERTEX_ARRAY);
     glBindVertexArray(0);
 }
 
@@ -548,6 +547,55 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     }
 }
 
+void GraphicsManager::SetUpGLInterop()
+{
+    unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+    unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
+    Graphics* graphics = GetGraphics();
+    graphics->CreateVboForCudaInterop(solutionMemorySize+floorSize);
+}
+
+void GraphicsManager::SetUpShaders()
+{
+    Graphics* graphics = GetGraphics();
+    graphics->CompileShaders();
+}
+
+void GraphicsManager::SetUpCuda()
+{
+    float4 rayCastIntersect{ 0, 0, 0, 1e6 };
+
+    cudaMalloc((void **)&m_rayCastIntersect_d, sizeof(float4));
+    cudaMemcpy(m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->AllocateDeviceMemory();
+    cudaLbm->InitializeDeviceMemory();
+
+    float u = m_parent->GetRootPanel()->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+
+    float* fA_d = cudaLbm->GetFA();
+    float* fB_d = cudaLbm->GetFB();
+    int* im_d = cudaLbm->GetImage();
+    float* floor_d = cudaLbm->GetFloorTemp();
+    Obstruction* obst_d = cudaLbm->GetDeviceObst();
+
+    Graphics* graphics = GetGraphics();
+    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
+    float4 *dptr;
+    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
+    size_t num_bytes,num_bytes2;
+    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
+
+    Domain* domain = cudaLbm->GetDomain();
+    InitializeDomain(dptr, fA_d, im_d, u, *domain);
+    InitializeDomain(dptr, fB_d, im_d, u, *domain);
+
+    InitializeFloor(dptr, floor_d, *domain);
+
+    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
+}
+
 void GraphicsManager::RunCuda()
 {
     // map OpenGL buffer object for writing from CUDA
@@ -594,11 +642,19 @@ void GraphicsManager::RunComputeShader()
     GetGraphics()->RunComputeShader(m_translate);
 }
 
-void GraphicsManager::RunVertexShader()
+void GraphicsManager::RenderVbo()
 {
-    GetGraphics()->RunVertexShader(GetModelMatrix(), GetProjectionMatrix());
+    CudaLbm* cudaLbm = GetCudaLbm();
+    GetGraphics()->RenderVbo(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+        GetModelMatrix(), GetProjectionMatrix());
 }
 
+void GraphicsManager::RenderVboUsingShaders()
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    GetGraphics()->RenderVboUsingShaders(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+        GetModelMatrix(), GetProjectionMatrix());
+}
 
 bool GraphicsManager::ShouldRenderFloor()
 {

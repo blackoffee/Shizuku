@@ -531,11 +531,8 @@ void DrawShapePreview(Panel &rootPanel)
 
 void SetUpGLInterop(Panel &rootPanel)
 {
-    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-    unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    graphicsManager->GetGraphics()->SetUpGLInterOp(solutionMemorySize+floorSize);
+    graphicsManager->SetUpGLInterop();
 }
 
 void CleanUpGLInterop(Panel &rootPanel)
@@ -554,46 +551,18 @@ void timerEvent(int value)
 }
 
 /*----------------------------------------------------------------------------------------
- *	CUDA calls
+ *	CUDA and graphics setup
  */
 void SetUpCUDA(Panel &rootPanel)
 {
-    float4 rayCastIntersect{ 0, 0, 0, 1e6 };
-
     GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    cudaMalloc((void **)&graphicsManager->m_rayCastIntersect_d, sizeof(float4));
-    cudaMemcpy(graphicsManager->m_rayCastIntersect_d, &rayCastIntersect, sizeof(float4), cudaMemcpyHostToDevice);
+    graphicsManager->SetUpShaders();
+}
 
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    cudaLbm->AllocateDeviceMemory();
-    cudaLbm->InitializeDeviceMemory();
-
-    float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-
-    float* fA_d = cudaLbm->GetFA();
-    float* fB_d = cudaLbm->GetFB();
-    int* im_d = cudaLbm->GetImage();
-    float* floor_d = cudaLbm->GetFloorTemp();
-    Obstruction* obst_d = cudaLbm->GetDeviceObst();
-
-    Graphics* graphics = graphicsManager->GetGraphics();
-    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
-    float4 *dptr;
-    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
-    size_t num_bytes,num_bytes2;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
-
-    Domain* domain = cudaLbm->GetDomain();
-    InitializeDomain(dptr, fA_d, im_d, u, *domain);
-    InitializeDomain(dptr, fB_d, im_d, u, *domain);
-
-    InitializeFloor(dptr, floor_d, *domain);
-
-    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
-
-
-    //graphics->GetShaderProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
-
+void SetUpShaders(Panel &rootPanel)
+{
+    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    graphicsManager->SetUpCuda();
 }
 
 void Draw2D(Panel &rootPanel)
@@ -736,13 +705,7 @@ void Draw()
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
-    //graphicsManager->RunComputeShader();
-    //graphicsManager->RunVertexShader();
-
-    bool renderFloor = graphicsManager->ShouldRenderFloor();
-    Graphics* graphics = graphicsManager->GetGraphics();
-    Domain domain = *cudaLbm->GetDomain();
-    graphics->RenderVbo(renderFloor, domain);
+    graphicsManager->RenderVboUsingShaders();
 
     CheckGLError();
 
@@ -753,6 +716,7 @@ void Draw()
     //Compute and display FPS
     g_fpsTracker.Tock();
     float fps = g_fpsTracker.GetFps();
+    Domain domain = *cudaLbm->GetDomain();
     UpdateWindowTitle(fps, domain);
 }
 
@@ -780,6 +744,7 @@ int main(int argc,char **argv)
     Init();
     SetUpGLInterop(Window);
     SetUpCUDA(Window);
+    SetUpShaders(Window);
 
     glutMainLoop();
 

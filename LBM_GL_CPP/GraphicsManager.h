@@ -92,13 +92,15 @@ public:
     FW_API void DeleteVbo();
     FW_API void CreateElementArrayBuffer();
     FW_API void DeleteElementArrayBuffer();
-    FW_API void SetUpGLInterOp(unsigned int size);
+    FW_API void CreateVboForCudaInterop(unsigned int size);
     FW_API void CleanUpGLInterOp();
-    FW_API void SetUpCuda();
     FW_API ShaderProgram* GetShaderProgram();
+    FW_API void CompileShaders();
     FW_API void RunComputeShader(const float3 cameraPosition);
-    FW_API void RunVertexShader(glm::mat4 modelMatrix, glm::mat4 projectionMatrix);
-    FW_API void RenderVbo(bool renderFloor, Domain &domain);
+    FW_API void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
+        glm::mat4 projectionMatrix);
+    FW_API void RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
+        glm::mat4 projectionMatrix);
 };
 
 
@@ -157,9 +159,13 @@ public:
     FW_API Graphics* GetGraphics();
 
     FW_API void CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth);
+    FW_API void SetUpGLInterop();
+    FW_API void SetUpShaders();
+    FW_API void SetUpCuda();
     FW_API void RunCuda();
     FW_API void RunComputeShader();
-    FW_API void RunVertexShader();
+    FW_API void RenderVbo();
+    FW_API void RenderVboUsingShaders();
     FW_API bool ShouldRenderFloor();
 
     FW_API void ClickDown(Mouse mouse);
