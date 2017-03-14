@@ -705,6 +705,7 @@ void Draw()
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
     graphicsManager->RunCuda();
+    graphicsManager->RunComputeShader();
     graphicsManager->RenderVboUsingShaders();
 
     CheckGLError();

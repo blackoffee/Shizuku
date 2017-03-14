@@ -80,6 +80,7 @@ class Graphics
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
     ShaderProgram* m_shaderProgram;
+    ShaderProgram* m_computeProgram;
 public:
     FW_API Graphics();
 
@@ -95,6 +96,7 @@ public:
     FW_API void CreateVboForCudaInterop(unsigned int size);
     FW_API void CleanUpGLInterOp();
     FW_API ShaderProgram* GetShaderProgram();
+    FW_API ShaderProgram* GetComputeProgram();
     FW_API void CompileShaders();
     FW_API void RunComputeShader(const float3 cameraPosition);
     FW_API void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,

@@ -127,7 +127,7 @@ subroutine(VboUpdate_t) void DoNothing(uvec3 workUnit)
 void main()
 {
 
-	//VboUpdate(gl_GlobalInvocationID);
+	VboUpdate(gl_GlobalInvocationID);
 
 
 

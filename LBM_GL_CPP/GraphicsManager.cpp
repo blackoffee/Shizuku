@@ -209,6 +209,7 @@ int CudaLbm::ImageFcn(const int x, const int y){
 Graphics::Graphics()
 {
     m_shaderProgram = new ShaderProgram;
+    m_computeProgram = new ShaderProgram;
 }
 
 void Graphics::CreateCudaLbm()
@@ -314,12 +315,18 @@ ShaderProgram* Graphics::GetShaderProgram()
     return m_shaderProgram;
 }
 
+ShaderProgram* Graphics::GetComputeProgram()
+{
+    return m_computeProgram;
+}
+
 void Graphics::CompileShaders()
 {
     GetShaderProgram()->Initialize();
     GetShaderProgram()->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
     GetShaderProgram()->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
-    //GetShaderProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+    GetComputeProgram()->Initialize();
+    GetComputeProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
 }
 
 void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
@@ -356,12 +363,7 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix
 void Graphics::RunComputeShader(const float3 cameraPosition)
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_vbo);
-    ShaderProgram* shader = GetShaderProgram();
-
-    if (shader->computeShader == NULL)
-    {
-        shader->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
-    }
+    ShaderProgram* shader = GetComputeProgram();
 
     shader->Use();
 
