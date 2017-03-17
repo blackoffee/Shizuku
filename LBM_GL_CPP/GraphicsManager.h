@@ -178,6 +178,7 @@ public:
    
     void UpdateViewTransformations();
     void UpdateGraphicsInputs();
+    void UpdateLbmInputs();
     glm::vec4 GetViewportMatrix();
     glm::mat4 GetModelMatrix();
     glm::mat4 GetProjectionMatrix();

@@ -620,7 +620,7 @@ void GraphicsManager::RunCuda()
     size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
 
-    UpdateLbmInputs(*cudaLbm, *rootPanel);
+    UpdateLbmInputs();
     float u = cudaLbm->GetInletVelocity();
     float omega = cudaLbm->GetOmega();
 
@@ -1066,6 +1066,16 @@ void GraphicsManager::UpdateGraphicsInputs()
     m_contourMinValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar1->GetValue();
     m_contourMaxValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar2->GetValue();
     m_currentObstSize = rootPanel->GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+}
+
+void GraphicsManager::UpdateLbmInputs()
+{
+    Panel* rootPanel = m_parent->GetRootPanel();
+    float u = rootPanel->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float omega = rootPanel->GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->SetInletVelocity(u);
+    cudaLbm->SetOmega(omega);
 }
 
 
