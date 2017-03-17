@@ -1,15 +1,16 @@
 #include "GraphicsManager.h"
+#include "Panel.h"
+#include "Layout.h"
 #include "kernel.h"
 #include "Mouse.h"
 #include "Domain.h"
-#include "main.h"
 #include "cuda_runtime.h"
 #include "cuda_gl_interop.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
-#include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLEW/glew.h>
+#include <algorithm>
 
 
 CudaLbm::CudaLbm()
@@ -1063,9 +1064,9 @@ void GraphicsManager::UpdateViewTransformations()
 void GraphicsManager::UpdateGraphicsInputs()
 {
     Panel* rootPanel = m_parent->GetRootPanel();
-    m_contourMinValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar1->GetValue();
-    m_contourMaxValue = GetCurrentContourSlider(*rootPanel)->m_sliderBar2->GetValue();
-    m_currentObstSize = rootPanel->GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    m_contourMinValue = Layout::GetCurrentContourSliderValue(*rootPanel, 1);
+    m_contourMaxValue = Layout::GetCurrentContourSliderValue(*rootPanel, 2);
+    m_currentObstSize = Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
 }
 
 void GraphicsManager::UpdateLbmInputs()

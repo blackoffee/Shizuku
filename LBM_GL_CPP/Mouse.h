@@ -1,4 +1,5 @@
 #pragma once
+#include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 
 class Panel;

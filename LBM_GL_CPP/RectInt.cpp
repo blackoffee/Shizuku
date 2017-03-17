@@ -1,5 +1,4 @@
 #include "RectInt.h"
-#include "math.h"
 
 RectInt::RectInt() : m_x(0), m_y(0), m_w(0), m_h(0)
 {

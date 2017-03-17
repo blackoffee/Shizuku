@@ -1,4 +1,9 @@
 #include "Window.h"
+#include "Layout.h"
+#include "GraphicsManager.h"
+#include "Domain.h"
+#include <typeinfo>
+#include <GLUT/freeglut.h>
 
 void ResizeWrapper(const int x, const int y)
 {
@@ -83,7 +88,7 @@ void Window::Resize(const int width, const int height)
     float scaleUp = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
     int windowWidth = m_windowPanel->GetWidth();
     int windowHeight = m_windowPanel->GetHeight();
-    UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, m_leftPanelHeight, m_leftPanelWidth);
+    Layout::UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, m_leftPanelHeight, m_leftPanelWidth);
 
     RectInt rect = { 200, 100, width, height };
     m_windowPanel->SetSize_Absolute(rect);
@@ -206,6 +211,17 @@ void Window::MouseWheel(const int button, const int direction,
     }
 }
 
+void Window::UpdateWindowTitle(const float fps, Domain &domain)
+{
+    char fpsReport[256];
+    int xDim = domain.GetXDim();
+    int yDim = domain.GetYDim();
+    sprintf_s(fpsReport, 
+        "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
+        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
+    glutSetWindowTitle(fpsReport);
+}
+
 void Window::DrawLoop()
 {
     m_fpsTracker.Tick();
@@ -222,7 +238,7 @@ void Window::DrawLoop()
     graphicsManager->RunComputeShader();
     graphicsManager->RenderVboUsingShaders();
 
-    Draw2D(*m_windowPanel);
+    Layout::Draw2D(*m_windowPanel);
 
     glutSwapBuffers();
     m_fpsTracker.Tock();

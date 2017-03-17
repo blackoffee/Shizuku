@@ -1,4 +1,5 @@
 #include "Command.h"
+#include "GraphicsManager.h"
 
 Command::Command(Panel &rootPanel)
 {

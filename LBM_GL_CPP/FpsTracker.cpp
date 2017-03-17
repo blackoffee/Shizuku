@@ -1,5 +1,3 @@
-#include <GLEW/glew.h>
-#include <GLUT/freeglut.h>
 #include "FpsTracker.h"
 
 FpsTracker::FpsTracker()

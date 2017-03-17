@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iostream>
 
-
 class Shader
 {
     GLuint shaderID;
@@ -14,7 +13,6 @@ public:
     Shader(const GLchar* filePath, const GLenum shaderType, const GLuint Program);
     GLuint GetId();
 };
-
 
 class ShaderProgram
 {

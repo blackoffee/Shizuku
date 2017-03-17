@@ -1,7 +1,13 @@
 #pragma once
 #include "cuda_runtime.h"
 
-class Domain
+#ifdef LBM_GL_CPP_EXPORTS  
+#define FW_API __declspec(dllexport)   
+#else  
+#define FW_API __declspec(dllimport)   
+#endif  
+
+class FW_API Domain
 {
     int m_xDim;
     int m_yDim;

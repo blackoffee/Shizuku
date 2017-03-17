@@ -1,8 +1,8 @@
 #pragma once
-#include <typeinfo>
-#include "main.h"
 #include "command.h"
 #include "FpsTracker.h"
+
+class Domain;
 
 class Window
 {
@@ -34,6 +34,7 @@ public:
         const int /*x*/, const int /*y*/);
     void MouseWheel(const int button, const int direction,
         const int x, const int y);
+    void UpdateWindowTitle(const float fps, Domain &domain);
     void DrawLoop();
     void InitializeGLUT(int argc, char **argv);
     void Display();
