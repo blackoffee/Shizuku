@@ -1,4 +1,6 @@
 #include "Domain.h"
+#include "common.h"
+#include <math.h>
 
 Domain::Domain()
 {

@@ -1,10 +1,10 @@
 #pragma once
+#include <GLEW/glew.h>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
-#include <GLEW/glew.h>
 
 class Shader
 {

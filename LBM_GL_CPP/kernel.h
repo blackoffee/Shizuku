@@ -1,12 +1,9 @@
+#pragma once
+#include "GraphicsManager.h"
+#include "Domain.h"
+#include "common.h"
 #include "cuda_runtime.h"
 #include "cuda.h"
-#include "device_launch_parameters.h"
-#include <stdio.h>
-#include <cstring>
-#include "common.h"
-#include "Domain.h"
-#include "LbmNode.h"
-#include "GraphicsManager.h"
 
 class CudaLbm;
 

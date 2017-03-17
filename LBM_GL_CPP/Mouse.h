@@ -1,6 +1,7 @@
 #pragma once
-#include "Panel.h"
 #include <GLUT/freeglut.h>
+
+class Panel;
 
 class Mouse
 {

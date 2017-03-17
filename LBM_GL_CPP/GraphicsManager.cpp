@@ -1,7 +1,15 @@
 #include "GraphicsManager.h"
-#include "Mouse.h"
 #include "kernel.h"
+#include "Mouse.h"
+#include "Domain.h"
 #include "main.h"
+#include "cuda_runtime.h"
+#include "cuda_gl_interop.h"
+#include "helper_cuda.h"
+#include "helper_cuda_gl.h"
+#include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
+#include <GLEW/glew.h>
 
 
 CudaLbm::CudaLbm()

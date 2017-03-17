@@ -1,5 +1,8 @@
 #include "Panel.h"
+#include "GraphicsManager.h"
 #include "Mouse.h"
+#include <algorithm>
+#include <GLEW/glew.h>
 
 Color::Color()
 {

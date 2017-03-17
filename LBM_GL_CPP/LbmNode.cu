@@ -1,4 +1,7 @@
 #include "LbmNode.h"
+#include "Domain.h"
+#include "common.h"
+#include <math.h>
 
 __host__ __device__ LbmNode::LbmNode()
 {

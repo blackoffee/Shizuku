@@ -1,13 +1,13 @@
 #pragma once 
+#include "Panel.h"
+#include "GraphicsManager.h"
+#include "RectFloat.h"
+#include "RectInt.h"
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 #include <string>
 #include <iostream>
 #include <vector>
-#include "Panel.h"
-#include "GraphicsManager.h"
-#include "RectFloat.h"
-#include "RectInt.h"
 
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   

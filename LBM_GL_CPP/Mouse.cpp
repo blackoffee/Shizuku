@@ -1,4 +1,5 @@
 #include "Mouse.h"
+#include "Panel.h"
 
 void Mouse::SetBasePanel(Panel* basePanel)
 {

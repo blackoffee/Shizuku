@@ -1,7 +1,5 @@
-#include <string.h>
-#include "math.h"
 #include "kernel.h"
-
+#include "LbmNode.h"
 
 /*----------------------------------------------------------------------------------------
  *	Device functions

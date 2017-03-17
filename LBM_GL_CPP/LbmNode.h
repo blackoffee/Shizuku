@@ -1,8 +1,5 @@
 #pragma once
-#include <math.h>
 #include "cuda_runtime.h"
-#include "common.h"
-#include "Domain.h"
 
 class LbmNode
 {

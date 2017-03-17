@@ -1,11 +1,8 @@
 #pragma once 
-#include <GLEW/glew.h>
-#include <string>
-#include <iostream>
-#include <vector>
-#include "GraphicsManager.h"
 #include "RectFloat.h"
 #include "RectInt.h"
+#include <string>
+#include <vector>
 
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
@@ -28,6 +25,7 @@ class Button;
 class Slider;
 class Mouse;
 class ButtonGroup;
+class GraphicsManager;
 
 class FW_API Panel
 {

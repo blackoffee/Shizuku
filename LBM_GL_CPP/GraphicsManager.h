@@ -1,17 +1,13 @@
 #pragma once
-#include <GLEW/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <string>
-#include <algorithm>
+#include "Shader.h"
+#include "common.h"
 #include "cuda_runtime.h"
 #include "cuda_gl_interop.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
+#include <glm/glm.hpp>
+#include <string>
 
-#include "Common.h"
-#include "kernel.h"
-#include "Shader.h"
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 #ifdef LBM_GL_CPP_EXPORTS  
@@ -22,6 +18,7 @@
 
 class Panel;
 class Mouse;
+class Domain;
 
 class FW_API CudaLbm
 {

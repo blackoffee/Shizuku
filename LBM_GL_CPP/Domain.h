@@ -1,7 +1,5 @@
 #pragma once
-#include <math.h>
 #include "cuda_runtime.h"
-#include "common.h"
 
 class Domain
 {
@@ -24,8 +22,6 @@ public:
     __host__ void SetYDimVisible(const int yDimVisible);
 
 };
-
-
 
 __device__ int dmin(const int a, const int b);
 __device__ int dmax(const int a);

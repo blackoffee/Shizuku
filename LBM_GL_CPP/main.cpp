@@ -1,3 +1,8 @@
+#include "main.h"
+#include "Mouse.h"
+#include "kernel.h"
+#include "FpsTracker.h"
+
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 #include "cuda_runtime.h"
@@ -8,21 +13,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <stdio.h>
-#include <iostream>
 #include <ostream>
 #include <fstream>
 #include <time.h>
 #include <algorithm>
-
-#include "main.h"
-#include "kernel.h"
-#include "Mouse.h"
-#include "Panel.h"
-#include "common.h"
-#include "Domain.h"
-#include "FpsTracker.h"
-
 const int g_leftPanelWidth(350);
 const int g_leftPanelHeight(500);
 
