@@ -7,7 +7,7 @@
 #define FW_API __declspec(dllimport)   
 #endif  
 
-class FpsTracker
+class FW_API FpsTracker
 {
 private:
     clock_t m_before, m_diff;
@@ -15,9 +15,9 @@ private:
     int m_frameLimit;
     float m_fps;
 public:
-    FW_API FpsTracker();
-    FW_API void Tick();
-    FW_API void Tock();
-    FW_API float GetFps();
+    FpsTracker();
+    void Tick();
+    void Tock();
+    float GetFps();
 };
 
