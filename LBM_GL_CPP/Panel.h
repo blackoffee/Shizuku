@@ -1,6 +1,5 @@
 #pragma once 
 #include <GLEW/glew.h>
-#include <GLUT/freeglut.h>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -27,7 +26,6 @@ public:
 
 class Button;
 class Slider;
-class GraphicsManager;
 class Mouse;
 class ButtonGroup;
 

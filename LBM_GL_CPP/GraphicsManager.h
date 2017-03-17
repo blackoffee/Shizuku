@@ -1,17 +1,13 @@
 #pragma once
 #include <GLEW/glew.h>
-#include <GLUT/freeglut.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
-#include <iostream>
-#include <vector>
 #include <algorithm>
 #include "cuda_runtime.h"
 #include "cuda_gl_interop.h"
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
-#include "device_launch_parameters.h"
 
 #include "Common.h"
 #include "kernel.h"

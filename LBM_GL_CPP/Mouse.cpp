@@ -1,11 +1,5 @@
 #include "Mouse.h"
 
-extern float rotate_x;
-extern float rotate_z;
-extern float translate_x;
-extern float translate_y;
-extern int g_TwoDView;
-
 void Mouse::SetBasePanel(Panel* basePanel)
 {
     m_basePanel = basePanel;

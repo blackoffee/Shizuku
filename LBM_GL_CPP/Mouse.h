@@ -1,7 +1,6 @@
-#ifndef MOUSE
-#define MOUSE
-
+#pragma once
 #include "Panel.h"
+#include <GLUT/freeglut.h>
 
 class Mouse
 {
@@ -33,4 +32,3 @@ public:
 
     void Wheel(int button, int dir, int x, int y);
 };
-#endif
