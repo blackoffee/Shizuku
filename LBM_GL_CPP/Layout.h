@@ -34,9 +34,9 @@ namespace Layout
     FW_API void SetUpButtons(Panel &rootPanel);
     FW_API void Draw2D(Panel &rootPanel);
     FW_API void DrawShapePreview(Panel &rootPanel);
-    FW_API void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area,
-        int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp);
-    FW_API void UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, int leftPanelHeight, int leftPanelWidth);
+    FW_API void UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, const int area,
+        const int leftPanelHeight, const int leftPanelWidth, const int xDim, const int yDim, const float scaleUp);
+    FW_API void UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, const int leftPanelHeight, const int leftPanelWidth);
 
 };
 

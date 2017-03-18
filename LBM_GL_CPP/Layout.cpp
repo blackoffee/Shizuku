@@ -9,24 +9,23 @@ extern const int g_leftPanelHeight;
 
 void Layout::SetUpWindow(Panel &rootPanel)
 {
-    int windowWidth = 1200;
-    int windowHeight = g_leftPanelHeight+100;
+    const int windowWidth = 1200;
+    const int windowHeight = g_leftPanelHeight+100;
 
     rootPanel.SetSize_Absolute(RectInt(200, 100, windowWidth, windowHeight));
     rootPanel.m_draw = false;
     rootPanel.SetName("Main Window");
 
-    Panel* CDV = rootPanel.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
+    Panel* const CDV = rootPanel.CreateSubPanel(RectInt(0, 0, g_leftPanelWidth, g_leftPanelHeight), Panel::DEF_ABS,
         "CDV", Color(Color::DARK_GRAY));
-    Panel* outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -0.9f, 2.f, 0.5f), Panel::DEF_REL,
+    Panel* const outputsPanel = CDV->CreateSubPanel(RectFloat(-1.f,  -0.9f, 2.f, 0.5f), Panel::DEF_REL,
         "Outputs", Color(Color::DARK_GRAY));
-    Panel* inputsPanel  = CDV->CreateSubPanel(RectFloat(-1.f, -0.4f, 2.f, 0.6f), Panel::DEF_REL,
+    Panel* const inputsPanel  = CDV->CreateSubPanel(RectFloat(-1.f, -0.4f, 2.f, 0.6f), Panel::DEF_REL,
         "Inputs", Color(Color::DARK_GRAY));
-    Panel* drawingPanel = CDV->CreateSubPanel(RectFloat(-1.f,  0.2f, 2.f, 0.8f), Panel::DEF_REL,
+    Panel* const drawingPanel = CDV->CreateSubPanel(RectFloat(-1.f,  0.2f, 2.f, 0.8f), Panel::DEF_REL,
         "Drawing", Color(Color::DARK_GRAY));
-    Panel* viewModePanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.1f), Panel::DEF_REL,
+    Panel* const viewModePanel = CDV->CreateSubPanel(RectFloat(-1.f,  -1.f, 2.f, 0.1f), Panel::DEF_REL,
         "ViewMode", Color(Color::DARK_GRAY));
-
 
     outputsPanel->CreateButton(RectFloat(-0.9f, -0.2f +0.12f, 0.85f, 0.4f),
         Panel::DEF_REL, "X Velocity", Color(Color::GRAY));
@@ -50,11 +49,10 @@ void Layout::SetUpWindow(Panel &rootPanel)
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
     rootPanel.GetPanel("Graphics")->m_draw = false;
     rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
-    float scaleUp = rootPanel.GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
 
-    float sliderH = 1.4f/3.f/2.f;
-    float sliderBarW = 0.1f;
-    float sliderBarH = 2.f;
+    const float sliderH = 1.4f/3.f/2.f;
+    const float sliderBarW = 0.1f;
+    const float sliderBarH = 2.f;
 
     inputsPanel->CreateSubPanel(RectFloat(-0.9f, -1.f+0.4f+0.16f+sliderH*5, 0.5f, sliderH),
         Panel::DEF_REL, "Label_InletV", Color(Color::DARK_GRAY));
@@ -102,8 +100,8 @@ void Layout::SetUpWindow(Panel &rootPanel)
     outputsPanel->CreateSubPanel(RectFloat{-0.9f, 0.2f+0.16f+(0.64f-sliderH*2)*0.5f+sliderH, 0.5f, sliderH}
         , Panel::DEF_REL, "Label_Contour", Color(Color::DARK_GRAY));
     rootPanel.GetPanel("Label_Contour")->SetDisplayText("Contour Color");
-    float contourSliderBarWidth = 0.1f;
-    float contourSliderBarHeight = 2.f;
+    const float contourSliderBarWidth = 0.1f;
+    const float contourSliderBarHeight = 2.f;
     outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
     rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-1.f, -1, contourSliderBarWidth, contourSliderBarHeight),
         Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
@@ -206,11 +204,10 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     rootPanel.GetSlider(sliderName)->Hide();
 
-
     //Drawing panel
-    Panel* drawingPreview = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
+    Panel* const drawingPreview = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
         Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
-    Panel* drawingButtons = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
+    Panel* const drawingButtons = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.9f, -1.f, 0.4f, 1.5f),
         Panel::DEF_REL, "DrawingButtons", Color(Color::DARK_GRAY));
 
     drawingPanel->CreateSlider(RectFloat(-0.9f, 0.9f-sliderH*0.75f*2,1.8f, sliderH*0.75f), Panel::DEF_REL,
@@ -219,9 +216,6 @@ void Layout::SetUpWindow(Panel &rootPanel)
         "Label_Size", Color(Color::DARK_GRAY));
     rootPanel.GetPanel("Label_Size")->SetDisplayText("Size");
 
-    float leftEnd = -0.9f;
-    float width = 1.8f;
-    float buttonSpacing = 0.0f;
     drawingButtons->CreateButton(RectFloat(-0.9f, 0.7f-0.04f , 1.8f, 0.3f ), Panel::DEF_REL,
         "Square"    , Color(Color::GRAY));
     drawingButtons->CreateButton(RectFloat(-0.9f, 0.4f-0.08f , 1.8f, 0.3f ), Panel::DEF_REL,
@@ -235,9 +229,8 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider("Slider_Size")->SetMaxValue(15.f);
     rootPanel.GetSlider("Slider_Size")->SetMinValue(1.f);
     rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
-    float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    const float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstSize(currentObstSize);
-
 
     Layout::SetUpButtons(rootPanel);
     WaterRenderingButtonCallBack(rootPanel); //default is water rendering
@@ -297,105 +290,105 @@ void Layout::GetCurrentContourSliderBoundValues(Panel &rootPanel, float &minValu
 
 void InitializeButtonCallBack(Panel &rootPanel)
 {
-    GraphicsManager* graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
     Graphics* graphics = graphicsManager->GetGraphics();
     cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
-    float4 *dptr;
+    float4* dptr;
     cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();
 
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
     int* im_d = cudaLbm->GetImage();
 
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    Domain* domain = cudaLbm->GetDomain();
+    Domain* const domain = cudaLbm->GetDomain();
     InitializeDomain(dptr, fA_d, im_d, u, *domain);
 }
 
 void VelMagButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Velocity Magnitude"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_MAG);
 }
 
 void VelXButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("X Velocity"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_U);
 }
 
 void VelYButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Y Velocity"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(VEL_V);
 }
 
 void StrainRateButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("StrainRate"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(STRAIN_RATE);
 }
 
 void PressureButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Pressure"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(PRESSURE);
 }
 
 void WaterRenderingButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* contourButtons = rootPanel.GetButtonGroup("ContourButtons");
+    ButtonGroup* const contourButtons = rootPanel.GetButtonGroup("ContourButtons");
     contourButtons->ExclusiveEnable(rootPanel.GetButton("Water Rendering"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetContourVar(WATER_RENDERING);
 }
 
 void SquareButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Square"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::SQUARE);
 }
 
 void CircleButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Circle"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::CIRCLE);
 }
 
 void HorLineButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
 }
 
 void VertLineButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
+    ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
 }
 
 void ThreeDButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
+    ButtonGroup* const viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
     viewModeButtons->ExclusiveEnable(rootPanel.GetButton("3D"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(THREE_DIMENSIONAL);
 }
 
 void TwoDButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
+    ButtonGroup* const viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
     viewModeButtons->ExclusiveEnable(rootPanel.GetButton("2D"));
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(TWO_DIMENSIONAL);
 }
@@ -417,7 +410,7 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("StrainRate"),
         rootPanel.GetButton("Pressure"),
         rootPanel.GetButton("Water Rendering") };
-    ButtonGroup* contourButtonGroup = rootPanel.CreateButtonGroup("ContourButtons", buttons);
+    ButtonGroup* const contourButtonGroup = rootPanel.CreateButtonGroup("ContourButtons", buttons);
 
     //Shape buttons
     rootPanel.GetButton("Square")->SetCallback(SquareButtonCallBack);
@@ -430,7 +423,7 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("Circle"),
         rootPanel.GetButton("Hor. Line"),
         rootPanel.GetButton("Vert. Line") };
-    ButtonGroup* shapeButtonGroup = rootPanel.CreateButtonGroup("ShapeButtons", buttons2);
+    ButtonGroup* const shapeButtonGroup = rootPanel.CreateButtonGroup("ShapeButtons", buttons2);
 
     rootPanel.GetButton("3D")->SetCallback(ThreeDButtonCallBack);
     rootPanel.GetButton("2D")->SetCallback(TwoDButtonCallBack);
@@ -439,7 +432,7 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("2D"),
         rootPanel.GetButton("3D")
     };
-    ButtonGroup* viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
+    ButtonGroup* const viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
 
 }
 
@@ -455,23 +448,23 @@ void Layout::Draw2D(Panel &rootPanel)
 
 void Layout::DrawShapePreview(Panel &rootPanel)
 {
-    Panel* previewPanel = rootPanel.GetPanel("DrawingPreview");
-    float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
-    float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
-    int windowWidth = rootPanel.GetWidth();
-    int windowHeight = rootPanel.GetHeight();
-    float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
+    Panel* const previewPanel = rootPanel.GetPanel("DrawingPreview");
+    const float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
+    const float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
+    const int windowWidth = rootPanel.GetWidth();
+    const int windowHeight = rootPanel.GetHeight();
+    const float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
         rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
 
-    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
-    int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
-    float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
-    int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
-    int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (xDimVisible); //r1x in pixels
-    int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (yDimVisible); //r1x in pixels
+    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();
+    const int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
+    const int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
+    const float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+    const int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
+    const int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
+    const int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (xDimVisible); //r1x in pixels
+    const int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (yDimVisible); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
@@ -527,26 +520,28 @@ void Layout::DrawShapePreview(Panel &rootPanel)
     }
 }
 
-void Layout::UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, int area,
-    int leftPanelHeight, int leftPanelWidth, int xDim, int yDim, float scaleUp)
+void Layout::UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, const int area,
+    const int leftPanelHeight, const int leftPanelWidth, const int xDim, const int yDim,
+    const float scaleUp)
 {
-    float aspectRatio = static_cast<float>(xDim) / yDim;
-    float leftPanelW = static_cast<float>(leftPanelWidth);
+    const float aspectRatio = static_cast<float>(xDim) / yDim;
+    const float leftPanelW = static_cast<float>(leftPanelWidth);
     heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW
         +scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
     heightOut = std::max(heightOut, leftPanelHeight);
     widthOut = heightOut*aspectRatio+leftPanelW;
 }
 
-void Layout::UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, int leftPanelHeight, int leftPanelWidth)
+void Layout::UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, const int leftPanelHeight,
+    const int leftPanelWidth)
 {
-    GraphicsManager *graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    float scaleUp = graphicsManager->GetScaleFactor();
-    int windowWidth = rootPanel.GetWidth();
-    int windowHeight = rootPanel.GetHeight();
-    int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
-    int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+    const float scaleUp = graphicsManager->GetScaleFactor();
+    const int windowWidth = rootPanel.GetWidth();
+    const int windowHeight = rootPanel.GetHeight();
+    const int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
+    const int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
+    CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();
     cudaLbm->GetDomain()->SetXDimVisible(xDimVisible);
     cudaLbm->GetDomain()->SetYDimVisible(yDimVisible);
 }
