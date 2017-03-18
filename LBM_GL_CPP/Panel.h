@@ -42,7 +42,7 @@ private:
     float m_minValue = 1.f;
     float m_maxValue = 0.f;
     std::string m_displayText = "";
-    SizeDefinitionMethod m_sizeDefinition;
+    SizeDefinitionMethod m_sizeDefinition = DEF_ABS;
     GraphicsManager* m_graphicsManager = NULL;
 protected:
     void(*m_callback)(Panel &rootPanel) = NULL;
