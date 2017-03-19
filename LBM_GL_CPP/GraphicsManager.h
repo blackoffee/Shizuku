@@ -6,6 +6,7 @@
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
 #include <glm/glm.hpp>
+#include <vector>
 #include <string>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
@@ -66,6 +67,13 @@ public:
 
 class FW_API Graphics
 {
+private:
+    class Ssbo
+    {
+    public:
+        GLuint m_id;
+        std::string m_name;
+    };
     CudaLbm* m_cudaLbm;
     cudaGraphicsResource* m_cudaGraphicsResource;
     GLuint m_vao;
@@ -73,6 +81,7 @@ class FW_API Graphics
     GLuint m_elementArrayBuffer;
     ShaderProgram* m_shaderProgram;
     ShaderProgram* m_computeProgram;
+    std::vector<Ssbo> m_ssbos;
 public:
     Graphics();
 
@@ -85,11 +94,14 @@ public:
     void DeleteVbo();
     void CreateElementArrayBuffer();
     void DeleteElementArrayBuffer();
+    void CreateShaderStorageBuffer(const unsigned int sizeInInts, const std::string name);
+    GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop(unsigned int size);
     void CleanUpGLInterOp();
     ShaderProgram* GetShaderProgram();
     ShaderProgram* GetComputeProgram();
     void CompileShaders();
+    void AllocateStorageBuffers();
     void RunComputeShader(const float3 cameraPosition);
     void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
         glm::mat4 projectionMatrix);

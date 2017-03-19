@@ -277,8 +277,8 @@ void Graphics::DeleteVbo()
 
 void Graphics::CreateElementArrayBuffer()
 {
-    int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
-    int numberOfNodes = MAX_XDIM*MAX_YDIM;
+    const int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    const int numberOfNodes = MAX_XDIM*MAX_YDIM;
     GLuint* elementIndices = new GLuint[numberOfElements * 4 * 2];
     for (int j = 0; j < MAX_YDIM-1; j++){
         for (int i = 0; i < MAX_XDIM-1; i++){
@@ -309,6 +309,33 @@ void Graphics::DeleteElementArrayBuffer(){
     glDeleteBuffers(1, &m_elementArrayBuffer);
 }
 
+void Graphics::CreateShaderStorageBuffer(const unsigned int sizeInInts, const std::string name)
+{
+    GLuint temp;
+    glGenBuffers(1, &temp);
+    GLint* data = new GLint[sizeInInts];
+    for (int i = 0; i < sizeInInts; i++)
+    {
+        data[i] = 0;
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, temp);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeInInts*sizeof(GLint), data, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, temp);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    m_ssbos.push_back(Ssbo{ temp, name });
+}
+
+GLuint Graphics::GetShaderStorageBuffer(const std::string name)
+{
+    for (std::vector<Ssbo>::iterator it = m_ssbos.begin(); it != m_ssbos.end(); ++it)
+    {
+        if (it->m_name == name)
+        {
+            return it->m_id;
+        }
+    }
+}
+
 GLuint Graphics::GetElementArrayBuffer()
 {
     return m_elementArrayBuffer;
@@ -336,6 +363,11 @@ void Graphics::CompileShaders()
     GetShaderProgram()->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
     GetComputeProgram()->Initialize();
     GetComputeProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+}
+
+void Graphics::AllocateStorageBuffers()
+{
+    CreateShaderStorageBuffer(MAX_XDIM*MAX_YDIM, "Floor");
 }
 
 void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
@@ -372,26 +404,44 @@ void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix
 void Graphics::RunComputeShader(const float3 cameraPosition)
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_vbo);
-    ShaderProgram* shader = GetComputeProgram();
+    const GLuint ssbo_floor = GetShaderStorageBuffer("Floor");
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_floor);
+    ShaderProgram* const shader = GetComputeProgram();
 
     shader->Use();
 
-    GLint maxXDimLocation = glGetUniformLocation(shader->GetId(), "maxXDim");
-    GLint xDimVisibleLocation = glGetUniformLocation(shader->GetId(), "xDimVisible");
-    GLint cameraPositionLocation = glGetUniformLocation(shader->GetId(), "cameraPosition");
+    const GLint maxXDimLocation = glGetUniformLocation(shader->GetId(), "maxXDim");
+    const GLint maxYDimLocation = glGetUniformLocation(shader->GetId(), "maxYDim");
+    const GLint xDimVisibleLocation = glGetUniformLocation(shader->GetId(), "xDimVisible");
+    const GLint yDimVisibleLocation = glGetUniformLocation(shader->GetId(), "yDimVisible");
+    const GLint cameraPositionLocation = glGetUniformLocation(shader->GetId(), "cameraPosition");
     glUniform1i(maxXDimLocation, MAX_XDIM);
+    glUniform1i(maxYDimLocation, MAX_YDIM);
     Domain domain = *m_cudaLbm->GetDomain();
     glUniform1i(xDimVisibleLocation, domain.GetXDimVisible());
+    glUniform1i(yDimVisibleLocation, domain.GetYDimVisible());
     glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-    GLuint vboUpdateSubroutine = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+    const GLuint phongLighting = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
         "PhongLighting");
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &vboUpdateSubroutine);
+    const GLuint collectLight = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "ComputeFloorLightIntensitiesFromMeshDeformation");
+    const GLuint applyLights = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "ApplyCausticLightingToFloor");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &phongLighting);
 
+    glDispatchCompute(MAX_XDIM, MAX_YDIM, 2);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &collectLight);
     glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    shader->Unset();
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &applyLights);
+    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    
+    shader->Unset();//
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -570,6 +620,7 @@ void GraphicsManager::SetUpShaders()
 {
     Graphics* graphics = GetGraphics();
     graphics->CompileShaders();
+    graphics->AllocateStorageBuffers();
 }
 
 void GraphicsManager::SetUpCuda()
