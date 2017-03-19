@@ -2,8 +2,8 @@
 #include "Layout.h"
 #include "GraphicsManager.h"
 #include "Domain.h"
-#include <typeinfo>
 #include <GLUT/freeglut.h>
+#include <typeinfo>
 
 void ResizeWrapper(const int x, const int y)
 {
