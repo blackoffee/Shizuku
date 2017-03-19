@@ -355,28 +355,28 @@ void SquareButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Square"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::SQUARE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Shape::SQUARE);
 }
 
 void CircleButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Circle"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::CIRCLE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Shape::CIRCLE);
 }
 
 void HorLineButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Hor. Line"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::HORIZONTAL_LINE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Shape::HORIZONTAL_LINE);
 }
 
 void VertLineButtonCallBack(Panel &rootPanel)
 {
     ButtonGroup* const shapeButtons = rootPanel.GetButtonGroup("ShapeButtons");
     shapeButtons->ExclusiveEnable(rootPanel.GetButton("Vert. Line"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Obstruction::VERTICAL_LINE);
+    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Shape::VERTICAL_LINE);
 }
 
 void ThreeDButtonCallBack(Panel &rootPanel)
@@ -468,11 +468,11 @@ void Layout::DrawShapePreview(Panel &rootPanel)
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    Obstruction::Shape currentShape = graphicsManager->GetCurrentObstShape();
+    Shape currentShape = graphicsManager->GetCurrentObstShape();
     glColor3f(0.8f,0.8f,0.8f);
     switch (currentShape)
     {
-    case Obstruction::CIRCLE:
+    case Shape::CIRCLE:
     {
         glBegin(GL_TRIANGLE_FAN);
         int circleResolution = 20;
@@ -485,7 +485,7 @@ void Layout::DrawShapePreview(Panel &rootPanel)
         glEnd();
         break;
     }
-    case Obstruction::SQUARE:
+    case Shape::SQUARE:
     {
         glBegin(GL_QUADS);
             glVertex2f(centerX - r1fx, centerY + r1fy);
@@ -495,7 +495,7 @@ void Layout::DrawShapePreview(Panel &rootPanel)
         glEnd();
         break;
     }
-    case Obstruction::HORIZONTAL_LINE:
+    case Shape::HORIZONTAL_LINE:
     {
         r1fy = static_cast<float>(LINE_OBST_WIDTH) / windowHeight*2.f;
         glBegin(GL_QUADS);
@@ -506,7 +506,7 @@ void Layout::DrawShapePreview(Panel &rootPanel)
         glEnd();
         break;
     }
-    case Obstruction::VERTICAL_LINE:
+    case Shape::VERTICAL_LINE:
     {
         r1fx = static_cast<float>(LINE_OBST_WIDTH) / windowWidth*2.f;
         glBegin(GL_QUADS);

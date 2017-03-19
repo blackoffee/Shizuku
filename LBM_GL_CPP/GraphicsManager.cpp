@@ -164,23 +164,23 @@ void CudaLbm::InitializeDeviceMemory()
         m_obst_h[i].r1 = 0;
         m_obst_h[i].x = 0;
         m_obst_h[i].y = -1000;
-        m_obst_h[i].state = Obstruction::REMOVED;
+        m_obst_h[i].state = State::REMOVED;
     }	
     m_obst_h[0].r1 = 6.5;
     m_obst_h[0].x = 30;// g_xDim*0.2f;
     m_obst_h[0].y = 42;// g_yDim*0.3f;
     m_obst_h[0].u = 0;// g_yDim*0.3f;
     m_obst_h[0].v = 0;// g_yDim*0.3f;
-    m_obst_h[0].shape = Obstruction::SQUARE;
-    m_obst_h[0].state = Obstruction::NEW;
+    m_obst_h[0].shape = Shape::SQUARE;
+    m_obst_h[0].state = State::NEW;
 
     m_obst_h[1].r1 = 4.5;
     m_obst_h[1].x = 30;// g_xDim*0.2f;
     m_obst_h[1].y = 100;// g_yDim*0.3f;
     m_obst_h[1].u = 0;// g_yDim*0.3f;
     m_obst_h[1].v = 0;// g_yDim*0.3f;
-    m_obst_h[1].shape = Obstruction::VERTICAL_LINE;
-    m_obst_h[1].state = Obstruction::NEW;
+    m_obst_h[1].shape = Shape::VERTICAL_LINE;
+    m_obst_h[1].state = State::NEW;
 
     memsize_inputs = sizeof(m_obst_h);
     cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice);
@@ -375,43 +375,10 @@ void Graphics::AllocateStorageBuffers()
 void Graphics::InitializeObstSsbo()
 {
     const GLuint obstSsbo = GetShaderStorageBuffer("Obstructions");
-    struct GLobst
-    {
-        int shape; // {SQUARE,CIRCLE,HORIZONTAL_LINE,VERTICAL_LINE};
-        float x;
-        float y;
-        float r1;
-        float r2;
-        float u;
-        float v;
-        int state; // {ACTIVE,INACTIVE,NEW,REMOVED};
-    };
-    GLobst* obst_h = new GLobst[MAXOBSTS];
-    for (int i = 0; i < MAXOBSTS; i++)
-    {
-        obst_h[i].r1 = 0;
-        obst_h[i].x = 0;
-        obst_h[i].y = -1000;
-        obst_h[i].state = 3;
-    }	
-    obst_h[0].r1 = 6.5;//
-    obst_h[0].x = 30;// g_xDim*0.2f;
-    obst_h[0].y = 42;// g_yDim*0.3f;
-    obst_h[0].u = 0;// g_yDim*0.3f;
-    obst_h[0].v = 0;// g_yDim*0.3f;
-    obst_h[0].shape = 0;
-    obst_h[0].state = 2;
-
-    obst_h[1].r1 = 4.5;
-    obst_h[1].x = 30;// g_xDim*0.2f;
-    obst_h[1].y = 100;// g_yDim*0.3f;
-    obst_h[1].u = 0;// g_yDim*0.3f;
-    obst_h[1].v = 0;// g_yDim*0.3f;
-    obst_h[1].shape = 3;
-    obst_h[1].state = 2;
-
+    CudaLbm* cudaLbm = GetCudaLbm();
+    Obstruction* obst_h = cudaLbm->GetHostObst();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(GLobst), obst_h, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(Obstruction), obst_h, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -454,7 +421,7 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_floor);
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_obsts);
-    ShaderProgram* const shader = GetComputeProgram();
+    ShaderProgram* const shader = GetComputeProgram();//
 
     shader->Use();
 
@@ -478,6 +445,9 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
         "ComputeFloorLightIntensitiesFromMeshDeformation");
     const GLuint applyLights = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
         "ApplyCausticLightingToFloor");
+    const GLuint doNothing = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "DoNothing2");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &doNothing);
     const int xDim = domain.GetXDim();
     const int yDim = domain.GetYDim();
 
@@ -490,13 +460,54 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &phongLighting);
-
     glDispatchCompute(xDim, yDim, 2);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-   
     shader->Unset();
+    
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
 
+template <typename T>
+void SetUniform(GLuint shaderId, const GLchar* varName, T varValue)
+{
+    const GLint targetLocation = glGetUniformLocation(shaderId, varName);
+    if (typeid(varValue) == typeid(int))
+    {
+        glUniform1i(targetLocation, varValue);
+    }
+    else if (typeid(varValue) == typeid(float))
+    {
+        glUniform1f(targetLocation, varValue);
+    }
+    else if (typeid(varValue) == typeid(bool))
+    {
+        glUniform1i(targetLocation, varValue);
+    }
+}
+
+void Graphics::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst)
+{
+    const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_obsts);
+    ShaderProgram* const shader = GetComputeProgram();
+    shader->Use();
+
+    SetUniform(shader->GetId(), "targetObst.shape", newObst.shape);
+    SetUniform(shader->GetId(), "targetObst.x", newObst.x);
+    SetUniform(shader->GetId(), "targetObst.y", newObst.y);
+    SetUniform(shader->GetId(), "targetObst.r1", newObst.r1);
+    SetUniform(shader->GetId(), "targetObst.u", newObst.u);
+    SetUniform(shader->GetId(), "targetObst.v", newObst.v);
+    SetUniform(shader->GetId(), "targetObst.state", newObst.state);
+    SetUniform(shader->GetId(), "isObstOp", true);
+    SetUniform(shader->GetId(), "targetObstId", obstId);
+
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    SetUniform(shader->GetId(), "isObstOp", false);
+
+    shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -543,7 +554,7 @@ void GraphicsManager::SetCurrentObstSize(const float size)
     m_currentObstSize = size;
 }
 
-void GraphicsManager::SetCurrentObstShape(const Obstruction::Shape shape)
+void GraphicsManager::SetCurrentObstShape(const Shape shape)
 {
     m_currentObstShape = shape;
 }
@@ -589,7 +600,7 @@ void GraphicsManager::SetContourVar(const ContourVariable contourVar)
 }
 
 
-Obstruction::Shape GraphicsManager::GetCurrentObstShape()
+Shape GraphicsManager::GetCurrentObstShape()
 {
     return m_currentObstShape;
 }
@@ -1010,10 +1021,11 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
     obst.u = u;
     obst.v = v;
-    obst.state = Obstruction::ACTIVE;
+    obst.state = State::ACTIVE;
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     UpdateDeviceObstructions(obst_d, obstId, obst);  
+    GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
 }
 
 
@@ -1041,11 +1053,12 @@ void GraphicsManager::Zoom(const int dir, const float mag)
 
 void GraphicsManager::AddObstruction(const int simX, const int simY)
 {
-    Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, Obstruction::NEW  };
+    Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, State::NEW  };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     UpdateDeviceObstructions(obst_d, obstId, obst);
+    GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
 }
 
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
@@ -1058,9 +1071,10 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
 {
     if (obstId >= 0)
     {
-        m_obstructions[obstId].state = Obstruction::REMOVED;
+        m_obstructions[obstId].state = State::REMOVED;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId]);
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId]);
     }
 }
 
@@ -1086,10 +1100,11 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
         float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
         obst.u = u;
         obst.v = v;
-        obst.state = Obstruction::ACTIVE;
+        obst.state = State::ACTIVE;
         m_obstructions[m_currentObstId] = obst;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
+        GetGraphics()->UpdateObstructionsUsingComputeShader(m_currentObstId, obst);
     }
 }
 
@@ -1097,8 +1112,8 @@ int GraphicsManager::FindUnusedObstructionId()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state == Obstruction::REMOVED || 
-            m_obstructions[i].state == Obstruction::INACTIVE)
+        if (m_obstructions[i].state == State::REMOVED || 
+            m_obstructions[i].state == State::INACTIVE)
         {
             return i;
         }
@@ -1115,7 +1130,7 @@ int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != Obstruction::REMOVED)
+        if (m_obstructions[i].state != State::REMOVED)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x, m_obstructions[i].y);
             if (newDist < dist)
@@ -1135,7 +1150,7 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != Obstruction::REMOVED)
+        if (m_obstructions[i].state != State::REMOVED)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x,
                 m_obstructions[i].y);

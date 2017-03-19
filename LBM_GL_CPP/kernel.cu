@@ -21,26 +21,26 @@ inline __device__ bool IsInsideObstruction(const float x, const float y,
     Obstruction* obstructions, const float tolerance = 0.f)
 {
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != Obstruction::INACTIVE)
+        if (obstructions[i].state != State::INACTIVE)
         {
             float r1 = obstructions[i].r1;
-            if (obstructions[i].shape == Obstruction::SQUARE){
+            if (obstructions[i].shape == Shape::SQUARE){
                 if (abs(x - obstructions[i].x)<r1 + tolerance &&
                     abs(y - obstructions[i].y)<r1 + tolerance)
                     return true;
             }
-            else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
+            else if (obstructions[i].shape == Shape::CIRCLE){//shift by 0.5 cells for better looks
                 float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
                     + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
                 if (distFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
                     return true;
             }
-            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
+            else if (obstructions[i].shape == Shape::HORIZONTAL_LINE){
                 if (abs(x - obstructions[i].x)<r1*2+tolerance &&
                     abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return true;
             }
-            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
+            else if (obstructions[i].shape == Shape::VERTICAL_LINE){
                 if (abs(y - obstructions[i].y)<r1*2+tolerance &&
                     abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return true;
@@ -54,25 +54,25 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
     Obstruction* obstructions, const float tolerance = 0.f)
 {
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != Obstruction::INACTIVE)
+        if (obstructions[i].state != State::INACTIVE)
         {
             float r1 = obstructions[i].r1 + tolerance;
-            if (obstructions[i].shape == Obstruction::SQUARE){
+            if (obstructions[i].shape == Shape::SQUARE){
                 if (abs(x - obstructions[i].x)<r1 && abs(y - obstructions[i].y)<r1)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::CIRCLE){//shift by 0.5 cells for better looks
+            else if (obstructions[i].shape == Shape::CIRCLE){//shift by 0.5 cells for better looks
                 float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
                     + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
                 if (distFromCenter<r1*r1+0.1f)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::HORIZONTAL_LINE){
+            else if (obstructions[i].shape == Shape::HORIZONTAL_LINE){
                 if (abs(x - obstructions[i].x)<r1*2 &&
                     abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
             }
-            else if (obstructions[i].shape == Obstruction::VERTICAL_LINE){
+            else if (obstructions[i].shape == Shape::VERTICAL_LINE){
                 if (abs(y - obstructions[i].y)<r1*2 &&
                     abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
                     return i;//10;
@@ -628,15 +628,15 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
         int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
         if (obstID >= 0)
         {
-            if (obstructions[obstID].state == Obstruction::NEW)
+            if (obstructions[obstID].state == State::NEW)
             {
                 zcoord = dmin(-0.3f, zcoord + 0.075f);
             }
-            else if (obstructions[obstID].state == Obstruction::REMOVED)
+            else if (obstructions[obstID].state == State::REMOVED)
             {
                 zcoord = dmax(-1.f, zcoord - 0.075f);
             }
-            else if (obstructions[obstID].state == Obstruction::ACTIVE)
+            else if (obstructions[obstID].state == State::ACTIVE)
             {
                 zcoord = -0.3f;
             }
@@ -690,11 +690,11 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
         {
             if (zcoord > -0.29f)
             {
-                obstructions[obstID].state = Obstruction::ACTIVE;
+                obstructions[obstID].state = State::ACTIVE;
             }
             if (zcoord < -0.99f)
             {
-                obstructions[obstID].state = Obstruction::INACTIVE;
+                obstructions[obstID].state = State::INACTIVE;
             }
         }
     }

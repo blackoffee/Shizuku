@@ -105,6 +105,7 @@ public:
     void AllocateStorageBuffers();
     void InitializeObstSsbo();
     void RunComputeShader(const float3 cameraPosition);
+    void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
         glm::mat4 projectionMatrix);
     void RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
@@ -122,7 +123,7 @@ private:
     float3 m_translate;
     int m_currentObstId = -1;
     float m_currentObstSize = 0.f;
-    Obstruction::Shape m_currentObstShape = Obstruction::SQUARE;
+    Shape m_currentObstShape = Shape::SQUARE;
     ViewMode m_viewMode;
     Obstruction* m_obstructions;
     Panel* m_parent;
@@ -145,8 +146,8 @@ public:
 
     void SetCurrentObstSize(const float size);
 
-    Obstruction::Shape GetCurrentObstShape();
-    void SetCurrentObstShape(const Obstruction::Shape shape);
+    Shape GetCurrentObstShape();
+    void SetCurrentObstShape(const Shape shape);
 
     ViewMode GetViewMode();
     void SetViewMode(const ViewMode viewMode);

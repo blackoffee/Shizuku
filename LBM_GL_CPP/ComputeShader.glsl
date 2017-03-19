@@ -32,6 +32,7 @@ uniform int maxObsts;
 uniform vec3 cameraPosition;
 uniform int targetObstId;
 uniform Obstruction targetObst;
+uniform bool isObstOp = false;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
 subroutine void ObstUpdate_t();
@@ -309,7 +310,7 @@ subroutine(ObstUpdate_t) void UpdateObstruction()
     obsts[targetObstId].state = targetObst.state;
 }
 
-subroutine(ObstUpdate_t) void DoNothing()
+subroutine(ObstUpdate_t) void DoNothing2()
 {
 
 }
@@ -321,9 +322,15 @@ subroutine(VboUpdate_t) void DoNothing(uvec3 workUnit)
 
 void main()
 {
-
-	VboUpdate(gl_GlobalInvocationID);
-
-	ObstUpdate_t();
+	if (!isObstOp)
+	{
+		VboUpdate(gl_GlobalInvocationID);
+	}
+	else
+	{
+		//ObstUpdate();
+		UpdateObstruction();
+	}
+	
 
 }
