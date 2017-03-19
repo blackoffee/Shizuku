@@ -1,4 +1,15 @@
 #version 430 core
+struct Obstruction
+{
+    int shape; // {SQUARE,CIRCLE,HORIZONTAL_LINE,VERTICAL_LINE};
+    float x;
+    float y;
+    float r1;
+    float r2;
+    float u;
+    float v;
+    int state; // {ACTIVE,INACTIVE,NEW,REMOVED};
+};
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0) buffer vbo
 {
@@ -8,18 +19,25 @@ layout(binding = 1) buffer ssbo_floor
 {
 	int floorLighting[];
 };
+layout(binding = 2) buffer ssbo_obsts
+{
+	Obstruction obsts[];
+};
 
 uniform int xDimVisible;
 uniform int yDimVisible;
 uniform int maxXDim;
 uniform int maxYDim;
+uniform int maxObsts;
 uniform vec3 cameraPosition;
+uniform int targetObstId;
+uniform Obstruction targetObst;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
-subroutine void VboUpdate2_t();
+subroutine void ObstUpdate_t();
 
 subroutine uniform VboUpdate_t VboUpdate;
-subroutine uniform VboUpdate2_t VboUpdate2;
+subroutine uniform ObstUpdate_t ObstUpdate;
 
 
 vec4 unpackColor(float f)
@@ -54,6 +72,40 @@ float packColor(vec4 color)
 
     return uintBitsToFloat(colorOut);
 }
+
+int FindOverlappingObstruction(const float x, const float y,
+    const float tolerance = 0.f)
+{
+    for (int i = 0; i < 3; i++){
+        if (obsts[i].state != 1) 
+        {
+            const float r1 = obsts[i].r1;
+            if (obsts[i].shape == 0){
+                if (abs(x - obsts[i].x)<r1 + tolerance &&
+                    abs(y - obsts[i].y)<r1 + tolerance)
+                    return i;
+            }
+            else if (obsts[i].shape == 1){//shift by 0.5 cells for better looks
+                const float distFromCenter = (x + 0.5f - obsts[i].x)*(x + 0.5f - obsts[i].x)
+                    + (y + 0.5f - obsts[i].y)*(y + 0.5f - obsts[i].y);
+                if (distFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
+                    return i;
+            }
+            else if (obsts[i].shape == 2){
+                if (abs(x - obsts[i].x)<r1*2+tolerance &&
+                    abs(y - obsts[i].y)<1*0.501f+tolerance)
+                    return i;
+            }
+            else if (obsts[i].shape == 3){
+                if (abs(y - obsts[i].y)<r1*2+tolerance &&
+                    abs(x - obsts[i].x)<1*0.501f+tolerance)
+                    return i;
+            }
+        }
+    }
+    return -1;
+}
+
 
 void Normalize(inout vec3 n)
 {
@@ -193,41 +245,42 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
     float B = 255.f;
     float A = 255.f;
 
-//    if (IsInsideObstruction(x, y, obstructions, 0.99f))
-//    {
-//        int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
-//        if (obstID >= 0)
-//        {
-//            if (obstructions[obstID].state == Obstruction::NEW)
-//            {
-//                zcoord = dmin(-0.3f, zcoord + 0.075f);
-//            }
-//            else if (obstructions[obstID].state == Obstruction::REMOVED)
-//            {
-//                zcoord = dmax(-1.f, zcoord - 0.075f);
-//            }
-//            else if (obstructions[obstID].state == Obstruction::ACTIVE)
-//            {
-//                zcoord = -0.3f;
-//            }
-//            else
-//            {
-//                zcoord = -1.f;
-//            }
-//        }
-//        else
-//        {
-//            zcoord = -1.f;
-//        }
-//        lightFactor = 0.8f;
-//        R = 255.f;
-//        G = 255.f;
-//        B = 255.f;
-//    }
-//    else
-//    {
-        zcoord = -1.f;
-//    }
+    //if (FindOverlappingObstruction(x, y, 0.99f) > -1)
+    //{
+        const int obstID = FindOverlappingObstruction(float(x), float(y), 0.f);
+        if (obstID >= 0)
+        {
+			lightFactor = 0.8f;
+        	R = 255.f;
+        	G = 255.f;
+        	B = 255.f;
+            if (obsts[obstID].state == 2)
+            {
+                zcoord = min(-0.3f, zcoord + 0.075f);
+            }
+            else if (obsts[obstID].state == 3)
+            {
+                zcoord = max(-1.f, zcoord - 0.075f);
+            }
+            else if (obsts[obstID].state == 0)
+            {
+                zcoord = -0.3f;
+            }
+            else
+            {
+                zcoord = -1.f;
+            }
+        }
+        else
+        {
+            zcoord = -1.f;
+        }
+
+    //}
+    //else
+    //{
+    //    zcoord = -1.f;
+    //}
     R *= lightFactor;
     G *= lightFactor;
     B *= lightFactor;
@@ -245,19 +298,32 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
     positions[j].w = packColor(color);
 }
 
+subroutine(ObstUpdate_t) void UpdateObstruction()
+{
+	obsts[targetObstId].shape = targetObst.shape;
+    obsts[targetObstId].r1 = targetObst.r1;
+    obsts[targetObstId].x = targetObst.x;
+    obsts[targetObstId].y = targetObst.y;
+    obsts[targetObstId].u = targetObst.u;
+    obsts[targetObstId].v = targetObst.v;
+    obsts[targetObstId].state = targetObst.state;
+}
 
+subroutine(ObstUpdate_t) void DoNothing()
+{
+
+}
 
 subroutine(VboUpdate_t) void DoNothing(uvec3 workUnit)
 {
 }
 
-subroutine(VboUpdate2_t) void DoNothing2()
-{
-}
 
 void main()
 {
 
 	VboUpdate(gl_GlobalInvocationID);
+
+	ObstUpdate_t();
 
 }

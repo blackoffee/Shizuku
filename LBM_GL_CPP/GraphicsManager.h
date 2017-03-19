@@ -94,7 +94,8 @@ public:
     void DeleteVbo();
     void CreateElementArrayBuffer();
     void DeleteElementArrayBuffer();
-    void CreateShaderStorageBuffer(const unsigned int sizeInInts, const std::string name);
+    template <typename T> void CreateShaderStorageBuffer(T defaultValue,
+        const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop(unsigned int size);
     void CleanUpGLInterOp();
@@ -102,6 +103,7 @@ public:
     ShaderProgram* GetComputeProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
+    void InitializeObstSsbo();
     void RunComputeShader(const float3 cameraPosition);
     void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
         glm::mat4 projectionMatrix);
