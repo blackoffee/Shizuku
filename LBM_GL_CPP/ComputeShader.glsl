@@ -194,10 +194,73 @@ float ComputeAreaFrom4Points(const vec2 nw, const vec2 ne,
     return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
 }
 
+vec2 ComputePositionOfLightOnFloor(vec3 incidentLight, const uint x, const uint y)
+{
+    vec3 n = vec3( 0.f, 0.f, 1.f );
+    float slope_x = 0.f;
+    float slope_y = 0.f;
+    float cellSize = 2.f / xDimVisible;
+    if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+    {
+        slope_x = (positions[(x + 1) + y*maxXDim].z - positions[(x - 1) + y*maxXDim].z) /
+            (2.f*cellSize);
+        slope_y = (positions[(x)+(y + 1)*maxXDim].z - positions[(x)+(y - 1)*maxXDim].z) /
+            (2.f*cellSize);
+        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+        n.z = 2.f*cellSize*2.f*cellSize;
+    }
+    Normalize(n);
+
+    Normalize(incidentLight);
+    float waterDepth = 80.f;
+
+    vec3 refractedLight;
+    vec3 r = vec3(1.0f / 1.3f);
+    vec3 c = vec3(-(DotProduct(n, incidentLight)));
+    refractedLight = r*incidentLight + (r*c - sqrt(vec3(1.f) - r*r*(vec3(1.f) - c*c)))*n;
+
+    float dx = -refractedLight.x*(positions[(x)+(y)*maxXDim].z + 1.f)*waterDepth 
+        / refractedLight.z;
+    float dy = -refractedLight.y*(positions[(x)+(y)*maxXDim].z + 1.f)*waterDepth 
+        / refractedLight.z;
+
+    return vec2( float(x) + dx, float(y) + dy );
+}
+
+
+
+subroutine(VboUpdate_t) void DeformFloorMeshUsingCausticRay(uvec3 workUnit)
+{
+    const uint x = workUnit.x;
+    const uint y = workUnit.y;
+    const uint j = x + y*maxXDim + maxXDim*maxYDim;
+    vec3 incidentLight = vec3(-0.25f, -0.25f, -1.f);
+
+    if (x < xDimVisible && y < yDimVisible)
+    {
+        vec2 lightPositionOnFloor;
+        if (FindOverlappingObstruction(x, y, 1.f) >= 0)
+        {
+            lightPositionOnFloor = vec2(x, y);
+        }
+        else
+        {
+            lightPositionOnFloor = ComputePositionOfLightOnFloor(incidentLight, x, y);
+        }
+
+        positions[j].x = lightPositionOnFloor.x;
+        positions[j].y = lightPositionOnFloor.y;
+    }
+}
+
+
+
+
 subroutine(VboUpdate_t) void ComputeFloorLightIntensitiesFromMeshDeformation(uvec3 workUnit)
 {
-    uint x = workUnit.x;
-    uint y = workUnit.y;
+    const uint x = workUnit.x;
+    const uint y = workUnit.y;
 
 	if (x < xDimVisible-1 && y < yDimVisible-1)
 	{

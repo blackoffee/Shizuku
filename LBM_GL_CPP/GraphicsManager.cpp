@@ -447,6 +447,8 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glUniform1i(yDimVisibleLocation, domain.GetYDimVisible());
     glUniform3f(cameraPositionLocation, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
+    const GLuint deformMesh = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "DeformFloorMeshUsingCausticRay");
     const GLuint phongLighting = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
         "PhongLighting");
     const GLuint collectLight = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
@@ -460,6 +462,10 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &doNothing);
     const int xDim = domain.GetXDim();
     const int yDim = domain.GetYDim();
+
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &deformMesh);
+    glDispatchCompute(xDim, yDim, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &collectLight);
     glDispatchCompute(xDim, yDim, 1);
