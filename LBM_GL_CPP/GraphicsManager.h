@@ -80,7 +80,8 @@ private:
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
     ShaderProgram* m_shaderProgram;
-    ShaderProgram* m_computeProgram;
+    ShaderProgram* m_lightingProgram;
+    ShaderProgram* m_obstProgram;
     std::vector<Ssbo> m_ssbos;
 public:
     Graphics();
@@ -100,7 +101,8 @@ public:
     void CreateVboForCudaInterop(unsigned int size);
     void CleanUpGLInterOp();
     ShaderProgram* GetShaderProgram();
-    ShaderProgram* GetComputeProgram();
+    ShaderProgram* GetLightingProgram();
+    ShaderProgram* GetObstProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void InitializeObstSsbo();

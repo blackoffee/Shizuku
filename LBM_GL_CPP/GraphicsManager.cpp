@@ -218,7 +218,8 @@ int CudaLbm::ImageFcn(const int x, const int y){
 Graphics::Graphics()
 {
     m_shaderProgram = new ShaderProgram;
-    m_computeProgram = new ShaderProgram;
+    m_lightingProgram = new ShaderProgram;
+    m_obstProgram = new ShaderProgram;
 }
 
 void Graphics::CreateCudaLbm()
@@ -352,9 +353,14 @@ ShaderProgram* Graphics::GetShaderProgram()
     return m_shaderProgram;
 }
 
-ShaderProgram* Graphics::GetComputeProgram()
+ShaderProgram* Graphics::GetLightingProgram()
 {
-    return m_computeProgram;
+    return m_lightingProgram;
+}
+
+ShaderProgram* Graphics::GetObstProgram()
+{
+    return m_obstProgram;
 }
 
 void Graphics::CompileShaders()
@@ -362,8 +368,10 @@ void Graphics::CompileShaders()
     GetShaderProgram()->Initialize();
     GetShaderProgram()->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
     GetShaderProgram()->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
-    GetComputeProgram()->Initialize();
-    GetComputeProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+    GetLightingProgram()->Initialize();
+    GetLightingProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+    GetObstProgram()->Initialize();
+    GetObstProgram()->CreateShader("Obstructions.glsl", GL_COMPUTE_SHADER);
 }
 
 void Graphics::AllocateStorageBuffers()
@@ -421,7 +429,7 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_floor);
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_obsts);
-    ShaderProgram* const shader = GetComputeProgram();//
+    ShaderProgram* const shader = GetLightingProgram();//
 
     shader->Use();
 
@@ -445,6 +453,8 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
         "ComputeFloorLightIntensitiesFromMeshDeformation");
     const GLuint applyLights = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
         "ApplyCausticLightingToFloor");
+    const GLuint updateObstStates = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "UpdateObstructionTransientStates");
     const GLuint doNothing = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
         "DoNothing2");
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &doNothing);
@@ -461,6 +471,10 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
 
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &phongLighting);
     glDispatchCompute(xDim, yDim, 2);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &updateObstStates);
+    glDispatchCompute(xDim, yDim, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     shader->Unset();
@@ -489,8 +503,8 @@ void SetUniform(GLuint shaderId, const GLchar* varName, T varValue)
 void Graphics::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst)
 {
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_obsts);
-    ShaderProgram* const shader = GetComputeProgram();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_obsts);
+    ShaderProgram* const shader = GetObstProgram();
     shader->Use();
 
     SetUniform(shader->GetId(), "targetObst.shape", newObst.shape);
@@ -500,15 +514,20 @@ void Graphics::UpdateObstructionsUsingComputeShader(const int obstId, Obstructio
     SetUniform(shader->GetId(), "targetObst.u", newObst.u);
     SetUniform(shader->GetId(), "targetObst.v", newObst.v);
     SetUniform(shader->GetId(), "targetObst.state", newObst.state);
-    SetUniform(shader->GetId(), "isObstOp", true);
     SetUniform(shader->GetId(), "targetObstId", obstId);
+
+    const GLuint updateObstruction = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
+        "UpdateObstruction");
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &updateObstruction);
 
     glDispatchCompute(1, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    SetUniform(shader->GetId(), "isObstOp", false);
 
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+
 }
 
 void Graphics::RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,

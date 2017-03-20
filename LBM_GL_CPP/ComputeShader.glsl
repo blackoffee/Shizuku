@@ -299,6 +299,28 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
     positions[j].w = packColor(color);
 }
 
+subroutine(VboUpdate_t) void UpdateObstructionTransientStates(uvec3 workUnit)
+{
+    const uint x = workUnit.x;
+    const uint y = workUnit.y;
+    const uint j = maxXDim*maxYDim + x + y*maxXDim;
+
+    const float zcoord = positions[j].z;
+
+    const int obstID = FindOverlappingObstruction(float(x), float(y));
+    if (obstID >= 0)
+    {
+        if (zcoord > -0.29f)
+        {
+            obsts[obstID].state = 0;
+        }
+        if (zcoord < -0.99f)
+        {
+            obsts[obstID].state = 1;
+        }
+    }
+}
+
 subroutine(ObstUpdate_t) void UpdateObstruction()
 {
 	obsts[targetObstId].shape = targetObst.shape;

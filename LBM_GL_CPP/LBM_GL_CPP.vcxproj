@@ -225,6 +225,7 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
   <ItemGroup>
     <None Include="ComputeShader.glsl" />
     <None Include="FragmentShader.glsl" />
+    <None Include="Obstructions.glsl" />
     <None Include="VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

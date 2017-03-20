@@ -82,6 +82,7 @@
     <None Include="ComputeShader.glsl" />
     <None Include="FragmentShader.glsl" />
     <None Include="VertexShader.glsl" />
+    <None Include="Obstructions.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
