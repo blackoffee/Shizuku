@@ -11,6 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLEW/glew.h>
 #include <algorithm>
+#undef min
+#undef max
 
 
 CudaLbm::CudaLbm()

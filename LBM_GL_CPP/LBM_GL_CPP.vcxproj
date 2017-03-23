@@ -220,16 +220,12 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />
     <ClInclude Include="Domain.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ComputeShader.glsl" />
     <None Include="FragmentShader.glsl" />
     <None Include="VertexShader.glsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="LBM_GL_CPP.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
