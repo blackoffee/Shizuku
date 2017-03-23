@@ -3,6 +3,8 @@
 #include "Mouse.h"
 #include <GLEW/glew.h>
 #include <algorithm>
+#undef min
+#undef max
 
 Color::Color()
 {

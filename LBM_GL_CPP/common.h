@@ -1,6 +1,4 @@
 #pragma once
-#undef min
-#undef max
 #define MAXOBSTS 100
 #define MAX_XDIM 512
 #define MAX_YDIM 512
