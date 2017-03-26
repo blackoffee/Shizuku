@@ -488,21 +488,18 @@ void Graphics::UpdateObstructionsUsingComputeShader(const int obstId, Obstructio
     ShaderProgram* const shader = GetObstProgram();
     shader->Use();
 
-    SetUniform(shader->GetId(), "targetObst.shape", newObst.shape);
-    SetUniform(shader->GetId(), "targetObst.x", newObst.x);
-    SetUniform(shader->GetId(), "targetObst.y", newObst.y);
-    SetUniform(shader->GetId(), "targetObst.r1", newObst.r1);
-    SetUniform(shader->GetId(), "targetObst.u", newObst.u);
-    SetUniform(shader->GetId(), "targetObst.v", newObst.v);
-    SetUniform(shader->GetId(), "targetObst.state", newObst.state);
-    SetUniform(shader->GetId(), "targetObstId", obstId);
+    GLuint shaderId = shader->GetId();
 
-    const GLuint updateObstruction = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
-        "UpdateObstruction");
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &updateObstruction);
+    SetUniform(shaderId, "targetObst.shape", newObst.shape);
+    SetUniform(shaderId, "targetObst.x", newObst.x);
+    SetUniform(shaderId, "targetObst.y", newObst.y);
+    SetUniform(shaderId, "targetObst.r1", newObst.r1);
+    SetUniform(shaderId, "targetObst.u", newObst.u);
+    SetUniform(shaderId, "targetObst.v", newObst.v);
+    SetUniform(shaderId, "targetObst.state", newObst.state);
+    SetUniform(shaderId, "targetObstId", obstId);
 
-    glDispatchCompute(1, 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    RunSubroutine(shader->GetId(), "UpdateObstruction", int3{ 1, 1, 1 });
 
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -518,35 +515,23 @@ void Graphics::InitializeComputeShaderData()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_obsts);
     ShaderProgram* const shader = GetLightingProgram();
 
-    shader->Use();//
+    shader->Use();
 
-    const GLint maxXDimLocation = glGetUniformLocation(shader->GetId(), "maxXDim");
-    const GLint maxYDimLocation = glGetUniformLocation(shader->GetId(), "maxYDim");
-    const GLint maxObstsLocation = glGetUniformLocation(shader->GetId(), "maxObsts");
-    const GLint xDimLocation = glGetUniformLocation(shader->GetId(), "xDim");
-    const GLint yDimLocation = glGetUniformLocation(shader->GetId(), "yDim");
-    const GLint xDimVisibleLocation = glGetUniformLocation(shader->GetId(), "xDimVisible");
-    const GLint yDimVisibleLocation = glGetUniformLocation(shader->GetId(), "yDimVisible");
-    const GLint uMaxLocation = glGetUniformLocation(shader->GetId(), "uMax");
-    glUniform1i(maxXDimLocation, MAX_XDIM);
-    glUniform1i(maxYDimLocation, MAX_YDIM);
-    glUniform1i(maxObstsLocation, MAXOBSTS);
     Domain domain = *m_cudaLbm->GetDomain();
-    glUniform1i(xDimLocation, domain.GetXDim());
-    glUniform1i(yDimLocation, domain.GetYDim());
-    glUniform1i(xDimVisibleLocation, domain.GetXDimVisible());
-    glUniform1i(yDimVisibleLocation, domain.GetYDimVisible());
-    glUniform1f(uMaxLocation, m_inletVelocity);
+    GLuint shaderId = shader->GetId();
+    SetUniform(shaderId, "maxXDim", MAX_XDIM);
+    SetUniform(shaderId, "maxYDim", MAX_YDIM);
+    SetUniform(shaderId, "maxObsts", MAXOBSTS);
+    SetUniform(shaderId, "xDim", domain.GetXDim());
+    SetUniform(shaderId, "yDim", domain.GetYDim());
+    SetUniform(shaderId, "xDimVisible", domain.GetXDim());
+    SetUniform(shaderId, "yDimVisible", domain.GetYDim());
+    SetUniform(shaderId, "uMax", m_inletVelocity);
 
-    const GLuint initializeDomain = glGetSubroutineIndex(shader->GetId(), GL_COMPUTE_SHADER,
-        "InitializeDomain");
+    RunSubroutine(shaderId, "InitializeDomain", int3{ MAX_XDIM, MAX_YDIM, 1 });
 
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &initializeDomain);
-    glDispatchCompute(MAX_XDIM, MAX_YDIM, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-   
 }
     
 void Graphics::SetOmega(const float omega)
