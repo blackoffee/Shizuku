@@ -466,14 +466,15 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
     }
-
+    
     RunSubroutine(shaderID, "UpdateFluidVbo", int3{ xDim, yDim, 1 });
     RunSubroutine(shaderID, "DeformFloorMeshUsingCausticRay", int3{ xDim, yDim, 1 });
     RunSubroutine(shaderID, "ComputeFloorLightIntensitiesFromMeshDeformation", int3{ xDim, yDim, 1 });
     RunSubroutine(shaderID, "ApplyCausticLightingToFloor", int3{ xDim, yDim, 1 });
     RunSubroutine(shaderID, "PhongLighting", int3{ xDim, yDim, 2 });
     RunSubroutine(shaderID, "UpdateObstructionTransientStates", int3{ xDim, yDim, 1 });
-
+    RunSubroutine(shaderID, "CleanUpVbo", int3{ MAX_XDIM, MAX_YDIM, 2 });
+    
     shader->Unset();
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

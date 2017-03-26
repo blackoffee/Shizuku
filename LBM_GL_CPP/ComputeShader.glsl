@@ -405,15 +405,30 @@ subroutine(VboUpdate_t) void UpdateFluidVbo(uvec3 workUnit)
     vec4 color = vec4(100.f/255.f, 150.f/255.f, 1.f, 100.f/255.f);
     if (FindOverlappingObstruction(x, y, 1.f) >= 0)
     {
-        positions[j].z = 0.f;
-        color = vec4(0.f, 1.f, 0.f, 1.f);
+        color = vec4(0.f, 0.f, 0.f, 0.f);
     }
     positions[j].w = packColor(color);
 
 }
 
+subroutine(VboUpdate_t) void CleanUpVbo(uvec3 workUnit)
+{
+ 	uint x = workUnit.x;
+	uint y = workUnit.y;
+	uint z = workUnit.z;
+    uint j = x + y * maxXDim + z * maxXDim * maxYDim;
 
-
+    if (x >= xDimVisible || y >= yDimVisible)
+    {
+        float xcoord, ycoord;
+        ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y);
+        vec4 color = vec4(0.f, 0.f, 0.f, 0.f);
+        positions[j].x = xcoord;
+        positions[j].y = ycoord;
+        positions[j].z = -1.f;
+        positions[j].w = packColor(color);
+    }
+}
 
 subroutine(VboUpdate_t) void PhongLighting(uvec3 workUnit)
 {
