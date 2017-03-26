@@ -307,6 +307,7 @@ void InitializeButtonCallBack(Panel &rootPanel)
     float u = rootPanel.GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
     Domain* const domain = cudaLbm->GetDomain();
     InitializeDomain(dptr, fA_d, im_d, u, *domain);
+    graphics->InitializeComputeShaderData();
 }
 
 void VelMagButtonCallBack(Panel &rootPanel)

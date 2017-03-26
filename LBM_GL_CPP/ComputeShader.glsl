@@ -11,19 +11,28 @@ struct Obstruction
     int state; // {ACTIVE,INACTIVE,NEW,REMOVED};
 };
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(binding = 0) buffer vbo
+layout(binding = 0) buffer ssbo_fSource
+{
+    float fSource[];
+};
+layout(binding = 1) buffer ssbo_fTarget
+{
+    float fTarget[];
+};
+layout(binding = 2) buffer vbo
 {
     vec4 positions[];
 };
-layout(binding = 1) buffer ssbo_floor
+layout(binding = 3) buffer ssbo_floor
 {
 	int floorLighting[];
 };
-layout(binding = 2) buffer ssbo_obsts
+layout(binding = 4) buffer ssbo_obsts
 {
 	Obstruction obsts[];
 };
-
+uniform int xDim;
+uniform int yDim;
 uniform int xDimVisible;
 uniform int yDimVisible;
 uniform int maxXDim;
@@ -33,6 +42,8 @@ uniform vec3 cameraPosition;
 uniform int targetObstId;
 uniform Obstruction targetObst;
 uniform bool isObstOp = false;
+uniform float uMax;
+uniform float omega;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
 subroutine void ObstUpdate_t();
@@ -107,16 +118,302 @@ int FindOverlappingObstruction(const float x, const float y,
     return -1;
 }
 
+void Swap(inout float a, inout float b)
+{
+    const float c = a;
+    a = b;
+    b = c;
+}
 
 void Normalize(inout vec3 n)
 {
 	n = normalize(n);
 }
 
-float DotProduct(vec3 v1, vec3 v2)
+float DotProduct(const vec3 v1, const vec3 v2)
 {
     return dot(v1,v2);
 }
+
+uint fMemory(const uint fNumb, const uint x, const uint y)
+{
+    return x+y*maxXDim+fNumb*maxXDim*maxYDim;
+}
+
+void ChangeCoordinatesToScaledFloat(inout float xcoord, inout float ycoord,
+	const uint x, const uint y)
+{
+    xcoord = float(x) / (float(xDimVisible) *0.5f);
+    ycoord = float(y) / (float(xDimVisible) *0.5f);
+    xcoord -= 1.0;
+    ycoord -= 1.0;
+}
+
+uint ImageFcn(const uint x, const uint y)
+{
+    if (x == 0)
+    {
+        return 3;// west
+    }
+    else if (x == xDim-1)
+    {
+        return 2;// east
+    }
+    else if (y == 0)
+    {
+        return 12;
+    }
+    else if (y == yDim-1)
+    {
+        return 11;
+    }
+    return 0;
+}
+
+void ComputeFEqs(inout float f[9], const float rho, const float u, const float v)
+{
+    const float usqr = u*u+v*v;
+    f[0] = 0.4444444444f*(rho - 1.5f*usqr);
+    f[1] = 0.1111111111f*(rho + 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+    f[2] = 0.1111111111f*(rho + 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+    f[3] = 0.1111111111f*(rho - 3.0f*u + 4.5f*u*u - 1.5f*usqr);
+    f[4] = 0.1111111111f*(rho - 3.0f*v + 4.5f*v*v - 1.5f*usqr);
+    f[5] = 0.02777777778*(rho + 3.0f*(u + v) + 4.5f*(u + v)*(u + v) - 1.5f*usqr);
+    f[6] = 0.02777777778*(rho + 3.0f*(-u + v) + 4.5f*(-u + v)*(-u + v) - 1.5f*usqr);
+    f[7] = 0.02777777778*(rho + 3.0f*(-u - v) + 4.5f*(-u - v)*(-u - v) - 1.5f*usqr);
+    f[8] = 0.02777777778*(rho + 3.0f*(u - v) + 4.5f*(u - v)*(u - v) - 1.5f*usqr);   
+}
+
+subroutine(VboUpdate_t) void InitializeDomain(uvec3 workUnit)
+{
+	uint x = workUnit.x;
+	uint y = workUnit.y;
+	uint z = workUnit.z;
+ 
+    float fEq[9];
+    float rho = 1.f;
+    float u = uMax;
+    float v = 0.f;
+    ComputeFEqs(fEq, rho, u, v);
+    for (uint i = 0; i < 9; i++)
+    {
+        fSource[fMemory(i, x, y)] = fEq[i];
+        fTarget[fMemory(i, x, y)] = fEq[i];
+    }
+}
+
+void DirichletWest(inout float f[9], const uint y)
+{
+    if (y == 0){
+        f[2] = f[4];
+        f[6] = f[7];
+    }
+    else if (y == yDim - 1){
+        f[4] = f[2];
+        f[7] = f[6];
+    }
+    float u, v;
+    u = uMax;
+    v = 0.0f;
+    f[1] = f[3] + u*0.66666667f;
+    f[5] = f[7] - 0.5f*(f[2] - f[4]) + v*0.5f + u*0.166666667f;
+    f[8] = f[6] + 0.5f*(f[2] - f[4]) - v*0.5f + u*0.166666667f;
+}
+
+void NeumannEast(inout float f[9], const uint y)
+{
+    if (y == 0){
+        f[2] = f[4];
+        f[5] = f[8];
+    }
+    else if (y == yDim - 1){
+        f[4] = f[2];
+        f[8] = f[5];
+    }
+    float rho, u, v;
+    v = 0.0f;
+    rho = 1.f;
+    u = -rho + ((f[0] + f[2] + f[4]) + 2.0f*f[1] + 2.0f*f[5] + 2.0f*f[8]);
+    f[3] = f[1] - u*0.66666667f;
+    f[7] = f[5] + 0.5f*(f[2] - f[4]) - v*0.5f - u*0.166666667f;
+    f[6] = f[8] - 0.5f*(f[2] - f[4]) + v*0.5f - u*0.166666667f;
+}
+
+void ApplyBCs(inout float f[9], const uint x, const uint y)
+{
+    uint im = ImageFcn(x,y);
+    if (im == 2)//NeumannEast
+    {
+        NeumannEast(f, y);
+    }
+    else if (im == 3)//DirichletWest
+    {
+        DirichletWest(f, y);
+    }
+    else if (im == 11)//xsymmetry
+    {
+        f[4] = f[2];
+        f[7] = f[6];
+        f[8] = f[5];
+    }
+    else if (im == 12)//xsymmetry
+    {
+        f[2] = f[4];
+        f[6] = f[7];
+        f[5] = f[8];
+    }  
+}
+
+void BounceBackWall(inout float f[9])
+{
+    Swap(f[1], f[3]);
+    Swap(f[2], f[4]);
+    Swap(f[5], f[7]);
+    Swap(f[6], f[8]);
+}
+
+void ReadDistributions(inout float f[9], const uint x, const uint y)
+{
+    for (uint i = 0; i < 9; i++)
+    {
+        f[i] = fSource[fMemory(i, x, y)];
+    }
+}
+
+void ReadIncomingDistributions(inout float f[9], const uint x, const uint y)
+{
+    uint j = x + y*maxXDim;
+    f[0] = fSource[j];
+    f[1] = fSource[fMemory(1, max(x - 1, 0), y)];
+    f[3] = fSource[fMemory(3, min(x + 1, maxXDim), y)];
+    f[2] = fSource[fMemory(2, x, y - 1)];
+    f[5] = fSource[fMemory(5, max(x - 1, 0), y - 1)];
+    f[6] = fSource[fMemory(6, min(x + 1, maxXDim), y - 1)];
+    f[4] = fSource[fMemory(4, x, y + 1)];
+    f[7] = fSource[fMemory(7, min(x + 1, maxXDim), y + 1)];
+    f[8] = fSource[fMemory(8, max(x - 1, 0), min(y + 1, maxXDim))];
+}
+
+float ComputeStrainRateMagnitude(float f[9])
+{
+    const float rho = f[0] + f[1] + f[2] + f[3]
+        + f[4] + f[5] + f[6] + f[7] + f[8];
+    const float u = f[1] - f[3] + f[5] - f[6]
+        - f[7] + f[8];
+    const float v = f[2] - f[4] + f[5] + f[6]
+        - f[7] - f[8];
+    float fEq[9];
+    ComputeFEqs(fEq, rho, u, v);
+    float qxx = (f[1]-fEq[1]) + (f[3]-fEq[3]) + (f[5]-fEq[5]) + (f[6]-fEq[6])
+        + (f[7]-fEq[7]) + (f[8]-fEq[8]);
+    float qxy = (f[5]-fEq[5]) - (f[6]-fEq[6]) + (f[7]-fEq[7]) - (f[8]-fEq[8]) ;
+    float qyy = (f[5]-fEq[5]) + (f[2]-fEq[2]) + (f[6]-fEq[6]) + (f[7]-fEq[7])
+        + (f[4]-fEq[4]) + (f[8]-fEq[8]);
+    return sqrt(qxx*qxx + qxy*qxy * 2 + qyy*qyy);
+}
+
+void Collide(inout float f[9])
+{
+    const float Q = ComputeStrainRateMagnitude(f);
+    const float tau0 = 1.f / omega;
+    const float smagConst = 0.1f;
+    const float tau = 0.5f*tau0 + 0.5f*sqrt(tau0*tau0 + 18.f*sqrt(2.f)*Q);
+    const float omegaTurb = 1.f / tau;
+
+    float m1, m2, m4, m6, m7, m8;
+
+    const float rho = f[0] + f[1] + f[2] + f[3]
+        + f[4] + f[5] + f[6] + f[7] + f[8];
+    const float u = f[1] - f[3] + f[5] - f[6]
+        - f[7] + f[8];
+    const float v = f[2] - f[4] + f[5] + f[6]
+        - f[7] - f[8];
+
+    m1 = -2.f*f[0] + f[1] + f[2] + f[3] + f[4] + 4.f*f[5] + 4.f*f[6] + 4.f*f[7]
+        + 4.f*f[8] - 3.0f*(u*u + v*v);
+    m2 = 3.f*f[0] - 3.f*f[1] - 3.f*f[2] - 3.f*f[3] - 3.f*f[4] + 3.0f*(u*u + v*v); //ep
+    m4 = -f[1] + f[3] + 2.f*f[5] - 2.f*f[6] - 2.f*f[7] + 2.f*f[8];;//qx_eq
+    m6 = -f[2] + f[4] + 2.f*f[5] + 2.f*f[6] - 2.f*f[7] - 2.f*f[8];;//qy_eq
+    m7 = f[1] - f[2] + f[3] - f[4] - (u*u - v*v);//pxx_eq
+    m8 = f[5] - f[6] + f[7] - f[8] - (u*v);//pxy_eq
+
+    f[0] = f[0] - (-m1 + m2)*0.11111111f;
+    f[1] = f[1] - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m4 + m7*omegaTurb*0.25f);
+    f[2] = f[2] - (-m1*0.027777777f - 0.05555555556f*m2 - 0.16666666667f*m6 - m7*omegaTurb*0.25f);
+    f[3] = f[3] - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m4 + m7*omegaTurb*0.25f);
+    f[4] = f[4] - (-m1*0.027777777f - 0.05555555556f*m2 + 0.16666666667f*m6 - m7*omegaTurb*0.25f);
+    f[5] = f[5] - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 + 0.08333333333f*m6
+        + m8*omegaTurb*0.25f);
+    f[6] = f[6] - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 + 0.08333333333f*m6
+        - m8*omegaTurb*0.25f);
+    f[7] = f[7] - (0.05555555556f*m1 + m2*0.027777777f - 0.08333333333f*m4 - 0.08333333333f*m6
+        + m8*omegaTurb*0.25f);
+    f[8] = f[8] - (0.05555555556f*m1 + m2*0.027777777f + 0.08333333333f*m4 - 0.08333333333f*m6
+        - m8*omegaTurb*0.25f);
+}
+
+
+
+subroutine(VboUpdate_t) void MarchLbm(uvec3 workUnit)
+{
+ 	uint x = workUnit.x;
+	uint y = workUnit.y;
+	uint z = workUnit.z;
+    uint j = x + y * maxXDim;
+    int obstId = FindOverlappingObstruction(float(x), float(y), 0.f);
+    float fTemp[9];
+    ReadIncomingDistributions(fTemp, x, y); 
+    if (obstId >= 0)
+    {
+        BounceBackWall(fTemp);
+    }
+    else
+    {
+        ApplyBCs(fTemp, x, y);
+        Collide(fTemp);
+    }
+
+    for (uint i = 0; i < 9; i++)
+    {
+        fTarget[fMemory(i, x, y)] = fTemp[i];
+    }
+
+}
+
+subroutine(VboUpdate_t) void UpdateFluidVbo(uvec3 workUnit)
+{
+ 	uint x = workUnit.x;
+	uint y = workUnit.y;
+	uint z = workUnit.z;
+    uint j = x + y * maxXDim;
+    float fTemp[9];
+    ReadDistributions(fTemp, x, y);
+  
+    const float rho = fTemp[0] + fTemp[1] + fTemp[2] + fTemp[3]
+        + fTemp[4] + fTemp[5] + fTemp[6] + fTemp[7] + fTemp[8];
+    const float u = fTemp[1] - fTemp[3] + fTemp[5] - fTemp[6]
+        - fTemp[7] + fTemp[8];
+    const float v = fTemp[2] - fTemp[4] + fTemp[5] + fTemp[6]
+        - fTemp[7] - fTemp[8];
+    float xcoord, ycoord;
+    ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y);
+    const float zcoord = (rho-1.f)-0.5f;
+
+    positions[j].x = xcoord;
+    positions[j].y = ycoord;
+    positions[j].z = zcoord;
+    vec4 color = vec4(100.f/255.f, 150.f/255.f, 1.f, 100.f/255.f);
+    if (FindOverlappingObstruction(x, y, 1.f) >= 0)
+    {
+        positions[j].z = 0.f;
+        color = vec4(0.f, 1.f, 0.f, 1.f);
+    }
+    positions[j].w = packColor(color);
+
+}
+
+
+
 
 subroutine(VboUpdate_t) void PhongLighting(uvec3 workUnit)
 {
@@ -228,8 +525,6 @@ vec2 ComputePositionOfLightOnFloor(vec3 incidentLight, const uint x, const uint 
     return vec2( float(x) + dx, float(y) + dy );
 }
 
-
-
 subroutine(VboUpdate_t) void DeformFloorMeshUsingCausticRay(uvec3 workUnit)
 {
     const uint x = workUnit.x;
@@ -254,9 +549,6 @@ subroutine(VboUpdate_t) void DeformFloorMeshUsingCausticRay(uvec3 workUnit)
     }
 }
 
-
-
-
 subroutine(VboUpdate_t) void ComputeFloorLightIntensitiesFromMeshDeformation(uvec3 workUnit)
 {
     const uint x = workUnit.x;
@@ -279,15 +571,6 @@ subroutine(VboUpdate_t) void ComputeFloorLightIntensitiesFromMeshDeformation(uve
     	atomicAdd(floorLighting[x+1 + (y+1)*maxXDim], int_lightIntensity);
     	atomicAdd(floorLighting[x   + (y+1)*maxXDim], int_lightIntensity);
 	}
-}
-
-void ChangeCoordinatesToScaledFloat(inout float xcoord, inout float ycoord,
-	const uint x, const uint y, const int xDimVisible, const int yDimVisible)
-{
-    xcoord = float(x) / (float(xDimVisible) *0.5f);
-    ycoord = float(y) / (float(xDimVisible) *0.5f);
-    xcoord -= 1.0;
-    ycoord -= 1.0;
 }
 
 subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
@@ -355,7 +638,7 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
 	color.z = B/255.f;
 	color.w = A/255.f;
 
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y, xDimVisible, yDimVisible);
+    ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y);
     positions[j].x = xcoord;
     positions[j].y = ycoord;
     positions[j].z = zcoord;

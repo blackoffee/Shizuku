@@ -83,6 +83,8 @@ private:
     ShaderProgram* m_lightingProgram;
     ShaderProgram* m_obstProgram;
     std::vector<Ssbo> m_ssbos;
+    float m_omega;
+    float m_inletVelocity;
 public:
     Graphics();
 
@@ -106,6 +108,14 @@ public:
     void CompileShaders();
     void AllocateStorageBuffers();
     void InitializeObstSsbo();
+    void InitializeComputeShaderData();
+    
+    void SetOmega(const float omega);
+    float GetOmega();
+    void SetInletVelocity(const float u);
+    float GetInletVelocity();
+    void UpdateLbmInputs(const float u, const float omega);
+
     void RunComputeShader(const float3 cameraPosition);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
@@ -223,3 +233,9 @@ public:
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,
     const float x2, const float y2);
+void SetUniform(GLuint shaderId, const GLchar* varName, const int varValue);
+void SetUniform(GLuint shaderId, const GLchar* varName, const float varValue);
+void SetUniform(GLuint shaderId, const GLchar* varName, const bool varValue);
+void SetUniform(GLuint shaderId, const GLchar* varName, const float3 varValue);
+void RunSubroutine(GLuint shaderId, const GLchar* subroutineName,
+    const int3 workGroupSize);
