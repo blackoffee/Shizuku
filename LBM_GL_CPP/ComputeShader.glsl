@@ -39,17 +39,12 @@ uniform int maxXDim;
 uniform int maxYDim;
 uniform int maxObsts;
 uniform vec3 cameraPosition;
-uniform int targetObstId;
-uniform Obstruction targetObst;
-uniform bool isObstOp = false;
 uniform float uMax;
 uniform float omega;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
-subroutine void ObstUpdate_t();
 
 subroutine uniform VboUpdate_t VboUpdate;
-subroutine uniform ObstUpdate_t ObstUpdate;
 
 
 vec4 unpackColor(float f)
@@ -550,14 +545,14 @@ subroutine(VboUpdate_t) void DeformFloorMeshUsingCausticRay(uvec3 workUnit)
     if (x < xDimVisible && y < yDimVisible)
     {
         vec2 lightPositionOnFloor;
-        if (FindOverlappingObstruction(x, y, 1.f) >= 0)
-        {
-            lightPositionOnFloor = vec2(x, y);
-        }
-        else
-        {
+//        if (FindOverlappingObstruction(x, y, 1.f) >= 0)
+//        {
+//            lightPositionOnFloor = vec2(x, y);
+//        }
+//        else
+//        {
             lightPositionOnFloor = ComputePositionOfLightOnFloor(incidentLight, x, y);
-        }
+//        }
 
         positions[j].x = lightPositionOnFloor.x;
         positions[j].y = lightPositionOnFloor.y;
@@ -682,38 +677,10 @@ subroutine(VboUpdate_t) void UpdateObstructionTransientStates(uvec3 workUnit)
     }
 }
 
-subroutine(ObstUpdate_t) void UpdateObstruction()
-{
-	obsts[targetObstId].shape = targetObst.shape;
-    obsts[targetObstId].r1 = targetObst.r1;
-    obsts[targetObstId].x = targetObst.x;
-    obsts[targetObstId].y = targetObst.y;
-    obsts[targetObstId].u = targetObst.u;
-    obsts[targetObstId].v = targetObst.v;
-    obsts[targetObstId].state = targetObst.state;
-}
-
-subroutine(ObstUpdate_t) void DoNothing2()
-{
-
-}
-
-subroutine(VboUpdate_t) void DoNothing(uvec3 workUnit)
-{
-}
-
 
 void main()
 {
-	if (!isObstOp)
-	{
-		VboUpdate(gl_GlobalInvocationID);
-	}
-	else
-	{
-		//ObstUpdate();
-		UpdateObstruction();
-	}
+    VboUpdate(gl_GlobalInvocationID);
 	
 
 }
