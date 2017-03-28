@@ -22,7 +22,7 @@ CudaLbm::CudaLbm()
     m_timeStepsPerFrame = TIMESTEPS_PER_FRAME / 2;
 }
 
-CudaLbm::CudaLbm(int maxX, int maxY)
+CudaLbm::CudaLbm(const int maxX, const int maxY)
 {
     m_maxX = maxX;
     m_maxY = maxY;
@@ -73,17 +73,17 @@ float CudaLbm::GetOmega()
     return m_omega;
 }
 
-void CudaLbm::SetInletVelocity(float velocity)
+void CudaLbm::SetInletVelocity(const float velocity)
 {
     m_inletVelocity = velocity;
 }
 
-void CudaLbm::SetOmega(float omega)
+void CudaLbm::SetOmega(const float omega)
 {
     m_omega = omega;
 }
 
-void CudaLbm::SetPausedState(bool isPaused)
+void CudaLbm::SetPausedState(const bool isPaused)
 {
     m_isPaused = isPaused;
 }
@@ -238,7 +238,7 @@ cudaGraphicsResource* Graphics::GetCudaSolutionGraphicsResource()
     return m_cudaGraphicsResource;
 }
 
-void Graphics::CreateVboForCudaInterop(unsigned int size)
+void Graphics::CreateVboForCudaInterop(const unsigned int size)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
     CreateVbo(size, cudaGraphicsMapFlagsWriteDiscard);
@@ -251,7 +251,7 @@ void Graphics::CleanUpGLInterOp()
     DeleteElementArrayBuffer();
 }
 
-void Graphics::CreateVbo(unsigned int size, unsigned int vboResFlags)
+void Graphics::CreateVbo(const unsigned int size, const unsigned int vboResFlags)
 {
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
@@ -340,7 +340,8 @@ void Graphics::CompileShaders()
     GetComputeProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
 }
 
-void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
+void Graphics::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
+    const glm::mat4 &projectionMatrix)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -398,8 +399,8 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Graphics::RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
-    glm::mat4 projectionMatrix)
+void Graphics::RenderVboUsingShaders(const bool renderFloor, Domain &domain,
+    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
     ShaderProgram* shader = GetShaderProgram();
 
@@ -441,7 +442,7 @@ void GraphicsManager::SetCurrentObstSize(const float size)
     m_currentObstSize = size;
 }
 
-void GraphicsManager::SetCurrentObstShape(const Obstruction::Shape shape)
+void GraphicsManager::SetCurrentObstShape(const Obstruction::Shape &shape)
 {
     m_currentObstShape = shape;
 }
