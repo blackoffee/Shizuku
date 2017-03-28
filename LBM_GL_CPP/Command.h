@@ -1,7 +1,13 @@
 #pragma once
 #include "Panel.h"
 
-class Command
+#ifdef LBM_GL_CPP_EXPORTS  
+#define FW_API __declspec(dllexport)   
+#else  
+#define FW_API __declspec(dllimport)   
+#endif  
+
+class FW_API Command
 {
 protected:
     Panel* m_rootPanel;
@@ -18,7 +24,7 @@ public:
 };
 
 
-class Zoom : public Command
+class FW_API Zoom : public Command
 {
 public:
     Zoom(Panel &rootPanel);
@@ -26,7 +32,7 @@ public:
 };
 
 
-class Pan : public Command
+class FW_API Pan : public Command
 {
     float m_initialX;
     float m_initialY;
@@ -38,7 +44,7 @@ public:
 };
 
 
-class Rotate : public Command
+class FW_API Rotate : public Command
 {
     float m_initialX;
     float m_initialY;
@@ -50,7 +56,7 @@ public:
 };
 
 
-class ButtonPress : public Command
+class FW_API ButtonPress : public Command
 {
     Button* m_button;
 public:
@@ -59,7 +65,7 @@ public:
     void End(Button* button);
 };
 
-class SliderDrag : public Command
+class FW_API SliderDrag : public Command
 {
     float m_initialX;
     float m_initialY;
@@ -71,14 +77,14 @@ public:
     void End();
 };
 
-class AddObstruction : public Command
+class FW_API AddObstruction : public Command
 {
 public:
     AddObstruction(Panel &rootPanel);
     void Start(const float currentX, const float currentY);
 };
 
-class RemoveObstruction : public Command
+class FW_API RemoveObstruction : public Command
 {
     int m_currentObst;
 public:
@@ -88,7 +94,7 @@ public:
 };
 
 
-class MoveObstruction : public Command
+class FW_API MoveObstruction : public Command
 {
     int m_currentObst;
     float m_initialX;

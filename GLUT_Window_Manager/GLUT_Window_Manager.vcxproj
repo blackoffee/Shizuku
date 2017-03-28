@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Command.cpp" />
     <ClCompile Include="glut_main.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -165,7 +164,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Command.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
