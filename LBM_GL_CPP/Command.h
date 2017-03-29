@@ -1,11 +1,15 @@
 #pragma once
-#include "Panel.h"
 
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
 #else  
 #define FW_API __declspec(dllimport)   
 #endif  
+
+class Panel;
+class Button;
+class SliderBar;
+class GraphicsManager;
 
 class FW_API Command
 {
