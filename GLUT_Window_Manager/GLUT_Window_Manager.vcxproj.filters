@@ -27,15 +27,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\LBM_GL_CPP\ComputeShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\LBM_GL_CPP\FragmentShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\LBM_GL_CPP\VertexShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>
