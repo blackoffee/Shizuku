@@ -22,7 +22,7 @@ CudaLbm::CudaLbm()
     m_timeStepsPerFrame = TIMESTEPS_PER_FRAME / 2;
 }
 
-CudaLbm::CudaLbm(int maxX, int maxY)
+CudaLbm::CudaLbm(const int maxX, const int maxY)
 {
     m_maxX = maxX;
     m_maxY = maxY;
@@ -73,17 +73,17 @@ float CudaLbm::GetOmega()
     return m_omega;
 }
 
-void CudaLbm::SetInletVelocity(float velocity)
+void CudaLbm::SetInletVelocity(const float velocity)
 {
     m_inletVelocity = velocity;
 }
 
-void CudaLbm::SetOmega(float omega)
+void CudaLbm::SetOmega(const float omega)
 {
     m_omega = omega;
 }
 
-void CudaLbm::SetPausedState(bool isPaused)
+void CudaLbm::SetPausedState(const bool isPaused)
 {
     m_isPaused = isPaused;
 }
@@ -239,7 +239,7 @@ cudaGraphicsResource* Graphics::GetCudaSolutionGraphicsResource()
     return m_cudaGraphicsResource;
 }
 
-void Graphics::CreateVboForCudaInterop(unsigned int size)
+void Graphics::CreateVboForCudaInterop(const unsigned int size)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
     CreateVbo(size, cudaGraphicsMapFlagsWriteDiscard);
@@ -252,7 +252,7 @@ void Graphics::CleanUpGLInterOp()
     DeleteElementArrayBuffer();
 }
 
-void Graphics::CreateVbo(unsigned int size, unsigned int vboResFlags)
+void Graphics::CreateVbo(const unsigned int size, const unsigned int vboResFlags)
 {
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
@@ -448,7 +448,8 @@ int Graphics::RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOri
     return returnVal;
 }
 
-void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
+void Graphics::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
+    const glm::mat4 &projectionMatrix)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -614,8 +615,8 @@ void Graphics::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
-void Graphics::RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
-    glm::mat4 projectionMatrix)
+void Graphics::RenderVboUsingShaders(const bool renderFloor, Domain &domain,
+    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
     ShaderProgram* shader = GetShaderProgram();
 

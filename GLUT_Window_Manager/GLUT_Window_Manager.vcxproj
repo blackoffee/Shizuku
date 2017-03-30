@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Command.cpp" />
     <ClCompile Include="glut_main.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -165,13 +164,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Command.h" />
     <ClInclude Include="Window.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\LBM_GL_CPP\ComputeShader.glsl" />
-    <None Include="..\LBM_GL_CPP\FragmentShader.glsl" />
-    <None Include="..\LBM_GL_CPP\VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

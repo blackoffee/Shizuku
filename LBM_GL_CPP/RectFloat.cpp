@@ -16,7 +16,7 @@ float RectFloat::GetCentroidY()
 }
 
 //// chains together nested float coordinates. Use to get absolute float coordinates from relative float coordinates
-RectFloat operator*(RectFloat recParent, RectFloat recChild)
+RectFloat operator*(const RectFloat recParent, const RectFloat recChild)
 {
 	RectFloat result;
 	result.m_x = recParent.m_x+recParent.m_w*(recChild.m_x+1.f)/2.f;
@@ -27,7 +27,7 @@ RectFloat operator*(RectFloat recParent, RectFloat recChild)
 }
 
 //// chains together nested float coordinates. Use to get relative float coordinates from absolute float coordinates
-RectFloat operator/(RectFloat recChild, RectFloat recParent)
+RectFloat operator/(const RectFloat recChild, const RectFloat recParent)
 {
 	RectFloat result;
 	result.m_x = (recChild.m_x - recParent.m_x) / (recParent.m_w)*2.f-1.f;
@@ -38,7 +38,7 @@ RectFloat operator/(RectFloat recChild, RectFloat recParent)
 }
 
 
-bool operator==(RectFloat rec1, RectFloat rec2)
+bool operator==(const RectFloat rec1, const RectFloat rec2)
 {
 	bool result(true);
 	result *= fabs(rec1.m_x - rec2.m_x) < 0.001f*(fabs(rec1.m_x) + fabs(rec2.m_x));
@@ -48,12 +48,12 @@ bool operator==(RectFloat rec1, RectFloat rec2)
 	return result;
 }
 
-RectFloat RectInt2RectFloat(RectInt rectChild, RectInt rectParent)
+RectFloat RectInt2RectFloat(const RectInt rectChild, const RectInt rectParent)
 {
-	float xf = (static_cast< float >(rectChild.m_x) / rectParent.m_w)*2.f - 1.f;
-	float yf = (static_cast< float >(rectChild.m_y) / rectParent.m_h)*2.f - 1.f;
-	float wf = (static_cast< float >(rectChild.m_w) / rectParent.m_w)*2.f;
-	float hf = (static_cast< float >(rectChild.m_h) / rectParent.m_h)*2.f;
+	const float xf = (static_cast< float >(rectChild.m_x) / rectParent.m_w)*2.f - 1.f;
+	const float yf = (static_cast< float >(rectChild.m_y) / rectParent.m_h)*2.f - 1.f;
+	const float wf = (static_cast< float >(rectChild.m_w) / rectParent.m_w)*2.f;
+	const float hf = (static_cast< float >(rectChild.m_h) / rectParent.m_h)*2.f;
 	return RectFloat(xf, yf, wf, hf);
 }
 

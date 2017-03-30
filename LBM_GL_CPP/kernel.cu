@@ -873,7 +873,7 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
-    const float3 rayOrigin, const float3 rayDir, Obstruction* obst_d, Domain &simDomain)
+    const float3 &rayOrigin, const float3 &rayDir, Obstruction* obst_d, Domain &simDomain)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();

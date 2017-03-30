@@ -39,7 +39,7 @@ private:
     int m_timeStepsPerFrame;
 public:
     CudaLbm();
-    CudaLbm(int maxX, int maxY);
+    CudaLbm(const int maxX, const int maxY);
     Domain* GetDomain();
     float* GetFA();
     float* GetFB();
@@ -49,9 +49,9 @@ public:
     Obstruction* GetHostObst();
     float GetInletVelocity();
     float GetOmega();
-    void SetInletVelocity(float velocity);
-    void SetOmega(float omega);
-    void SetPausedState(bool isPaused);
+    void SetInletVelocity(const float velocity);
+    void SetOmega(const float omega);
+    void SetPausedState(const bool isPaused);
     bool IsPaused();
     int GetTimeStepsPerFrame();
     void SetTimeStepsPerFrame(const int timeSteps);
@@ -93,7 +93,7 @@ public:
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     GLuint GetVbo();
     GLuint GetElementArrayBuffer();
-    void CreateVbo(unsigned int size, unsigned int vboResFlags);
+    void CreateVbo(const unsigned int size, const unsigned int vboResFlags);
     void DeleteVbo();
     void CreateElementArrayBuffer();
     void DeleteElementArrayBuffer();
@@ -119,10 +119,11 @@ public:
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
         const float3 rayDir);
-    void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
-        glm::mat4 projectionMatrix);
-    void RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
-        glm::mat4 projectionMatrix);
+        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
+    void RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
+        const glm::mat4 &projectionMatrix);
+    void RenderVboUsingShaders(const bool renderFloor, Domain &domain,
+        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };
 
 

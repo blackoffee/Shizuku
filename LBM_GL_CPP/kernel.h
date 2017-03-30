@@ -32,5 +32,5 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     const float3 cameraPosition, Domain &simDomain);
 
 int RayCastMouseClick(float3 &selectedElementCoord, float4* vis,
-    float4* rayCastIntersect_d, float3 rayOrigin, float3 rayDir,
+    float4* rayCastIntersect_d, const float3 &rayOrigin, const float3 &rayDir,
     Obstruction* obst_d, Domain &simDomain);
