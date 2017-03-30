@@ -148,11 +148,14 @@ private:
     float m_contourMaxValue;
     ContourVariable m_contourVar;
     Graphics* m_graphics;
+    bool m_useCuda = true;
 
 public:
     float4* m_rayCastIntersect_d;
 
     GraphicsManager(Panel* panel);
+
+    void UseCuda(bool useCuda);
 
     float3 GetRotationTransforms();
     float3 GetTranslationTransforms();
@@ -186,8 +189,8 @@ public:
     void SetUpCuda();
     void RunCuda();
     void RunComputeShader();
+    void RunSimulation();
     void RenderVbo();
-    void RenderVboUsingShaders();
     bool ShouldRenderFloor();
 
     void ClickDown(Mouse mouse);

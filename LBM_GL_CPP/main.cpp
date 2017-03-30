@@ -149,9 +149,8 @@ void Draw()
     graphicsManager->UpdateViewTransformations();
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
-    graphicsManager->RunCuda();
-    graphicsManager->RunComputeShader();
-    graphicsManager->RenderVboUsingShaders();
+    graphicsManager->RunSimulation();
+    graphicsManager->RenderVbo();
 
     CheckGLError();
 

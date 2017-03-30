@@ -761,6 +761,4 @@ subroutine(VboUpdate_t) void ResetRayCastData(uvec3 workUnit)
 void main()
 {
     VboUpdate(gl_GlobalInvocationID);
-	
-
 }

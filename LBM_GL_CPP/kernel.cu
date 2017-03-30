@@ -859,17 +859,17 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
-    //DeformFloorMeshUsingCausticRay << <grid, threads >> >
-    //    (vis, incidentLight1, obst_d, simDomain);
-    //ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
-    //    (vis, floor_d, obst_d, simDomain);
+    DeformFloorMeshUsingCausticRay << <grid, threads >> >
+        (vis, incidentLight1, obst_d, simDomain);
+    ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
+        (vis, floor_d, obst_d, simDomain);
 
-    //ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain);
-//    UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain);
+    UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-//    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
-//        simDomain);
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
+        simDomain);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 

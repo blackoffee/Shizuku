@@ -234,9 +234,8 @@ void Window::DrawLoop()
     graphicsManager->UpdateViewTransformations();
 
     graphicsManager->GetCudaLbm()->UpdateDeviceImage();
-    graphicsManager->RunCuda();
-    graphicsManager->RunComputeShader();
-    graphicsManager->RenderVboUsingShaders();
+    graphicsManager->RunSimulation();
+    graphicsManager->RenderVbo();
 
     Layout::Draw2D(*m_windowPanel);
 

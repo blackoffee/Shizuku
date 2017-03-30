@@ -642,6 +642,11 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_translate = { 0.f, 0.8f, 0.2f };
 }
 
+void GraphicsManager::UseCuda(bool useCuda)
+{
+    m_useCuda = useCuda;
+}
+
 float3 GraphicsManager::GetRotationTransforms()
 {
     return m_rotate;
@@ -852,20 +857,20 @@ void GraphicsManager::RunCuda()
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
     Domain* domain = cudaLbm->GetDomain();
-//    MarchSolution(cudaLbm);
-//    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
+    MarchSolution(cudaLbm);
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
-//    if (ShouldRenderFloor())
-//    {
-//        LightSurface(dptr, obst_d, cameraPosition, *domain);
-//    }
-//    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
-//    CleanUpDeviceVBO(dptr, *domain);
+    if (ShouldRenderFloor())
+    {
+        LightSurface(dptr, obst_d, cameraPosition, *domain);
+    }
+    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
+    CleanUpDeviceVBO(dptr, *domain);
 
-//    // unmap buffer object
+    // unmap buffer object
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);
 
 }
@@ -875,18 +880,32 @@ void GraphicsManager::RunComputeShader()
     GetGraphics()->RunComputeShader(m_translate);
 }
 
+void GraphicsManager::RunSimulation()
+{
+    if (m_useCuda)
+    {
+        RunCuda();
+    }
+    else
+    {
+        RunComputeShader();
+    }
+}
+
 void GraphicsManager::RenderVbo()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderVbo(ShouldRenderFloor(), *cudaLbm->GetDomain(),
-        GetModelMatrix(), GetProjectionMatrix());
-}
-
-void GraphicsManager::RenderVboUsingShaders()
-{
-    CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderVboUsingShaders(ShouldRenderFloor(), *cudaLbm->GetDomain(),
-        GetModelMatrix(), GetProjectionMatrix());
+    ////Colors in Cuda vbo not rendered properly
+//    if (m_useCuda)
+//    {
+//        GetGraphics()->RenderVbo(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+//            GetModelMatrix(), GetProjectionMatrix());
+//    }
+//    else
+//    {
+        GetGraphics()->RenderVboUsingShaders(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+            GetModelMatrix(), GetProjectionMatrix());
+//    }
 }
 
 bool GraphicsManager::ShouldRenderFloor()
@@ -959,22 +978,28 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
     int returnVal = 0;
-
-//    // map OpenGL buffer object for writing from CUDA
-//    cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
-//    float4 *dptr;
-//    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
-//    size_t num_bytes;
-//    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
-
     float3 selectedCoordF;
-//    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-//    Domain* domain = GetCudaLbm()->GetDomain();
-//    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
-//        rayOrigin, rayDir, obst_d, *domain);
+    int rayCastResult;
 
-    int rayCastResult = GetGraphics()->RayCastMouseClick(selectedCoordF, rayOrigin, rayDir);
+    if (m_useCuda)
+    {
+        // map OpenGL buffer object for writing from CUDA
+        cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
+        float4 *dptr;
+        cudaGraphicsMapResources(1, &cudaSolutionField, 0);
+        size_t num_bytes;
+        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
+        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+        Domain* domain = GetCudaLbm()->GetDomain();
+        rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
+            rayOrigin, rayDir, obst_d, *domain);
+        cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
+    }
+    else
+    {
+        rayCastResult = GetGraphics()->RayCastMouseClick(selectedCoordF, rayOrigin, rayDir);
+    }
 
     if (rayCastResult == 0)
     {
@@ -987,8 +1012,6 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     {
         returnVal = 1;
     }
-
-//    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
     return returnVal;
 }
@@ -1132,9 +1155,15 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     obst.v = v;
     obst.state = State::ACTIVE;
     m_obstructions[obstId] = obst;
-    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-    UpdateDeviceObstructions(obst_d, obstId, obst);  
-    GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
+    if (m_useCuda)
+    {
+        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+        UpdateDeviceObstructions(obst_d, obstId, obst);  
+    }
+    else
+    {
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
+    }
 }
 
 

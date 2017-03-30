@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     Window::Instance().InitializeGLUT(argc, argv);
     Window::Instance().InitializeGL();
 
+    graphicsManager->UseCuda(false);
     graphicsManager->SetUpGLInterop();
     graphicsManager->SetUpCuda();
     graphicsManager->SetUpShaders();
