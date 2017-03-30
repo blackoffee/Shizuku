@@ -115,9 +115,10 @@ public:
     void SetInletVelocity(const float u);
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
-
     void RunComputeShader(const float3 cameraPosition);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
+    int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
+        const float3 rayDir);
     void RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,
         glm::mat4 projectionMatrix);
     void RenderVboUsingShaders(bool renderFloor, Domain &domain, glm::mat4 modelMatrix,

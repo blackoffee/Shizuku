@@ -27,7 +27,11 @@ layout(binding = 3) buffer ssbo_floor
 {
 	int floorLighting[];
 };
-layout(binding = 4) buffer ssbo_obsts
+layout(binding = 4) buffer ssbo_rayIntersect
+{
+	vec4 rayIntersect[];
+};
+layout(binding = 5) buffer ssbo_obsts
 {
 	Obstruction obsts[];
 };
@@ -41,6 +45,8 @@ uniform int maxObsts;
 uniform vec3 cameraPosition;
 uniform float uMax;
 uniform float omega;
+uniform vec3 rayOrigin;
+uniform vec3 rayDir;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
 
@@ -677,6 +683,80 @@ subroutine(VboUpdate_t) void UpdateObstructionTransientStates(uvec3 workUnit)
     }
 }
 
+vec3 GetIntersectionOfRayWithTriangle(vec3 rayOrigin,
+    vec3 rayDir, const vec3 p1, const vec3 p2, const vec3 p3)
+{
+    //plane of triangle
+    vec3 n = cross((p2 - p1), (p3 - p1));
+    n = normalize(n);
+    float d = dot(n, p1); //coefficient "d" of plane equation (n.x = d)
+
+    rayDir = normalize(rayDir);
+    float t = (d-dot(n,rayOrigin))/(dot(n,rayDir));
+
+    return rayOrigin + t*rayDir;
+}
+
+bool IsPointInsideTriangle(const vec3 p1, const vec3 p2,
+    const vec3 p3, const vec3 q)
+{
+    vec3 n = cross((p2 - p1), (p3 - p1));
+
+    if (dot(cross(p2 - p1, q - p1), n) < 0) return false;
+    if (dot(cross(p3 - p2, q - p2), n) < 0) return false;
+    if (dot(cross(p1 - p3, q - p3), n) < 0) return false;
+
+    return true;
+}
+
+subroutine(VboUpdate_t) void RayCast(uvec3 workUnit)
+{
+    const uint x = workUnit.x;
+    const uint y = workUnit.y;
+    const uint j = maxXDim*maxYDim + x + y*maxXDim;
+    
+    if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
+    {
+        const int obstId = FindOverlappingObstruction(float(x), float(y));
+        if (obstId >= 0)
+        {
+            vec3 nw = positions[j+maxXDim].xyz;
+            vec3 ne = positions[j+maxXDim+1].xyz;
+            vec3 se = positions[j+1].xyz;
+            vec3 sw = positions[j].xyz;
+
+            vec3 intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+                nw, ne, se);
+            if (IsPointInsideTriangle(nw, ne, se, intersection))
+            {
+                float d = distance(intersection, rayOrigin);
+                if (d < rayIntersect[0].w)
+                {
+                    rayIntersect[0].xyz = intersection.xyz;
+                    rayIntersect[0].w = d;
+                }
+            }
+            else{
+                intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+                    ne, se, sw);
+                if (IsPointInsideTriangle(ne, se, sw, intersection))
+                {
+                    float d = distance(intersection, rayOrigin);
+                    if (d < rayIntersect[0].w)
+                    {
+                        rayIntersect[0].xyz = intersection.xyz;
+                        rayIntersect[0].w = d;
+                    }
+                }
+            }
+        }
+    }
+}
+
+subroutine(VboUpdate_t) void ResetRayCastData(uvec3 workUnit)
+{
+    rayIntersect[0].xyzw = vec4(0,0,0,1e6);
+}
 
 void main()
 {

@@ -382,6 +382,7 @@ void Graphics::AllocateStorageBuffers()
     CreateShaderStorageBuffer(GLfloat(0), MAX_XDIM*MAX_YDIM*9, "LbmB");
     CreateShaderStorageBuffer(GLint(0), MAX_XDIM*MAX_YDIM, "Floor");
     CreateShaderStorageBuffer(Obstruction{}, MAXOBSTS, "Obstructions");
+    CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
 void Graphics::InitializeObstSsbo()
@@ -393,6 +394,58 @@ void Graphics::InitializeObstSsbo()
     glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(Obstruction), obst_h, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+int Graphics::RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
+    const float3 rayDir)
+{
+    Domain domain = *m_cudaLbm->GetDomain();
+    int xDim = domain.GetXDim();
+    int yDim = domain.GetYDim();
+    glm::vec4 intersectionCoord{ 0, 0, 0, 0 };
+    float intersectCoord[4];
+    const GLuint ssbo_rayIntersection = GetShaderStorageBuffer("RayIntersection");
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_rayIntersection);
+
+    ShaderProgram* const shader = GetLightingProgram();
+    shader->Use();
+
+    GLuint shaderID = shader->GetId();
+    SetUniform(shaderID, "maxXDim", MAX_XDIM);
+    SetUniform(shaderID, "maxyDim", MAX_YDIM);
+    SetUniform(shaderID, "maxObsts", MAXOBSTS);
+    SetUniform(shaderID, "xDim", xDim);
+    SetUniform(shaderID, "yDim", yDim);
+    SetUniform(shaderID, "xDimVisible", domain.GetXDimVisible());
+    SetUniform(shaderID, "yDimVisible", domain.GetYDimVisible());
+    SetUniform(shaderID, "rayOrigin", rayOrigin);
+    SetUniform(shaderID, "rayDir", rayDir);
+
+    RunSubroutine(shaderID, "ResetRayCastData", int3{ 1, 1, 1 });
+    RunSubroutine(shaderID, "RayCast", int3{ xDim, yDim, 1 });
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rayIntersection);
+    GLfloat* intersect = (GLfloat*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0,
+        sizeof(glm::vec4), GL_MAP_READ_BIT);
+    std::memcpy(&intersectionCoord, intersect, sizeof(glm::vec4));
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    int returnVal;
+    if (intersectionCoord.w > 1e5) //ray did not intersect with any objects
+    {
+        returnVal = 1;
+    }
+    else
+    {
+        RunSubroutine(shaderID, "ResetRayCastData", int3{ 1, 1, 1 });
+        rayCastIntersection.x = intersectionCoord.x;
+        rayCastIntersection.y = intersectionCoord.y;
+        rayCastIntersection.z = intersectionCoord.z;
+        returnVal = 0;
+    }
+    shader->Unset();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return returnVal;
 }
 
 void Graphics::RenderVbo(bool renderFloor, Domain &domain, glm::mat4 modelMatrix, glm::mat4 projectionMatrix)
@@ -436,7 +489,7 @@ void Graphics::RunComputeShader(const float3 cameraPosition)
     const GLuint ssbo_floor = GetShaderStorageBuffer("Floor");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_floor);
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_obsts);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_obsts);
     ShaderProgram* const shader = GetLightingProgram();
 
     shader->Use();
@@ -513,7 +566,7 @@ void Graphics::InitializeComputeShaderData()
     const GLuint ssbo_lbmB = GetShaderStorageBuffer("LbmB");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_obsts);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_obsts);
     ShaderProgram* const shader = GetLightingProgram();
 
     shader->Use();
@@ -522,7 +575,7 @@ void Graphics::InitializeComputeShaderData()
     GLuint shaderId = shader->GetId();
     SetUniform(shaderId, "maxXDim", MAX_XDIM);
     SetUniform(shaderId, "maxYDim", MAX_YDIM);
-    SetUniform(shaderId, "maxObsts", MAXOBSTS);
+    SetUniform(shaderId, "maxObsts", MAXOBSTS);//
     SetUniform(shaderId, "xDim", domain.GetXDim());
     SetUniform(shaderId, "yDim", domain.GetYDim());
     SetUniform(shaderId, "xDimVisible", domain.GetXDim());
@@ -907,18 +960,22 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
     int returnVal = 0;
 
-    // map OpenGL buffer object for writing from CUDA
-    cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
-    float4 *dptr;
-    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
-    size_t num_bytes;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
+//    // map OpenGL buffer object for writing from CUDA
+//    cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
+//    float4 *dptr;
+//    cudaGraphicsMapResources(1, &cudaSolutionField, 0);
+//    size_t num_bytes;
+//    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
     float3 selectedCoordF;
-    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-    Domain* domain = GetCudaLbm()->GetDomain();
-    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
-        rayOrigin, rayDir, obst_d, *domain);
+//    Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+//    Domain* domain = GetCudaLbm()->GetDomain();
+//    int rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
+//        rayOrigin, rayDir, obst_d, *domain);
+
+    int rayCastResult = GetGraphics()->RayCastMouseClick(selectedCoordF, rayOrigin, rayDir);
+
+
     if (rayCastResult == 0)
     {
         m_currentZ = selectedCoordF.z;
@@ -931,7 +988,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
         returnVal = 1;
     }
 
-    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
+//    cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 
     return returnVal;
 }
