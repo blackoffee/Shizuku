@@ -1,7 +1,7 @@
 #include "Panel.h"
 #include "GraphicsManager.h"
-#include "Mouse.h"
 #include <GLEW/glew.h>
+#include <GLUT/freeglut.h>
 #include <algorithm>
 #undef min
 #undef max
@@ -475,26 +475,6 @@ ButtonGroup* Panel::CreateButtonGroup(const std::string name, std::vector<Button
 
 void Panel::Drag(const int x, const int y, const float dx, const float dy, const int button)
 {
-    if (m_graphicsManager != NULL)
-    {
-        m_graphicsManager->Drag(x,y,dx,dy,button);
-    }
-}
-
-void Panel::Wheel(const int button, const int dir, const int x, const int y)
-{
-    if (m_graphicsManager != NULL)
-    {
-        m_graphicsManager->Wheel(button,dir,x,y);
-    }
-}
-
-void Panel::ClickDown(Mouse mouse)
-{
-    if (m_graphicsManager != NULL)
-    {
-        m_graphicsManager->ClickDown(mouse);
-    }
 }
 
 void Panel::ClickDown()
@@ -521,14 +501,6 @@ void Button::SetCallback(void(*callback)(Panel &rootPanel))
 }
 
 void Button::Callback()
-{
-    if (m_callback != NULL)
-    {
-        m_callback(*GetRootPanel());
-    }
-}
-
-void Button::ClickDown(Mouse mouse)
 {
     if (m_callback != NULL)
     {

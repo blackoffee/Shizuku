@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Layout.h"
+#include "Panel.h"
 #include "GraphicsManager.h"
 #include "Domain.h"
 #include <GLUT/freeglut.h>

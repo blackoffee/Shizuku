@@ -2,7 +2,6 @@
 #include "Panel.h"
 #include "Layout.h"
 #include "kernel.h"
-#include "Mouse.h"
 #include "Domain.h"
 #include "cuda_runtime.h"
 #include "cuda_gl_interop.h"
@@ -1046,63 +1045,6 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
 
-void GraphicsManager::ClickDown(Mouse mouse)
-{
-    int mod = glutGetModifiers();
-    int mouseX = mouse.GetX();
-    int mouseY = mouse.GetY();
-    int simX, simY;
-    if (mouse.m_lmb == 1)
-    {
-        m_currentObstId = -1;
-        int simX, simY;
-        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
-        {
-            m_currentObstId = FindClosestObstructionId(simX, simY);
-        }
-    }
-    else if (mouse.m_rmb == 1)
-    {
-        m_currentObstId = -1;
-        m_currentZ = -0.5f;
-        GetSimCoordFromMouseRay(simX, simY, mouseX, mouseY);
-        AddObstruction(simX, simY);
-    }
-    else if (mouse.m_mmb == 1 && mod != GLUT_ACTIVE_CTRL)
-    {
-        m_currentObstId = -1;
-        if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
-        {            
-            m_currentObstId = FindClosestObstructionId(simX, simY);
-            RemoveObstruction(simX, simY);
-        }
-
-    }
-}
-
-void GraphicsManager::Drag(const int xi, const int yi, const float dxf,
-    const float dyf, const int button)
-{
-    if (button == GLUT_LEFT_BUTTON)
-    {
-        MoveObstruction(xi,yi,dxf,dyf);
-    }
-    else if (button == GLUT_MIDDLE_BUTTON)
-    {
-        int mod = glutGetModifiers();
-        if (mod == GLUT_ACTIVE_CTRL)
-        {
-            m_translate.x += dxf;
-            m_translate.y += dyf;
-        }
-        else
-        {
-            m_rotate.x += dyf*45.f;
-            m_rotate.z += dxf*45.f;
-        }
-
-    }
-}
 
 void GraphicsManager::Pan(const float dx, const float dy)
 {
@@ -1167,17 +1109,6 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     }
 }
 
-
-void GraphicsManager::Wheel(const int button, const int dir, const int x, const int y)
-{
-    if (dir > 0){
-        m_translate.z -= 0.3f;
-    }
-    else
-    {
-        m_translate.z += 0.3f;
-    }
-}
 
 void GraphicsManager::Zoom(const int dir, const float mag)
 {
@@ -1257,8 +1188,7 @@ int GraphicsManager::FindUnusedObstructionId()
             return i;
         }
     }
-    MessageBox(0, "Object could not be added. You are currently using the maximum number of objects.",
-        "Error", MB_OK);
+    printf("Object could not be added. You are currently using the maximum number of objects.");
     return 0;
 }
 

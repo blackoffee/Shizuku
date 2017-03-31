@@ -23,7 +23,6 @@ public:
 
 class Button;
 class Slider;
-class Mouse;
 class ButtonGroup;
 class GraphicsManager;
 
@@ -123,8 +122,6 @@ public:
     virtual void DrawAll(); //draw current panel, then invoke DrawAll on immediate children. Effectively draws all subpanels
 
     virtual void Drag(const int x, const int y, const float dx, const float dy, const int button);
-    virtual void Wheel(const int button, const int dir, const int x, const int y);
-    virtual void ClickDown(Mouse mouse);
     virtual void ClickDown();
 
     ~Panel();
@@ -142,7 +139,6 @@ public:
     Button(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
 
-    virtual void ClickDown(Mouse mouse);
     virtual void ClickDown();
 };
 

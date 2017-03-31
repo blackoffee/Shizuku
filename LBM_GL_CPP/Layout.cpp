@@ -4,8 +4,8 @@
 #include "kernel.h"
 #include <algorithm>
 
-extern const int g_leftPanelWidth;
-extern const int g_leftPanelHeight;
+extern const int g_leftPanelWidth(350);
+extern const int g_leftPanelHeight(500);
 
 void Layout::SetUpWindow(Panel &rootPanel)
 {

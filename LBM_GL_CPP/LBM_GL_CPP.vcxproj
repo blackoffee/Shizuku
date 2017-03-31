@@ -199,8 +199,6 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClCompile Include="FpsTracker.cpp" />
     <ClCompile Include="GraphicsManager.cpp" />
     <ClCompile Include="Layout.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
@@ -216,7 +214,6 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClInclude Include="kernel.h" />
     <ClInclude Include="Layout.h" />
     <ClInclude Include="LbmNode.h" />
-    <ClInclude Include="Mouse.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Panel.h" />
     <ClInclude Include="RectFloat.h" />

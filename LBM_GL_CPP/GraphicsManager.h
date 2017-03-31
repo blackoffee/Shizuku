@@ -119,7 +119,6 @@ public:
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
         const float3 rayDir);
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
     void RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
         const glm::mat4 &projectionMatrix);
     void RenderVboUsingShaders(const bool renderFloor, Domain &domain,
@@ -194,11 +193,6 @@ public:
     void RenderVbo();
     bool ShouldRenderFloor();
 
-    void ClickDown(Mouse mouse);
-
-    void Drag(const int xi, const int yi, const float dxf, const float dyf,
-        const int button);
-    void Wheel(const int button, const int dir, const int x, const int y);
     void Zoom(const int dir, const float mag);
     void Pan(const float dx, const float dy);
     void Rotate(const float dx, const float dy);
