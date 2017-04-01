@@ -1,4 +1,5 @@
 #include "GraphicsManager.h"
+#include "Shader.h"
 #include "Panel.h"
 #include "Layout.h"
 #include "kernel.h"

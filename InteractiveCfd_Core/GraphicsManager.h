@@ -1,8 +1,8 @@
 #pragma once
-#include "Shader.h"
 #include "common.h"
 #include "cuda_runtime.h"
-#include "cuda_gl_interop.h"
+#include <GLEW/glew.h>
+#include "cuda_gl_interop.h"  // needs GLEW
 #include "helper_cuda.h"
 #include "helper_cuda_gl.h"
 #include <glm/glm.hpp>
@@ -20,6 +20,7 @@
 class Panel;
 class Mouse;
 class Domain;
+class ShaderProgram;
 
 class FW_API CudaLbm
 {

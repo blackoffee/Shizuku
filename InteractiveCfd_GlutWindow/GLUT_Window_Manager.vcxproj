@@ -22,6 +22,7 @@
     <ProjectGuid>{7633F095-C71C-49BF-A436-D13DB1BD6B3A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>GLUT_Window_Manager</RootNamespace>
+    <ProjectName>InteractiveCfd_GlutWindow</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -68,22 +69,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(LBM_GL);$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)/InteractiveCfd_Core;$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(LBM_GL);$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)/InteractiveCfd_Core;$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(LBM_GL);$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)/InteractiveCfd_Core;$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(LBM_GL);$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)/InteractiveCfd_Core;$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -155,16 +156,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="glut_main.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LBM_GL_CPP\LBM_GL_CPP.vcxproj">
-      <Project>{2ca37005-4ac9-46f2-a584-c4b67153fa97}</Project>
-    </ProjectReference>
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Window.h" />
+    <ProjectReference Include="..\InteractiveCfd_Core\LBM_GL_CPP.vcxproj">
+      <Project>{2ca37005-4ac9-46f2-a584-c4b67153fa97}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
