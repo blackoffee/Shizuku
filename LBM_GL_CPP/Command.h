@@ -15,7 +15,6 @@ class FW_API Command
 {
 protected:
     Panel* m_rootPanel;
-public:
     enum State {ACTIVE, INACTIVE};
     State m_state;
     Command();
