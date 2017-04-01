@@ -2,7 +2,6 @@
 #include "Layout.h"
 #include "Panel.h"
 #include "GraphicsManager.h"
-#include "Command.h"
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 

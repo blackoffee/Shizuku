@@ -33,8 +33,32 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Command.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Command\AddObstruction.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\ButtonPress.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\MoveObstruction.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Pan.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\RemoveObstruction.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Rotate.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SliderDrag.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Zoom.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Command.cpp">
+      <Filter>Command</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -71,8 +95,32 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Command.h">
+    <ClInclude Include="Command\Pan.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\AddObstruction.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Command.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\MoveObstruction.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\RemoveObstruction.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Rotate.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SliderDrag.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Zoom.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\ButtonPress.h">
+      <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +135,9 @@
     </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{d308b1e8-062c-49f7-8f9e-171de9faf26f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Command">
+      <UniqueIdentifier>{60698793-cc05-4f9d-bd08-de9e82c0779b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

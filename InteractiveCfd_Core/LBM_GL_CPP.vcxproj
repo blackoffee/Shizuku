@@ -71,19 +71,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -196,7 +196,15 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <CudaCompile Include="LbmNode.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Command.cpp" />
+    <ClCompile Include="Command\AddObstruction.cpp" />
+    <ClCompile Include="Command\ButtonPress.cpp" />
+    <ClCompile Include="Command\Command.cpp" />
+    <ClCompile Include="Command\MoveObstruction.cpp" />
+    <ClCompile Include="Command\Pan.cpp" />
+    <ClCompile Include="Command\RemoveObstruction.cpp" />
+    <ClCompile Include="Command\Rotate.cpp" />
+    <ClCompile Include="Command\SliderDrag.cpp" />
+    <ClCompile Include="Command\Zoom.cpp" />
     <ClCompile Include="FpsTracker.cpp" />
     <ClCompile Include="GraphicsManager.cpp" />
     <ClCompile Include="Layout.cpp" />
@@ -209,7 +217,15 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Command.h" />
+    <ClInclude Include="Command\AddObstruction.h" />
+    <ClInclude Include="Command\ButtonPress.h" />
+    <ClInclude Include="Command\Command.h" />
+    <ClInclude Include="Command\MoveObstruction.h" />
+    <ClInclude Include="Command\Pan.h" />
+    <ClInclude Include="Command\RemoveObstruction.h" />
+    <ClInclude Include="Command\Rotate.h" />
+    <ClInclude Include="Command\SliderDrag.h" />
+    <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="FpsTracker.h" />
     <ClInclude Include="GraphicsManager.h" />
     <ClInclude Include="kernel.h" />

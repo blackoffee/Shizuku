@@ -25,6 +25,3 @@ protected:
     Panel* GetRootPanel();
     GraphicsManager* GetGraphicsManager();
 };
-
-
-

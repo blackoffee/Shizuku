@@ -1,5 +1,12 @@
 #pragma once
-#include "command.h"
+#include "Command/Zoom.h"
+#include "Command/Pan.h"
+#include "Command/Rotate.h"
+#include "Command/ButtonPress.h"
+#include "Command/SliderDrag.h"
+#include "Command/AddObstruction.h"
+#include "Command/RemoveObstruction.h"
+#include "Command/MoveObstruction.h"
 #include "FpsTracker.h"
 
 class Domain;
