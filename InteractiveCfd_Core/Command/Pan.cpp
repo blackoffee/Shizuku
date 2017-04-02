@@ -1,5 +1,5 @@
 #include "Pan.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 Pan::Pan(Panel &rootPanel) : Command(rootPanel)
 {

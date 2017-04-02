@@ -1,5 +1,5 @@
 #include "Rotate.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 Rotate::Rotate(Panel &rootPanel) : Command(rootPanel)
 {

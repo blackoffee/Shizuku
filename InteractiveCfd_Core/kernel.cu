@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "LbmNode.h"
+#include "Graphics/CudaLbm.h"
 
 /*----------------------------------------------------------------------------------------
  *	Device functions

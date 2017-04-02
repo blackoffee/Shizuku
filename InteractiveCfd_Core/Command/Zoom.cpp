@@ -1,5 +1,5 @@
 #include "Zoom.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 Zoom::Zoom(Panel &rootPanel) : Command(rootPanel)
 {

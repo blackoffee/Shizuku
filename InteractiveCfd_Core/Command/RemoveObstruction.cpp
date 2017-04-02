@@ -1,5 +1,5 @@
 #include "RemoveObstruction.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 RemoveObstruction::RemoveObstruction(Panel &rootPanel) : Command(rootPanel)
 {

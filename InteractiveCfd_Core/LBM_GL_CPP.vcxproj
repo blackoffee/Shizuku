@@ -206,7 +206,9 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClCompile Include="Command\SliderDrag.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
     <ClCompile Include="FpsTracker.cpp" />
-    <ClCompile Include="GraphicsManager.cpp" />
+    <ClCompile Include="Graphics\CudaLbm.cpp" />
+    <ClCompile Include="Graphics\GraphicsManager.cpp" />
+    <ClCompile Include="Graphics\ShaderManager.cpp" />
     <ClCompile Include="Layout.cpp" />
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="RectFloat.cpp" />
@@ -227,7 +229,9 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClInclude Include="Command\SliderDrag.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="FpsTracker.h" />
-    <ClInclude Include="GraphicsManager.h" />
+    <ClInclude Include="Graphics\CudaLbm.h" />
+    <ClInclude Include="Graphics\GraphicsManager.h" />
+    <ClInclude Include="Graphics\ShaderManager.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="Layout.h" />
     <ClInclude Include="LbmNode.h" />

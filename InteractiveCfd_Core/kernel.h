@@ -1,5 +1,5 @@
 #pragma once
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 #include "Domain.h"
 #include "common.h"
 #include "cuda_runtime.h"

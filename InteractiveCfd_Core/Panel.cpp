@@ -1,5 +1,5 @@
 #include "Panel.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 #include <GLEW/glew.h>
 #include <GLUT/freeglut.h>
 #include <algorithm>

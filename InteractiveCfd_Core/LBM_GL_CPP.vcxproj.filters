@@ -1,38 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CudaCompile Include="kernel.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="LbmNode.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Domain.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
+    <CudaCompile Include="Domain.cu" />
+    <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="LbmNode.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GraphicsManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FpsTracker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Layout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Panel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RectFloat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RectInt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Command\AddObstruction.cpp">
       <Filter>Command</Filter>
     </ClCompile>
@@ -60,44 +33,23 @@
     <ClCompile Include="Command\Command.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="FpsTracker.cpp" />
+    <ClCompile Include="Layout.cpp" />
+    <ClCompile Include="Panel.cpp" />
+    <ClCompile Include="RectFloat.cpp" />
+    <ClCompile Include="RectInt.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Graphics\GraphicsManager.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ShaderManager.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\CudaLbm.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Domain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FpsTracker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="kernel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Layout.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LbmNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Panel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RectInt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RectFloat.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Command\Pan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Command\AddObstruction.h">
       <Filter>Command</Filter>
     </ClInclude>
@@ -122,22 +74,52 @@
     <ClInclude Include="Command\ButtonPress.h">
       <Filter>Command</Filter>
     </ClInclude>
+    <ClInclude Include="common.h" />
+    <ClInclude Include="Domain.h" />
+    <ClInclude Include="FpsTracker.h" />
+    <ClInclude Include="kernel.h" />
+    <ClInclude Include="Layout.h" />
+    <ClInclude Include="LbmNode.h" />
+    <ClInclude Include="Panel.h" />
+    <ClInclude Include="RectFloat.h" />
+    <ClInclude Include="RectInt.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Command\Pan.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsManager.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ShaderManager.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\CudaLbm.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ComputeShader.glsl" />
-    <None Include="FragmentShader.glsl" />
-    <None Include="VertexShader.glsl" />
-    <None Include="Obstructions.glsl" />
+    <None Include="VertexShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Obstructions.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="FragmentShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="ComputeShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{0b0295a6-aedd-4bde-a232-f025a94df177}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{d308b1e8-062c-49f7-8f9e-171de9faf26f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Command">
       <UniqueIdentifier>{60698793-cc05-4f9d-bd08-de9e82c0779b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{4017dda8-ff9f-4e4e-92dd-91d00f230996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{5572258e-85d1-4c30-8691-d0a082b7aae4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

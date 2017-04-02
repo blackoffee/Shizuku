@@ -1,5 +1,5 @@
 #include "MoveObstruction.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 MoveObstruction::MoveObstruction(Panel &rootPanel) : Command(rootPanel)
 {

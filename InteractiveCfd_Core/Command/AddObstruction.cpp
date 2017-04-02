@@ -1,5 +1,5 @@
 #include "AddObstruction.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
 
 AddObstruction::AddObstruction(Panel &rootPanel) : Command(rootPanel)
 {

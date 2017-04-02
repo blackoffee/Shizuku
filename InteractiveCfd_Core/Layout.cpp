@@ -1,6 +1,8 @@
 #include "Layout.h"
 #include "Panel.h"
-#include "GraphicsManager.h"
+#include "Graphics/GraphicsManager.h"
+#include "Graphics/ShaderManager.h"
+#include "Graphics/CudaLbm.h"
 #include "kernel.h"
 #include <algorithm>
 
@@ -291,7 +293,7 @@ void Layout::GetCurrentContourSliderBoundValues(Panel &rootPanel, float &minValu
 void InitializeButtonCallBack(Panel &rootPanel)
 {
     GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    Graphics* graphics = graphicsManager->GetGraphics();
+    ShaderManager* graphics = graphicsManager->GetGraphics();
     cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
     float4* dptr;
     cudaGraphicsMapResources(1, &cudaSolutionField, 0);
