@@ -3,8 +3,6 @@
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
-#include "helper_cuda.h"
-#include "helper_cuda_gl.h"
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>

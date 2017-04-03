@@ -2,8 +2,6 @@
 #include "Layout.h"
 #include "Panel.h"
 #include "Graphics/GraphicsManager.h"
-#include <GLEW/glew.h>
-#include <GLUT/freeglut.h>
 
 int main(int argc, char **argv)
 {
@@ -15,7 +13,7 @@ int main(int argc, char **argv)
     Window::Instance().InitializeGLUT(argc, argv);
     Window::Instance().InitializeGL();
 
-    graphicsManager->UseCuda(false);
+    //graphicsManager->UseCuda(false);
     graphicsManager->SetUpGLInterop();
     graphicsManager->SetUpCuda();
     graphicsManager->SetUpShaders();

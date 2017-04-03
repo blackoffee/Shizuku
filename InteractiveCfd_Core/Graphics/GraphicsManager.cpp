@@ -6,12 +6,7 @@
 #include "Layout.h"
 #include "kernel.h"
 #include "Domain.h"
-#include "cuda_runtime.h"
-#include "cuda_gl_interop.h"
-#include "helper_cuda.h"
-#include "helper_cuda_gl.h"
 #include <glm/gtc/type_ptr.hpp>
-#include <GLEW/glew.h>
 #include <algorithm>
 #undef min
 #undef max
@@ -120,6 +115,16 @@ CudaLbm* GraphicsManager::GetCudaLbm()
 ShaderManager* GraphicsManager::GetGraphics()
 {
     return m_graphics;
+}
+
+bool GraphicsManager::IsCudaCapable()
+{
+    int deviceCount = 0;
+    if (cudaGetDeviceCount(&deviceCount) > 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth)
@@ -299,24 +304,6 @@ bool GraphicsManager::ShouldRenderFloor()
         return true;
     }
     return false;
-}
-
-
-void GraphicsManager::GetSimCoordFromMouseCoord(int &xOut, int &yOut, const int mouseX, const int mouseY)
-{
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    float xf = intCoordToFloatCoord(mouseX, m_parent->GetRootPanel()->GetWidth());
-    float yf = intCoordToFloatCoord(mouseY, m_parent->GetRootPanel()->GetHeight());
-    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_h), MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
-        graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
-        graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, 
@@ -616,16 +603,6 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     }
     //printf("closest obst: %i", closestObstId);
     return closestObstId;
-}
-
-bool GraphicsManager::IsInClosestObstruction(const int mouseX, const int mouseY)
-{
-    int simX, simY;
-    GetSimCoordFromMouseCoord(simX, simY, mouseX, mouseY);
-    int closestObstId = FindClosestObstructionId(simX, simY);
-    float dist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[closestObstId].x, 
-        m_obstructions[closestObstId].y);
-    return (dist < m_obstructions[closestObstId].r1);
 }
 
 void GraphicsManager::UpdateViewTransformations()

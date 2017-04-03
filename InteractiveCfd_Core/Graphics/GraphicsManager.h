@@ -39,10 +39,9 @@ private:
     ContourVariable m_contourVar;
     ShaderManager* m_graphics;
     bool m_useCuda = true;
-
-public:
     float4* m_rayCastIntersect_d;
 
+public:
     GraphicsManager(Panel* panel);
 
     void UseCuda(bool useCuda);
@@ -73,6 +72,8 @@ public:
     CudaLbm* GetCudaLbm();
     ShaderManager* GetGraphics();
 
+    bool IsCudaCapable();
+
     void CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth);
     void SetUpGLInterop();
     void SetUpShaders();
@@ -99,7 +100,6 @@ public:
     glm::mat4 GetModelMatrix();
     glm::mat4 GetProjectionMatrix();
 
-    void GetSimCoordFromMouseCoord(int &xOut, int &yOut, const int mouseX, const int mouseY);
     void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
     void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
     int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, 
@@ -116,7 +116,6 @@ public:
     int FindUnusedObstructionId();
     int FindClosestObstructionId(const int simX, const int simY);
     int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
-    bool IsInClosestObstruction(const int mouseX, const int mouseY);
  
 };
 

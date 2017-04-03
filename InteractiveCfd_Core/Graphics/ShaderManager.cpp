@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include "CudaLbm.h"
 #include "Domain.h"
+#include "helper_cuda.h"
 #include <glm/gtc/type_ptr.hpp>
 
 ShaderManager::ShaderManager()

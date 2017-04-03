@@ -1,7 +1,6 @@
 #pragma once
 #include "common.h"
 #include "cuda_runtime.h"
-#include <GLEW/glew.h>
 
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
