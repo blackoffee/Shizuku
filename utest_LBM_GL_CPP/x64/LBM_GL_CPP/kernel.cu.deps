@@ -379,7 +379,7 @@ c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\vector_functions
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\device_launch_parameters.h
 c:\program files\nvidia gpu computing toolkit\cuda\v7.5\include\vector_types.h
 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-e:\interactivecfd\interactivecfd\lbm_gl_cpp\kernel.h
+c:\users\yusuke\documents\visual studio 2013\projects\lbm_gl_cpp\lbm_gl_cpp\kernel.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\device_launch_parameters.h
@@ -387,6 +387,10 @@ C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h
 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\swprintf.inl
 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstring
-e:\interactivecfd\interactivecfd\lbm_gl_cpp\common.h
-e:\interactivecfd\interactivecfd\lbm_gl_cpp\SimulationParameters.h
+c:\users\yusuke\documents\visual studio 2013\projects\lbm_gl_cpp\lbm_gl_cpp\common.h
+c:\users\yusuke\documents\visual studio 2013\projects\lbm_gl_cpp\lbm_gl_cpp\Domain.h
 C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
+c:\users\yusuke\documents\visual studio 2013\projects\lbm_gl_cpp\lbm_gl_cpp\LbmNode.h
+C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include\cuda_runtime.h
