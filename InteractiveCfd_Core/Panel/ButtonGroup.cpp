@@ -1,5 +1,6 @@
 #include "ButtonGroup.h"
 #include "Button.h"
+#include "Slider.h"
 #include "Panel.h"
 
 ButtonGroup::ButtonGroup()

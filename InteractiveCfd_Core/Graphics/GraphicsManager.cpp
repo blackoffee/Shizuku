@@ -2,6 +2,7 @@
 #include "ShaderManager.h"
 #include "CudaLbm.h"
 #include "Shader.h"
+#include "Panel/Slider.h"
 #include "Panel/Panel.h"
 #include "Layout.h"
 #include "kernel.h"

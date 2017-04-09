@@ -151,27 +151,6 @@ public:
     virtual void Drag(int x, int y, float dx, float dy, int button);
 };
 
-class FW_API Slider : public Panel
-{
-public:
-    SliderBar* m_sliderBar1 = NULL;
-    SliderBar* m_sliderBar2 = NULL;
-
-    Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
-        const std::string name, const Color color, Panel* parent = NULL);
-    Slider(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
-        const std::string name, const Color color, Panel* parent = NULL);
-
-    void CreateSliderBar(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,
-        const std::string name, const Color color);
-
-    void UpdateAll();
-    
-    void Draw();
-    void DrawAll();
-    void Hide();
-    void Show();
-};
 
 
 FW_API float intCoordToFloatCoord(const int x, const int xDim);
