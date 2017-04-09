@@ -47,6 +47,9 @@ uniform float uMax;
 uniform float omega;
 uniform vec3 rayOrigin;
 uniform vec3 rayDir;
+uniform int contourVar; //{VEL_MAG,VEL_U,VEL_V,PRESSURE,STRAIN_RATE,WATER_RENDERING};
+uniform float contourMin;
+uniform float contourMax;
 
 subroutine void VboUpdate_t(uvec3 workUnit);
 
@@ -398,15 +401,52 @@ subroutine(VboUpdate_t) void UpdateFluidVbo(uvec3 workUnit)
         - fTemp[7] - fTemp[8];
     float xcoord, ycoord;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y);
-    const float zcoord = (rho-1.f)-0.5f;
+    float zcoord = (rho-1.f)-0.5f;
+    if (ImageFcn(x,y) != 0)
+    {
+        zcoord = -1.f;
+    }
 
     positions[j].x = xcoord;
     positions[j].y = ycoord;
     positions[j].z = zcoord;
-    vec4 color = vec4(100.f/255.f, 150.f/255.f, 1.f, 100.f/255.f);
+    vec4 color;
+    if (contourVar == 5)
+    {
+        color = vec4(100.f/255.f, 150.f/255.f, 1.f, 100.f/255.f);
+    }
+    else
+    {
+        float varValue;
+        if (contourVar == 0)
+        {
+            varValue = sqrt(u*u+v*v);
+        }
+        else if (contourVar == 1)
+        {
+            varValue = u;
+        }
+        else if (contourVar == 2)
+        {
+            varValue = v;
+        }
+        else if (contourVar == 3)
+        {
+            varValue = rho;
+        }
+        else if (contourVar == 4)
+        {
+            varValue = ComputeStrainRateMagnitude(fTemp);
+        }
+        float R = min(1.f,max(0.f,(varValue - contourMin) / (contourMax - contourMin)));
+        float G = min(1.f,max(0.f,(varValue - contourMin) / (contourMax - contourMin)));
+        float B = 1.f;
+        float A = 1.f;
+        color = vec4(R, G, B, A);
+    }
     if (FindOverlappingObstruction(x, y, 1.f) >= 0)
     {
-        color = vec4(0.f, 0.f, 0.f, 0.f);
+        color = vec4(1.f, 1.f, 1.f, 1.f);
     }
     positions[j].w = packColor(color);
 

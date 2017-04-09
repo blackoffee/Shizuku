@@ -266,7 +266,7 @@ void GraphicsManager::RunCuda()
 
 void GraphicsManager::RunComputeShader()
 {
-    GetGraphics()->RunComputeShader(m_translate);
+    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinValue, m_contourMaxValue);
 }
 
 void GraphicsManager::RunSimulation()

@@ -268,7 +268,8 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glBindVertexArray(0);
 }
 
-void ShaderManager::RunComputeShader(const float3 cameraPosition)
+void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
+        const float contMin, const float contMax)
 {
     const GLuint ssbo_lbmA = GetShaderStorageBuffer("LbmA");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
@@ -297,6 +298,9 @@ void ShaderManager::RunComputeShader(const float3 cameraPosition)
     SetUniform(shaderID, "cameraPosition", cameraPosition);
     SetUniform(shaderID, "uMax", m_inletVelocity);
     SetUniform(shaderID, "omega", m_omega);
+    SetUniform(shaderID, "contourVar", contVar);
+    SetUniform(shaderID, "contourMin", contMin);
+    SetUniform(shaderID, "contourMax", contMax);
 
     for (int i = 0; i < 5; i++)
     {
