@@ -1,5 +1,6 @@
 #include "Layout.h"
 #include "Panel/ButtonGroup.h"
+#include "Panel/Button.h"
 #include "Panel/Panel.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/ShaderManager.h"

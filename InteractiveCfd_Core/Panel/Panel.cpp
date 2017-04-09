@@ -1,4 +1,5 @@
 #include "Panel.h"
+#include "Button.h"
 #include "ButtonGroup.h"
 #include "Graphics/GraphicsManager.h"
 #include <GLEW/glew.h>
@@ -481,42 +482,6 @@ void Panel::Drag(const int x, const int y, const float dx, const float dy, const
 void Panel::ClickDown()
 {
 }
-
-Button::Button(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition, 
-    const std::string name, const Color color, Panel* parent) 
-    : Panel(rectFloat, sizeDefinition, name, color, parent)
-{
-    SetDisplayText(GetName());
-}
-
-Button::Button(const RectInt rectInt, const SizeDefinitionMethod sizeDefinition, 
-    const std::string name, const Color color, Panel* parent) 
-    : Panel(rectInt, sizeDefinition, name, color, parent)
-{
-    SetDisplayText(GetName());
-}
-
-void Button::SetCallback(void(*callback)(Panel &rootPanel))
-{
-    m_callback = callback;
-}
-
-void Button::Callback()
-{
-    if (m_callback != NULL)
-    {
-        m_callback(*GetRootPanel());
-    }
-}
-
-void Button::ClickDown()
-{
-    if (m_callback != NULL)
-    {
-        m_callback(*GetRootPanel());
-    }
-}
-
 SliderBar::SliderBar()
 {
 }
