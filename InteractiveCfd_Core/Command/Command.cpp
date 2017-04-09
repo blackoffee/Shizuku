@@ -1,6 +1,6 @@
 #include "Command.h"
 #include "Graphics/GraphicsManager.h"
-#include "Panel.h"
+#include "Panel/Panel.h"
 
 Command::Command(Panel &rootPanel)
 {

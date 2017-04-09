@@ -1,6 +1,6 @@
 #include "Window.h"
 #include "Layout.h"
-#include "Panel.h"
+#include "Panel/Panel.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 #include "Domain.h"

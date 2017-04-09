@@ -187,20 +187,6 @@ public:
     void Show();
 };
 
-class FW_API ButtonGroup
-{
-    std::string m_name;
-    std::vector<Button*> m_buttons;
-public:
-    ButtonGroup();
-    ButtonGroup(const std::string name, std::vector<Button*> &buttons);
-
-    std::string GetName();
-    void AddButton(Button* button);
-    std::vector<Button*> GetButtons(Button* button);
-    void ExclusiveEnable(Button* button);
-    Button* GetCurrentEnabledButton();
-};
 
 FW_API float intCoordToFloatCoord(const int x, const int xDim);
 FW_API int floatCoordToIntCoord(const float x, const int xDim);

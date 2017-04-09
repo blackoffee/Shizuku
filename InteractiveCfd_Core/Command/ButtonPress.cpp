@@ -1,5 +1,5 @@
 #include "ButtonPress.h"
-#include "Panel.h"
+#include "Panel/Panel.h"
 
 ButtonPress::ButtonPress(Panel &rootPanel) : Command(rootPanel)
 {

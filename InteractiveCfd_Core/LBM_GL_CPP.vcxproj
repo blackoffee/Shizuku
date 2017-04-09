@@ -210,7 +210,11 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
     <ClCompile Include="Layout.cpp" />
-    <ClCompile Include="Panel.cpp" />
+    <ClCompile Include="Panel\Button.cpp" />
+    <ClCompile Include="Panel\ButtonGroup.cpp" />
+    <ClCompile Include="Panel\Panel.cpp" />
+    <ClCompile Include="Panel\Slider.cpp" />
+    <ClCompile Include="Panel\SliderBar.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -236,7 +240,11 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClInclude Include="Layout.h" />
     <ClInclude Include="LbmNode.h" />
     <ClInclude Include="common.h" />
-    <ClInclude Include="Panel.h" />
+    <ClInclude Include="Panel\Button.h" />
+    <ClInclude Include="Panel\ButtonGroup.h" />
+    <ClInclude Include="Panel\Panel.h" />
+    <ClInclude Include="Panel\Slider.h" />
+    <ClInclude Include="Panel\SliderBar.h" />
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />
     <ClInclude Include="Domain.h" />
