@@ -126,16 +126,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="VertexShader.glsl">
+    <None Include="Shaders\ComputeShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Obstructions.glsl">
+    <None Include="Shaders\FragmentShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="FragmentShader.glsl">
+    <None Include="Shaders\Obstructions.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="ComputeShader.glsl">
+    <None Include="Shaders\VertexShader.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -102,7 +102,7 @@
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -126,7 +126,7 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -154,7 +154,7 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -183,7 +183,7 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -251,10 +251,10 @@ copy "$(ProjectDir)*.glsl" "$(OutDir)"</Command>
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ComputeShader.glsl" />
-    <None Include="FragmentShader.glsl" />
-    <None Include="Obstructions.glsl" />
-    <None Include="VertexShader.glsl" />
+    <None Include="Shaders\ComputeShader.glsl" />
+    <None Include="Shaders\FragmentShader.glsl" />
+    <None Include="Shaders\Obstructions.glsl" />
+    <None Include="Shaders\VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
