@@ -69,7 +69,8 @@ public:
     void SetInletVelocity(const float u);
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
-    void RunComputeShader(const float3 cameraPosition);
+    void RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
+        const float contMin, const float contMax);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
         const float3 rayDir);
