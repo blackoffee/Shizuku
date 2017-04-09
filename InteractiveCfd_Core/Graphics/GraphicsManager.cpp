@@ -3,6 +3,7 @@
 #include "CudaLbm.h"
 #include "Shader.h"
 #include "Panel/Slider.h"
+#include "Panel/SliderBar.h"
 #include "Panel/Panel.h"
 #include "Layout.h"
 #include "kernel.h"

@@ -1,4 +1,5 @@
 #include "Slider.h"
+#include "SliderBar.h"
 #include <GLEW/glew.h>
 
 Slider::Slider(const RectFloat rectFloat, const SizeDefinitionMethod sizeDefinition,

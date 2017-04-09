@@ -1,5 +1,6 @@
 #include "SliderDrag.h"
 #include "Panel/Panel.h"
+#include "Panel/SliderBar.h"
 
 SliderDrag::SliderDrag(Panel &rootPanel) : Command(rootPanel)
 {

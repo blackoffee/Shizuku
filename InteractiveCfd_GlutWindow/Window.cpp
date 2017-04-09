@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Layout.h"
 #include "Panel/Button.h"
+#include "Panel/SliderBar.h"
 #include "Panel/Panel.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
