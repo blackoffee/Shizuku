@@ -25,15 +25,15 @@ layout(binding = 2) buffer vbo
 };
 layout(binding = 3) buffer ssbo_floor
 {
-	int floorLighting[];
+    int floorLighting[];
 };
 layout(binding = 4) buffer ssbo_rayIntersect
 {
-	vec4 rayIntersect[];
+    vec4 rayIntersect[];
 };
 layout(binding = 5) buffer ssbo_obsts
 {
-	Obstruction obsts[];
+    Obstruction obsts[];
 };
 uniform int xDim;
 uniform int yDim;
@@ -131,7 +131,7 @@ void Swap(inout float a, inout float b)
 
 void Normalize(inout vec3 n)
 {
-	n = normalize(n);
+    n = normalize(n);
 }
 
 float DotProduct(const vec3 v1, const vec3 v2)
@@ -145,7 +145,7 @@ uint fMemory(const uint fNumb, const uint x, const uint y)
 }
 
 void ChangeCoordinatesToScaledFloat(inout float xcoord, inout float ycoord,
-	const uint x, const uint y)
+    const uint x, const uint y)
 {
     xcoord = float(x) / (float(xDimVisible) *0.5f);
     ycoord = float(y) / (float(xDimVisible) *0.5f);
@@ -190,9 +190,9 @@ void ComputeFEqs(inout float f[9], const float rho, const float u, const float v
 
 subroutine(VboUpdate_t) void InitializeDomain(uvec3 workUnit)
 {
-	uint x = workUnit.x;
-	uint y = workUnit.y;
-	uint z = workUnit.z;
+    uint x = workUnit.x;
+    uint y = workUnit.y;
+    uint z = workUnit.z;
  
     float fEq[9];
     float rho = 1.f;
@@ -360,9 +360,9 @@ void Collide(inout float f[9])
 
 subroutine(VboUpdate_t) void MarchLbm(uvec3 workUnit)
 {
- 	uint x = workUnit.x;
-	uint y = workUnit.y;
-	uint z = workUnit.z;
+    uint x = workUnit.x;
+    uint y = workUnit.y;
+    uint z = workUnit.z;
     uint j = x + y * maxXDim;
     int obstId = FindOverlappingObstruction(float(x), float(y), 0.f);
     float fTemp[9];
@@ -386,9 +386,9 @@ subroutine(VboUpdate_t) void MarchLbm(uvec3 workUnit)
 
 subroutine(VboUpdate_t) void UpdateFluidVbo(uvec3 workUnit)
 {
- 	uint x = workUnit.x;
-	uint y = workUnit.y;
-	uint z = workUnit.z;
+    uint x = workUnit.x;
+    uint y = workUnit.y;
+    uint z = workUnit.z;
     uint j = x + y * maxXDim;
     float fTemp[9];
     ReadDistributions(fTemp, x, y);
@@ -454,9 +454,9 @@ subroutine(VboUpdate_t) void UpdateFluidVbo(uvec3 workUnit)
 
 subroutine(VboUpdate_t) void CleanUpVbo(uvec3 workUnit)
 {
- 	uint x = workUnit.x;
-	uint y = workUnit.y;
-	uint z = workUnit.z;
+    uint x = workUnit.x;
+    uint y = workUnit.y;
+    uint z = workUnit.z;
     uint j = x + y * maxXDim + z * maxXDim * maxYDim;
 
     if (x >= xDimVisible || y >= yDimVisible)
@@ -473,9 +473,9 @@ subroutine(VboUpdate_t) void CleanUpVbo(uvec3 workUnit)
 
 subroutine(VboUpdate_t) void PhongLighting(uvec3 workUnit)
 {
-	uint x = workUnit.x;
-	uint y = workUnit.y;
-	uint z = workUnit.z;
+    uint x = workUnit.x;
+    uint y = workUnit.y;
+    uint z = workUnit.z;
     uint j = x + y * maxXDim + z * maxXDim * maxYDim;
 
     float slope_x = 0.f;
@@ -523,7 +523,7 @@ subroutine(VboUpdate_t) void PhongLighting(uvec3 workUnit)
     
     vec4 lightFactor;
     lightFactor.xyz = min(vec3(1.f,1.f,1.f), (diffuse1.xyz + diffuse2.xyz + specular1.xyz + lightAmbient));
-	lightFactor.w = 1.f;
+    lightFactor.w = 1.f;
 
     vec4 unpackedColor = unpackColor(positions[j].w);
     vec4 finalColor;
@@ -610,23 +610,23 @@ subroutine(VboUpdate_t) void ComputeFloorLightIntensitiesFromMeshDeformation(uve
     const uint x = workUnit.x;
     const uint y = workUnit.y;
 
-	if (x < xDimVisible-1 && y < yDimVisible-1)
-	{
-		vec2 nw, ne, sw, se;
-    	const int offset = maxXDim*maxYDim;
-    	nw = vec2(positions[(x  )+(y+1)*maxXDim+offset].x, positions[(x  )+(y+1)*maxXDim+offset].y);
-    	ne = vec2(positions[(x+1)+(y+1)*maxXDim+offset].x, positions[(x+1)+(y+1)*maxXDim+offset].y);
-    	sw = vec2(positions[(x  )+(y  )*maxXDim+offset].x, positions[(x  )+(y  )*maxXDim+offset].y);
-    	se = vec2(positions[(x+1)+(y  )*maxXDim+offset].x, positions[(x+1)+(y  )*maxXDim+offset].y);
+    if (x < xDimVisible-1 && y < yDimVisible-1)
+    {
+        vec2 nw, ne, sw, se;
+        const int offset = maxXDim*maxYDim;
+        nw = vec2(positions[(x  )+(y+1)*maxXDim+offset].x, positions[(x  )+(y+1)*maxXDim+offset].y);
+        ne = vec2(positions[(x+1)+(y+1)*maxXDim+offset].x, positions[(x+1)+(y+1)*maxXDim+offset].y);
+        sw = vec2(positions[(x  )+(y  )*maxXDim+offset].x, positions[(x  )+(y  )*maxXDim+offset].y);
+        se = vec2(positions[(x+1)+(y  )*maxXDim+offset].x, positions[(x+1)+(y  )*maxXDim+offset].y);
 
-    	const float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
-    	const float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
-		const int int_lightIntensity = int(lightIntensity*0.25f*1000000.f);
-    	atomicAdd(floorLighting[x   + (y  )*maxXDim], int_lightIntensity);
-    	atomicAdd(floorLighting[x+1 + (y  )*maxXDim], int_lightIntensity);
-    	atomicAdd(floorLighting[x+1 + (y+1)*maxXDim], int_lightIntensity);
-    	atomicAdd(floorLighting[x   + (y+1)*maxXDim], int_lightIntensity);
-	}
+        const float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
+        const float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
+        const int int_lightIntensity = int(lightIntensity*0.25f*1000000.f);
+        atomicAdd(floorLighting[x   + (y  )*maxXDim], int_lightIntensity);
+        atomicAdd(floorLighting[x+1 + (y  )*maxXDim], int_lightIntensity);
+        atomicAdd(floorLighting[x+1 + (y+1)*maxXDim], int_lightIntensity);
+        atomicAdd(floorLighting[x   + (y+1)*maxXDim], int_lightIntensity);
+    }
 }
 
 subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
@@ -653,10 +653,10 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
         const int obstID = FindOverlappingObstruction(float(x), float(y), 0.f);
         if (obstID >= 0)
         {
-			lightFactor = 0.8f;
-        	R = 255.f;
-        	G = 255.f;
-        	B = 255.f;
+            lightFactor = 0.8f;
+            R = 255.f;
+            G = 255.f;
+            B = 255.f;
             if (obsts[obstID].state == 2)
             {
                 zcoord = min(-0.3f, zcoord + 0.075f);
@@ -688,11 +688,11 @@ subroutine(VboUpdate_t) void ApplyCausticLightingToFloor(uvec3 workUnit)
     G *= lightFactor;
     B *= lightFactor;
 
-	vec4 color;
-	color.x = R/255.f;
-	color.y = G/255.f;
-	color.z = B/255.f;
-	color.w = A/255.f;
+    vec4 color;
+    color.x = R/255.f;
+    color.y = G/255.f;
+    color.z = B/255.f;
+    color.w = A/255.f;
 
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, x, y);
     positions[j].x = xcoord;

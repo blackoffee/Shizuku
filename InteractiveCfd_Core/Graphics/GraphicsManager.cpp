@@ -188,6 +188,8 @@ void GraphicsManager::SetUpShaders()
     graphics->InitializeObstSsbo();
     UpdateLbmInputs();
     graphics->InitializeComputeShaderData();
+
+    graphics->SetUpFloorTexture();
 }
 
 void GraphicsManager::SetUpCuda()
@@ -281,6 +283,12 @@ void GraphicsManager::RunSimulation()
     {
         RunComputeShader();
     }
+}
+
+void GraphicsManager::RenderFloorToTexture()
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    GetGraphics()->RenderFloorToTexture(*cudaLbm->GetDomain());
 }
 
 void GraphicsManager::RenderVbo()

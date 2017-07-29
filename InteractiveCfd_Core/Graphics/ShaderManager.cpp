@@ -10,6 +10,7 @@ ShaderManager::ShaderManager()
     m_shaderProgram = new ShaderProgram;
     m_lightingProgram = new ShaderProgram;
     m_obstProgram = new ShaderProgram;
+    m_floorProgram = new ShaderProgram;
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -153,6 +154,11 @@ ShaderProgram* ShaderManager::GetObstProgram()
     return m_obstProgram;
 }
 
+ShaderProgram* ShaderManager::GetFloorProgram()
+{
+    return m_floorProgram;
+}
+
 void ShaderManager::CompileShaders()
 {
     GetShaderProgram()->Initialize();
@@ -162,6 +168,9 @@ void ShaderManager::CompileShaders()
     GetLightingProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
     GetObstProgram()->Initialize();
     GetObstProgram()->CreateShader("Obstructions.glsl", GL_COMPUTE_SHADER);
+    GetFloorProgram()->Initialize();
+    GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
+    GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -171,6 +180,37 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(GLint(0), MAX_XDIM*MAX_YDIM, "Floor");
     CreateShaderStorageBuffer(Obstruction{}, MAXOBSTS, "Obstructions");
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
+}
+
+void ShaderManager::SetUpFloorTexture()
+{
+    // set up FBO and texture to render to 
+    glGenFramebuffers(1, &m_floorFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
+
+    glGenTextures(1, &m_floorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+
+    GLuint textureWidth = 1024;
+    GLuint textureHeight = 1024;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_floorTexture, 0);
+
+    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, drawBuffers);
+
+    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        //return false;
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }
 
 void ShaderManager::InitializeObstSsbo()
@@ -236,16 +276,59 @@ int ShaderManager::RayCastMouseClick(float3 &rayCastIntersection, const float3 r
     return returnVal;
 }
 
+void ShaderManager::RenderFloorToTexture(Domain &domain)
+{
+
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
+    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(-1,1,-1,1,-100,20);
+    //gluPerspective(45.0, 1.0, 0.1, 10.0);
+
+
+    ShaderProgram* floorShader = GetFloorProgram();
+    floorShader->Use();
+
+    SetUniform(floorShader->GetId(), "xDimVisible", domain.GetXDimVisible());
+    SetUniform(floorShader->GetId(), "yDimVisible", domain.GetYDimVisible());
+    glViewport(0, 0, 1024, 1024);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
+
+    int yDimVisible = domain.GetYDimVisible();
+    //Draw floor
+    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
+        BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+
+    floorShader->Unset();
+
+
+
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
     const glm::mat4 &projectionMatrix)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glBindVertexArray(m_vao);
+    //glBindVertexArray(m_vao);
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
@@ -253,7 +336,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_VERTEX_ARRAY);
 
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
@@ -265,7 +348,8 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //Draw water surface
     glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
     glDisableClientState(GL_VERTEX_ARRAY);
-    glBindVertexArray(0);
+    //glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
@@ -413,6 +497,7 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
     ShaderProgram* shader = GetShaderProgram();
 
     shader->Use();//
+    glActiveTexture(GL_TEXTURE0);
     GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");
     GLint projectionMatrixLocation = glGetUniformLocation(shader->GetId(), "projectionMatrix");
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));

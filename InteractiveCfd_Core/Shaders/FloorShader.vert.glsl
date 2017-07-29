@@ -4,11 +4,8 @@ layout(location = 1) in float color;
 
 out vec4 fColor;
 
-uniform vec4 viewportMatrix;
-uniform mat4 modelMatrix;
-uniform mat4 projectionMatrix;
-
-out vec3 texCoords;
+uniform int xDimVisible;
+uniform int yDimVisible;
 
 vec4 unpackColor(float f)
 {
@@ -33,20 +30,28 @@ vec4 unpackColor(float f)
 }
 
 
+
 void main()
 {
-    
-    gl_Position = projectionMatrix*modelMatrix*vec4(position, 1.f);
+    fColor = unpackColor(color);
 
-    vec4 unpackedColor = unpackColor(color);
+    //fColor = vec4(1.f);
 
-    texCoords = (position.xyz+vec3(1.f))*0.5f;
+    //if (position.z > -0.99f)
+    //{
+        gl_Position = vec4(position,1.0f);
 
 
+    gl_Position.x = position.x;
+    gl_Position.y = (position.y+1.0f)/yDimVisible*xDimVisible-1.0f;
 
-    fColor.x = unpackedColor.x;
-    fColor.y = unpackedColor.y;// color.y*sin((time + position.x + 1.f)*0.3f);
-    fColor.z = unpackedColor.z;//color.z*sin((time + position.x + 1.f)*0.3f);
-    fColor.w = unpackedColor.w;//color.z*sin((time + position.x + 1.f)*0.3f);
-
+//        gl_Position.xyz = vec3(0.f);
+//        gl_Position.z = 0.2f;
+//        gl_Position.w = 1.f;
+    //}
+    //else
+    //{
+        //gl_Position = vec4(position,1.0f);
+        //fColor.w = 0.0f;
+    //}
 }

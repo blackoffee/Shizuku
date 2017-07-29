@@ -81,6 +81,7 @@ public:
     void RunCuda();
     void RunComputeShader();
     void RunSimulation();
+    void RenderFloorToTexture();
     void RenderVbo();
     bool ShouldRenderFloor();
 

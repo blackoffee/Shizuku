@@ -231,20 +231,26 @@ void Window::DrawLoop()
     m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->UpdateGraphicsInputs();
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+
+    graphicsManager->RunSimulation();
+
+    // render caustic floor to texture
+    graphicsManager->RenderFloorToTexture();
 
     ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
     graphicsManager->UpdateViewTransformations();
 
-    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
-    graphicsManager->RunSimulation();
     graphicsManager->RenderVbo();
 
     Layout::Draw2D(*m_windowPanel);
 
+
     glutSwapBuffers();
     m_fpsTracker.Tock();
+
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     Domain domain = *cudaLbm->GetDomain();
     UpdateWindowTitle(m_fpsTracker.GetFps(), domain);

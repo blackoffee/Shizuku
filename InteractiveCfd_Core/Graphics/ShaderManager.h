@@ -33,9 +33,12 @@ private:
     GLuint m_vao;
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
+    GLuint m_floorTexture;
+    GLuint m_floorFbo;
     ShaderProgram* m_shaderProgram;
     ShaderProgram* m_lightingProgram;
     ShaderProgram* m_obstProgram;
+    ShaderProgram* m_floorProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
@@ -59,8 +62,10 @@ public:
     ShaderProgram* GetShaderProgram();
     ShaderProgram* GetLightingProgram();
     ShaderProgram* GetObstProgram();
+    ShaderProgram* GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
+    void SetUpFloorTexture();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
     
@@ -74,6 +79,7 @@ public:
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
     int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
         const float3 rayDir);
+    void RenderFloorToTexture(Domain &domain);
     void RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
         const glm::mat4 &projectionMatrix);
     void RenderVboUsingShaders(const bool renderFloor, Domain &domain,
