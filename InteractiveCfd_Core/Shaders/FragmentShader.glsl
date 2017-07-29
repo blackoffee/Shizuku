@@ -20,7 +20,7 @@ void main()
         //color.r = texture( renderedTexture, vec2( 0.5f, 0.1f )).r;
         //color.g = texture( renderedTexture, vec2( 0.5f, 0.1f )).g;
         //color.b = texture( renderedTexture, vec2( 0.5f, 0.1f )).b;
-        color.a = 1.0f;
+        color.a = 0.5f;
     }
 
 

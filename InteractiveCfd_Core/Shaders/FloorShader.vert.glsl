@@ -43,7 +43,7 @@ void main()
 
 
     gl_Position.x = position.x;
-    gl_Position.y = (position.y+1.0f)/yDimVisible*xDimVisible-1.0f;
+    gl_Position.y = position.y;
 
 //        gl_Position.xyz = vec3(0.f);
 //        gl_Position.z = 0.2f;
