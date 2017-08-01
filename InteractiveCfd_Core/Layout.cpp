@@ -451,6 +451,7 @@ void Layout::Draw2D(Panel &rootPanel)
     glOrtho(-1,1,-1,1,-100,20);
     rootPanel.DrawAll();
     Layout::DrawShapePreview(rootPanel);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Layout::DrawShapePreview(Panel &rootPanel)

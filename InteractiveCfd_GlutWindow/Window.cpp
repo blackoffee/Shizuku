@@ -238,6 +238,8 @@ void Window::DrawLoop()
     // render caustic floor to texture
     graphicsManager->RenderFloorToTexture();
 
+    graphicsManager->RunSurfaceRefraction();
+
     ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
     graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);

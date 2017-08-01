@@ -752,6 +752,78 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
 
 }
 
+texture<float4, 2, cudaReadModeElementType> floorTex;
+
+__global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
+    float3 cameraPosition, Domain simDomain)
+{
+    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int y = threadIdx.y + blockIdx.y*blockDim.y;
+    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
+
+    unsigned char color[4];
+    std::memcpy(color, &(vbo[j].w), sizeof(color));
+
+    color[3] = 50;
+
+    float3 n = { 0, 0, 0 };
+    float slope_x = 0.f;
+    float slope_y = 0.f;
+    float cellSize = 2.f / xDimVisible;
+    if (x == 0)
+    {
+        n.x = -1.f;
+    }
+    else if (y == 0)
+    {
+        n.y = -1.f;
+    }
+    else if (x >= xDimVisible - 1)
+    {
+        n.x = 1.f;
+    }
+    else if (y >= yDimVisible - 1)
+    {
+        n.y = 1.f;
+    }
+    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+    {
+        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+            (2.f*cellSize);
+        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+            (2.f*cellSize);
+        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+        n.z = 2.f*cellSize*2.f*cellSize;
+        color[3] = 255;
+    }
+    Normalize(n);
+    float waterDepth = 80.f;
+    float zPos = (vbo[j].z + 1.f)*waterDepth;
+    float3 elementPosition = {x,y,zPos };
+    cameraPosition.x *= xDimVisible;
+    cameraPosition.y *= xDimVisible;
+    cameraPosition.z *= xDimVisible;
+    float3 eyeDirection = elementPosition - cameraPosition;
+
+    float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);
+
+    float xTex = lightPositionOnFloor.x/xDimVisible*1024+0.5f;
+    float yTex = lightPositionOnFloor.y/xDimVisible*1024+0.5f;
+
+    float4 textureColor = tex2D(floorTex, xTex, yTex);
+    color[0] = textureColor.x*255.f;
+    color[1] = textureColor.y*255.f;
+    color[2] = textureColor.z*255.f;
+
+    std::memcpy(&(vbo[j].w), color, sizeof(color));
+}
+
+
+
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
@@ -903,3 +975,16 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
         return 0;
     }
 }
+
+void RefractSurface(float4* vis, cudaArray* floorTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+    Domain &simDomain)
+{
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
+    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
+    cudaBindTextureToArray(floorTex, floorTexture);
+    float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
+    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
+}
+

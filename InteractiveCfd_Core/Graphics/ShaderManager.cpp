@@ -28,6 +28,11 @@ cudaGraphicsResource* ShaderManager::GetCudaSolutionGraphicsResource()
     return m_cudaGraphicsResource;
 }
 
+cudaGraphicsResource* ShaderManager::GetCudaFloorTextureResource()
+{
+    return m_cudaFloorTextureResource;
+}
+
 void ShaderManager::CreateVboForCudaInterop(const unsigned int size)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
@@ -206,6 +211,8 @@ void ShaderManager::SetUpFloorTexture()
 
     //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         //return false;
+
+    cudaGraphicsGLRegisterImage(&m_cudaFloorTextureResource, m_floorFbo, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -464,7 +471,17 @@ void ShaderManager::InitializeComputeShaderData()
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
-    
+
+void ShaderManager::BindFloorTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+}
+
+void ShaderManager::UnbindFloorTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void ShaderManager::SetOmega(const float omega)
 {
     m_omega = omega;

@@ -79,6 +79,7 @@ public:
     void SetUpShaders();
     void SetUpCuda();
     void RunCuda();
+    void RunSurfaceRefraction();
     void RunComputeShader();
     void RunSimulation();
     void RenderFloorToTexture();

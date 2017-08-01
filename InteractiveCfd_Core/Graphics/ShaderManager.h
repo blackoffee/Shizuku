@@ -30,6 +30,7 @@ private:
     };
     CudaLbm* m_cudaLbm;
     cudaGraphicsResource* m_cudaGraphicsResource;
+    cudaGraphicsResource* m_cudaFloorTextureResource;
     GLuint m_vao;
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
@@ -48,6 +49,7 @@ public:
     void CreateCudaLbm();
     CudaLbm* GetCudaLbm();
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    cudaGraphicsResource* GetCudaFloorTextureResource();
     GLuint GetVbo();
     GLuint GetElementArrayBuffer();
     void CreateVbo(const unsigned int size, const unsigned int vboResFlags);
@@ -68,6 +70,9 @@ public:
     void SetUpFloorTexture();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
+
+    void BindFloorTexture();
+    void UnbindFloorTexture();
     
     void SetOmega(const float omega);
     float GetOmega();
