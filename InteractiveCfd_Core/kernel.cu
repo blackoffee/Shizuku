@@ -118,6 +118,12 @@ __device__ float3 operator*(const float a, const float3 &u)
     return make_float3(a*u.x, a*u.y, a*u.z);
 }
 
+__device__ float3 operator/(const float3 &u, const float a)
+{
+    return make_float3(u.x / a, u.y / a, u.z / a);
+}
+
+
 __device__ float DotProduct(const float3 &u, const float3 &v)
 {
     return u.x*v.x + u.y*v.y + u.z*v.z;
@@ -180,6 +186,73 @@ __device__ bool IsPointInsideTriangle(const float3 &p1, const float3 &p2,
     if (DotProduct(CrossProduct(p1 - p3, q - p3), n) < 0) return false;
 
     return true;
+}
+
+
+__device__ float GetDistanceBetweenPointAndLine(const float3 &p1, const float3 &q1, const float3 &q2)
+{
+    float3 closestPoint = q1+DotProduct(q2 - q1, p1 - q1)/sqrt(DotProduct(q2-q1,q2-q1))*(q2-q1);
+    return Distance(p1, closestPoint);
+}
+
+
+__device__ float GetDistanceBetweenTwoLines(const float3 &p1, const float3 &p2, const float3 &q1, const float3 &q2)
+{
+    float3 n = CrossProduct(p2 - p1, q2 - q1);
+    Normalize(n);
+    return abs(DotProduct(p1 - q1, n));
+}
+
+
+// ! geomalgorithms.com/a07-_distance.html
+__device__ float GetDistanceBetweenTwoLineSegments(const float3 &p1, const float3 &p2, const float3 &q1, const float3 &q2)
+{
+    float3 u = p2 - p1;
+    Normalize(u);
+    float3 v = q2 - q1;
+    Normalize(v);
+    float3 w = p1 - q1;
+
+    float a = DotProduct(u, u);
+    float b = DotProduct(u, v);
+    float c = DotProduct(v, v);
+    float d = DotProduct(u, w);
+    float e = DotProduct(v, w);
+
+    float sc = (b*e - c*d) / (a*c - b*b);
+
+    if (sqrt(DotProduct(p2 - p1, p2 - p1)) > sc && sc > 0)
+    {
+        float3 n = CrossProduct(p2 - p1, q2 - q1);
+        Normalize(n);
+        return abs(DotProduct(p1 - q1, n));
+    }
+
+    float d1, d2, d3, d4;
+    d1 = GetDistanceBetweenPointAndLine(p1, q1, q2);
+    d2 = GetDistanceBetweenPointAndLine(p2, q1, q2);
+    d3 = GetDistanceBetweenPointAndLine(q1, p1, p2);
+    d4 = GetDistanceBetweenPointAndLine(q2, p1, p2);
+    return dmin(dmin(dmin(d1, d2), d3), d4);
+}
+
+
+inline __device__ bool DoesRayHitObst(const float3 rayOrigin, const float3 rayDest,
+    Obstruction* obstructions, const float tolerance = 0.f)
+{
+    for (int i = 0; i < MAXOBSTS; i++){
+        if (obstructions[i].state != State::INACTIVE)
+        {
+            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, -40 };
+            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, -80 };
+            float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
+            if (dist < obstructions[i].r1)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 //p1, p2, p3 should be in clockwise order
@@ -365,10 +438,10 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     if (im == 1 || im == 20){
         R = 204; G = 204; B = 204;
     }
-    else if (im != 0 || x == xDimVisible-1)
-    {
-        zcoord = -1.f;
-    }
+//    else if (im != 0 || x == xDimVisible-1)
+//    {
+//        zcoord = -1.f;
+//    }
 
     float color;
     char b[] = { R, G, B, A };
@@ -701,6 +774,12 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     }
 }
 
+__device__ int findIntersectWithObst(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
+    float3 rayDir, Obstruction* obstructions, Domain simDomain)
+{
+
+}
+
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
     float3 rayDir, Obstruction* obstructions, Domain simDomain)
 {
@@ -804,12 +883,12 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float waterDepth = 80.f;
     float zPos = (vbo[j].z + 1.f)*waterDepth;
     float3 elementPosition = {x,y,zPos };
-    cameraPosition.x *= xDimVisible;
-    cameraPosition.y *= xDimVisible;
-    cameraPosition.z *= xDimVisible;
-    float3 eyeDirection = elementPosition - cameraPosition;
+    elementPosition.x /= xDimVisible;
+    elementPosition.y /= xDimVisible;
+    elementPosition.z /= xDimVisible;
+    float3 eyeDirection = elementPosition - cameraPosition;  //normalized
 
-    float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);
+    float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);  //non-normalized
 
     float xTex = lightPositionOnFloor.x/xDimVisible*1024+0.5f;
     float yTex = lightPositionOnFloor.y/xDimVisible*1024+0.5f;
@@ -818,6 +897,58 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     color[0] = textureColor.x*255.f;
     color[1] = textureColor.y*255.f;
     color[2] = textureColor.z*255.f;
+
+
+    float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, -zPos }; //non-normalized
+
+    bool hitsObst = DoesRayHitObst(xDimVisible*elementPosition, refractedRayDest, obstructions);
+
+//    if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
+//    {
+//        if (IsInsideObstruction(x, y, obstructions, 1.f))
+//        {
+//            float3 nw{ vbo[j+MAX_XDIM].x, vbo[j+MAX_XDIM].y, vbo[j+MAX_XDIM].z };
+//            float3 ne{ vbo[j+MAX_XDIM+1].x, vbo[j+MAX_XDIM+1].y, vbo[j+MAX_XDIM+1].z };
+//            float3 se{ vbo[j+1].x, vbo[j+1].y, vbo[j+1].z };
+//            float3 sw{ vbo[j].x, vbo[j].y, vbo[j].z };
+
+//            float3 intersection = GetIntersectionOfRayWithTriangle(cameraPosition, eyeDirection,
+//                nw, ne, se);
+//            if (IsPointInsideTriangle(nw, ne, se, intersection))
+//            {
+//                    hitsObst = true;
+//                //printf("distance in kernel: %f\n", distance);
+//            }
+//            else{
+//                intersection = GetIntersectionOfRayWithTriangle(cameraPosition, eyeDirection,
+//                    ne, se, sw);
+//                if (IsPointInsideTriangle(ne, se, sw, intersection))
+//                {
+//                        hitsObst = true;
+//                    //printf("distance in kernel: %f\n", distance);
+//                }
+//            }
+//        }
+//    }
+
+    if (hitsObst == true)
+    {
+        color[0] = 204;
+        color[1] = 204;
+        color[2] = 204;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
@@ -941,8 +1072,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
-        simDomain);
+//    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
+//        simDomain);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 

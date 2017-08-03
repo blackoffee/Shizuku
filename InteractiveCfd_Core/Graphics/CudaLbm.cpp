@@ -70,6 +70,11 @@ void CudaLbm::SetOmega(const float omega)
     m_omega = omega;
 }
 
+void CudaLbm::TogglePausedState()
+{
+    m_isPaused = !m_isPaused;
+}
+
 void CudaLbm::SetPausedState(const bool isPaused)
 {
     m_isPaused = isPaused;
@@ -155,20 +160,20 @@ void CudaLbm::InitializeDeviceMemory()
         m_obst_h[i].y = -1000;
         m_obst_h[i].state = State::REMOVED;
     }	
-    m_obst_h[0].r1 = 6.5;
-    m_obst_h[0].x = 30;// g_xDim*0.2f;
-    m_obst_h[0].y = 42;// g_yDim*0.3f;
+    m_obst_h[0].r1 = 8.0;
+    m_obst_h[0].x = 80;// g_xDim*0.2f;
+    m_obst_h[0].y = 80;// g_yDim*0.3f;
     m_obst_h[0].u = 0;// g_yDim*0.3f;
     m_obst_h[0].v = 0;// g_yDim*0.3f;
-    m_obst_h[0].shape = Shape::SQUARE;
+    m_obst_h[0].shape = Shape::CIRCLE;
     m_obst_h[0].state = State::NEW;
 
-    m_obst_h[1].r1 = 4.5;
-    m_obst_h[1].x = 30;// g_xDim*0.2f;
-    m_obst_h[1].y = 100;// g_yDim*0.3f;
+    m_obst_h[1].r1 = 12.0;
+    m_obst_h[1].x = 120;// g_xDim*0.2f;
+    m_obst_h[1].y = 90;// g_yDim*0.3f;
     m_obst_h[1].u = 0;// g_yDim*0.3f;
     m_obst_h[1].v = 0;// g_yDim*0.3f;
-    m_obst_h[1].shape = Shape::VERTICAL_LINE;
+    m_obst_h[1].shape = Shape::CIRCLE;
     m_obst_h[1].state = State::NEW;
 
     memsize_inputs = sizeof(m_obst_h);

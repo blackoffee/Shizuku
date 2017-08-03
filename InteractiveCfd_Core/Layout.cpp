@@ -90,7 +90,7 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
     rootPanel.GetPanel("Label_Resolution")->SetDisplayText("Resolution");
-    rootPanel.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
     rootPanel.GetSlider("Slider_Resolution")->SetMaxValue(1.f);
     rootPanel.GetSlider("Slider_Resolution")->SetMinValue(6.f);
@@ -240,7 +240,8 @@ void Layout::SetUpWindow(Panel &rootPanel)
 
     Layout::SetUpButtons(rootPanel);
     WaterRenderingButtonCallBack(rootPanel); //default is water rendering
-    SquareButtonCallBack(rootPanel); //default is square shape
+    CircleButtonCallBack(rootPanel); //default is circle shape
+    //SquareButtonCallBack(rootPanel); //default is square shape
     ThreeDButtonCallBack(rootPanel);
 }
 

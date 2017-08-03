@@ -162,6 +162,7 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
         (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
 
+    glMatrixMode(GL_PROJECTION);
     if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
@@ -169,6 +170,7 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     else
     {
         gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
+        //glMatrixMode(GL_MODELVIEW);
         glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
         glRotatef(-m_rotate.x,1,0,0);
         glRotatef(m_rotate.z,0,0,1);
@@ -307,7 +309,6 @@ void GraphicsManager::RunSurfaceRefraction()
     glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix());
     glm::vec4 origin = { 0, 0, 0, 1 };
     glm::vec4 cameraPos = modelMatrixInv*origin;
-    std::cout << cameraPos.x << ", " << cameraPos.y << "," << cameraPos.z << std::endl;
 
     if (ShouldRenderFloor())
     {

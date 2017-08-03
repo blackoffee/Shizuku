@@ -40,6 +40,7 @@ public:
     float GetOmega();
     void SetInletVelocity(const float velocity);
     void SetOmega(const float omega);
+    void TogglePausedState();
     void SetPausedState(const bool isPaused);
     bool IsPaused();
     int GetTimeStepsPerFrame();

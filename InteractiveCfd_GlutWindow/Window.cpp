@@ -201,7 +201,10 @@ void Window::MouseMotion(const int x, const int y)
 void Window::Keyboard(const unsigned char key,
     const int x, const int y)
 {
-    
+    if (key == 32)
+    {
+        m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetCudaLbm()->TogglePausedState();
+    }
 }
 void Window::MouseWheel(const int button, const int direction,
     const int x, const int y)
