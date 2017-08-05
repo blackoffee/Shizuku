@@ -267,11 +267,10 @@ void GraphicsManager::RunCuda()
     SetObstructionVelocitiesToZero(obst_h, obst_d);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
-//    if (ShouldRenderFloor())
-//    {
-//        //LightSurface(dptr, obst_d, cameraPosition, *domain);
-//        RefractSurface(dptr, floorTexture, obst_d, cameraPosition, *domain);
-//    }
+    if (ShouldRenderFloor() && !ShouldRefractSurface())
+    {
+        LightSurface(dptr, obst_d, cameraPosition, *domain);
+    }
     LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
     CleanUpDeviceVBO(dptr, *domain);
 
@@ -283,43 +282,44 @@ void GraphicsManager::RunCuda()
 
 void GraphicsManager::RunSurfaceRefraction()
 {
-    // map OpenGL buffer object for writing from CUDA
-    CudaLbm* cudaLbm = GetCudaLbm();
-    ShaderManager* graphics = GetGraphics();
-    cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
-    cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorTextureResource();
-    Panel* rootPanel = m_parent->GetRootPanel();
-
-    float4 *dptr;
-    cudaArray *floorTexture;
-
-    graphics->BindFloorTexture();
-
-    cudaGraphicsMapResources(1, &vbo_resource, 0);
-    size_t num_bytes;
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-
-    cudaGraphicsMapResources(1, &floorTextureResource, 0);
-    cudaGraphicsSubResourceGetMappedArray(&floorTexture, floorTextureResource, 0, 0);
-
-    Obstruction* obst_d = cudaLbm->GetDeviceObst();
-
-    Domain* domain = cudaLbm->GetDomain();
-    float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
-    glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix());
-    glm::vec4 origin = { 0, 0, 0, 1 };
-    glm::vec4 cameraPos = modelMatrixInv*origin;
-
-    if (ShouldRenderFloor())
+    if (ShouldRefractSurface())
     {
+        // map OpenGL buffer object for writing from CUDA
+        CudaLbm* cudaLbm = GetCudaLbm();
+        ShaderManager* graphics = GetGraphics();
+        cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
+        cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorTextureResource();
+        Panel* rootPanel = m_parent->GetRootPanel();
+
+        float4 *dptr;
+        cudaArray *floorTexture;
+
+        graphics->BindFloorTexture();
+
+        cudaGraphicsMapResources(1, &vbo_resource, 0);
+        size_t num_bytes;
+        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
+
+        cudaGraphicsMapResources(1, &floorTextureResource, 0);
+        cudaGraphicsSubResourceGetMappedArray(&floorTexture, floorTextureResource, 0, 0);
+
+        Obstruction* obst_d = cudaLbm->GetDeviceObst();
+
+        Domain* domain = cudaLbm->GetDomain();
+        float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
+        glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix());
+        glm::vec4 origin = { 0, 0, 0, 1 };
+        glm::vec4 cameraPos = modelMatrixInv*origin;
+
+
         RefractSurface(dptr, floorTexture, obst_d, cameraPos, *domain);
+
+        graphics->UnbindFloorTexture();
+
+        // unmap buffer object
+        cudaGraphicsUnmapResources(1, &vbo_resource, 0);
+        cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
     }
-
-    graphics->UnbindFloorTexture();
-
-    // unmap buffer object
-    cudaGraphicsUnmapResources(1, &vbo_resource, 0);
-    cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
 }
 
 void GraphicsManager::RunComputeShader()
@@ -364,6 +364,15 @@ void GraphicsManager::RenderVbo()
 bool GraphicsManager::ShouldRenderFloor()
 {
     if (m_viewMode == ViewMode::THREE_DIMENSIONAL || m_contourVar == ContourVariable::WATER_RENDERING)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool GraphicsManager::ShouldRefractSurface()
+{
+    if (m_contourVar == ContourVariable::WATER_RENDERING)
     {
         return true;
     }

@@ -85,6 +85,7 @@ public:
     void RenderFloorToTexture();
     void RenderVbo();
     bool ShouldRenderFloor();
+    bool ShouldRefractSurface();
 
     void Zoom(const int dir, const float mag);
     void Pan(const float dx, const float dy);

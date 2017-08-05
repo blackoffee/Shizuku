@@ -1,3 +1,7 @@
+#define WATER_DEPTH 40.0f
+#define WATER_DEPTH_NORMALIZED 0.5f
+#define OBST_HEIGHT 2.f
+
 #include "kernel.h"
 #include "LbmNode.h"
 #include "Graphics/CudaLbm.h"
@@ -311,19 +315,19 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
             float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
             if (dist < obstructions[i].r1*2.f+0.5f)
             {
-                float r1 = obstructions[i].r1;
                 float x =  obstructions[i].x;
                 float y =  obstructions[i].y;
                 if (obstructions[i].shape == Shape::SQUARE)
                 {
+                    float r1 = obstructions[i].r1;
                     float3 swt = { x - r1, y - r1, obstHeight };//-0.3f*80.f
                     float3 set = { x + r1, y - r1, obstHeight };//-0.3f*80.f
                     float3 nwt = { x - r1, y + r1, obstHeight };//-0.3f*80.f
                     float3 net = { x + r1, y + r1, obstHeight };//-0.3f*80.f
-                    float3 swb = { x - r1, y - r1, 0.f };//-1.f*80.f
-                    float3 seb = { x + r1, y - r1, 0.f };//-1.f*80.f
-                    float3 nwb = { x - r1, y + r1, 0.f };//-1.f*80.f
-                    float3 neb = { x + r1, y + r1, 0.f };//-1.f*80.f
+                    float3 swb = { x - (r1+0.5f), y - (r1+0.5f), 0.f };//-1.f*80.f
+                    float3 seb = { x + (r1+0.5f), y - (r1+0.5f), 0.f };//-1.f*80.f
+                    float3 nwb = { x - (r1+0.5f), y + (r1+0.5f), 0.f };//-1.f*80.f
+                    float3 neb = { x + (r1+0.5f), y + (r1+0.5f), 0.f };//-1.f*80.f
 
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
@@ -333,6 +337,42 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                 else if (obstructions[i].shape == Shape::CIRCLE)
                 {
                     
+                }
+                else if (obstructions[i].shape == Shape::VERTICAL_LINE)
+                {
+                    float r1 = LINE_OBST_WIDTH*0.501f;
+                    float r2 = obstructions[i].r1*2.f;
+                    float3 swt = { x - r1, y - r2, obstHeight };
+                    float3 set = { x + r1, y - r2, obstHeight };
+                    float3 nwt = { x - r1, y + r2, obstHeight };
+                    float3 net = { x + r1, y + r2, obstHeight };
+                    float3 swb = { x - (r1+0.5f), y - (r2+0.5f), 0.f };
+                    float3 seb = { x + (r1+0.5f), y - (r2+0.5f), 0.f };
+                    float3 nwb = { x - (r1+0.5f), y + (r2+0.5f), 0.f };
+                    float3 neb = { x + (r1+0.5f), y + (r2+0.5f), 0.f };
+
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
+                }
+                else if (obstructions[i].shape == Shape::HORIZONTAL_LINE)
+                {
+                    float r1 = obstructions[i].r1*2.f;
+                    float r2 = LINE_OBST_WIDTH*0.501f;
+                    float3 swt = { x - r1, y - r2, obstHeight };
+                    float3 set = { x + r1, y - r2, obstHeight };
+                    float3 nwt = { x - r1, y + r2, obstHeight };
+                    float3 net = { x + r1, y + r2, obstHeight };
+                    float3 swb = { x - (r1+0.5f), y - (r2+0.5f), 0.f };
+                    float3 seb = { x + (r1+0.5f), y - (r2+0.5f), 0.f };
+                    float3 nwb = { x - (r1+0.5f), y + (r2+0.5f), 0.f };
+                    float3 neb = { x + (r1+0.5f), y + (r2+0.5f), 0.f };
+
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
                 }
             }
         }
@@ -771,17 +811,18 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
         int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
         if (obstID >= 0)
         {
+            float fullObstHeight = -1.f+OBST_HEIGHT;
             if (obstructions[obstID].state == State::NEW)
             {
-                zcoord = dmin(-0.3f, zcoord + 0.075f);
+                zcoord = dmin(fullObstHeight, zcoord + 0.15f);
             }
             else if (obstructions[obstID].state == State::REMOVED)
             {
-                zcoord = dmax(-1.f, zcoord - 0.075f);
+                zcoord = dmax(-1.f, zcoord - 0.15f);
             }
             else if (obstructions[obstID].state == State::ACTIVE)
             {
-                zcoord = -0.3f;
+                zcoord = fullObstHeight;
             }
             else
             {
@@ -831,7 +872,7 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
         int obstID = FindOverlappingObstruction(x, y, obstructions);
         if (obstID >= 0)
         {
-            if (zcoord > -0.29f)
+            if (zcoord > -1.f+OBST_HEIGHT)
             {
                 obstructions[obstID].state = State::ACTIVE;
             }
@@ -979,7 +1020,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         //color[2] = 0;
         //color[3] = 255;
         //std::memcpy(&(vbo[j].w), color, sizeof(color));
-        std::memcpy(&(vbo[j].w), &(vbo[(int)intersect.x+1 + ((int)intersect.y+1)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
+        std::memcpy(&(vbo[j].w), &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
     }
     else
     {
