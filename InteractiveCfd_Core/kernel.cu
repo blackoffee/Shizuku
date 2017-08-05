@@ -237,24 +237,25 @@ __device__ float GetDistanceBetweenTwoLineSegments(const float3 &p1, const float
 }
 
 
-inline __device__ bool DoesRayHitObst(const float3 rayOrigin, const float3 rayDest,
-    Obstruction* obstructions, const float tolerance = 0.f)
-{
-    for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
-        {
-            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, -40 };
-            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, -80 };
-            float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
-            if (dist < obstructions[i].r1)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+//inline __device__ bool DoesRayHitObst(const float3 rayOrigin, const float3 rayDest,
+//    Obstruction* obstructions, const float tolerance = 0.f)
+//{
+//    for (int i = 0; i < MAXOBSTS; i++){
+//        if (obstructions[i].state != State::INACTIVE)
+//        {
+//            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, -40 };
+//            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, -80 };
+//            float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
+//            if (dist < obstructions[i].r1+0.5f)
+//            {
+//                return true;
+//            }
+//        }
+//    }
+//    return false;
+//}
 
+// Gets intersection of ray with plane created by triangle
 //p1, p2, p3 should be in clockwise order
 __device__ float3 GetIntersectionOfRayWithTriangle(const float3 &rayOrigin,
     float3 rayDir, const float3 &p1, const float3 &p2, const float3 &p3)
@@ -269,6 +270,76 @@ __device__ float3 GetIntersectionOfRayWithTriangle(const float3 &rayOrigin,
 
     return rayOrigin + t*rayDir;
 }
+
+// Only update intersect reference if intersect is inside the rectangle, and is closer to rayOrigin than previous value
+__device__ bool IntersectRayWithRect(float3 &intersect, float3 rayOrigin, float3 rayDir, 
+    float3 topLeft, float3 topRight, float3 bottomRight, float3 bottomLeft)
+{
+    float3 temp;
+    temp = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, topLeft, topRight, bottomRight);
+    if (IsPointInsideTriangle(topLeft, topRight, bottomRight, temp))
+    {
+        if (Distance(temp, rayOrigin) < Distance(intersect, rayOrigin))
+        {
+            intersect = temp;
+            return true;
+        }
+    }
+    temp = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, bottomRight, bottomLeft, topLeft);
+    if (IsPointInsideTriangle(bottomRight, bottomLeft, topLeft, temp))
+    {
+        if (Distance(temp, rayOrigin) < Distance(intersect, rayOrigin))
+        {
+            intersect = temp;
+            return true;
+        }
+    }
+    return false;
+}
+
+__device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
+    Obstruction* obstructions, const float tolerance = 0.f)
+{
+    float3 rayDir = rayDest - rayOrigin;
+    bool hit = false;
+    for (int i = 0; i < MAXOBSTS; i++){
+        if (obstructions[i].state != State::INACTIVE)
+        {
+            float obstHeight = WATER_DEPTH*1.5f;
+            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, 0 };
+            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };
+            float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
+            if (dist < obstructions[i].r1*2.f+0.5f)
+            {
+                float r1 = obstructions[i].r1;
+                float x =  obstructions[i].x;
+                float y =  obstructions[i].y;
+                if (obstructions[i].shape == Shape::SQUARE)
+                {
+                    float3 swt = { x - r1, y - r1, obstHeight };//-0.3f*80.f
+                    float3 set = { x + r1, y - r1, obstHeight };//-0.3f*80.f
+                    float3 nwt = { x - r1, y + r1, obstHeight };//-0.3f*80.f
+                    float3 net = { x + r1, y + r1, obstHeight };//-0.3f*80.f
+                    float3 swb = { x - r1, y - r1, 0.f };//-1.f*80.f
+                    float3 seb = { x + r1, y - r1, 0.f };//-1.f*80.f
+                    float3 nwb = { x - r1, y + r1, 0.f };//-1.f*80.f
+                    float3 neb = { x + r1, y + r1, 0.f };//-1.f*80.f
+
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
+                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
+                }
+                else if (obstructions[i].shape == Shape::CIRCLE)
+                {
+                    
+                }
+            }
+        }
+    }
+    return hit;
+}
+
 
 __device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord,
     const int xDimVisible, const int yDimVisible)
@@ -392,7 +463,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
-    zcoord =  (rho - 1.0f) - 0.5f;
+    zcoord =  (-1.f+WATER_DEPTH_NORMALIZED) + (rho - 1.0f);
 
     //for color, need to convert 4 bytes (RGBA) to float
     float variableValue = 0.f;
@@ -599,17 +670,15 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     Normalize(n);
 
     Normalize(incidentLight);
-    float waterDepth = 80.f;
 
     float3 refractedLight;
     float r = 1.0 / 1.3f;
     float c = -(DotProduct(n, incidentLight));
     refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
+    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/WATER_DEPTH_NORMALIZED*WATER_DEPTH;
 
-    float dx = -refractedLight.x*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth 
-        / refractedLight.z;
-    float dy = -refractedLight.y*(vbo[(x)+(y)*MAX_XDIM].z + 1.f)*waterDepth 
-        / refractedLight.z;
+    float dx = -refractedLight.x*waterDepth/refractedLight.z;
+    float dy = -refractedLight.y*waterDepth/refractedLight.z;
 
     return float2{ (float)x + dx, (float)y + dy };
 }
@@ -880,8 +949,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[3] = 255;
     }
     Normalize(n);
-    float waterDepth = 80.f;
-    float zPos = (vbo[j].z + 1.f)*waterDepth;
+    float zPos = (vbo[j].z + 1.f)/WATER_DEPTH_NORMALIZED*WATER_DEPTH;
     float3 elementPosition = {x,y,zPos };
     elementPosition.x /= xDimVisible;
     elementPosition.y /= xDimVisible;
@@ -899,9 +967,25 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     color[2] = textureColor.z*255.f;
 
 
-    float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, -zPos }; //non-normalized
+    float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, 0.f }; //non-normalized
 
-    bool hitsObst = DoesRayHitObst(xDimVisible*elementPosition, refractedRayDest, obstructions);
+    //bool hitsObst = DoesRayHitObst(xDimVisible*elementPosition, refractedRayDest, obstructions);
+
+    float3 intersect = { 99999, 99999, 99999 };
+    if (GetCoordFromRayHitOnObst(intersect, xDimVisible*elementPosition, refractedRayDest, obstructions))
+    {
+        //color[0] = 200;
+        //color[1] = 0;
+        //color[2] = 0;
+        //color[3] = 255;
+        //std::memcpy(&(vbo[j].w), color, sizeof(color));
+        std::memcpy(&(vbo[j].w), &(vbo[(int)intersect.x+1 + ((int)intersect.y+1)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
+    }
+    else
+    {
+        std::memcpy(&(vbo[j].w), color, sizeof(color));
+    }
+
 
 //    if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
 //    {
@@ -931,12 +1015,12 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 //        }
 //    }
 
-    if (hitsObst == true)
-    {
-        color[0] = 204;
-        color[1] = 204;
-        color[2] = 204;
-    }
+//    if (hitsObst == true)
+//    {
+//        color[0] = 204;
+//        color[1] = 204;
+//        color[2] = 204;
+//    }
 
 
 
@@ -950,7 +1034,6 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
 
 
-    std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
 
 
@@ -1072,8 +1155,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
-//    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
-//        simDomain);
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
+        simDomain);
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 

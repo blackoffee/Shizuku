@@ -2,6 +2,8 @@
 #define MAXOBSTS 100
 #define MAX_XDIM 512
 #define MAX_YDIM 512
+#define WATER_DEPTH 40.0f
+#define WATER_DEPTH_NORMALIZED 0.5f
 #define INITIAL_UMAX 0.125f
 #define BLOCKSIZEX 128
 #define BLOCKSIZEY 1
