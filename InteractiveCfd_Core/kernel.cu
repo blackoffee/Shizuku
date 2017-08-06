@@ -1,6 +1,6 @@
-#define WATER_DEPTH 40.0f
 #define WATER_DEPTH_NORMALIZED 0.5f
-#define OBST_HEIGHT 2.f
+#define OBST_HEIGHT 0.8f
+#define WATER_REFRACTIVE_INDEX 1.33f
 
 #include "kernel.h"
 #include "LbmNode.h"
@@ -195,7 +195,9 @@ __device__ bool IsPointInsideTriangle(const float3 &p1, const float3 &p2,
 
 __device__ float GetDistanceBetweenPointAndLine(const float3 &p1, const float3 &q1, const float3 &q2)
 {
-    float3 closestPoint = q1+DotProduct(q2 - q1, p1 - q1)/sqrt(DotProduct(q2-q1,q2-q1))*(q2-q1);
+    float3 q = q2 - q1;
+    Normalize(q);
+    float3 closestPoint = q1+DotProduct(q2 - q1, p1 - q1)/sqrt(DotProduct(q2-q1,q2-q1))*q;
     return Distance(p1, closestPoint);
 }
 
@@ -309,11 +311,11 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != State::INACTIVE)
         {
-            float obstHeight = WATER_DEPTH*1.5f;
-            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, 0 };
-            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };
+            float obstHeight = rayOrigin.z+0.1f;
+            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, obstHeight };
+            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, 0 };
             float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
-            if (dist < obstructions[i].r1*2.f+0.5f)
+            if (dist < obstructions[i].r1*2.5f)
             {
                 float x =  obstructions[i].x;
                 float y =  obstructions[i].y;
@@ -346,10 +348,10 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                     float3 set = { x + r1, y - r2, obstHeight };
                     float3 nwt = { x - r1, y + r2, obstHeight };
                     float3 net = { x + r1, y + r2, obstHeight };
-                    float3 swb = { x - (r1+0.5f), y - (r2+0.5f), 0.f };
-                    float3 seb = { x + (r1+0.5f), y - (r2+0.5f), 0.f };
-                    float3 nwb = { x - (r1+0.5f), y + (r2+0.5f), 0.f };
-                    float3 neb = { x + (r1+0.5f), y + (r2+0.5f), 0.f };
+                    float3 swb = { x - (r1), y - (r2), 0.f };
+                    float3 seb = { x + (r1), y - (r2), 0.f };
+                    float3 nwb = { x - (r1), y + (r2), 0.f };
+                    float3 neb = { x + (r1), y + (r2), 0.f };
 
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
@@ -364,10 +366,10 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                     float3 set = { x + r1, y - r2, obstHeight };
                     float3 nwt = { x - r1, y + r2, obstHeight };
                     float3 net = { x + r1, y + r2, obstHeight };
-                    float3 swb = { x - (r1+0.5f), y - (r2+0.5f), 0.f };
-                    float3 seb = { x + (r1+0.5f), y - (r2+0.5f), 0.f };
-                    float3 nwb = { x - (r1+0.5f), y + (r2+0.5f), 0.f };
-                    float3 neb = { x + (r1+0.5f), y + (r2+0.5f), 0.f };
+                    float3 swb = { x - (r1), y - (r2), 0.f };
+                    float3 seb = { x + (r1), y - (r2), 0.f };
+                    float3 nwb = { x - (r1), y + (r2), 0.f };
+                    float3 neb = { x + (r1), y + (r2), 0.f };
 
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
                     hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
@@ -655,8 +657,8 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
 
     float lightAmbient = 0.3f;
     
-    float3 diffuse1  = 0.1f*cosTheta1*diffuseLightColor1;
-    float3 diffuse2  = 0.1f*cosTheta2*diffuseLightColor2;
+    float3 diffuse1  = 0.3f*cosTheta1*diffuseLightColor1;
+    float3 diffuse2  = 0.3f*cosTheta2*diffuseLightColor2;
     float3 specular1 = cosAlpha*specularLightColor1;
 
     color[0] = color[0]*dmin(1.f,(diffuse1.x+diffuse2.x+specular1.x+lightAmbient));
@@ -712,10 +714,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
     Normalize(incidentLight);
 
     float3 refractedLight;
-    float r = 1.0 / 1.3f;
+    float r = 1.0 / WATER_REFRACTIVE_INDEX;
     float c = -(DotProduct(n, incidentLight));
     refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
-    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/WATER_DEPTH_NORMALIZED*WATER_DEPTH;
+    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
 
     float dx = -refractedLight.x*waterDepth/refractedLight.z;
     float dy = -refractedLight.y*waterDepth/refractedLight.z;
@@ -990,12 +992,19 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[3] = 255;
     }
     Normalize(n);
-    float zPos = (vbo[j].z + 1.f)/WATER_DEPTH_NORMALIZED*WATER_DEPTH;
+    float zPos = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
     float3 elementPosition = {x,y,zPos };
-    elementPosition.x /= xDimVisible;
-    elementPosition.y /= xDimVisible;
-    elementPosition.z /= xDimVisible;
-    float3 eyeDirection = elementPosition - cameraPosition;  //normalized
+//    elementPosition.x /= xDimVisible;
+//    elementPosition.y /= xDimVisible;
+//    elementPosition.z /= xDimVisible;
+
+//    elementPosition.x = elementPosition.x*2.f - 1.f;
+//    elementPosition.y = elementPosition.y*2.f - 1.f;
+//    elementPosition.z = elementPosition.z*2.f - 1.f;
+
+    //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
+    float3 eyeDirection = elementPosition/xDimVisible - cameraPosition;  //normalized
+    //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
     float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);  //non-normalized
 
@@ -1013,11 +1022,12 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     //bool hitsObst = DoesRayHitObst(xDimVisible*elementPosition, refractedRayDest, obstructions);
 
     float3 intersect = { 99999, 99999, 99999 };
-    if (GetCoordFromRayHitOnObst(intersect, xDimVisible*elementPosition, refractedRayDest, obstructions))
+    //if (GetCoordFromRayHitOnObst(intersect, 0.5f*(elementPosition + float3{ 1.f, 1.f, 1.f }), refractedRayDest, obstructions))
+    if (GetCoordFromRayHitOnObst(intersect, elementPosition, refractedRayDest, obstructions))
     {
-        //color[0] = 200;
-        //color[1] = 0;
-        //color[2] = 0;
+        //color[0] = 255;
+        //color[1] = 255*(lightPositionOnFloor.x-x)/100.f;
+        //color[2] = 255*(lightPositionOnFloor.y-y)/100.f;
         //color[3] = 255;
         //std::memcpy(&(vbo[j].w), color, sizeof(color));
         std::memcpy(&(vbo[j].w), &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));

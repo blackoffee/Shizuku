@@ -22,7 +22,7 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
     m_rotate = { 60.f, 0.f, 30.f };
-    m_translate = { 0.f, 0.8f, 0.2f };
+    m_translate = { 0.f, 0.f, 0.0f };
 }
 
 void GraphicsManager::UseCuda(bool useCuda)
@@ -172,12 +172,16 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     {
         //glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
         //gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
+        //SetProjectionMatrix(glm::ortho(-1.f+m_translate.z, 1.f-m_translate.z, -1.f+m_translate.z, 1.f-m_translate.z, -20.f, 20.f));
         SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
         glMatrixMode(GL_MODELVIEW);
         glm::mat4 modelMat;
-        modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, -2+m_translate.z });
+        modelMat = glm::translate(modelMat, glm::vec3{ 0.0, 0.8, -2.0 });
+        modelMat = glm::scale(modelMat, glm::vec3{ 1.f+0.1f*m_translate.z });
+        modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
         modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
         modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
+        //modelMat = glm::translate(modelMat, glm::vec3{ 0,0, -2+m_translate.z });
         SetModelMatrix(modelMat);
         //glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
         //glRotatef(-m_rotate.x,1,0,0);
@@ -314,9 +318,14 @@ void GraphicsManager::RunSurfaceRefraction()
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
         Domain* domain = cudaLbm->GetDomain();
-        glm::mat4 modelMatrixInv = glm::inverse(GetModelMatrix());
+        glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix()*GetModelMatrix());
         glm::vec4 origin = { 0, 0, 0, 1 };
-        glm::vec4 cameraPos = modelMatrixInv*origin;
+        glm::vec4 cameraPos = GetCameraPosition();
+        glm::vec4 cameraDir = GetCameraDirection();
+        //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
+        //std::cout << "CameraDir: " << cameraDir.x << "," << cameraDir.y << "," << cameraDir.z << std::endl;
+
+
 
 
         RefractSurface(dptr, floorTexture, obst_d, cameraPos, *domain);
@@ -424,6 +433,49 @@ void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
     rayDir.y /= mag;
     rayDir.z /= mag;
 
+
+}
+
+
+glm::vec4 GraphicsManager::GetCameraDirection()
+{
+    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
+    glm::mat4 model = glm::make_mat4(m_modelMatrix);
+    glm::vec4 v = { 0.f, 0.f, 1.f, 1.f };
+    //return glm::vec4 { 0.f, 2.f, -1.f, 1.f };
+    return glm::inverse(proj*model)*v;
+}
+
+
+glm::vec4 GraphicsManager::GetCameraPosition()
+{
+    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
+    glm::mat4 model = glm::make_mat4(m_modelMatrix);
+    glm::vec4 rayOrigin1 = { 0.1, 0, 1, 1 };
+    glm::vec4 rayOrigin2 = { 0, 0.1, 1, 1 };
+    glm::vec4 rayOrigin1Ndc = proj*rayOrigin1;
+    rayOrigin1Ndc.x /= rayOrigin1Ndc.w;
+    rayOrigin1Ndc.y /= rayOrigin1Ndc.w;
+    rayOrigin1Ndc.z /= rayOrigin1Ndc.w;
+    glm::vec4 rayOrigin2Ndc = proj*rayOrigin2;
+    rayOrigin2Ndc.x /= rayOrigin2Ndc.w;
+    rayOrigin2Ndc.y /= rayOrigin2Ndc.w;
+    rayOrigin2Ndc.z /= rayOrigin2Ndc.w;
+    glm::vec4 rayDir1Ndc = proj*rayOrigin1Ndc - rayOrigin1Ndc;
+    glm::vec4 rayDir2Ndc = proj*rayOrigin2Ndc - rayOrigin2Ndc;
+
+    const float det = rayDir1Ndc.y*rayDir2Ndc.x - rayDir2Ndc.y*rayDir1Ndc.x;
+    const float u = (rayDir1Ndc.x*(rayOrigin2Ndc.y - rayOrigin1Ndc.y) - rayDir1Ndc.y*(rayOrigin1Ndc.x - rayDir2Ndc.x)) / det;
+    //printf("%f\n", det);
+
+    glm::vec4 cameraPosNdc;
+    cameraPosNdc.x = rayOrigin1Ndc.x + u*rayDir1Ndc.x;
+    cameraPosNdc.y = rayOrigin1Ndc.y + u*rayDir1Ndc.y;
+    cameraPosNdc.z = -(rayOrigin1Ndc.z + u*rayDir1Ndc.z);
+    cameraPosNdc.w = 1.0f;
+
+    return glm::inverse(proj*model)*cameraPosNdc;
+    //return float3{ rayOrigin1.x+u*rayDir1.x, rayOrigin1.y+u*rayDir1.y, rayOrigin1.z+u*rayDir1.z };
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
@@ -493,6 +545,8 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     float3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
+    glm::vec4 cameraPos = GetCameraPosition();
+    //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
     float t = (planeZ - rayOrigin.z)/rayDir.z;
     float xf = rayOrigin.x + t*rayDir.x;
     float yf = rayOrigin.y + t*rayDir.y;

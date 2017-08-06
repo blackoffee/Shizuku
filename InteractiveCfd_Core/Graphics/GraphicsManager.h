@@ -107,6 +107,8 @@ public:
 
     void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
     void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
+    glm::vec4 GetCameraDirection();
+    glm::vec4 GetCameraPosition();
     int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, 
         const int mouseX, const int mouseY);
     void GetSimCoordFromMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
