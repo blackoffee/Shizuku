@@ -518,8 +518,8 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
     glActiveTexture(GL_TEXTURE0);
     GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");
     GLint projectionMatrixLocation = glGetUniformLocation(shader->GetId(), "projectionMatrix");
-    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(glm::transpose(modelMatrix)));
+    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(glm::transpose(projectionMatrix)));
 
     RenderVbo(renderFloor, domain, modelMatrix, projectionMatrix);
 

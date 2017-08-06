@@ -9,6 +9,7 @@
 #include "kernel.h"
 #include "Domain.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <algorithm>
 #undef min
@@ -154,26 +155,33 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glMatrixMode(GL_PROJECTION);
+    //glMatrixMode(GL_PROJECTION);
     //glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(xTranslation,yTranslation,0.f);
-    glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
-        (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
+    //glLoadIdentity();
+    //glTranslatef(xTranslation,yTranslation,0.f);
+    //glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
+    //    (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
 
 
-    glMatrixMode(GL_PROJECTION);
+    //glMatrixMode(GL_PROJECTION);
     if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
     {
         glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
     }
     else
     {
-        gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
-        //glMatrixMode(GL_MODELVIEW);
-        glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
-        glRotatef(-m_rotate.x,1,0,0);
-        glRotatef(m_rotate.z,0,0,1);
+        //glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
+        //gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
+        SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
+        glMatrixMode(GL_MODELVIEW);
+        glm::mat4 modelMat;
+        modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, -2+m_translate.z });
+        modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
+        modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
+        SetModelMatrix(modelMat);
+        //glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
+        //glRotatef(-m_rotate.x,1,0,0);
+        //glRotatef(m_rotate.z,0,0,1);
     }
 }
 
@@ -306,8 +314,7 @@ void GraphicsManager::RunSurfaceRefraction()
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
         Domain* domain = cudaLbm->GetDomain();
-        float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
-        glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix());
+        glm::mat4 modelMatrixInv = glm::inverse(GetModelMatrix());
         glm::vec4 origin = { 0, 0, 0, 1 };
         glm::vec4 cameraPos = modelMatrixInv*origin;
 
@@ -398,20 +405,25 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut,
 void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
     const int mouseX, const int mouseY)
 {
-    double x, y, z;
-    gluUnProject(mouseX, mouseY, 0.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
-    //printf("Origin: %f, %f, %f\n", x, y, z);
-    rayOrigin.x = x;
-    rayOrigin.y = y;
-    rayOrigin.z = z;
-    gluUnProject(mouseX, mouseY, 1.0f, m_modelMatrix, m_projectionMatrix, m_viewport, &x, &y, &z);
-    rayDir.x = x-rayOrigin.x;
-    rayDir.y = y-rayOrigin.y;
-    rayDir.z = z-rayOrigin.z;
+    glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
+    glm::mat4 mvpInv = glm::inverse(mvp);
+    glm::vec4 v1 = { (float)mouseX/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)mouseY/(m_viewport[3]-m_viewport[1])*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
+    glm::vec4 v2 = { (float)mouseX/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)mouseY/(m_viewport[3]-m_viewport[1])*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
+    glm::vec4 r1 = mvpInv*v1;
+    glm::vec4 r2 = mvpInv*v2;
+    rayOrigin.x = r1.x/r1.w;
+    rayOrigin.y = r1.y/r1.w;
+    rayOrigin.z = r1.z/r1.w;
+    //printf("Origin: %f, %f, %f\n", r1.x, r1.y, r1.z);
+    //printf("Viewport: %f, %f, %f, %f\n", m_viewport[0], m_viewport[1], m_viewport[2], m_viewport[3]);
+    rayDir.x = r2.x/r2.w-rayOrigin.x ;
+    rayDir.y = r2.y/r2.w-rayOrigin.y ;
+    rayDir.z = r2.z/r2.w-rayOrigin.z ;
     float mag = sqrt(rayDir.x*rayDir.x + rayDir.y*rayDir.y + rayDir.z*rayDir.z);
     rayDir.x /= mag;
     rayDir.y /= mag;
     rayDir.z /= mag;
+
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
@@ -681,8 +693,8 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
 void GraphicsManager::UpdateViewTransformations()
 {
     glGetIntegerv(GL_VIEWPORT, m_viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
-    glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
+    //glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
+    //glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
 }
 
 void GraphicsManager::UpdateGraphicsInputs()
@@ -713,13 +725,32 @@ glm::vec4 GraphicsManager::GetViewportMatrix()
 
 glm::mat4 GraphicsManager::GetModelMatrix()
 {
-    return glm::make_mat4(m_modelMatrix);
+    return glm::transpose(glm::make_mat4(m_modelMatrix));
 }
 
 glm::mat4 GraphicsManager::GetProjectionMatrix()
 {
-    return glm::make_mat4(m_projectionMatrix);
+    return glm::transpose(glm::make_mat4(m_projectionMatrix));
 }
+
+void GraphicsManager::SetModelMatrix(glm::mat4 modelMatrix)
+{
+    const float *source = (const float*)glm::value_ptr(modelMatrix);
+    for (int i = 0; i < 16; ++i)
+    {
+        m_modelMatrix[i] = source[i];
+    }
+}
+
+void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
+{
+    const float *source = (const float*)glm::value_ptr(projMatrix);
+    for (int i = 0; i < 16; ++i)
+    {
+        m_projectionMatrix[i] = source[i];
+    }
+}
+
 
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,
