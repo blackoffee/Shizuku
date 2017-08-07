@@ -10,7 +10,7 @@
 #include "kernel.h"
 #include <algorithm>
 
-extern const int g_leftPanelWidth(350);
+extern const int g_leftPanelWidth(150);
 extern const int g_leftPanelHeight(500);
 
 void Layout::SetUpWindow(Panel &rootPanel)
@@ -240,8 +240,8 @@ void Layout::SetUpWindow(Panel &rootPanel)
 
     Layout::SetUpButtons(rootPanel);
     WaterRenderingButtonCallBack(rootPanel); //default is water rendering
-    CircleButtonCallBack(rootPanel); //default is circle shape
-    //SquareButtonCallBack(rootPanel); //default is square shape
+    //CircleButtonCallBack(rootPanel); //default is circle shape
+    SquareButtonCallBack(rootPanel); //default is square shape
     ThreeDButtonCallBack(rootPanel);
 }
 

@@ -165,15 +165,15 @@ void CudaLbm::InitializeDeviceMemory()
     m_obst_h[0].y = 80;// g_yDim*0.3f;
     m_obst_h[0].u = 0;// g_yDim*0.3f;
     m_obst_h[0].v = 0;// g_yDim*0.3f;
-    m_obst_h[0].shape = Shape::CIRCLE;
+    m_obst_h[0].shape = Shape::VERTICAL_LINE;
     m_obst_h[0].state = State::NEW;
 
-    m_obst_h[1].r1 = 12.0;
+    m_obst_h[1].r1 = 8.0;
     m_obst_h[1].x = 120;// g_xDim*0.2f;
-    m_obst_h[1].y = 90;// g_yDim*0.3f;
+    m_obst_h[1].y = 120;// g_yDim*0.3f;
     m_obst_h[1].u = 0;// g_yDim*0.3f;
     m_obst_h[1].v = 0;// g_yDim*0.3f;
-    m_obst_h[1].shape = Shape::CIRCLE;
+    m_obst_h[1].shape = Shape::SQUARE;
     m_obst_h[1].state = State::NEW;
 
     memsize_inputs = sizeof(m_obst_h);

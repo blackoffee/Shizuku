@@ -978,19 +978,19 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float cellSize = 2.f / xDimVisible;
     if (x == 0)
     {
-        n.x = -1.f;
+        n.x = 0.f;
     }
     else if (y == 0)
     {
-        n.y = -1.f;
+        n.y = 0.f;
     }
     else if (x >= xDimVisible - 1)
     {
-        n.x = 1.f;
+        n.x = 0.f;
     }
     else if (y >= yDimVisible - 1)
     {
-        n.y = 1.f;
+        n.y = 0.f;
     }
     else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
@@ -1025,11 +1025,15 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
     //float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);  //non-normalized
 
-    float xTex = ((float)(x)+dx)/xDimVisible*1024+0.5f;
-    float yTex = ((float)(y)+dy)/xDimVisible*1024+0.5f;
+    float xf = (float)x + dx;
+    float yf = (float)y + dy;
+    float xTex = xf/xDimVisible*1024+0.5f;
+    float yTex = yf/xDimVisible*1024+0.5f;
 
     float3 reflectedColor = { 255.f, 255.f, 255.f };
     float4 textureColor = tex2D(floorTex, xTex, yTex);
+    if (xf > xDimVisible-1 || xf < 0 || yf > yDimVisible-1 || yf < 0)
+        textureColor = { 0.f, 0.f, 0.f, 1.f };
     float3 refractedRayDest = { (float)(x)+dx, (float)(y)+dy, 0 };
     //float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, 0.f }; //non-normalized
 
