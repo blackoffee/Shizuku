@@ -70,21 +70,21 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(LibraryPath)</LibraryPath>
     <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(LibraryPath)</LibraryPath>
     <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CUDA_PATH_V7_5)/lib;$(NVCUDASAMPLES7_5_ROOT)/common/lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -106,7 +106,7 @@ copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <Include>./;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc;</Include>
+      <Include>./;</Include>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CustomBuildStep>
@@ -136,7 +136,7 @@ copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <Include>./;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc</Include>
+      <Include>./;</Include>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CustomBuildStep>
@@ -170,7 +170,7 @@ copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <Include>./;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc</Include>
+      <Include>./;</Include>
       <AdditionalCompilerOptions>
       </AdditionalCompilerOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
@@ -205,7 +205,7 @@ copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <Include>./;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc</Include>
+      <Include>./;</Include>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CustomBuildStep>

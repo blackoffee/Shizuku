@@ -42,7 +42,7 @@ void DrawLoopWrapper()
 Window::Window() :
     m_currentPanel(NULL),
     m_windowPanel(new Panel),
-    m_leftPanelWidth(300),
+    m_leftPanelWidth(250),
     m_leftPanelHeight(500),
     m_zoom(Zoom(*m_windowPanel)),
     m_pan(Pan(*m_windowPanel)),
