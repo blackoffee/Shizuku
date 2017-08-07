@@ -126,20 +126,20 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\ComputeShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\FragmentShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\Obstructions.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\VertexShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\FloorShader.vert.glsl" />
     <None Include="Shaders\FloorShader.frag.glsl" />
+    <None Include="Shaders\SurfaceShader.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\SurfaceShader.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Obstructions.comp.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\SurfaceShader.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">

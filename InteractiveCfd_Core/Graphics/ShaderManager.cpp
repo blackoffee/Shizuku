@@ -167,12 +167,12 @@ ShaderProgram* ShaderManager::GetFloorProgram()
 void ShaderManager::CompileShaders()
 {
     GetShaderProgram()->Initialize();
-    GetShaderProgram()->CreateShader("VertexShader.glsl", GL_VERTEX_SHADER);
-    GetShaderProgram()->CreateShader("FragmentShader.glsl", GL_FRAGMENT_SHADER);
+    GetShaderProgram()->CreateShader("SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
+    GetShaderProgram()->CreateShader("SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
     GetLightingProgram()->Initialize();
-    GetLightingProgram()->CreateShader("ComputeShader.glsl", GL_COMPUTE_SHADER);
+    GetLightingProgram()->CreateShader("SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
     GetObstProgram()->Initialize();
-    GetObstProgram()->CreateShader("Obstructions.glsl", GL_COMPUTE_SHADER);
+    GetObstProgram()->CreateShader("Obstructions.comp.glsl", GL_COMPUTE_SHADER);
     GetFloorProgram()->Initialize();
     GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
     GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
