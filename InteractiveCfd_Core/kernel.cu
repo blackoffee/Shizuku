@@ -505,7 +505,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
-    zcoord =  (-1.f+WATER_DEPTH_NORMALIZED) + (rho - 1.0f);
+    zcoord =  (-1.f+WATER_DEPTH_NORMALIZED) + 1.5f*(rho - 1.0f);
 
     //for color, need to convert 4 bytes (RGBA) to float
     float variableValue = 0.f;
@@ -689,6 +689,18 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomai
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
+__device__ float3 ReflectRay(float3 incidentLight, float3 n)
+{
+    return 2.f*DotProduct(incidentLight, n)*n + incidentLight;
+}
+
+__device__ float3 RefractRay(float3 incidentLight, float3 n)
+{
+    float r = 1.0 / WATER_REFRACTIVE_INDEX;
+    float c = -(DotProduct(n, incidentLight));
+    return r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
+}
+
 __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
     const int x, const int y, Domain simDomain)
 {
@@ -713,10 +725,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
 
     Normalize(incidentLight);
 
-    float3 refractedLight;
-    float r = 1.0 / WATER_REFRACTIVE_INDEX;
-    float c = -(DotProduct(n, incidentLight));
-    refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
+    float3 refractedLight = RefractRay(incidentLight, n);
+//    float r = 1.0 / WATER_REFRACTIVE_INDEX;
+//    float c = -(DotProduct(n, incidentLight));
+//    refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
     const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
 
     float dx = -refractedLight.x*waterDepth/refractedLight.z;
@@ -994,96 +1006,51 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     Normalize(n);
     float zPos = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
     float3 elementPosition = {x,y,zPos };
-//    elementPosition.x /= xDimVisible;
-//    elementPosition.y /= xDimVisible;
-//    elementPosition.z /= xDimVisible;
-
-//    elementPosition.x = elementPosition.x*2.f - 1.f;
-//    elementPosition.y = elementPosition.y*2.f - 1.f;
-//    elementPosition.z = elementPosition.z*2.f - 1.f;
-
     //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
     float3 eyeDirection = elementPosition/xDimVisible - cameraPosition;  //normalized
     //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-    float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);  //non-normalized
+    Normalize(eyeDirection);
+    float3 refractedRay = RefractRay(eyeDirection, n);
+    float3 reflectedRay = ReflectRay(eyeDirection, n);
+    float cosTheta = dmax(0.f,dmin(1.f,DotProduct(eyeDirection, -1.f*n)));
+    float nu = 1.f / WATER_REFRACTIVE_INDEX;
+    //float r0 = ((1.0f-WATER_REFRACTIVE_INDEX)/(1.f+WATER_REFRACTIVE_INDEX))*((1.0f-WATER_REFRACTIVE_INDEX)/(1.f+WATER_REFRACTIVE_INDEX));
+    float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
+    float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
+    
+    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
+    float dx = -refractedRay.x*waterDepth/refractedRay.z;
+    float dy = -refractedRay.y*waterDepth/refractedRay.z;
 
-    float xTex = lightPositionOnFloor.x/xDimVisible*1024+0.5f;
-    float yTex = lightPositionOnFloor.y/xDimVisible*1024+0.5f;
+    //float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, eyeDirection, x, y, simDomain);  //non-normalized
 
+    float xTex = ((float)(x)+dx)/xDimVisible*1024+0.5f;
+    float yTex = ((float)(y)+dy)/xDimVisible*1024+0.5f;
+
+    float3 reflectedColor = { 255.f, 255.f, 255.f };
     float4 textureColor = tex2D(floorTex, xTex, yTex);
-    color[0] = textureColor.x*255.f;
-    color[1] = textureColor.y*255.f;
-    color[2] = textureColor.z*255.f;
-
-
-    float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, 0.f }; //non-normalized
-
-    //bool hitsObst = DoesRayHitObst(xDimVisible*elementPosition, refractedRayDest, obstructions);
+    float3 refractedRayDest = { (float)(x)+dx, (float)(y)+dy, 0 };
+    //float3 refractedRayDest = { lightPositionOnFloor.x, lightPositionOnFloor.y, 0.f }; //non-normalized
 
     float3 intersect = { 99999, 99999, 99999 };
     //if (GetCoordFromRayHitOnObst(intersect, 0.5f*(elementPosition + float3{ 1.f, 1.f, 1.f }), refractedRayDest, obstructions))
     if (GetCoordFromRayHitOnObst(intersect, elementPosition, refractedRayDest, obstructions))
     {
-        //color[0] = 255;
-        //color[1] = 255*(lightPositionOnFloor.x-x)/100.f;
-        //color[2] = 255*(lightPositionOnFloor.y-y)/100.f;
-        //color[3] = 255;
-        //std::memcpy(&(vbo[j].w), color, sizeof(color));
-        std::memcpy(&(vbo[j].w), &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
+        std::memcpy(color, &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
+        color[0] = (1.f-reflectedRayIntensity)*color[0]+reflectedRayIntensity*reflectedColor.x;
+        color[1] = (1.f-reflectedRayIntensity)*color[1]+reflectedRayIntensity*reflectedColor.y;
+        color[2] = (1.f-reflectedRayIntensity)*color[2]+reflectedRayIntensity*reflectedColor.z;
+        color[3] = 255;
+        //std::memcpy(&(vbo[j].w), &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
     }
     else
     {
-        std::memcpy(&(vbo[j].w), color, sizeof(color));
+        color[0] = (1.f-reflectedRayIntensity)*textureColor.x*255.f+reflectedRayIntensity*reflectedColor.x;
+        color[1] = (1.f-reflectedRayIntensity)*textureColor.y*255.f+reflectedRayIntensity*reflectedColor.y;
+        color[2] = (1.f-reflectedRayIntensity)*textureColor.z*255.f+reflectedRayIntensity*reflectedColor.z;
     }
-
-
-//    if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
-//    {
-//        if (IsInsideObstruction(x, y, obstructions, 1.f))
-//        {
-//            float3 nw{ vbo[j+MAX_XDIM].x, vbo[j+MAX_XDIM].y, vbo[j+MAX_XDIM].z };
-//            float3 ne{ vbo[j+MAX_XDIM+1].x, vbo[j+MAX_XDIM+1].y, vbo[j+MAX_XDIM+1].z };
-//            float3 se{ vbo[j+1].x, vbo[j+1].y, vbo[j+1].z };
-//            float3 sw{ vbo[j].x, vbo[j].y, vbo[j].z };
-
-//            float3 intersection = GetIntersectionOfRayWithTriangle(cameraPosition, eyeDirection,
-//                nw, ne, se);
-//            if (IsPointInsideTriangle(nw, ne, se, intersection))
-//            {
-//                    hitsObst = true;
-//                //printf("distance in kernel: %f\n", distance);
-//            }
-//            else{
-//                intersection = GetIntersectionOfRayWithTriangle(cameraPosition, eyeDirection,
-//                    ne, se, sw);
-//                if (IsPointInsideTriangle(ne, se, sw, intersection))
-//                {
-//                        hitsObst = true;
-//                    //printf("distance in kernel: %f\n", distance);
-//                }
-//            }
-//        }
-//    }
-
-//    if (hitsObst == true)
-//    {
-//        color[0] = 204;
-//        color[1] = 204;
-//        color[2] = 204;
-//    }
-
-
-
-
-
-
-
-
-
-
-
-
+    std::memcpy(&(vbo[j].w), color, sizeof(color));
 
 }
 
