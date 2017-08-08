@@ -338,7 +338,13 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                 }
                 else if (obstructions[i].shape == Shape::CIRCLE)
                 {
-                    
+                    if (dist < obstructions[i].r1)
+                    {
+                        float3 v = CrossProduct(rayDir, obstLineP1 - obstLineP2);
+                        Normalize(v);
+                        intersect = float3{ x, y, obstHeight*0.5f }+dist*v;
+                        hit = true;
+                    }
                 }
                 else if (obstructions[i].shape == Shape::VERTICAL_LINE)
                 {
@@ -575,7 +581,7 @@ __global__ void CleanUpVBO(float4* vbo, Domain simDomain)
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     if (x >= xDimVisible || y >= yDimVisible)
     {
-        unsigned char b[] = { 0,0,0,255 };
+        unsigned char b[] = { 0,0,0,0 };
         float color;
         std::memcpy(&color, &b, sizeof(color));
         //clean up surface mesh
@@ -607,19 +613,19 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     float cellSize = 2.f / xDimVisible;
     if (x == 0)
     {
-        n.x = -1.f;
+        n.x = 0.f;
     }
     else if (y == 0)
     {
-        n.y = -1.f;
+        n.y = 0.f;
     }
     else if (x >= xDimVisible - 1)
     {
-        n.x = 1.f;
+        n.x = 0.f;
     }
     else if (y >= yDimVisible - 1)
     {
-        n.y = 1.f;
+        n.y = 0.f;
     }
     else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
