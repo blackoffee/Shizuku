@@ -798,7 +798,7 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
         se = make_float2(vbo[(x+1)+(y  )*MAX_XDIM+offset].x, vbo[(x+1)+(y  )*MAX_XDIM+offset].y);
 
         float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
-        float lightIntensity = 0.3f / areaOfLightMeshOnFloor;
+        float lightIntensity = 0.6f / areaOfLightMeshOnFloor;
         atomicAdd(&floor_d[x   + (y  )*MAX_XDIM], lightIntensity*0.25f);
         atomicAdd(&floor_d[x+1 + (y  )*MAX_XDIM], lightIntensity*0.25f);
         atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
@@ -821,9 +821,9 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
     floor_d[x + y*MAX_XDIM] = 0.f;
 
-    unsigned char R = 50.f;
-    unsigned char G = 120.f;
-    unsigned char B = 255.f;
+    unsigned char R = 120.0f;
+    unsigned char G = 160.0f;
+    unsigned char B = 220.0f;
     unsigned char A = 255.f;
 
     if (IsInsideObstruction(x, y, obstructions, 0.99f))
