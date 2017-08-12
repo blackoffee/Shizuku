@@ -218,14 +218,14 @@ void Window::MouseWheel(const int button, const int direction,
     }
 }
 
-void Window::UpdateWindowTitle(const float fps, Domain &domain)
+void Window::UpdateWindowTitle(const float fps, Domain &domain, const int tSteps)
 {
     char fpsReport[256];
     int xDim = domain.GetXDim();
     int yDim = domain.GetYDim();
     sprintf_s(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        TIMESTEPS_PER_FRAME, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
+        tSteps, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
     glutSetWindowTitle(fpsReport);
 }
 
@@ -258,7 +258,8 @@ void Window::DrawLoop()
 
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     Domain domain = *cudaLbm->GetDomain();
-    UpdateWindowTitle(m_fpsTracker.GetFps(), domain);
+    const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
+    UpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
 }
 
 void Window::InitializeGLUT(int argc, char **argv)

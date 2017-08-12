@@ -244,13 +244,25 @@ void GraphicsManager::SetUpCuda()
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 }
 
+int TimeStepSelector(const int nodes)
+{
+    if (nodes < 100000)
+    {
+        return std::min(60.f, 60 - 40 * (float)(nodes - 10000)/100000);
+    }
+    else
+    {
+        return std::max(10.f, 20 - 20 * (float)(nodes - 100000)/150000);
+    }
+}
+
 void GraphicsManager::RunCuda()
 {
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
     ShaderManager* graphics = GetGraphics();
     cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
-    cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorTextureResource();
+    cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorLightTextureResource();
     Panel* rootPanel = m_parent->GetRootPanel();
 
     float4 *dptr;
@@ -273,6 +285,8 @@ void GraphicsManager::RunCuda()
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
     Domain* domain = cudaLbm->GetDomain();
+    cudaLbm->SetTimeStepsPerFrame(TimeStepSelector(domain->GetXDim()*domain->GetYDim()));
+    //printf("scalef: %i\n", TimeStepSelector(domain->GetXDim()*domain->GetYDim()));
     MarchSolution(cudaLbm);
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
