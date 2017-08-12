@@ -242,78 +242,86 @@ __device__ float GetDistanceBetweenTwoLineSegments(const float3 &p1, const float
     return dmin(dmin(dmin(d1, d2), d3), d4);
 }
 
-
-//inline __device__ bool DoesRayHitObst(const float3 rayOrigin, const float3 rayDest,
-//    Obstruction* obstructions, const float tolerance = 0.f)
-//{
-//    for (int i = 0; i < MAXOBSTS; i++){
-//        if (obstructions[i].state != State::INACTIVE)
-//        {
-//            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, -40 };
-//            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, -80 };
-//            float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
-//            if (dist < obstructions[i].r1+0.5f)
-//            {
-//                return true;
-//            }
-//        }
-//    }
-//    return false;
-//}
-
-// Gets intersection of ray with plane created by triangle
+// Gets intersection of line with plane created by triangle
 //p1, p2, p3 should be in clockwise order
-__device__ float3 GetIntersectionOfRayWithTriangle(const float3 &rayOrigin,
-    float3 rayDir, const float3 &p1, const float3 &p2, const float3 &p3)
+__device__ float3 GetIntersectionOfLineWithTriangle(const float3 &lineOrigin,
+    float3 &lineDir, const float3 &p1, const float3 &p2, const float3 &p3)
 {
     //plane of triangle
     float3 n = CrossProduct((p2 - p1), (p3 - p1));
     Normalize(n);
     float d = DotProduct(n, p1); //coefficient "d" of plane equation (n.x = d)
 
-    Normalize(rayDir);
-    float t = (d-DotProduct(n,rayOrigin))/(DotProduct(n,rayDir));
+    Normalize(lineDir);
+    float t = (d-DotProduct(n,lineOrigin))/(DotProduct(n,lineDir));
 
-    return rayOrigin + t*rayDir;
+    return lineOrigin + t*lineDir;
 }
 
-// Only update intersect reference if intersect is inside the rectangle, and is closer to rayOrigin than previous value
-__device__ bool IntersectRayWithRect(float3 &intersect, float3 rayOrigin, float3 rayDir, 
+// Gets intersection of line segment with plane created by triangle
+//p1, p2, p3 should be in clockwise order
+__device__ bool GetIntersectionOfLineSegmentWithTriangle(float3 &intersect, const float3 &lineOrigin,
+    float3 &lineDest, const float3 &p1, const float3 &p2, const float3 &p3)
+{
+    //plane of triangle
+    float3 n = CrossProduct((p2 - p1), (p3 - p1));
+    Normalize(n);
+    float d = DotProduct(n, p1); //coefficient "d" of plane equation (n.x = d)
+
+    float3 lineDir = lineDest - lineOrigin;
+    const float length = sqrt(DotProduct(lineDir, lineDir));
+    Normalize(lineDir);
+    float t = (d-DotProduct(n,lineOrigin))/(DotProduct(n,lineDir));
+    if (t > 0 && t < length)
+    {
+        intersect = lineOrigin + t*lineDir;
+        return true;
+    }
+    return false;
+}
+
+
+// Only update intersect reference if intersect is inside the rectangle, and is closer to lineOrigin than previous value
+__device__ bool IntersectLineSegmentWithRect(float3 &intersect, float3 lineOrigin, float3 lineDest, 
     float3 topLeft, float3 topRight, float3 bottomRight, float3 bottomLeft)
 {
     float3 temp;
-    temp = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, topLeft, topRight, bottomRight);
-    if (IsPointInsideTriangle(topLeft, topRight, bottomRight, temp))
+    if (GetIntersectionOfLineSegmentWithTriangle(temp, lineOrigin, lineDest, topLeft, topRight, bottomRight))
     {
-        if (Distance(temp, rayOrigin) < Distance(intersect, rayOrigin))
+        if (IsPointInsideTriangle(topLeft, topRight, bottomRight, temp))
         {
-            intersect = temp;
-            return true;
+            if (Distance(temp, lineOrigin) < Distance(intersect, lineOrigin))
+            {
+                intersect = temp;
+                return true;
+            }
         }
     }
-    temp = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir, bottomRight, bottomLeft, topLeft);
-    if (IsPointInsideTriangle(bottomRight, bottomLeft, topLeft, temp))
+    if (GetIntersectionOfLineSegmentWithTriangle(temp, lineOrigin, lineDest, bottomRight, bottomLeft, topLeft))
     {
-        if (Distance(temp, rayOrigin) < Distance(intersect, rayOrigin))
+        if (IsPointInsideTriangle(bottomRight, bottomLeft, topLeft, temp))
         {
-            intersect = temp;
-            return true;
+            if (Distance(temp, lineOrigin) < Distance(intersect, lineOrigin))
+            {
+                intersect = temp;
+                return true;
+            }
         }
     }
     return false;
 }
 
 __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
-    Obstruction* obstructions, const float tolerance = 0.f)
+    Obstruction* obstructions, float obstHeight, const float tolerance = 0.f)
 {
     float3 rayDir = rayDest - rayOrigin;
     bool hit = false;
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != State::INACTIVE)
         {
-            float obstHeight = rayOrigin.z+0.1f;
-            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, obstHeight };
-            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, 0 };
+            obstHeight = rayOrigin.z+0.1f;
+            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, rayOrigin.z+0.1f }; //obstHeight };
+            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, 0.f };
             float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
             if (dist < obstructions[i].r1*2.5f)
             {
@@ -331,10 +339,10 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                     float3 nwb = { x - (r1+0.5f), y + (r1+0.5f), 0.f };//-1.f*80.f
                     float3 neb = { x + (r1+0.5f), y + (r1+0.5f), 0.f };//-1.f*80.f
 
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, nwt, swt, swb, nwb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, swt, set, seb, swb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, set, net, neb, seb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, net, nwt, nwb, neb);
                 }
                 else if (obstructions[i].shape == Shape::CIRCLE)
                 {
@@ -359,10 +367,10 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                     float3 nwb = { x - (r1), y + (r2), 0.f };
                     float3 neb = { x + (r1), y + (r2), 0.f };
 
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, nwt, swt, swb, nwb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, swt, set, seb, swb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, set, net, neb, seb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, net, nwt, nwb, neb);
                 }
                 else if (obstructions[i].shape == Shape::HORIZONTAL_LINE)
                 {
@@ -377,10 +385,10 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
                     float3 nwb = { x - (r1), y + (r2), 0.f };
                     float3 neb = { x + (r1), y + (r2), 0.f };
 
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, nwt, swt, swb, nwb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, swt, set, seb, swb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, set, net, neb, seb);
-                    hit = hit | IntersectRayWithRect(intersect, rayOrigin, rayDir, net, nwt, nwb, neb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, nwt, swt, swb, nwb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, swt, set, seb, swb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, set, net, neb, seb);
+                    hit = hit | IntersectLineSegmentWithRect(intersect, rayOrigin, rayDest, net, nwt, nwb, neb);
                 }
             }
         }
@@ -697,7 +705,7 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomai
 
 __device__ float3 ReflectRay(float3 incidentLight, float3 n)
 {
-    return 2.f*DotProduct(incidentLight, n)*n + incidentLight;
+    return 2.f*DotProduct(incidentLight, -1.f*n)*n + incidentLight;
 }
 
 __device__ float3 RefractRay(float3 incidentLight, float3 n)
@@ -930,7 +938,7 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
             float3 se{ vbo[j+1].x, vbo[j+1].y, vbo[j+1].z };
             float3 sw{ vbo[j].x, vbo[j].y, vbo[j].z };
 
-            float3 intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+            float3 intersection = GetIntersectionOfLineWithTriangle(rayOrigin, rayDir,
                 nw, ne, se);
             if (IsPointInsideTriangle(nw, ne, se, intersection))
             {
@@ -943,7 +951,7 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
                 //printf("distance in kernel: %f\n", distance);
             }
             else{
-                intersection = GetIntersectionOfRayWithTriangle(rayOrigin, rayDir,
+                intersection = GetIntersectionOfLineWithTriangle(rayOrigin, rayDir,
                     ne, se, sw);
                 if (IsPointInsideTriangle(ne, se, sw, intersection))
                 {
@@ -961,7 +969,152 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
 
 }
 
+__device__ int GetIntersectWithCubeMap(float3 &intersect, const float3 &rayOrigin, const float3 &rayDir)
+{
+    float distance = 99999999;
+    float temp;
+    int side = -1;
+    const float maxDim = dmax(MAX_XDIM, MAX_YDIM);
+    if (rayDir.x > 0)
+    {
+        temp = (maxDim - rayOrigin.x) / rayDir.x;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 3;
+        }
+    }
+    else if (rayDir.x < 0)
+    {
+        temp = -rayOrigin.x / rayDir.x;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 1;
+        }
+    }
+    if (rayDir.y > 0)
+    {
+        temp = (maxDim - rayOrigin.y) / rayDir.y;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 2;
+        }
+    }
+    else if (rayDir.y < 0)
+    {
+        temp = -rayOrigin.y / rayDir.y;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 4;
+        }
+    }
+    if (rayDir.z > 0)
+    {
+        temp = (maxDim - rayOrigin.z) / rayDir.z;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 0;
+        }
+    }
+    else if (rayDir.z < 0)
+    {
+        temp = -rayOrigin.z / rayDir.z;
+        if (temp < distance)
+        {
+            distance = temp;
+            side = 5;
+        }
+    }
+    intersect = (rayOrigin + distance*rayDir) / maxDim;
+    return side;
+
+}
+
+__device__ int GetCubeMapFace(const float3 &rayDir)
+{
+    float3 absDir = { abs(rayDir.x), abs(rayDir.y), abs(rayDir.z) };
+    //if (absDir.z > absDir.x && absDir.z > absDir.y)
+    if (absDir.z*absDir.z > absDir.x*absDir.x + absDir.y*absDir.y)
+    {
+        if (rayDir.z > 0)
+            return 0;
+        return 5;
+    }
+    //if (absDir.y > absDir.x && absDir.y > absDir.z)
+    if (absDir.y*absDir.y > absDir.x*absDir.x + absDir.z*absDir.z)
+    {
+        if (rayDir.y > 0)
+            return 2;
+        return 4;
+    }
+    //if (absDir.x > absDir.y && absDir.x > absDir.z)
+    if (absDir.x*absDir.x > absDir.y*absDir.y + absDir.z*absDir.z)
+    {
+        if (rayDir.x > 0)
+            return 3;
+        return 1;
+    }
+}
+
+
+__device__ float2 GetUVCoordsForSkyMap(const float3 &rayOrigin, const float3 &rayDir)
+{
+    float2 uv;
+    float3 intersect;
+    const float maxDim = dmax(MAX_XDIM, MAX_YDIM);
+    const float cubeSize = 5.f*maxDim;
+    if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 0) //posz
+    {
+        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.z) / rayDir.z)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
+        //if (intersect.x > 1.f || intersect.x < 0.f)
+        uv.x =   1024+intersect.x*1024+0.5f;
+        uv.y = 2*1024+(1.f-intersect.y)*1024+0.5f;
+    }
+    else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 1) //negx
+    {
+        //intersect = ((rayOrigin + (2.f*maxDim + rayOrigin.x / rayDir.x)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
+        uv.x = intersect.y*1024+0.5f;
+        uv.y = 1024+intersect.z*1024+0.5f;
+    }
+    else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 3) //posx
+    {
+        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.x) / rayDir.x)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
+
+        uv.x = 2*1024+(1.f-intersect.y)*1024+0.5f;
+        uv.y = 1024+intersect.z*1024+0.5f;
+    }
+    else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 2) //posy
+    {
+        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.y) / rayDir.y)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
+        uv.x = 1024+intersect.x*1024+0.5f;
+        uv.y = 1024+intersect.z*1024+0.5f;
+    }
+    else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 4) //negy
+    {
+        //intersect = ((rayOrigin + (2.f*maxDim + rayOrigin.y / rayDir.y)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
+        uv.x = 3*1024+(1.f-intersect.x)*1024+0.5f;
+        uv.y = 1024+intersect.z*1024+0.5f;
+    }
+    else //negz - this would be the floor
+    {
+        uv.x = 1024+intersect.x*1024+0.5f;
+        uv.y = (1.f-intersect.y)*1024+0.5f;
+        //uv = { 0, 0 };
+    }
+    //if (threadIdx.x == 10) printf("ray: %i, %f, %f, %f\n", cubeFace, rayDir.x, rayDir.y, rayDir.z);
+    //if (threadIdx.x == 10) printf("intersect: %f, %f, %f\n", intersect.x, intersect.y, intersect.z);
+    //uv.x = 1024 + (rayDir.x + 1.f)*0.5f * 1024;
+    //uv.y = 1024 + (rayDir.z + 1.f)*0.5f * 1024;
+    return uv;
+}
+
+
 texture<float4, 2, cudaReadModeElementType> floorTex;
+texture<float4, 2, cudaReadModeElementType> envTex;
 
 __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float3 cameraPosition, Domain simDomain)
@@ -978,7 +1131,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
     color[3] = 50;
 
-    float3 n = { 0, 0, 0 };
+    float3 n = { 0, 0, 1 };
     float slope_x = 0.f;
     float slope_y = 0.f;
     float cellSize = 2.f / xDimVisible;
@@ -1010,8 +1163,8 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[3] = 255;
     }
     Normalize(n);
-    float zPos = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
-    float3 elementPosition = {x,y,zPos };
+    const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
+    float3 elementPosition = {x,y,waterDepth }; //non-normalized
     //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
     float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
     //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
@@ -1020,11 +1173,13 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float3 refractedRay = RefractRay(viewingRay, n);
     float3 reflectedRay = ReflectRay(viewingRay, n);
     float cosTheta = dmax(0.f,dmin(1.f,DotProduct(viewingRay, -1.f*n)));
+    //if (threadIdx.x == 10) printf("view: %f, %f, %f\n", viewingRay.x, viewingRay.y, viewingRay.z);
+    //if (threadIdx.x == 10) printf("n: %f, %f, %f\n", n.x, n.y, n.z);
     float nu = 1.f / WATER_REFRACTIVE_INDEX;
     float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
     float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
     
-    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
+    //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
     float dx = -refractedRay.x*waterDepth/refractedRay.z;
     float dy = -refractedRay.y*waterDepth/refractedRay.z;
 
@@ -1033,12 +1188,23 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float xTex = xf/xDimVisible*1024+0.5f;
     float yTex = yf/xDimVisible*1024+0.5f;
 
-    float3 reflectedColor = { 255.f, 255.f, 255.f };
+    //float envColor = tex2D(envTex, 3, 3);
+    //unsigned char environment[4];
+    //std::memcpy(&environment, &envColor, sizeof(envColor));
+    //float3 reflectedColor;
+    //reflectedColor.x = (float)environment[0];
+    //reflectedColor.y = (float)environment[1];
+    //reflectedColor.z = (float)environment[2];
+    //float3 reflectedColor = { 255.f, 255.f, 255.f };
+
+    float2 uvSkyTex = GetUVCoordsForSkyMap(elementPosition, reflectedRay);
+    float4 skyColor = tex2D(envTex, uvSkyTex.x, uvSkyTex.y);
     float4 textureColor = tex2D(floorTex, xTex, yTex);
 
     float3 refractedRayDest = { (float)(x)+dx, (float)(y)+dy, 0 };
 
-    float3 intersect = { 99999, 99999, 99999 };
+    float3 refractionIntersect = { 99999, 99999, 99999 };
+    float3 reflectionIntersect = { 99999, 99999, 99999 };
     if (xf > xDimVisible - 1 || xf < 0 || yf > yDimVisible - 1 || yf < 0)
     {
         color[0] = 0;
@@ -1046,19 +1212,42 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[2] = 0; 
         color[3] = 0; 
     }
-    else if (GetCoordFromRayHitOnObst(intersect, elementPosition, refractedRayDest, obstructions))
-    {
-        std::memcpy(color, &(vbo[(int)(intersect.x+0.5f) + (int)(intersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w), sizeof(color));
-        color[0] = (1.f-reflectedRayIntensity)*color[0]+reflectedRayIntensity*reflectedColor.x;
-        color[1] = (1.f-reflectedRayIntensity)*color[1]+reflectedRayIntensity*reflectedColor.y;
-        color[2] = (1.f-reflectedRayIntensity)*color[2]+reflectedRayIntensity*reflectedColor.z;
-        color[3] = 255;
-    }
     else
     {
-        color[0] = (1.f-reflectedRayIntensity)*textureColor.x*255.f+reflectedRayIntensity*reflectedColor.x;
-        color[1] = (1.f-reflectedRayIntensity)*textureColor.y*255.f+reflectedRayIntensity*reflectedColor.y;
-        color[2] = (1.f-reflectedRayIntensity)*textureColor.z*255.f+reflectedRayIntensity*reflectedColor.z;
+        unsigned char refractedColor[4];
+        if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+        {
+            std::memcpy(refractedColor, &(vbo[(int)(refractionIntersect.x+0.5f) + (int)(refractionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
+                sizeof(refractedColor));
+        }
+        else
+        {
+            refractedColor[0] = textureColor.x*255.f;
+            refractedColor[1] = textureColor.y*255.f;
+            refractedColor[2] = textureColor.z*255.f;
+            refractedColor[3] = 255;
+        }
+        unsigned char reflectedColor[4];
+        if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, elementPosition+xDimVisible*reflectedRay, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+        {
+            std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
+                sizeof(reflectedColor));
+        }
+        else
+        {
+            //if (reflectedRay.z < 0)
+            //{
+            //    reflectedRayIntensity = 0.f;
+            //}
+            reflectedColor[0] = skyColor.x;
+            reflectedColor[1] = skyColor.y;
+            reflectedColor[2] = skyColor.z;
+            reflectedColor[3] = 255;
+        }
+
+        color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
+        color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
+        color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
         color[3] = 255;
     }
     std::memcpy(&(vbo[j].w), color, sizeof(color));
@@ -1218,14 +1407,15 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     }
 }
 
-void RefractSurface(float4* vis, cudaArray* floorTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    cudaBindTextureToArray(floorTex, floorTexture);
+    cudaBindTextureToArray(floorTex, floorLightTexture);
+    cudaBindTextureToArray(envTex, envTexture);
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
     SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
 }

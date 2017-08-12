@@ -41,7 +41,7 @@ public:
         const int /*x*/, const int /*y*/);
     void MouseWheel(const int button, const int direction,
         const int x, const int y);
-    void UpdateWindowTitle(const float fps, Domain &domain);
+    void UpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
     void DrawLoop();
     void InitializeGLUT(int argc, char **argv);
     void Display();

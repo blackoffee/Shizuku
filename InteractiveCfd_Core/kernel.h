@@ -35,5 +35,5 @@ int RayCastMouseClick(float3 &selectedElementCoord, float4* vis,
     float4* rayCastIntersect_d, const float3 &rayOrigin, const float3 &rayDir,
     Obstruction* obst_d, Domain &simDomain);
 
-void RefractSurface(float4* vis, cudaArray* floorTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+void RefractSurface(float4* vis, cudaArray* floorTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain);

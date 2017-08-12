@@ -3,7 +3,9 @@
 #include "CudaLbm.h"
 #include "Domain.h"
 #include "helper_cuda.h"
+#include <SOIL/SOIL.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <assert.h>
 
 ShaderManager::ShaderManager()
 {
@@ -28,9 +30,14 @@ cudaGraphicsResource* ShaderManager::GetCudaSolutionGraphicsResource()
     return m_cudaGraphicsResource;
 }
 
-cudaGraphicsResource* ShaderManager::GetCudaFloorTextureResource()
+cudaGraphicsResource* ShaderManager::GetCudaFloorLightTextureResource()
 {
-    return m_cudaFloorTextureResource;
+    return m_cudaFloorLightTextureResource;
+}
+
+cudaGraphicsResource* ShaderManager::GetCudaEnvTextureResource()
+{
+    return m_cudaEnvTextureResource;
 }
 
 void ShaderManager::CreateVboForCudaInterop(const unsigned int size)
@@ -187,17 +194,74 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
-void ShaderManager::SetUpFloorTexture()
+void ShaderManager::SetUpTextures()
 {
+    int width, height;
+    unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
+    assert(image != NULL);
+//    float* tex = new float[width*height];
+//    for (int i = 0; i < width*height; ++i)
+//    {
+//        unsigned char color[4];
+//        std::memcpy(&color, &image[3 * i], 3*sizeof(unsigned char));
+//        color[3] = unsigned char(255);
+//        std::memcpy(&tex[i], &color, sizeof(float));
+////        for (int j = 0; j < 4; ++j)
+////        {
+////            printf("%u,", color[j]);
+////        }
+////        std::cout << std::endl;
+//    }
+
+    float* tex = new float[4*width*height];
+    for (int i = 0; i < width*height; ++i)
+    {
+        unsigned char color[4];
+        std::memcpy(&color, &image[3 * i], 3*sizeof(unsigned char));
+        color[3] = unsigned char(255);
+        tex[4*i] = color[0];
+        tex[4*i+1] = color[1];
+        tex[4*i+2] = color[2];
+        tex[4*i+3] = color[3];
+//        if (i > (width) * 1024 + 1024 && i < (width) * 1024 + 2048)
+//        {
+//            for (int j = 0; j < 4; ++j)
+//            {
+//                printf("%f,", tex[4*i+j]);
+//            }
+//            std::cout << std::endl;
+//        }
+    }
+
+
+
+    glGenTextures(1, &m_envTexture);
+    glBindTexture(GL_TEXTURE_2D, m_envTexture);
+
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, tex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    cudaGraphicsGLRegisterImage(&m_cudaEnvTextureResource, m_envTexture, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
+
+    SOIL_free_image_data(image);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+
     // set up FBO and texture to render to 
     glGenFramebuffers(1, &m_floorFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
 
-    glGenTextures(1, &m_floorTexture);
-    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+    glGenTextures(1, &m_floorLightTexture);
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    GLuint textureWidth = 1024;
-    GLuint textureHeight = 1024;
+    const GLuint textureWidth = 1024;
+    const GLuint textureHeight = 1024;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -205,7 +269,7 @@ void ShaderManager::SetUpFloorTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_floorTexture, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_floorLightTexture, 0);
 
     GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, drawBuffers);
@@ -213,7 +277,7 @@ void ShaderManager::SetUpFloorTexture()
     //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         //return false;
 
-    cudaGraphicsGLRegisterImage(&m_cudaFloorTextureResource, m_floorFbo, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
+    cudaGraphicsGLRegisterImage(&m_cudaFloorLightTextureResource, m_floorLightTexture, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -290,7 +354,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
-    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -332,7 +396,6 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -357,7 +420,6 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
@@ -473,9 +535,14 @@ void ShaderManager::InitializeComputeShaderData()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void ShaderManager::BindFloorTexture()
+void ShaderManager::BindFloorLightTexture()
 {
-    glBindTexture(GL_TEXTURE_2D, m_floorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+}
+
+void ShaderManager::BindEnvTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, m_envTexture);
 }
 
 void ShaderManager::UnbindFloorTexture()

@@ -206,7 +206,7 @@ void GraphicsManager::SetUpShaders()
     UpdateLbmInputs();
     graphics->InitializeComputeShaderData();
 
-    graphics->SetUpFloorTexture();
+    graphics->SetUpTextures();
 }
 
 void GraphicsManager::SetUpCuda()
@@ -314,20 +314,24 @@ void GraphicsManager::RunSurfaceRefraction()
         CudaLbm* cudaLbm = GetCudaLbm();
         ShaderManager* graphics = GetGraphics();
         cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
-        cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorTextureResource();
+        cudaGraphicsResource* floorLightTextureResource = graphics->GetCudaFloorLightTextureResource();
+        cudaGraphicsResource* envTextureResource = graphics->GetCudaEnvTextureResource();
         Panel* rootPanel = m_parent->GetRootPanel();
 
         float4 *dptr;
-        cudaArray *floorTexture;
+        cudaArray *floorLightTexture;
+        cudaArray *envTexture;
 
-        graphics->BindFloorTexture();
+        //graphics->BindFloorTexture();
 
         cudaGraphicsMapResources(1, &vbo_resource, 0);
         size_t num_bytes;
         cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
 
-        cudaGraphicsMapResources(1, &floorTextureResource, 0);
-        cudaGraphicsSubResourceGetMappedArray(&floorTexture, floorTextureResource, 0, 0);
+        cudaGraphicsMapResources(1, &floorLightTextureResource, 0);
+        cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0);
+        cudaGraphicsMapResources(1, &envTextureResource, 0);
+        cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0);
 
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
@@ -342,13 +346,14 @@ void GraphicsManager::RunSurfaceRefraction()
 
 
 
-        RefractSurface(dptr, floorTexture, obst_d, cameraPos, *domain);
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
 
-        graphics->UnbindFloorTexture();
+        //graphics->UnbindFloorTexture();
 
         // unmap buffer object
         cudaGraphicsUnmapResources(1, &vbo_resource, 0);
-        cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
+        cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0);
+        cudaGraphicsUnmapResources(1, &envTextureResource, 0);
     }
 }
 

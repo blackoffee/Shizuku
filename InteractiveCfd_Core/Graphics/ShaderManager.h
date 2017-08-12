@@ -30,11 +30,13 @@ private:
     };
     CudaLbm* m_cudaLbm;
     cudaGraphicsResource* m_cudaGraphicsResource;
-    cudaGraphicsResource* m_cudaFloorTextureResource;
+    cudaGraphicsResource* m_cudaFloorLightTextureResource;
+    cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_vao;
     GLuint m_vbo;
     GLuint m_elementArrayBuffer;
-    GLuint m_floorTexture;
+    GLuint m_floorLightTexture;
+    GLuint m_envTexture;
     GLuint m_floorFbo;
     ShaderProgram* m_shaderProgram;
     ShaderProgram* m_lightingProgram;
@@ -49,7 +51,8 @@ public:
     void CreateCudaLbm();
     CudaLbm* GetCudaLbm();
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
-    cudaGraphicsResource* GetCudaFloorTextureResource();
+    cudaGraphicsResource* GetCudaFloorLightTextureResource();
+    cudaGraphicsResource* GetCudaEnvTextureResource();
     GLuint GetVbo();
     GLuint GetElementArrayBuffer();
     void CreateVbo(const unsigned int size, const unsigned int vboResFlags);
@@ -67,11 +70,12 @@ public:
     ShaderProgram* GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
-    void SetUpFloorTexture();
+    void SetUpTextures();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 
-    void BindFloorTexture();
+    void BindFloorLightTexture();
+    void BindEnvTexture();
     void UnbindFloorTexture();
     
     void SetOmega(const float omega);
