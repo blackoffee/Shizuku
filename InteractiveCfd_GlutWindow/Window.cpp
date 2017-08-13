@@ -51,7 +51,8 @@ Window::Window() :
     m_sliderDrag(SliderDrag(*m_windowPanel)),
     m_addObstruction(AddObstruction(*m_windowPanel)),
     m_removeObstruction(RemoveObstruction(*m_windowPanel)),
-    m_moveObstruction(MoveObstruction(*m_windowPanel))
+    m_moveObstruction(MoveObstruction(*m_windowPanel)),
+    m_pauseSimulation(PauseSimulation(*m_windowPanel))
 {
 }
 
@@ -203,7 +204,16 @@ void Window::Keyboard(const unsigned char key,
 {
     if (key == 32)
     {
-        m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetCudaLbm()->TogglePausedState();
+        if (m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetCudaLbm()->IsPaused())
+        {
+            m_pauseSimulation.End();
+            m_windowPanel->GetButton("Pause Simulation")->SetHighlight(false);
+        }
+        else
+        {
+            m_pauseSimulation.Start();
+            m_windowPanel->GetButton("Pause Simulation")->SetHighlight(true);
+        }
     }
 }
 void Window::MouseWheel(const int button, const int direction,

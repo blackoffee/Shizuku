@@ -322,8 +322,6 @@ void GraphicsManager::RunSurfaceRefraction()
         cudaArray *floorLightTexture;
         cudaArray *envTexture;
 
-        //graphics->BindFloorTexture();
-
         cudaGraphicsMapResources(1, &vbo_resource, 0);
         size_t num_bytes;
         cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
@@ -338,14 +336,24 @@ void GraphicsManager::RunSurfaceRefraction()
         Domain* domain = cudaLbm->GetDomain();
         glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix()*GetModelMatrix());
         glm::vec4 origin = { 0, 0, 0, 1 };
-        glm::vec4 cameraPos = GetCameraPosition();
+
+
+        glm::vec4 cameraPos;
         glm::vec4 cameraDir = GetCameraDirection();
         //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
         //std::cout << "CameraDir: " << cameraDir.x << "," << cameraDir.y << "," << cameraDir.z << std::endl;
 
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
+        if (!m_rayTracingPaused)
+        {
+            cameraPos = GetCameraPosition();
+            m_cameraPosition = cameraPos;
+        }
+        else
+        {
+            cameraPos = m_cameraPosition;
+        }
 
-        //graphics->UnbindFloorTexture();
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
 
         // unmap buffer object
         cudaGraphicsUnmapResources(1, &vbo_resource, 0);
@@ -395,11 +403,7 @@ void GraphicsManager::RenderVbo()
 
 bool GraphicsManager::ShouldRenderFloor()
 {
-    if (m_viewMode == ViewMode::THREE_DIMENSIONAL || m_contourVar == ContourVariable::WATER_RENDERING)
-    {
-        return true;
-    }
-    return false;
+    return true;
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -679,36 +683,10 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
     }
 }
 
-void GraphicsManager::MoveObstruction(const int xi, const int yi,
-    const float dxf, const float dyf)
+
+void GraphicsManager::SetRayTracingPausedState(const bool state)
 {
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    if (m_currentObstId > -1)
-    {
-        int simX1, simY1, simX2, simY2;
-        int dxi, dyi;
-        int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-        int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-        dxi = dxf*static_cast<float>(windowWidth) / 2.f;
-        dyi = dyf*static_cast<float>(windowHeight) / 2.f;
-        GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
-        GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
-        Obstruction obst = m_obstructions[m_currentObstId];
-        obst.x = simX2;
-        obst.y = simY2;
-        float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
-        float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
-        obst.u = u/m_scaleFactor;
-        obst.v = v/m_scaleFactor;
-        obst.state = State::ACTIVE;
-        m_obstructions[m_currentObstId] = obst;
-        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-//        if (m_useCuda)
-//            UpdateDeviceObstructions(obst_d, m_currentObstId, obst, m_scaleFactor);
-//        else
-//            GetGraphics()->UpdateObstructionsUsingComputeShader(m_currentObstId, obst, m_scaleFactor);
-    }
+    m_rayTracingPaused = state;
 }
 
 int GraphicsManager::FindUnusedObstructionId()

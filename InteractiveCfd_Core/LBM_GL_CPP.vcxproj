@@ -229,6 +229,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
     <ClCompile Include="Command\Pan.cpp" />
+    <ClCompile Include="Command\PauseRayTracing.cpp" />
+    <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SliderDrag.cpp" />
@@ -256,6 +258,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Command\MoveObstruction.h" />
     <ClInclude Include="Command\Pan.h" />
+    <ClInclude Include="Command\PauseRayTracing.h" />
+    <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SliderDrag.h" />

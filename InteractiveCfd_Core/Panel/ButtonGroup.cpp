@@ -33,8 +33,7 @@ void ButtonGroup::ExclusiveEnable(Button* button)
         }
         if (*it == button)
         {
-            (*it)->m_highlighted = true;
-            (*it)->SetBackgroundColor(Color::LIGHT_GRAY);
+            (*it)->SetHighlight(true);
             if (sliderForButton != NULL)
             {
                 sliderForButton->Show();
@@ -42,8 +41,7 @@ void ButtonGroup::ExclusiveEnable(Button* button)
         }
         else
         {
-            (*it)->m_highlighted = false;
-            (*it)->SetBackgroundColor(Color::GRAY);
+            (*it)->SetHighlight(false);
             if (sliderForButton != NULL)
             {
                 sliderForButton->Hide();

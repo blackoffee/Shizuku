@@ -62,6 +62,8 @@
     <ClCompile Include="Panel\SliderBar.cpp">
       <Filter>Panel</Filter>
     </ClCompile>
+    <ClCompile Include="Command\PauseSimulation.cpp" />
+    <ClCompile Include="Command\PauseRayTracing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -124,6 +126,8 @@
     <ClInclude Include="Panel\SliderBar.h">
       <Filter>Panel</Filter>
     </ClInclude>
+    <ClInclude Include="Command\PauseSimulation.h" />
+    <ClInclude Include="Command\PauseRayTracing.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\FloorShader.vert.glsl" />

@@ -35,3 +35,16 @@ void Button::ClickDown()
     }
 }
 
+void Button::SetHighlight(const bool state)
+{
+    m_highlighted = state;
+
+    if (state == true)
+    {
+        SetBackgroundColor(Color::LIGHT_GRAY);
+    }
+    else
+    {
+        SetBackgroundColor(Color::GRAY);
+    }
+}

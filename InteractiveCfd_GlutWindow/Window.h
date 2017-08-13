@@ -7,6 +7,7 @@
 #include "Command/AddObstruction.h"
 #include "Command/RemoveObstruction.h"
 #include "Command/MoveObstruction.h"
+#include "Command/PauseSimulation.h"
 #include "FpsTracker.h"
 
 class Domain;
@@ -24,6 +25,7 @@ private:
     AddObstruction m_addObstruction;
     RemoveObstruction m_removeObstruction;
     MoveObstruction m_moveObstruction;
+    PauseSimulation m_pauseSimulation;
     int m_leftPanelWidth;
     int m_leftPanelHeight;
     FpsTracker m_fpsTracker;

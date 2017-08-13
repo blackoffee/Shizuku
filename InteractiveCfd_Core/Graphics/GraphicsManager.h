@@ -28,6 +28,8 @@ private:
     float m_currentObstSize = 0.f;
     Shape m_currentObstShape = Shape::SQUARE;
     ViewMode m_viewMode;
+    bool m_rayTracingPaused = false;
+    glm::vec4 m_cameraPosition;
     Obstruction* m_obstructions;
     Panel* m_parent;
     float m_scaleFactor = 1.f;
@@ -95,6 +97,7 @@ public:
     void UnpickObstruction();
     void MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
         const float dxf, const float dyf);
+    void SetRayTracingPausedState(const bool state);
    
     void UpdateViewTransformations();
     void UpdateGraphicsInputs();
@@ -121,7 +124,6 @@ public:
     void AddObstruction(const int simX, const int simY);
     void RemoveObstruction(const int simX, const int simY);
     void RemoveSpecifiedObstruction(const int obstId);
-    void MoveObstruction(const int xi, const int yi, const float dxf, const float dyf);
     int FindUnusedObstructionId();
     int FindClosestObstructionId(const int simX, const int simY);
     int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);

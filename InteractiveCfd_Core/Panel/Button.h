@@ -18,6 +18,7 @@ public:
         const std::string name, const Color color, Panel* parent = NULL);
     Button(const RectInt rectInt    , const SizeDefinitionMethod sizeDefinition,
         const std::string name, const Color color, Panel* parent = NULL);
+    void SetHighlight(const bool state);
 
     virtual void ClickDown();
 };

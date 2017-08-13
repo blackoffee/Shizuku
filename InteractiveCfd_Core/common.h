@@ -1,7 +1,7 @@
 #pragma once
 #define MAXOBSTS 100
-#define MAX_XDIM 512
-#define MAX_YDIM 512
+#define MAX_XDIM 768
+#define MAX_YDIM 768
 
 #define INITIAL_UMAX 0.125f
 #define BLOCKSIZEX 64

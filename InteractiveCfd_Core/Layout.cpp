@@ -7,6 +7,8 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/ShaderManager.h"
 #include "Graphics/CudaLbm.h"
+#include "Command/PauseSimulation.h"
+#include "Command/PauseRayTracing.h"
 #include "kernel.h"
 #include <algorithm>
 
@@ -46,10 +48,10 @@ void Layout::SetUpWindow(Panel &rootPanel)
     outputsPanel->CreateButton(RectFloat(0.05f, -1.f  +0.04f, 0.85f, 0.4f),
         Panel::DEF_REL, "Water Rendering", Color(Color::GRAY));
 
-    viewModePanel->CreateButton(RectFloat(-0.9f , -1.f  +0.04f, 0.35f, 2.f),
-        Panel::DEF_REL, "3D", Color(Color::GRAY));
-    viewModePanel->CreateButton(RectFloat(-0.50f, -1.f  +0.04f, 0.35f, 2.f),
-        Panel::DEF_REL, "2D", Color(Color::GRAY));
+    viewModePanel->CreateButton(RectFloat(-0.9f , -1.f  +0.04f, 0.85f, 1.7f),
+        Panel::DEF_REL, "Pause Simulation", Color(Color::GRAY));
+    viewModePanel->CreateButton(RectFloat(0.05f, -1.f  +0.04f, 0.85f, 1.7f),
+        Panel::DEF_REL, "Pause Ray Tracing", Color(Color::GRAY));
 
     rootPanel.CreateSubPanel(RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight),
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
@@ -232,7 +234,7 @@ void Layout::SetUpWindow(Panel &rootPanel)
         "Vert. Line", Color(Color::GRAY));
     rootPanel.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
-    rootPanel.GetSlider("Slider_Size")->SetMaxValue(20.f);
+    rootPanel.GetSlider("Slider_Size")->SetMaxValue(30.f);
     rootPanel.GetSlider("Slider_Size")->SetMinValue(4.f);
     rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     const float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
@@ -242,7 +244,7 @@ void Layout::SetUpWindow(Panel &rootPanel)
     WaterRenderingButtonCallBack(rootPanel); //default is water rendering
     //CircleButtonCallBack(rootPanel); //default is circle shape
     SquareButtonCallBack(rootPanel); //default is square shape
-    ThreeDButtonCallBack(rootPanel);
+    //ThreeDButtonCallBack(rootPanel);
 }
 
 /*----------------------------------------------------------------------------------------
@@ -389,16 +391,34 @@ void VertLineButtonCallBack(Panel &rootPanel)
 
 void ThreeDButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* const viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
-    viewModeButtons->ExclusiveEnable(rootPanel.GetButton("3D"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(THREE_DIMENSIONAL);
+    Button* button = rootPanel.GetButton("Pause Simulation");
+    PauseSimulation pause(rootPanel);
+    if (button->m_highlighted == true)
+    {
+        pause.End();
+        button->SetHighlight(false);
+    }
+    else
+    {
+        pause.Start();
+        button->SetHighlight(true);
+    }
 }
 
 void TwoDButtonCallBack(Panel &rootPanel)
 {
-    ButtonGroup* const viewModeButtons = rootPanel.GetButtonGroup("ViewModeButtons");
-    viewModeButtons->ExclusiveEnable(rootPanel.GetButton("2D"));
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewMode(TWO_DIMENSIONAL);
+    Button* button = rootPanel.GetButton("Pause Ray Tracing");
+    PauseRayTracing pause(rootPanel);
+    if (button->m_highlighted == true)
+    {
+        pause.End();
+        button->SetHighlight(false);
+    }
+    else
+    {
+        pause.Start();
+        button->SetHighlight(true);
+    }
 }
 
 void Layout::SetUpButtons(Panel &rootPanel)
@@ -433,15 +453,15 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("Vert. Line") };
     ButtonGroup* const shapeButtonGroup = rootPanel.CreateButtonGroup("ShapeButtons", buttons2);
 
-    rootPanel.GetButton("3D")->SetCallback(ThreeDButtonCallBack);
-    rootPanel.GetButton("2D")->SetCallback(TwoDButtonCallBack);
+    rootPanel.GetButton("Pause Simulation")->SetCallback(ThreeDButtonCallBack);
+    rootPanel.GetButton("Pause Ray Tracing")->SetCallback(TwoDButtonCallBack);
     
     std::vector<Button*> buttons3 = {
-        rootPanel.GetButton("2D"),
-        rootPanel.GetButton("3D")
+        rootPanel.GetButton("Pause Ray Tracing"),
+        rootPanel.GetButton("Pause Simulation")
     };
-    rootPanel.GetButton("3D")->m_draw = false;
-    rootPanel.GetButton("2D")->m_draw = false;
+    //rootPanel.GetButton("Pause Simulation")->m_draw = false;
+    //rootPanel.GetButton("Pause Ray Tracing")->m_draw = false;
     ButtonGroup* const viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
 
 }
@@ -524,31 +544,4 @@ void Layout::DrawShapePreview(Panel &rootPanel)
     }
     }
 }
-
-void Layout::UpdateWindowDimensionsBasedOnAspectRatio(int& heightOut, int& widthOut, const int area,
-    const int leftPanelHeight, const int leftPanelWidth, const int xDim, const int yDim,
-    const float scaleUp)
-{
-    const float aspectRatio = static_cast<float>(xDim) / yDim;
-    const float leftPanelW = static_cast<float>(leftPanelWidth);
-    heightOut = scaleUp*(-scaleUp*leftPanelW+sqrt(scaleUp*scaleUp*leftPanelW*leftPanelW
-        +scaleUp*scaleUp*4*aspectRatio*area))/(scaleUp*scaleUp*2.f*aspectRatio);
-    heightOut = std::max(heightOut, leftPanelHeight);
-    widthOut = heightOut*aspectRatio+leftPanelW;
-}
-
-void Layout::UpdateDomainDimensionsBasedOnWindowSize(Panel &rootPanel, const int leftPanelHeight,
-    const int leftPanelWidth)
-{
-    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    const float scaleUp = graphicsManager->GetScaleFactor();
-    const int windowWidth = rootPanel.GetWidth();
-    const int windowHeight = rootPanel.GetHeight();
-    const int xDimVisible = static_cast<float>(windowWidth - leftPanelWidth) / scaleUp;
-    const int yDimVisible = ceil(static_cast<float>(windowHeight) / scaleUp);
-    CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();
-    cudaLbm->GetDomain()->SetXDimVisible(xDimVisible);
-    cudaLbm->GetDomain()->SetYDimVisible(yDimVisible);
-}
-
 

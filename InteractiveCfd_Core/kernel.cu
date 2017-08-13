@@ -1272,7 +1272,8 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f)
+        if ((abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f) &&
+            obst_h[i].state != State::REMOVED && obst_h[i].state != State::INACTIVE)
         {
             Obstruction obst = obst_h[i];
             obst.x /= scaleFactor;
@@ -1288,6 +1289,9 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
 
 void MarchSolution(CudaLbm* cudaLbm)
 {
+    if (cudaLbm->IsPaused()) 
+        return;
+
     Domain* simDomain = cudaLbm->GetDomain();
     int xDim = simDomain->GetXDim();
     int yDim = simDomain->GetYDim();
@@ -1304,10 +1308,7 @@ void MarchSolution(CudaLbm* cudaLbm)
     for (int i = 0; i < tStep; i++)
     {
         MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, u, *simDomain);
-        if (!cudaLbm->IsPaused())
-        {
-            MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
-        }
+        MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
     }
 }
 
