@@ -900,11 +900,11 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
         int obstID = FindOverlappingObstruction(x, y, obstructions);
         if (obstID >= 0)
         {
-            if (zcoord > -1.f+OBST_HEIGHT)
+            if (zcoord > -1.f+OBST_HEIGHT-0.1f)
             {
                 obstructions[obstID].state = State::ACTIVE;
             }
-            if (zcoord < -0.99f)
+            if (zcoord < -1.f+0.1f)
             {
                 obstructions[obstID].state = State::INACTIVE;
             }
@@ -1268,19 +1268,23 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, simDomain);
 }
 
-void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d)
+void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, const float scaleFactor)
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (obst_h[i].u > 0.f || obst_h[i].v > 0.f)
+        if (abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f)
         {
-            obst_h[i].u = 0.f;
-            obst_h[i].v = 0.f;
-            UpdateObstructions << <1, 1 >> >(obst_d,i,obst_h[i]);
+            Obstruction obst = obst_h[i];
+            obst.x /= scaleFactor;
+            obst.y /= scaleFactor;
+            obst.r1 /= scaleFactor;
+            obst.r2 /= scaleFactor;
+            obst.u = 0.f;
+            obst.v = 0.f;
+            UpdateObstructions << <1, 1 >> >(obst_d,i,obst);
         }
     }
 }
-
 
 void MarchSolution(CudaLbm* cudaLbm)
 {
@@ -1323,10 +1327,18 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable cont
         viewMode, u, *simDomain);
 }
 
+// ! In order to maintain the same relative positions/sizes of obstructions when the simulation resolution
+// ! is changed, host obstruction data is stored relative to the max resolution. When host data is passed
+// ! to GPU, the positions and sizes are scaled down based on the current resolution's scaling factor.
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
-    const Obstruction &newObst)
+    const Obstruction &newObst, const float scaleFactor)
 {
-    UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,newObst);
+    Obstruction obst = newObst;
+    obst.x /= scaleFactor;
+    obst.y /= scaleFactor;
+    obst.r1 /= scaleFactor;
+    obst.r2 /= scaleFactor;
+    UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,obst);
 }
 
 void CleanUpDeviceVBO(float4* vis, Domain &simDomain)

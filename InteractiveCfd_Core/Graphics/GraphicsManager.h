@@ -98,6 +98,8 @@ public:
    
     void UpdateViewTransformations();
     void UpdateGraphicsInputs();
+    void UpdateDomainDimensions();
+    void UpdateObstructionScales();
     void UpdateLbmInputs();
     glm::vec4 GetViewportMatrix();
     glm::mat4 GetModelMatrix();

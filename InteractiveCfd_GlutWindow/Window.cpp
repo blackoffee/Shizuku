@@ -92,7 +92,7 @@ void Window::Resize(const int width, const int height)
     float scaleUp = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager()->GetScaleFactor();
     int windowWidth = m_windowPanel->GetWidth();
     int windowHeight = m_windowPanel->GetHeight();
-    Layout::UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, m_leftPanelHeight, m_leftPanelWidth);
+    //Layout::UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, m_leftPanelHeight, m_leftPanelWidth);
 
     RectInt rect = { 200, 100, width, height };
     m_windowPanel->SetSize_Absolute(rect);

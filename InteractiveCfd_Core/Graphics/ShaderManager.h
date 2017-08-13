@@ -85,7 +85,7 @@ public:
     void UpdateLbmInputs(const float u, const float omega);
     void RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
         const float contMin, const float contMax);
-    void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst);
+    void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
         const float3 rayDir);
     void RenderFloorToTexture(Domain &domain);

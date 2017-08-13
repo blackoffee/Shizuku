@@ -482,7 +482,7 @@ void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourV
 
 
 
-void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst)
+void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor)
 {
     const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_obsts);

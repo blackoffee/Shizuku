@@ -21,7 +21,7 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_graphics = new ShaderManager;
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-    m_rotate = { 60.f, 0.f, 30.f };
+    m_rotate = { 45.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
 }
 
@@ -176,8 +176,8 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
         SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
         glMatrixMode(GL_MODELVIEW);
         glm::mat4 modelMat;
-        modelMat = glm::translate(modelMat, glm::vec3{ 0.0, 0.8, -2.0 });
-        modelMat = glm::scale(modelMat, glm::vec3{ 1.f+0.1f*m_translate.z });
+        modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
+        modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
         modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
         modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
         modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
@@ -290,7 +290,7 @@ void GraphicsManager::RunCuda()
     MarchSolution(cudaLbm);
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
-    SetObstructionVelocitiesToZero(obst_h, obst_d);
+    SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
     if (ShouldRenderFloor() && !ShouldRefractSurface())
@@ -342,9 +342,6 @@ void GraphicsManager::RunSurfaceRefraction()
         glm::vec4 cameraDir = GetCameraDirection();
         //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
         //std::cout << "CameraDir: " << cameraDir.x << "," << cameraDir.y << "," << cameraDir.z << std::endl;
-
-
-
 
         RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
 
@@ -414,6 +411,7 @@ bool GraphicsManager::ShouldRefractSurface()
     return false;
 }
 
+// only used in 2D mode
 void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, 
     const float xf, const float yf)
 {
@@ -619,8 +617,8 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
     GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
     Obstruction obst = m_obstructions[obstId];
-    obst.x += simX2-simX1;
-    obst.y += simY2-simY1;
+    obst.x = simX2*m_scaleFactor;
+    obst.y = simY2*m_scaleFactor;
     float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
     float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
     obst.u = u;
@@ -630,11 +628,11 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     if (m_useCuda)
     {
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        UpdateDeviceObstructions(obst_d, obstId, obst);  
+        UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);  
     }
     else
     {
-        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
 }
 
@@ -652,12 +650,14 @@ void GraphicsManager::Zoom(const int dir, const float mag)
 
 void GraphicsManager::AddObstruction(const int simX, const int simY)
 {
-    Obstruction obst = { m_currentObstShape, simX, simY, m_currentObstSize, 0, 0, 0, State::NEW  };
+    Obstruction obst = { m_currentObstShape, simX*m_scaleFactor, simY*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::NEW  };
     int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-    UpdateDeviceObstructions(obst_d, obstId, obst);
-    GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst);
+    if (m_useCuda)
+        UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);
+    else
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
 }
 
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
@@ -672,8 +672,10 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
     {
         m_obstructions[obstId].state = State::REMOVED;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId]);
-        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId]);
+        if (m_useCuda)
+            UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], m_scaleFactor);
+        else
+            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
     }
 }
 
@@ -693,17 +695,19 @@ void GraphicsManager::MoveObstruction(const int xi, const int yi,
         GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
         GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
         Obstruction obst = m_obstructions[m_currentObstId];
-        obst.x += simX2-simX1;
-        obst.y += simY2-simY1;
+        obst.x = simX2;
+        obst.y = simY2;
         float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
         float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
-        obst.u = u;
-        obst.v = v;
+        obst.u = u/m_scaleFactor;
+        obst.v = v/m_scaleFactor;
         obst.state = State::ACTIVE;
         m_obstructions[m_currentObstId] = obst;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        UpdateDeviceObstructions(obst_d, m_currentObstId, obst);
-        GetGraphics()->UpdateObstructionsUsingComputeShader(m_currentObstId, obst);
+//        if (m_useCuda)
+//            UpdateDeviceObstructions(obst_d, m_currentObstId, obst, m_scaleFactor);
+//        else
+//            GetGraphics()->UpdateObstructionsUsingComputeShader(m_currentObstId, obst, m_scaleFactor);
     }
 }
 
@@ -730,7 +734,7 @@ int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
     {
         if (m_obstructions[i].state != State::REMOVED)
         {
-            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x, m_obstructions[i].y);
+            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor, m_obstructions[i].y/m_scaleFactor);
             if (newDist < dist)
             {
                 dist = newDist;
@@ -750,9 +754,9 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     {
         if (m_obstructions[i].state != State::REMOVED)
         {
-            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x,
-                m_obstructions[i].y);
-            if (newDist < dist && newDist < m_obstructions[i].r1+tolerance)
+            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor,
+                m_obstructions[i].y/m_scaleFactor);
+            if (newDist < dist && newDist < m_obstructions[i].r1/m_scaleFactor+tolerance)
             {
                 dist = newDist;
                 closestObstId = i;
@@ -776,7 +780,37 @@ void GraphicsManager::UpdateGraphicsInputs()
     m_contourMinValue = Layout::GetCurrentContourSliderValue(*rootPanel, 1);
     m_contourMaxValue = Layout::GetCurrentContourSliderValue(*rootPanel, 2);
     m_currentObstSize = Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
+    m_scaleFactor = Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    UpdateDomainDimensions();
+    UpdateObstructionScales();
 }
+
+void GraphicsManager::UpdateDomainDimensions()
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->GetDomain()->SetXDimVisible(MAX_XDIM / m_scaleFactor);
+    cudaLbm->GetDomain()->SetYDimVisible(MAX_YDIM / m_scaleFactor);
+}
+
+void GraphicsManager::UpdateObstructionScales()
+{
+    for (int i = 0; i < MAXOBSTS; i++)
+    {
+        if (m_obstructions[i].state != State::REMOVED)
+        {
+            if (m_useCuda)
+            {
+                Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+                UpdateDeviceObstructions(obst_d, i, m_obstructions[i], m_scaleFactor);  
+            }
+            else
+            {
+                GetGraphics()->UpdateObstructionsUsingComputeShader(i, m_obstructions[i], m_scaleFactor);
+            }
+        }
+    }
+}
+
 
 void GraphicsManager::UpdateLbmInputs()
 {

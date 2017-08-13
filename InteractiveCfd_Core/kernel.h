@@ -10,7 +10,7 @@ class CudaLbm;
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     Domain &simDomain);
 
-void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d);
+void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, const float scaleFactor);
 
 void MarchSolution(CudaLbm* cudaLbm);
 
@@ -19,7 +19,7 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm,
     const ViewMode viewMode);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
-    const Obstruction &newObst);
+    const Obstruction &newObst, const float scaleFactor);
 
 void CleanUpDeviceVBO(float4* vis, Domain &simDomain);
 

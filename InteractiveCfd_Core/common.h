@@ -4,7 +4,7 @@
 #define MAX_YDIM 512
 
 #define INITIAL_UMAX 0.125f
-#define BLOCKSIZEX 128
+#define BLOCKSIZEX 64
 #define BLOCKSIZEY 1
 #define REFRESH_DELAY 10
 #define LINE_OBST_WIDTH 1

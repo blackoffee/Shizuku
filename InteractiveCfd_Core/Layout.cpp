@@ -16,7 +16,7 @@ extern const int g_leftPanelHeight(500);
 void Layout::SetUpWindow(Panel &rootPanel)
 {
     const int windowWidth = 1200;
-    const int windowHeight = g_leftPanelHeight+100;
+    const int windowHeight = g_leftPanelHeight+300;
 
     rootPanel.SetSize_Absolute(RectInt(200, 100, windowWidth, windowHeight));
     rootPanel.m_draw = false;
@@ -90,10 +90,10 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider("Slider_Visc")->m_sliderBar1->UpdateValue();
 
     rootPanel.GetPanel("Label_Resolution")->SetDisplayText("Resolution");
-    rootPanel.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(0.3f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
+    rootPanel.GetSlider("Slider_Resolution")->CreateSliderBar(RectFloat(-0.2f, -sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Resolution", Color(Color::GRAY));
     rootPanel.GetSlider("Slider_Resolution")->SetMaxValue(1.f);
-    rootPanel.GetSlider("Slider_Resolution")->SetMinValue(6.f);
+    rootPanel.GetSlider("Slider_Resolution")->SetMinValue(2.5f);
     rootPanel.GetSlider("Slider_Resolution")->m_sliderBar1->UpdateValue();
 
 
@@ -232,8 +232,8 @@ void Layout::SetUpWindow(Panel &rootPanel)
         "Vert. Line", Color(Color::GRAY));
     rootPanel.GetSlider("Slider_Size")->CreateSliderBar(RectFloat(-0.2f,-sliderBarH*0.5f, sliderBarW, sliderBarH),
         Panel::DEF_REL, "SliderBar_Size", Color(Color::GRAY));
-    rootPanel.GetSlider("Slider_Size")->SetMaxValue(15.f);
-    rootPanel.GetSlider("Slider_Size")->SetMinValue(1.f);
+    rootPanel.GetSlider("Slider_Size")->SetMaxValue(20.f);
+    rootPanel.GetSlider("Slider_Size")->SetMinValue(4.f);
     rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     const float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstSize(currentObstSize);
@@ -440,6 +440,8 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("2D"),
         rootPanel.GetButton("3D")
     };
+    rootPanel.GetButton("3D")->m_draw = false;
+    rootPanel.GetButton("2D")->m_draw = false;
     ButtonGroup* const viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
 
 }
@@ -462,18 +464,12 @@ void Layout::DrawShapePreview(Panel &rootPanel)
     const float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
     const int windowWidth = rootPanel.GetWidth();
     const int windowHeight = rootPanel.GetHeight();
-    const float graphicsToWindowScaleFactor = static_cast<float>(windowWidth)/
-        rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
-
     GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();
-    const int xDimVisible = cudaLbm->GetDomain()->GetXDimVisible();
-    const int yDimVisible = cudaLbm->GetDomain()->GetYDimVisible();
     const float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
     const int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
     const int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
-    const int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (xDimVisible); //r1x in pixels
-    const int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (yDimVisible); //r1x in pixels
+    const int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (MAX_XDIM); //r1x in pixels
+    const int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (MAX_XDIM); //r1x in pixels
     float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
     float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
