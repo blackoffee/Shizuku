@@ -912,12 +912,6 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     }
 }
 
-__device__ int findIntersectWithObst(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
-    float3 rayDir, Obstruction* obstructions, Domain simDomain)
-{
-
-}
-
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
     float3 rayDir, Obstruction* obstructions, Domain simDomain)
 {
@@ -1058,6 +1052,7 @@ __device__ int GetCubeMapFace(const float3 &rayDir)
             return 3;
         return 1;
     }
+    return -1;
 }
 
 

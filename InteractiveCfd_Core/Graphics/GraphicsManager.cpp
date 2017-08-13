@@ -137,56 +137,24 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     float scaleUp = rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     SetScaleFactor(scaleUp);
 
-    int windowWidth = rootPanel->GetWidth();
-    int windowHeight = rootPanel->GetHeight();
-
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
 
-    float xTranslation = -((static_cast<float>(windowWidth)-xDimVisible*scaleUp)*0.5
-        - static_cast<float>(leftPanelWidth)) / windowWidth*2.f;
-    float yTranslation = -((static_cast<float>(windowHeight)-yDimVisible*scaleUp)*0.5)
-        / windowHeight*2.f;
-
     //get view transformations
-    float3 cameraPosition = { m_translate.x, 
-        m_translate.y, - m_translate.z };
+    float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    //glMatrixMode(GL_PROJECTION);
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
-    //glTranslatef(xTranslation,yTranslation,0.f);
-    //glScalef((static_cast<float>(xDimVisible*scaleUp) / windowWidth),
-    //    (static_cast<float>(yDimVisible*scaleUp) / windowHeight), 1.f);
-
-
-    //glMatrixMode(GL_PROJECTION);
-    if (m_viewMode == ViewMode::TWO_DIMENSIONAL)
-    {
-        glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
-    }
-    else
-    {
-        //glOrtho(-1,1,-1,static_cast<float>(yDimVisible)/xDimVisible*2.f-1.f,-100,20);
-        //gluPerspective(45.0, static_cast<float>(xDimVisible) / yDimVisible, 0.1, 10.0);
-        //SetProjectionMatrix(glm::ortho(-1.f+m_translate.z, 1.f-m_translate.z, -1.f+m_translate.z, 1.f-m_translate.z, -20.f, 20.f));
-        SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
-        glMatrixMode(GL_MODELVIEW);
-        glm::mat4 modelMat;
-        modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
-        modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
-        modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
-        modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
-        modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
-        //modelMat = glm::translate(modelMat, glm::vec3{ 0,0, -2+m_translate.z });
-        SetModelMatrix(modelMat);
-        //glTranslatef(m_translate.x, m_translate.y, -2+m_translate.z);
-        //glRotatef(-m_rotate.x,1,0,0);
-        //glRotatef(m_rotate.z,0,0,1);
-    }
+    SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
+    glMatrixMode(GL_MODELVIEW);
+    glm::mat4 modelMat;
+    modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
+    modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
+    modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
+    modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
+    modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
+    SetModelMatrix(modelMat);
 }
 
 void GraphicsManager::SetUpGLInterop()

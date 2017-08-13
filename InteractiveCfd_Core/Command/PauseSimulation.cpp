@@ -5,7 +5,6 @@
 PauseSimulation::PauseSimulation(Panel &rootPanel) : Command(rootPanel)
 {
     m_rootPanel = &rootPanel;
-    m_state = INACTIVE;
 }
 
 void PauseSimulation::Start()
