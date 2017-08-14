@@ -193,12 +193,21 @@ __device__ bool IsPointInsideTriangle(const float3 &p1, const float3 &p2,
 }
 
 
-__device__ float GetDistanceBetweenPointAndLine(const float3 &p1, const float3 &q1, const float3 &q2)
+__device__ float GetDistanceBetweenPointAndLineSegment(const float3 &p1, const float3 &q1, const float3 &q2)
 {
     float3 q = q2 - q1;
+    const float magQ = sqrt(DotProduct(q, q));
+    float s = DotProduct(q2 - q1, p1 - q1) / magQ;
+
     Normalize(q);
-    float3 closestPoint = q1+DotProduct(q2 - q1, p1 - q1)/sqrt(DotProduct(q2-q1,q2-q1))*q;
-    return Distance(p1, closestPoint);
+    if (s > 0 && s < magQ)
+    {
+        return Distance(p1, q1 + s*q);
+    }
+    else
+    {
+        return dmin(Distance(p1, q1), Distance(p1, q2));
+    }
 }
 
 
@@ -235,10 +244,10 @@ __device__ float GetDistanceBetweenTwoLineSegments(const float3 &p1, const float
     }
 
     float d1, d2, d3, d4;
-    d1 = GetDistanceBetweenPointAndLine(p1, q1, q2);
-    d2 = GetDistanceBetweenPointAndLine(p2, q1, q2);
-    d3 = GetDistanceBetweenPointAndLine(q1, p1, p2);
-    d4 = GetDistanceBetweenPointAndLine(q2, p1, p2);
+    d1 = GetDistanceBetweenPointAndLineSegment(p1, q1, q2);
+    d2 = GetDistanceBetweenPointAndLineSegment(p2, q1, q2);
+    d3 = GetDistanceBetweenPointAndLineSegment(q1, p1, p2);
+    d4 = GetDistanceBetweenPointAndLineSegment(q2, p1, p2);
     return dmin(dmin(dmin(d1, d2), d3), d4);
 }
 
@@ -319,9 +328,8 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != State::INACTIVE)
         {
-            obstHeight = rayOrigin.z+0.1f;
-            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, rayOrigin.z+0.1f }; //obstHeight };
-            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, 0.f };
+            float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, 0.f };
+            float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };
             float dist = GetDistanceBetweenTwoLineSegments(rayOrigin, rayDest, obstLineP1, obstLineP2);
             if (dist < obstructions[i].r1*2.5f)
             {
@@ -1222,18 +1230,16 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
             refractedColor[2] = textureColor.z*255.f;
             refractedColor[3] = 255;
         }
+
         unsigned char reflectedColor[4];
-        if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, elementPosition+xDimVisible*reflectedRay, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+        float3 reflectedRayDest = elementPosition + xDimVisible*reflectedRay;
+        if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
         {
             std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
                 sizeof(reflectedColor));
         }
         else
         {
-            //if (reflectedRay.z < 0)
-            //{
-            //    reflectedRayIntensity = 0.f;
-            //}
             reflectedColor[0] = skyColor.x;
             reflectedColor[1] = skyColor.y;
             reflectedColor[2] = skyColor.z;
@@ -1284,9 +1290,6 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
 
 void MarchSolution(CudaLbm* cudaLbm)
 {
-    if (cudaLbm->IsPaused()) 
-        return;
-
     Domain* simDomain = cudaLbm->GetDomain();
     int xDim = simDomain->GetXDim();
     int yDim = simDomain->GetYDim();
@@ -1303,6 +1306,8 @@ void MarchSolution(CudaLbm* cudaLbm)
     for (int i = 0; i < tStep; i++)
     {
         MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, u, *simDomain);
+        if (cudaLbm->IsPaused())
+            return;
         MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
     }
 }

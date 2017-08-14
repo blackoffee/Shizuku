@@ -308,7 +308,6 @@ void GraphicsManager::RunSurfaceRefraction()
 
         glm::vec4 cameraPos;
         glm::vec4 cameraDir = GetCameraDirection();
-        //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
         //std::cout << "CameraDir: " << cameraDir.x << "," << cameraDir.y << "," << cameraDir.z << std::endl;
 
         if (!m_rayTracingPaused)
@@ -440,31 +439,7 @@ glm::vec4 GraphicsManager::GetCameraPosition()
 {
     glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
     glm::mat4 model = glm::make_mat4(m_modelMatrix);
-    glm::vec4 rayOrigin1 = { 0.1, 0, 1, 1 };
-    glm::vec4 rayOrigin2 = { 0, 0.1, 1, 1 };
-    glm::vec4 rayOrigin1Ndc = proj*rayOrigin1;
-    rayOrigin1Ndc.x /= rayOrigin1Ndc.w;
-    rayOrigin1Ndc.y /= rayOrigin1Ndc.w;
-    rayOrigin1Ndc.z /= rayOrigin1Ndc.w;
-    glm::vec4 rayOrigin2Ndc = proj*rayOrigin2;
-    rayOrigin2Ndc.x /= rayOrigin2Ndc.w;
-    rayOrigin2Ndc.y /= rayOrigin2Ndc.w;
-    rayOrigin2Ndc.z /= rayOrigin2Ndc.w;
-    glm::vec4 rayDir1Ndc = proj*rayOrigin1Ndc - rayOrigin1Ndc;
-    glm::vec4 rayDir2Ndc = proj*rayOrigin2Ndc - rayOrigin2Ndc;
-
-    const float det = rayDir1Ndc.y*rayDir2Ndc.x - rayDir2Ndc.y*rayDir1Ndc.x;
-    const float u = (rayDir1Ndc.x*(rayOrigin2Ndc.y - rayOrigin1Ndc.y) - rayDir1Ndc.y*(rayOrigin1Ndc.x - rayDir2Ndc.x)) / det;
-    //printf("%f\n", det);
-
-    glm::vec4 cameraPosNdc;
-    cameraPosNdc.x = rayOrigin1Ndc.x + u*rayDir1Ndc.x;
-    cameraPosNdc.y = rayOrigin1Ndc.y + u*rayDir1Ndc.y;
-    cameraPosNdc.z = -(rayOrigin1Ndc.z + u*rayDir1Ndc.z);
-    cameraPosNdc.w = 1.0f;
-
-    return glm::inverse(proj*model)*cameraPosNdc;
-    //return float3{ rayOrigin1.x+u*rayDir1.x, rayOrigin1.y+u*rayDir1.y, rayOrigin1.z+u*rayDir1.z };
+    return glm::inverse(proj*model)*glm::vec4(0, 0, 0, 1);
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
