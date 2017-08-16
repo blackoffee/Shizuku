@@ -27,25 +27,21 @@ void ButtonGroup::ExclusiveEnable(Button* button)
 {
     for (std::vector<Button*>::iterator it = m_buttons.begin(); it != m_buttons.end(); ++it)
     {
-        Slider* sliderForButton(NULL);
-        if ((*it)->GetRootPanel()->GetSlider((*it)->GetName()) != NULL){
-            sliderForButton = (*it)->GetRootPanel()->GetSlider((*it)->GetName());
+        const bool isSelectedButton = (*it == button);
+        (*it)->SetHighlight(isSelectedButton);
+
+        Slider* sliderForButton = (*it)->GetRootPanel()->GetSlider((*it)->GetName());
+        if (sliderForButton == NULL)
+        {
+            continue;
         }
         if (*it == button)
         {
-            (*it)->SetHighlight(true);
-            if (sliderForButton != NULL)
-            {
-                sliderForButton->Show();
-            }
+            sliderForButton->Show();
         }
         else
         {
-            (*it)->SetHighlight(false);
-            if (sliderForButton != NULL)
-            {
-                sliderForButton->Hide();
-            }
+            sliderForButton->Hide();
         }
     }
 }
