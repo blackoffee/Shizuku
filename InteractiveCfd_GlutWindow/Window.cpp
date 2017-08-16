@@ -281,7 +281,7 @@ void Window::InitializeGLUT(int argc, char **argv)
     glutInitWindowSize(width,height);
     glutInitWindowPosition(50,30);
 
-    glutCreateWindow("New Window management");
+    glutCreateWindow("Loading Interactive CFD...");
 
     glutReshapeFunc(ResizeWrapper);
     glutMouseFunc(MouseButtonWrapper);
