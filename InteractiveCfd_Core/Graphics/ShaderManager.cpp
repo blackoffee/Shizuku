@@ -139,6 +139,7 @@ GLuint ShaderManager::GetShaderStorageBuffer(const std::string name)
             return it->m_id;
         }
     }
+    return NULL;
 }
 
 GLuint ShaderManager::GetElementArrayBuffer()
@@ -303,7 +304,6 @@ int ShaderManager::RayCastMouseClick(float3 &rayCastIntersection, const float3 r
     int xDim = domain.GetXDim();
     int yDim = domain.GetYDim();
     glm::vec4 intersectionCoord{ 0, 0, 0, 0 };
-    float intersectCoord[4];
     const GLuint ssbo_rayIntersection = GetShaderStorageBuffer("RayIntersection");
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_rayIntersection);
 

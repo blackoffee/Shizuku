@@ -245,6 +245,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Panel\Panel.cpp" />
     <ClCompile Include="Panel\Slider.cpp" />
     <ClCompile Include="Panel\SliderBar.cpp" />
+    <CudaCompile Include="VectorUtils.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -277,6 +280,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Panel\Panel.h" />
     <ClInclude Include="Panel\Slider.h" />
     <ClInclude Include="Panel\SliderBar.h" />
+    <ClInclude Include="VectorUtils.h" />
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />
     <ClInclude Include="Domain.h" />

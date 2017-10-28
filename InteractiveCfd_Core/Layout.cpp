@@ -245,6 +245,7 @@ Slider* Layout::GetCurrentContourSlider(Panel &rootPanel)
         return rootPanel.GetSlider("StrainRate");
     else if (rootPanel.GetSlider("Pressure")->m_draw == true) 
         return rootPanel.GetSlider("Pressure");
+    return NULL;
 }
 
 float Layout::GetCurrentSliderValue(Panel &rootPanel, const std::string name, const int sliderNumber)
@@ -284,7 +285,7 @@ void InitializeButtonCallBack(Panel &rootPanel)
     cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
     float4* dptr;
     cudaGraphicsMapResources(1, &cudaSolutionField, 0);
-    size_t num_bytes,num_bytes2;
+    size_t num_bytes;
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, cudaSolutionField);
 
     CudaLbm* const cudaLbm = graphicsManager->GetCudaLbm();

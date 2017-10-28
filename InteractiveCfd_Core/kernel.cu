@@ -4,6 +4,7 @@
 
 #include "kernel.h"
 #include "LbmNode.h"
+#include "VectorUtils.h"
 #include "Graphics/CudaLbm.h"
 
 /*----------------------------------------------------------------------------------------
@@ -85,239 +86,6 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
         }
     }
     return -1;
-}
-__device__ float3 operator+(const float3 &u, const float3 &v)
-{
-    return make_float3(u.x + v.x, u.y + v.y, u.z + v.z);
-}
-
-__device__ float2 operator+(const float2 &u, const float2 &v)
-{
-    return make_float2(u.x + v.x, u.y + v.y);
-}
-
-__device__ float3 operator-(const float3 &u, const float3 &v)
-{
-    return make_float3(u.x - v.x, u.y - v.y, u.z - v.z);
-}
-
-__device__ float2 operator-(const float2 &u, const float2 &v)
-
-{
-    return make_float2(u.x - v.x, u.y - v.y);
-}
-
-__device__ float3 operator*(const float3 &u, const float3 &v)
-{
-    return make_float3(u.x * v.x, u.y * v.y, u.z * v.z);
-}
-
-__device__ float3 operator/(const float3 &u, const float3 &v)
-{
-    return make_float3(u.x / v.x, u.y / v.y, u.z / v.z);
-}
-
-__device__ float3 operator*(const float a, const float3 &u)
-{
-    return make_float3(a*u.x, a*u.y, a*u.z);
-}
-
-__device__ float3 operator/(const float3 &u, const float a)
-{
-    return make_float3(u.x / a, u.y / a, u.z / a);
-}
-
-
-__device__ float DotProduct(const float3 &u, const float3 &v)
-{
-    return u.x*v.x + u.y*v.y + u.z*v.z;
-}
-
-__device__ float3 CrossProduct(const float3 &u, const float3 &v)
-{
-    return make_float3(u.y*v.z-u.z*v.y, -(u.x*v.z-u.z*v.x), u.x*v.y-u.y*v.x);
-}
-
-__device__ float CrossProductArea(const float2 &u, const float2 &v)
-{
-    return 0.5f*sqrt((u.x*v.y-u.y*v.x)*(u.x*v.y-u.y*v.x));
-}
-
-__device__ void Normalize(float3 &u)
-{
-    float mag = sqrt(DotProduct(u, u));
-    u.x /= mag;
-    u.y /= mag;
-    u.z /= mag;
-}
-
-__device__ float Distance(const float3 &u, const float3 &v)
-{
-    return sqrt(DotProduct((u-v), (u-v)));
-}
-
-__device__ bool IsPointsOnSameSide(const float2 &p1, const float2 &p2,
-    const float2 &a, const float2 &b)
-{
-    float cp1 = (b - a).x*(p1 - a).y - (b - a).y*(p1 - a).x;
-    float cp2 = (b - a).x*(p2 - a).y - (b - a).y*(p2 - a).x;
-    if (cp1*cp2 >= 0)
-    {
-        return true;
-    }
-    return false;
-}
-
-__device__ bool IsPointInsideTriangle(const float2 &p, const float2 &a,
-    const float2 &b, const float2 &c)
-{
-    if (IsPointsOnSameSide(p, a, b, c) &&
-        IsPointsOnSameSide(p, b, a, c) &&
-        IsPointsOnSameSide(p, c, a, b))
-    {
-        return true;
-    }
-    return false;
-}
-
-__device__ bool IsPointInsideTriangle(const float3 &p1, const float3 &p2,
-    const float3 &p3, const float3 &q)
-{
-    float3 n = CrossProduct((p2 - p1), (p3 - p1));
-
-    if (DotProduct(CrossProduct(p2 - p1, q - p1), n) < 0) return false;
-    if (DotProduct(CrossProduct(p3 - p2, q - p2), n) < 0) return false;
-    if (DotProduct(CrossProduct(p1 - p3, q - p3), n) < 0) return false;
-
-    return true;
-}
-
-
-__device__ float GetDistanceBetweenPointAndLineSegment(const float3 &p1, const float3 &q1, const float3 &q2)
-{
-    float3 q = q2 - q1;
-    const float magQ = sqrt(DotProduct(q, q));
-    float s = DotProduct(q2 - q1, p1 - q1) / magQ;
-
-    Normalize(q);
-    if (s > 0 && s < magQ)
-    {
-        return Distance(p1, q1 + s*q);
-    }
-    else
-    {
-        return dmin(Distance(p1, q1), Distance(p1, q2));
-    }
-}
-
-
-__device__ float GetDistanceBetweenTwoLines(const float3 &p1, const float3 &p2, const float3 &q1, const float3 &q2)
-{
-    float3 n = CrossProduct(p2 - p1, q2 - q1);
-    Normalize(n);
-    return abs(DotProduct(p1 - q1, n));
-}
-
-
-// ! geomalgorithms.com/a07-_distance.html
-__device__ float GetDistanceBetweenTwoLineSegments(const float3 &p1, const float3 &p2, const float3 &q1, const float3 &q2)
-{
-    float3 u = p2 - p1;
-    Normalize(u);
-    float3 v = q2 - q1;
-    Normalize(v);
-    float3 w = p1 - q1;
-
-    float a = DotProduct(u, u);
-    float b = DotProduct(u, v);
-    float c = DotProduct(v, v);
-    float d = DotProduct(u, w);
-    float e = DotProduct(v, w);
-
-    float sc = (b*e - c*d) / (a*c - b*b);
-
-    if (sqrt(DotProduct(p2 - p1, p2 - p1)) > sc && sc > 0)
-    {
-        float3 n = CrossProduct(p2 - p1, q2 - q1);
-        Normalize(n);
-        return abs(DotProduct(p1 - q1, n));
-    }
-
-    float d1, d2, d3, d4;
-    d1 = GetDistanceBetweenPointAndLineSegment(p1, q1, q2);
-    d2 = GetDistanceBetweenPointAndLineSegment(p2, q1, q2);
-    d3 = GetDistanceBetweenPointAndLineSegment(q1, p1, p2);
-    d4 = GetDistanceBetweenPointAndLineSegment(q2, p1, p2);
-    return dmin(dmin(dmin(d1, d2), d3), d4);
-}
-
-// Gets intersection of line with plane created by triangle
-//p1, p2, p3 should be in clockwise order
-__device__ float3 GetIntersectionOfLineWithTriangle(const float3 &lineOrigin,
-    float3 &lineDir, const float3 &p1, const float3 &p2, const float3 &p3)
-{
-    //plane of triangle
-    float3 n = CrossProduct((p2 - p1), (p3 - p1));
-    Normalize(n);
-    float d = DotProduct(n, p1); //coefficient "d" of plane equation (n.x = d)
-
-    Normalize(lineDir);
-    float t = (d-DotProduct(n,lineOrigin))/(DotProduct(n,lineDir));
-
-    return lineOrigin + t*lineDir;
-}
-
-// Gets intersection of line segment with plane created by triangle
-//p1, p2, p3 should be in clockwise order
-__device__ bool GetIntersectionOfLineSegmentWithTriangle(float3 &intersect, const float3 &lineOrigin,
-    float3 &lineDest, const float3 &p1, const float3 &p2, const float3 &p3)
-{
-    //plane of triangle
-    float3 n = CrossProduct((p2 - p1), (p3 - p1));
-    Normalize(n);
-    float d = DotProduct(n, p1); //coefficient "d" of plane equation (n.x = d)
-
-    float3 lineDir = lineDest - lineOrigin;
-    const float length = sqrt(DotProduct(lineDir, lineDir));
-    Normalize(lineDir);
-    float t = (d-DotProduct(n,lineOrigin))/(DotProduct(n,lineDir));
-    if (t > 0 && t < length)
-    {
-        intersect = lineOrigin + t*lineDir;
-        return true;
-    }
-    return false;
-}
-
-
-// Only update intersect reference if intersect is inside the rectangle, and is closer to lineOrigin than previous value
-__device__ bool IntersectLineSegmentWithRect(float3 &intersect, float3 lineOrigin, float3 lineDest, 
-    float3 topLeft, float3 topRight, float3 bottomRight, float3 bottomLeft)
-{
-    float3 temp;
-    if (GetIntersectionOfLineSegmentWithTriangle(temp, lineOrigin, lineDest, topLeft, topRight, bottomRight))
-    {
-        if (IsPointInsideTriangle(topLeft, topRight, bottomRight, temp))
-        {
-            if (Distance(temp, lineOrigin) < Distance(intersect, lineOrigin))
-            {
-                intersect = temp;
-                return true;
-            }
-        }
-    }
-    if (GetIntersectionOfLineSegmentWithTriangle(temp, lineOrigin, lineDest, bottomRight, bottomLeft, topLeft))
-    {
-        if (IsPointInsideTriangle(bottomRight, bottomLeft, topLeft, temp))
-        {
-            if (Distance(temp, lineOrigin) < Distance(intersect, lineOrigin))
-            {
-                intersect = temp;
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
@@ -443,8 +211,8 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     int yDimVisible = simDomain.GetYDimVisible();
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = 0.f;
-    float R(255.f), G(255.f), B(255.f), A(255.f);
-    char b[] = { R, G, B, A };
+    unsigned char R(255), G(255), B(255), A(255);
+    unsigned char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
     int j = x + y*MAX_XDIM;
@@ -462,7 +230,7 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     int obstId = FindOverlappingObstruction(x, y, obstructions);
     if (obstId >= 0)
     {
-        if (obstructions[obstId].u < 1e-5f && obstructions[obstId].v < 1e-5f)
+        if (obstructions[obstId].u < 1e-2f && obstructions[obstId].v < 1e-2f)
         {
             im = 1; //bounce back
             Im[j] = im;
@@ -579,7 +347,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 //    }
 
     float color;
-    char b[] = { R, G, B, A };
+    unsigned char b[] = { R, G, B, A };
     std::memcpy(&color, &b, sizeof(color));
 
     //vbo aray to be displayed
@@ -615,11 +383,7 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     unsigned char color[4];
     std::memcpy(color, &(vbo[j].w), sizeof(color));
-    float R, G, B, A;
-    R = color[0];
-    G = color[1];
-    B = color[2];
-    A = color[3];
+    unsigned char A = color[3];
 
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
@@ -705,7 +469,7 @@ __global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomai
     zcoord = -1.f;
     unsigned char R(255), G(255), B(255), A(255);
 
-    char b[] = { R, G, B, A };
+    unsigned char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
@@ -726,7 +490,6 @@ __device__ float3 RefractRay(float3 incidentLight, float3 n)
 __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
     const int x, const int y, Domain simDomain)
 {
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
     float3 n = { 0, 0, 1 };
@@ -854,6 +617,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
             }
             else if (obstructions[obstID].state == State::REMOVED)
             {
+                obstructions[obstID].u = 0.0f;
+                obstructions[obstID].v = 0.0f;
                 zcoord = dmax(-1.f, zcoord - 0.15f);
             }
             else if (obstructions[obstID].state == State::ACTIVE)
@@ -862,6 +627,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
             }
             else
             {
+                obstructions[obstID].u = 0.0f;
+                obstructions[obstID].v = 0.0f;
                 zcoord = -1.f;
             }
         }
@@ -882,7 +649,7 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     G *= lightFactor;
     B *= lightFactor;
 
-    char b[] = { R, G, B, A };
+    unsigned char b[] = { R, G, B, A };
     float color;
     std::memcpy(&color, &b, sizeof(color));
     int xDimVisible = simDomain.GetXDimVisible();
@@ -899,9 +666,7 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float xcoord, ycoord, zcoord;
-
-    zcoord = vbo[j].z;
+    float zcoord = vbo[j].z;
 
     if (IsInsideObstruction(x, y, obstructions, 1.f))
     {
@@ -1069,36 +834,28 @@ __device__ float2 GetUVCoordsForSkyMap(const float3 &rayOrigin, const float3 &ra
     float2 uv;
     float3 intersect;
     const float maxDim = dmax(MAX_XDIM, MAX_YDIM);
-    const float cubeSize = 5.f*maxDim;
     if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 0) //posz
     {
-        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.z) / rayDir.z)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
-        //if (intersect.x > 1.f || intersect.x < 0.f)
         uv.x =   1024+intersect.x*1024+0.5f;
         uv.y = 2*1024+(1.f-intersect.y)*1024+0.5f;
     }
     else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 1) //negx
     {
-        //intersect = ((rayOrigin + (2.f*maxDim + rayOrigin.x / rayDir.x)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
         uv.x = intersect.y*1024+0.5f;
         uv.y = 1024+intersect.z*1024+0.5f;
     }
     else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 3) //posx
     {
-        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.x) / rayDir.x)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
-
         uv.x = 2*1024+(1.f-intersect.y)*1024+0.5f;
         uv.y = 1024+intersect.z*1024+0.5f;
     }
     else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 2) //posy
     {
-        //intersect = ((rayOrigin + ((3.f*maxDim - rayOrigin.y) / rayDir.y)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
         uv.x = 1024+intersect.x*1024+0.5f;
         uv.y = 1024+intersect.z*1024+0.5f;
     }
     else if (GetIntersectWithCubeMap(intersect, rayOrigin, rayDir) == 4) //negy
     {
-        //intersect = ((rayOrigin + (2.f*maxDim + rayOrigin.y / rayDir.y)*rayDir) + float3{ 2.f*maxDim }) / cubeSize;
         uv.x = 3*1024+(1.f-intersect.x)*1024+0.5f;
         uv.y = 1024+intersect.z*1024+0.5f;
     }
@@ -1106,12 +863,7 @@ __device__ float2 GetUVCoordsForSkyMap(const float3 &rayOrigin, const float3 &ra
     {
         uv.x = 1024+intersect.x*1024+0.5f;
         uv.y = (1.f-intersect.y)*1024+0.5f;
-        //uv = { 0, 0 };
     }
-    //if (threadIdx.x == 10) printf("ray: %i, %f, %f, %f\n", cubeFace, rayDir.x, rayDir.y, rayDir.z);
-    //if (threadIdx.x == 10) printf("intersect: %f, %f, %f\n", intersect.x, intersect.y, intersect.z);
-    //uv.x = 1024 + (rayDir.x + 1.f)*0.5f * 1024;
-    //uv.y = 1024 + (rayDir.z + 1.f)*0.5f * 1024;
     return uv;
 }
 
@@ -1167,7 +919,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     }
     Normalize(n);
     const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
-    float3 elementPosition = {x,y,waterDepth }; //non-normalized
+    float3 elementPosition = {(float)x,(float)y,waterDepth }; //non-normalized
     //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
     float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
     //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);

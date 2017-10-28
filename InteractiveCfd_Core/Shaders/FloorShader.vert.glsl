@@ -35,23 +35,5 @@ void main()
 {
     fColor = unpackColor(color);
 
-    //fColor = vec4(1.f);
-
-    //if (position.z > -0.99f)
-    //{
-        gl_Position = vec4(position,1.0f);
-
-
-    gl_Position.x = position.x;
-    gl_Position.y = position.y;
-
-//        gl_Position.xyz = vec3(0.f);
-//        gl_Position.z = 0.2f;
-//        gl_Position.w = 1.f;
-    //}
-    //else
-    //{
-        //gl_Position = vec4(position,1.0f);
-        //fColor.w = 0.0f;
-    //}
+    gl_Position = vec4(position,1.0f);
 }

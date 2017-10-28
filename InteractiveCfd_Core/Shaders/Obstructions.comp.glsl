@@ -13,7 +13,7 @@ struct Obstruction
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0) buffer ssbo_obsts
 {
-	Obstruction obsts[];
+    Obstruction obsts[];
 };
 
 uniform int maxObsts;
@@ -26,7 +26,7 @@ subroutine uniform ObstUpdate_t ObstUpdate;
 
 subroutine(ObstUpdate_t) void UpdateObstruction()
 {
-	obsts[targetObstId].shape = targetObst.shape;
+    obsts[targetObstId].shape = targetObst.shape;
     obsts[targetObstId].r1 = targetObst.r1;
     obsts[targetObstId].x = targetObst.x;
     obsts[targetObstId].y = targetObst.y;

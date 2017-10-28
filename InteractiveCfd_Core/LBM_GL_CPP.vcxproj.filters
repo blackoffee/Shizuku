@@ -4,6 +4,7 @@
     <CudaCompile Include="Domain.cu" />
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="LbmNode.cu" />
+    <CudaCompile Include="VectorUtils.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Command\AddObstruction.cpp">
@@ -128,6 +129,7 @@
     </ClInclude>
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
+    <ClInclude Include="VectorUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\FloorShader.vert.glsl" />
