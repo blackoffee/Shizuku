@@ -194,6 +194,24 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
     rootPanel.GetSlider(sliderName)->Hide();
 
+    VarName = "Water Rendering";
+    labelName = "Label_"+VarName;
+    sliderName = VarName;
+    sliderBarName1 = VarName+"Max";
+    sliderBarName2 = VarName+"Min";
+    outputsPanel->CreateSlider(contourSliderPosition, Panel::DEF_REL, sliderName, Color(Color::LIGHT_GRAY));
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat(-0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+        Panel::DEF_REL, sliderBarName1, Color(Color::GRAY));
+    rootPanel.GetSlider(sliderName)->CreateSliderBar(RectFloat( 0.45f, -1.f, contourSliderBarWidth, contourSliderBarHeight),
+        Panel::DEF_REL, sliderBarName2, Color(Color::GRAY));
+    rootPanel.GetSlider(sliderName)->SetMaxValue(1.05f);
+    rootPanel.GetSlider(sliderName)->SetMinValue(0.95f);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->SetForegroundColor(Color::BLUE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->SetForegroundColor(Color::WHITE);
+    rootPanel.GetSlider(sliderName)->m_sliderBar1->UpdateValue();
+    rootPanel.GetSlider(sliderName)->m_sliderBar2->UpdateValue();
+    rootPanel.GetSlider(sliderName)->Hide();
+
     //Drawing panel
     Panel* const drawingPreview = rootPanel.GetPanel("Drawing")->CreateSubPanel(RectFloat(-0.5f, -1.f, 1.5f, 1.5f),
         Panel::DEF_REL, "DrawingPreview", Color(Color::DARK_GRAY));
@@ -245,7 +263,8 @@ Slider* Layout::GetCurrentContourSlider(Panel &rootPanel)
         return rootPanel.GetSlider("StrainRate");
     else if (rootPanel.GetSlider("Pressure")->m_draw == true) 
         return rootPanel.GetSlider("Pressure");
-    return NULL;
+    else if (rootPanel.GetSlider("Water Rendering")->m_draw == true) 
+        return rootPanel.GetSlider("Water Rendering");
 }
 
 float Layout::GetCurrentSliderValue(Panel &rootPanel, const std::string name, const int sliderNumber)
@@ -441,6 +460,8 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("Pause Ray Tracing"),
         rootPanel.GetButton("Pause Simulation")
     };
+    //rootPanel.GetButton("Pause Simulation")->m_draw = false;
+    //rootPanel.GetButton("Pause Ray Tracing")->m_draw = false;
     ButtonGroup* const viewModeButtonGroup = rootPanel.CreateButtonGroup("ViewModeButtons", buttons3);
 
 }
