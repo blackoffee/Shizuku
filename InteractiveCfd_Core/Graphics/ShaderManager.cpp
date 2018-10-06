@@ -5,6 +5,8 @@
 #include "helper_cuda.h"
 #include <SOIL/SOIL.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
+#include <cstring>
 #include <assert.h>
 
 ShaderManager::ShaderManager()
@@ -198,7 +200,13 @@ void ShaderManager::AllocateStorageBuffers()
 void ShaderManager::SetUpTextures()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
+    const std::string fileName = "BlueSky.png";
+    int length = fileName.length();
+    char* cstr = new char[length + 1];
+    strcpy(cstr, fileName.c_str());
+
+    unsigned char* image = SOIL_load_image(cstr, &width, &height, 0, SOIL_LOAD_RGB);
+    delete cstr;
     assert(image != NULL);
 //    float* tex = new float[width*height];
 //    for (int i = 0; i < width*height; ++i)

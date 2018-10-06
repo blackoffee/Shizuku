@@ -22,7 +22,7 @@
     <ProjectGuid>{7633F095-C71C-49BF-A436-D13DB1BD6B3A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>GLUT_Window_Manager</RootNamespace>
-    <ProjectName>InteractiveCfd_GlutWindow</ProjectName>
+    <ProjectName>Shizuku</ProjectName>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -115,7 +115,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -153,14 +153,24 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\imgui\imgui.cpp" />
+    <ClCompile Include="..\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\imgui\imconfig.h" />
+    <ClInclude Include="..\imgui\imgui.h" />
+    <ClInclude Include="..\imgui\imgui_internal.h" />
+    <ClInclude Include="..\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\imgui\imstb_truetype.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

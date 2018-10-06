@@ -11,6 +11,7 @@
 #include "FpsTracker.h"
 
 class Domain;
+class GLFWwindow;
 
 class Window
 {
@@ -29,6 +30,7 @@ private:
     int m_leftPanelWidth;
     int m_leftPanelHeight;
     FpsTracker m_fpsTracker;
+    GLFWwindow* m_window;
 public:
     Window();
     Panel* GetWindowPanel();

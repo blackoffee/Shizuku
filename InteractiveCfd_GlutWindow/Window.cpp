@@ -6,8 +6,10 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 #include "Domain.h"
+#include <GLFW/glfw3.h>
 #include <GLUT/freeglut.h>
 #include <typeinfo>
+
 
 void ResizeWrapper(const int x, const int y)
 {
@@ -274,10 +276,12 @@ void Window::DrawLoop()
 
 void Window::InitializeGLUT(int argc, char **argv)
 {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
+
+
     int width = m_windowPanel->GetWidth();
     int height = m_windowPanel->GetHeight();
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
     glutInitWindowSize(width,height);
     glutInitWindowPosition(50,30);
 
@@ -292,10 +296,56 @@ void Window::InitializeGLUT(int argc, char **argv)
     glutDisplayFunc(DrawLoopWrapper);
     glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
 
+
+
+//    glfwInit();
+//    // Set all the required options for GLFW
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+//    // Create a GLFWwindow object that we can use for GLFW's functions
+//    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", nullptr, nullptr);
+//    glfwMakeContextCurrent(window);
+//    m_window = window;
+
+//    // Set the required callback functions
+//    //glfwSetKeyCallback(window, key_callback);
+
+//    // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
+//    glewExperimental = GL_TRUE;
+//    // Initialize GLEW to setup the OpenGL Function pointers
+//    glewInit();
+
+//    // Define the viewport dimensions
+//    glViewport(0, 0, width, height);
+
+
+
+
 }
 
 void Window::Display()
 {
+//    while (!glfwWindowShouldClose(m_window))
+//    {
+//        // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
+//        glfwPollEvents();
+
+
+//        // Render
+//        // Clear the colorbuffer
+//        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//        DrawLoop();
+
+//        glfwSwapBuffers(m_window);
+//    }
+//    // Terminate GLFW, clearing any resources allocated by GLFW.
+//    glfwTerminate();
+
     glutMainLoop();
 }
 
