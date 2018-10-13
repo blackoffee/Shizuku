@@ -254,6 +254,37 @@ void Window::UpdateWindowTitle(const float fps, Domain &domain, const int tSteps
     glutSetWindowTitle(fpsReport);
 }
 
+void Window::GlfwDrawLoop()
+{
+    m_fpsTracker.Tick();
+    GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
+    graphicsManager->UpdateGraphicsInputs();
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+
+    graphicsManager->RunSimulation();
+
+    // render caustic floor to texture
+    graphicsManager->RenderFloorToTexture();
+
+    graphicsManager->RunSurfaceRefraction();
+
+    ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
+
+    graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
+    graphicsManager->UpdateViewTransformations();
+
+    graphicsManager->RenderVbo();
+
+    //Layout::Draw2D(*m_windowPanel);
+
+
+    m_fpsTracker.Tock();
+
+    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+    Domain domain = *cudaLbm->GetDomain();
+    const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
+    std::cout << tStepsPerFrame << ", " << m_fpsTracker.GetFps() << std::endl;
+}
 void Window::DrawLoop()
 {
     m_fpsTracker.Tick();
@@ -289,14 +320,12 @@ void Window::DrawLoop()
 
 void Window::InitializeGLUT(int argc, char **argv)
 {
-
-
     int width = m_windowPanel->GetWidth();
     int height = m_windowPanel->GetHeight();
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE);
-    glutInitWindowSize(width,height);
-    glutInitWindowPosition(50,30);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+    glutInitWindowSize(width, height);
+    glutInitWindowPosition(50, 30);
 
     glutCreateWindow("Loading Interactive CFD...");
 
@@ -308,39 +337,44 @@ void Window::InitializeGLUT(int argc, char **argv)
 
     glutDisplayFunc(DrawLoopWrapper);
     glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
+}
 
+void Window::InitializeGlfw(int argc, char **argv)
+{
+    int width = m_windowPanel->GetWidth();
+    int height = m_windowPanel->GetHeight();
+    glfwInit();
+    // Set all the required options for GLFW
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
+    // Create a GLFWwindow object that we can use for GLFW's functions
+    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+    m_window = window;
 
-//    glfwInit();
-//    // Set all the required options for GLFW
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-//    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+    // Set the required callback functions
+    //glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowSizeCallback(window, ResizeWrapper); //glfw is in C so cannot bind instance method...
 
-//    // Create a GLFWwindow object that we can use for GLFW's functions
-//    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", nullptr, nullptr);
-//    glfwMakeContextCurrent(window);
-//    m_window = window;
+    // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
+    glewExperimental = GL_TRUE;
+    // Initialize GLEW to setup the OpenGL Function pointers
+    glewInit();
 
-//    // Set the required callback functions
-//    //glfwSetKeyCallback(window, key_callback);
-//    glfwSetWindowSizeCallback(window, ResizeWrapper); //glfw is in C so cannot bind instance method...
-
-//    // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
-//    glewExperimental = GL_TRUE;
-//    // Initialize GLEW to setup the OpenGL Function pointers
-//    glewInit();
-
-//    // Define the viewport dimensions
-//    glViewport(0, 0, width, height);
-
-
-
+    // Define the viewport dimensions
+    glViewport(0, 0, width, height);
 
 }
 
 void Window::Display()
+{
+    glutMainLoop();
+}
+
+void Window::GlfwDisplay()
 {
 //    Ogl ogl;
 //    ////Compile shader programs
@@ -380,52 +414,51 @@ void Window::Display()
 //    glm::vec3 cameraUp{ 0.f, 1.0f, 0.0f };
 
 
-//    while (!glfwWindowShouldClose(m_window))
-//    {
-//        // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-//        //glfwPollEvents();
-//        DrawLoop();
+    while (!glfwWindowShouldClose(m_window))
+    {
+        // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
+        glfwPollEvents();
+        GlfwDrawLoop();
 
-////        vao->Bind();
+//        vao->Bind();
 
-////        // Render
-////        // Clear the colorbuffer
-////        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-////        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-
-////        projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 10.0f);
+//        // Render
+//        // Clear the colorbuffer
+//        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 
-
-
-////        //Draw ref frame
-////        basicShader->Use();
-////        ogl.BindBO(GL_ARRAY_BUFFER, *vbo);
-////        ogl.BindBO(GL_ELEMENT_ARRAY_BUFFER, *ebo);
-
-////        basicShader->SetUniform("Transform", view);
-////        basicShader->SetUniform("Projection", projection);
-//// 
-////        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (const void*)(0));
-
-////        ogl.UnbindBO(GL_ARRAY_BUFFER);
-////        ogl.UnbindBO(GL_ELEMENT_ARRAY_BUFFER);
-////        basicShader->Unset();
+//        projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 10.0f);
 
 
 
 
-////        vao->Unbind();
 
-//        glfwSwapBuffers(m_window);
-//    }
-//    // Terminate GLFW, clearing any resources allocated by GLFW.
-//    glfwTerminate();
+//        //Draw ref frame
+//        basicShader->Use();
+//        ogl.BindBO(GL_ARRAY_BUFFER, *vbo);
+//        ogl.BindBO(GL_ELEMENT_ARRAY_BUFFER, *ebo);
 
-    glutMainLoop();
+//        basicShader->SetUniform("Transform", view);
+//        basicShader->SetUniform("Projection", projection);
+// 
+//        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (const void*)(0));
+
+//        ogl.UnbindBO(GL_ARRAY_BUFFER);
+//        ogl.UnbindBO(GL_ELEMENT_ARRAY_BUFFER);
+//        basicShader->Unset();
+
+
+
+
+//        vao->Unbind();
+
+        glfwSwapBuffers(m_window);
+    }
+    // Terminate GLFW, clearing any resources allocated by GLFW.
+    glfwTerminate();
+    //glutMainLoop();
 }
 
 

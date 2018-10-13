@@ -5,6 +5,7 @@
 #include "helper_cuda.h"
 #include <SOIL/SOIL.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <GLEW/glew.h>
 #include <string>
 #include <cstring>
 #include <assert.h>
@@ -110,10 +111,12 @@ void ShaderManager::CreateElementArrayBuffer()
             elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+5] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
         }
     }
+    glBindVertexArray(m_vao);
     glGenBuffers(1, &m_elementArrayBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
     free(elementIndices);
+    glBindVertexArray(0);
 }
 
 void ShaderManager::DeleteElementArrayBuffer(){
@@ -363,10 +366,10 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
 
-    glOrtho(-1,1,-1,1,-100,20);
+    //glOrtho(-1,1,-1,1,-100,20);
     //gluPerspective(45.0, 1.0, 0.1, 10.0);
 
 
@@ -407,7 +410,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //glMatrixMode(GL_MODELVIEW);
     //glLoadIdentity();
 
-    //glBindVertexArray(m_vao);
+    glBindVertexArray(m_vao);
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
@@ -415,7 +418,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-    //glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
@@ -427,7 +430,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //Draw water surface
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
     glDisableClientState(GL_VERTEX_ARRAY);
-    //glBindVertexArray(0);
+    glBindVertexArray(0);
 }
 
 void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
@@ -589,6 +592,7 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
 {
     ShaderProgram* shader = GetShaderProgram();
 
+    glBindVertexArray(m_vao);
     shader->Use();//
     glActiveTexture(GL_TEXTURE0);
     GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");

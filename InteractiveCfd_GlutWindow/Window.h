@@ -48,8 +48,11 @@ public:
         const int x, const int y);
     void UpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
     void DrawLoop();
+    void GlfwDrawLoop();
     void InitializeGLUT(int argc, char **argv);
+    void InitializeGlfw(int argc, char **argv);
     void Display();
+    void GlfwDisplay();
 
     static Window& Instance()
     {

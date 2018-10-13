@@ -10,15 +10,29 @@ int main(int argc, char **argv)
     Layout::SetUpWindow(*windowPanel);
     GraphicsManager* graphicsManager = windowPanel->GetPanel("Graphics")->GetGraphicsManager();
 
-    Window::Instance().InitializeGLUT(argc, argv);
-    Window::Instance().InitializeGL();
+    bool glfw = true;
+    if (glfw)
+    {
+        Window::Instance().InitializeGlfw(argc, argv);
 
-    //graphicsManager->UseCuda(false);
-    graphicsManager->SetUpGLInterop();
-    graphicsManager->SetUpCuda();
-    graphicsManager->SetUpShaders();
+        //graphicsManager->UseCuda(false);
+        graphicsManager->SetUpGLInterop();
+        graphicsManager->SetUpCuda();
+        graphicsManager->SetUpShaders();
 
-    Window::Instance().Display();
+        Window::Instance().GlfwDisplay();
+    }
+    else{
+        Window::Instance().InitializeGLUT(argc, argv);
+        Window::Instance().InitializeGL();
+
+        //graphicsManager->UseCuda(false);
+        graphicsManager->SetUpGLInterop();
+        graphicsManager->SetUpCuda();
+        graphicsManager->SetUpShaders();
+
+        Window::Instance().Display();
+    }
 
     return 0;
 }

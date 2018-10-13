@@ -5,7 +5,7 @@
 #include "SliderBar.h"
 #include "Graphics/GraphicsManager.h"
 #include <GLEW/glew.h>
-#include <GLUT/freeglut.h>
+//#include <GLUT/freeglut.h>
 #include <algorithm>
 #undef min
 #undef max

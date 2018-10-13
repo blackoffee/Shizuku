@@ -479,69 +479,69 @@ void Layout::Draw2D(Panel &rootPanel)
 
 void Layout::DrawShapePreview(Panel &rootPanel)
 {
-    Panel* const previewPanel = rootPanel.GetPanel("DrawingPreview");
-    const float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
-    const float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
-    const int windowWidth = rootPanel.GetWidth();
-    const int windowHeight = rootPanel.GetHeight();
-    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
-    const float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    const int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
-    const int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
-    const int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (MAX_XDIM); //r1x in pixels
-    const int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (MAX_XDIM); //r1x in pixels
-    float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
-    float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
+//    Panel* const previewPanel = rootPanel.GetPanel("DrawingPreview");
+//    const float centerX = previewPanel->GetRectFloatAbs().GetCentroidX();
+//    const float centerY = previewPanel->GetRectFloatAbs().GetCentroidY();
+//    const int windowWidth = rootPanel.GetWidth();
+//    const int windowHeight = rootPanel.GetHeight();
+//    GraphicsManager* const graphicsManager = rootPanel.GetPanel("Graphics")->GetGraphicsManager();
+//    const float currentSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
+//    const int graphicsWindowWidth = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_w;
+//    const int graphicsWindowHeight = rootPanel.GetPanel("Graphics")->GetRectIntAbs().m_h;
+//    const int r1ix = currentSize*static_cast<float>(graphicsWindowWidth) / (MAX_XDIM); //r1x in pixels
+//    const int r1iy = currentSize*static_cast<float>(graphicsWindowHeight) / (MAX_XDIM); //r1x in pixels
+//    float r1fx = static_cast<float>(r1ix) / windowWidth*2.f;
+//    float r1fy = static_cast<float>(r1iy) / windowHeight*2.f;
 
-    Shape currentShape = graphicsManager->GetCurrentObstShape();
-    glColor3f(0.8f,0.8f,0.8f);
-    switch (currentShape)
-    {
-    case Shape::CIRCLE:
-    {
-        glBegin(GL_TRIANGLE_FAN);
-        int circleResolution = 20;
-        glVertex2f(centerX, centerY);
-        for (int i = 0; i <= circleResolution; i++)
-        {
-            glVertex2f(centerX + r1fx*cos(i*2.f*PI/circleResolution),
-                        centerY + r1fy*sin(i*2.f*PI/circleResolution));
-        }
-        glEnd();
-        break;
-    }
-    case Shape::SQUARE:
-    {
-        glBegin(GL_QUADS);
-            glVertex2f(centerX - r1fx, centerY + r1fy);
-            glVertex2f(centerX - r1fx, centerY - r1fy);
-            glVertex2f(centerX + r1fx, centerY - r1fy);
-            glVertex2f(centerX + r1fx, centerY + r1fy);
-        glEnd();
-        break;
-    }
-    case Shape::HORIZONTAL_LINE:
-    {
-        r1fy = static_cast<float>(LINE_OBST_WIDTH) / windowHeight*2.f;
-        glBegin(GL_QUADS);
-            glVertex2f(centerX - r1fx*2.f, centerY + r1fy);
-            glVertex2f(centerX - r1fx*2.f, centerY - r1fy);
-            glVertex2f(centerX + r1fx*2.f, centerY - r1fy);
-            glVertex2f(centerX + r1fx*2.f, centerY + r1fy);
-        glEnd();
-        break;
-    }
-    case Shape::VERTICAL_LINE:
-    {
-        r1fx = static_cast<float>(LINE_OBST_WIDTH) / windowWidth*2.f;
-        glBegin(GL_QUADS);
-            glVertex2f(centerX - r1fx, centerY + r1fy*2.f);
-            glVertex2f(centerX - r1fx, centerY - r1fy*2.f);
-            glVertex2f(centerX + r1fx, centerY - r1fy*2.f);
-            glVertex2f(centerX + r1fx, centerY + r1fy*2.f);
-        glEnd();
-        break;
-    }
-    }
+//    Shape currentShape = graphicsManager->GetCurrentObstShape();
+//    glColor3f(0.8f,0.8f,0.8f);
+//    switch (currentShape)
+//    {
+//    case Shape::CIRCLE:
+//    {
+//        glBegin(GL_TRIANGLE_FAN);
+//        int circleResolution = 20;
+//        glVertex2f(centerX, centerY);
+//        for (int i = 0; i <= circleResolution; i++)
+//        {
+//            glVertex2f(centerX + r1fx*cos(i*2.f*PI/circleResolution),
+//                        centerY + r1fy*sin(i*2.f*PI/circleResolution));
+//        }
+//        glEnd();
+//        break;
+//    }
+//    case Shape::SQUARE:
+//    {
+//        glBegin(GL_QUADS);
+//            glVertex2f(centerX - r1fx, centerY + r1fy);
+//            glVertex2f(centerX - r1fx, centerY - r1fy);
+//            glVertex2f(centerX + r1fx, centerY - r1fy);
+//            glVertex2f(centerX + r1fx, centerY + r1fy);
+//        glEnd();
+//        break;
+//    }
+//    case Shape::HORIZONTAL_LINE:
+//    {
+//        r1fy = static_cast<float>(LINE_OBST_WIDTH) / windowHeight*2.f;
+//        glBegin(GL_QUADS);
+//            glVertex2f(centerX - r1fx*2.f, centerY + r1fy);
+//            glVertex2f(centerX - r1fx*2.f, centerY - r1fy);
+//            glVertex2f(centerX + r1fx*2.f, centerY - r1fy);
+//            glVertex2f(centerX + r1fx*2.f, centerY + r1fy);
+//        glEnd();
+//        break;
+//    }
+//    case Shape::VERTICAL_LINE:
+//    {
+//        r1fx = static_cast<float>(LINE_OBST_WIDTH) / windowWidth*2.f;
+//        glBegin(GL_QUADS);
+//            glVertex2f(centerX - r1fx, centerY + r1fy*2.f);
+//            glVertex2f(centerX - r1fx, centerY - r1fy*2.f);
+//            glVertex2f(centerX + r1fx, centerY - r1fy*2.f);
+//            glVertex2f(centerX + r1fx, centerY + r1fy*2.f);
+//        glEnd();
+//        break;
+//    }
+//    }
 }
 

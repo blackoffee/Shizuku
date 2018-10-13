@@ -8,6 +8,7 @@
 #include "Layout.h"
 #include "kernel.h"
 #include "Domain.h"
+#include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -148,7 +149,6 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
-    glMatrixMode(GL_MODELVIEW);
     glm::mat4 modelMat;
     modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
     modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
