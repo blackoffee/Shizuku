@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     GraphicsManager* graphicsManager = windowPanel->GetPanel("Graphics")->GetGraphicsManager();
 
     Window::Instance().InitializeGLUT(argc, argv);
-    //Window::Instance().InitializeGL();
+    Window::Instance().InitializeGL();
 
     //graphicsManager->UseCuda(false);
     graphicsManager->SetUpGLInterop();
