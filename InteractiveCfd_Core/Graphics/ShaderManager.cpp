@@ -83,30 +83,36 @@ void ShaderManager::DeleteVbo()
 
 void ShaderManager::CreateElementArrayBuffer()
 {
-    const int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    const int numberOfElements = 2*(MAX_XDIM - 1)*(MAX_YDIM - 1);
     const int numberOfNodes = MAX_XDIM*MAX_YDIM;
-    GLuint* elementIndices = new GLuint[numberOfElements * 4 * 2];
+    GLuint* elementIndices = new GLuint[numberOfElements * 3 * 2];
     for (int j = 0; j < MAX_YDIM-1; j++){
         for (int i = 0; i < MAX_XDIM-1; i++){
             //going clockwise, since y orientation will be flipped when rendered
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+0] = (i)+(j)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+1] = (i+1)+(j)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+2] = (i+1)+(j+1)*MAX_XDIM;
-            elementIndices[j*(MAX_XDIM-1)*4+i*4+3] = (i)+(j+1)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+0] = (i)+(j)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+1] = (i+1)+(j)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+2] = (i+1)+(j+1)*MAX_XDIM;
+
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+3] = (i)+(j)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+4] = (i+1)+(j+1)*MAX_XDIM;
+            elementIndices[j*(MAX_XDIM-1)*6+i*6+5] = (i)+(j+1)*MAX_XDIM;
         }
     }
     for (int j = 0; j < MAX_YDIM-1; j++){
         for (int i = 0; i < MAX_XDIM-1; i++){
             //going clockwise, since y orientation will be flipped when rendered
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+0] = numberOfNodes+(i)+(j)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+1] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+2] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
-            elementIndices[numberOfElements*4+j*(MAX_XDIM-1)*4+i*4+3] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+0] = numberOfNodes+(i)+(j)*MAX_XDIM;
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+1] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+2] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+3] = numberOfNodes+(i)+(j)*MAX_XDIM;
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+4] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+5] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
         }
     }
     glGenBuffers(1, &m_elementArrayBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*4*2, elementIndices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
     free(elementIndices);
 }
 
@@ -380,8 +386,8 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
 
     int yDimVisible = domain.GetYDimVisible();
     //Draw floor
-    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
-        BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
 
     floorShader->Unset();
 
@@ -398,8 +404,8 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    //glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
 
     //glBindVertexArray(m_vao);
     //Draw solution field
@@ -415,11 +421,11 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     if (renderFloor)
     {
         //Draw floor
-        glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4, GL_UNSIGNED_INT, 
-            BUFFER_OFFSET(sizeof(GLuint)*4*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+        glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+            BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
     }
     //Draw water surface
-    glDrawElements(GL_QUADS, (MAX_XDIM - 1)*(yDimVisible - 1)*4 , GL_UNSIGNED_INT, (GLvoid*)0);
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
     glDisableClientState(GL_VERTEX_ARRAY);
     //glBindVertexArray(0);
 }
