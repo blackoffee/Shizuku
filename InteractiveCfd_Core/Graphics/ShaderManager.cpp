@@ -200,13 +200,7 @@ void ShaderManager::AllocateStorageBuffers()
 void ShaderManager::SetUpTextures()
 {
     int width, height;
-    const std::string fileName = "BlueSky.png";
-    int length = fileName.length();
-    char* cstr = new char[length + 1];
-    strcpy(cstr, fileName.c_str());
-
-    unsigned char* image = SOIL_load_image(cstr, &width, &height, 0, SOIL_LOAD_RGB);
-    delete cstr;
+    unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
     assert(image != NULL);
 //    float* tex = new float[width*height];
 //    for (int i = 0; i < width*height; ++i)

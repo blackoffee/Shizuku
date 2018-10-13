@@ -8,6 +8,12 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{f85fd320-6c18-43a2-9bde-dda5047f7a6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ogl">
+      <UniqueIdentifier>{75fb856e-364e-47a8-803a-f0f00c24579b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{ff98fe68-0afc-4acf-8ee7-0eb26c2be26d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -23,6 +29,12 @@
     </ClCompile>
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ogl\Ogl.cpp">
+      <Filter>Ogl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ogl\Shader.cpp">
+      <Filter>Ogl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -45,5 +57,19 @@
     <ClInclude Include="..\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="..\Ogl\ogl.h">
+      <Filter>Ogl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Ogl\Shader.h">
+      <Filter>Ogl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="basic.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="basic.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

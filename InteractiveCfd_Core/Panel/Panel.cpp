@@ -253,30 +253,30 @@ void Panel::UpdateAll()
 
 void Panel::Draw()
 {
-    glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
-    glBegin(GL_QUADS);
-    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
-    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
-    glEnd();
+//    glColor3f(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b);
+//    glBegin(GL_QUADS);
+//    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+//    glVertex2f(m_rectFloat_abs.m_x, m_rectFloat_abs.m_y);
+//    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y);
+//    glVertex2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w, m_rectFloat_abs.m_y + m_rectFloat_abs.m_h);
+//    glEnd();
 
-    Panel* rootPanel = GetRootPanel();
-    glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
-    int stringWidth = 0;
-    for (char& c:m_displayText)
-    {
-        stringWidth += (glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, c));
-    }
-    float stringWidthf = static_cast<float>(stringWidth) / rootPanel->m_rectInt_abs.m_w*2.f;
-    float stringHeightf = static_cast<float>(glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, 'A')) /
-        rootPanel->m_rectInt_abs.m_h*2.f;
-    glRasterPos2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w*0.5f-stringWidthf*0.5f, 
-                    m_rectFloat_abs.m_y + m_rectFloat_abs.m_h*0.5f-stringHeightf*0.5f);
-    for (char& c:m_displayText)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
-    }
+//    Panel* rootPanel = GetRootPanel();
+//    glColor3f(m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b);
+//    int stringWidth = 0;
+//    for (char& c:m_displayText)
+//    {
+//        stringWidth += (glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, c));
+//    }
+//    float stringWidthf = static_cast<float>(stringWidth) / rootPanel->m_rectInt_abs.m_w*2.f;
+//    float stringHeightf = static_cast<float>(glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, 'A')) /
+//        rootPanel->m_rectInt_abs.m_h*2.f;
+//    glRasterPos2f(m_rectFloat_abs.m_x + m_rectFloat_abs.m_w*0.5f-stringWidthf*0.5f, 
+//                    m_rectFloat_abs.m_y + m_rectFloat_abs.m_h*0.5f-stringHeightf*0.5f);
+//    for (char& c:m_displayText)
+//    {
+//        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
+//    }
 }
 
 void Panel::DrawAll()

@@ -37,6 +37,7 @@ public:
     float GetFloatCoordX(const int x);
     float GetFloatCoordY(const int y);
     void InitializeGL();
+    void GlfwResize(GLFWwindow* window, int width, int height);
     void Resize(const int width, const int height);
     void MouseButton(const int button, const int state,
         const int x, const int y);
