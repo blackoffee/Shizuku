@@ -132,7 +132,7 @@ bool GraphicsManager::IsCudaCapable()
     return false;
 }
 
-void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth)
+void GraphicsManager::UpdateViewMatrices()
 {
     Panel* rootPanel = m_parent->GetRootPanel();
     float scaleUp = rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
@@ -140,15 +140,9 @@ void GraphicsManager::CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth
 
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-
-    //get view transformations
-    float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
-
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+;
     SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
+    //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
     glm::mat4 modelMat;
     modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
     modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });

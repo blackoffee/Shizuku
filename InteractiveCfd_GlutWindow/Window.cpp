@@ -13,40 +13,57 @@
 #include <typeinfo>
 #include <memory>
 
-
-void ResizeWrapper(const int x, const int y)
+namespace
 {
-    Window::Instance().Resize(x, y);
-}
+    void ResizeWrapper(const int x, const int y)
+    {
+        Window::Instance().Resize(x, y);
+    }
 
-void ResizeWrapper(GLFWwindow* window, int width, int height)
-{
-    Window::Instance().Resize(width, height);
-}
+    void ResizeWrapper(GLFWwindow* window, int width, int height)
+    {
+        Window::Instance().Resize(width, height);
+    }
 
-void MouseButtonWrapper(const int button, const int state, const int x, const int y)
-{
-    Window::Instance().MouseButton(button, state, x, y);
-}
+    void MouseButtonWrapper(const int button, const int state, const int x, const int y)
+    {
+        Window::Instance().MouseButton(button, state, x, y);
+    }
 
-void MouseMotionWrapper(const int x, const int y)
-{
-    Window::Instance().MouseMotion(x, y);
-}
+    void MouseButtonWrapper(GLFWwindow* window, int button, int state, int mods)
+    {
+        Window::Instance().GlfwMouseButton(button, state, mods);
+    }
 
-void MouseWheelWrapper(const int button, const int direction, const int x, const int y)
-{
-    Window::Instance().MouseWheel(button, direction, x, y);
-}
+    void MouseMotionWrapper(const int x, const int y)
+    {
+        Window::Instance().MouseMotion(x, y);
+    }
 
-void KeyboardWrapper(const unsigned char key, const int x, const int y)
-{
-    Window::Instance().Keyboard(key, x, y);
-}
+    void MouseMotionWrapper(GLFWwindow* window, double x, double y)
+    {
+        Window::Instance().MouseMotion(x, y);
+    }
 
-void DrawLoopWrapper()
-{
-    Window::Instance().DrawLoop();
+    void MouseWheelWrapper(GLFWwindow* window, double xwheel, double ywheel)
+    {
+        Window::Instance().GlfwMouseWheel(xwheel, ywheel);
+    }
+
+    void MouseWheelWrapper(const int button, const int direction, const int x, const int y)
+    {
+        Window::Instance().MouseWheel(button, direction, x, y);
+    }
+
+    void KeyboardWrapper(const unsigned char key, const int x, const int y)
+    {
+        Window::Instance().Keyboard(key, x, y);
+    }
+
+    void DrawLoopWrapper()
+    {
+        Window::Instance().DrawLoop();
+    }
 }
 
 Window::Window() :
@@ -126,7 +143,7 @@ void Window::MouseButton(const int button, const int state,
 {
     int windowHeight = m_windowPanel->GetHeight();
     float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(windowHeight-y);
+    float yf = GetFloatCoordY(windowHeight - y);
     m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
     int mod = glutGetModifiers();
     if (m_currentPanel == NULL)
@@ -192,6 +209,77 @@ void Window::MouseButton(const int button, const int state,
     }
 }
 
+void Window::GlfwMouseButton(const int button, const int state, const int mod)
+{
+    double x, y;
+    glfwGetCursorPos(m_window, &x, &y);
+    int windowHeight = m_windowPanel->GetHeight();
+    float xf = GetFloatCoordX(x);
+    float yf = GetFloatCoordY(windowHeight-y);
+    m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
+    if (m_currentPanel == NULL)
+    {
+        return;
+    }
+    if (m_currentPanel->GetGraphicsManager() != NULL)
+    {
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
+            && mod == GLFW_MOD_CONTROL)
+        {
+            m_pan.Start(xf, yf);
+        }
+        else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
+        {
+            m_rotate.Start(xf, yf);
+            m_removeObstruction.Start(xf, yf);
+        }
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
+        {
+            m_addObstruction.Start(xf, yf);
+        }
+        else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
+        {
+            m_moveObstruction.Start(xf, yf);
+        }
+        else
+        {
+            m_pan.End();
+            m_rotate.End();
+            m_sliderDrag.End();
+            m_moveObstruction.End();
+            m_removeObstruction.End(xf, yf);
+        }
+    }
+    else
+    {
+        std::string panelType = typeid(*m_currentPanel).name();
+        if (panelType == "class Button")
+        {
+            Button* buttonPanel = dynamic_cast<Button*>(m_currentPanel);
+            if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
+            {
+                m_buttonPress.Start(buttonPanel);
+            }
+            else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_RELEASE)
+            {
+                m_buttonPress.End(buttonPanel);
+            }
+        }
+        else if (panelType == "class SliderBar")
+        {
+            SliderBar* sliderBar = dynamic_cast<SliderBar*>(m_currentPanel);
+            if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
+            {
+                m_sliderDrag.Start(sliderBar, xf, yf);
+            }
+            else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_RELEASE)
+            {
+                m_sliderDrag.End();
+            }
+        }
+    }
+}
+
 void Window::MouseMotion(const int x, const int y)
 {
     int windowHeight = m_windowPanel->GetHeight();
@@ -231,6 +319,7 @@ void Window::Keyboard(const unsigned char key,
         }
     }
 }
+
 void Window::MouseWheel(const int button, const int direction,
     const int x, const int y)
 {
@@ -241,6 +330,31 @@ void Window::MouseWheel(const int button, const int direction,
     {
         m_zoom.Start(direction, 0.3f);
     }
+}
+
+void Window::GlfwMouseWheel(double xwheel, double ywheel)
+{
+    double x, y;
+    glfwGetCursorPos(m_window, &x, &y);
+    float xf = intCoordToFloatCoord(x, m_windowPanel->GetWidth());
+    float yf = intCoordToFloatCoord(y, m_windowPanel->GetHeight());
+    Panel* panel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
+    if (panel->GetGraphicsManager() != NULL)
+    {
+        const int dir = ywheel > 0 ? 1 : 0;
+        m_zoom.Start(dir, 0.3f);
+    }
+}
+
+void Window::GlfwUpdateWindowTitle(const float fps, Domain &domain, const int tSteps)
+{
+    char fpsReport[256];
+    int xDim = domain.GetXDim();
+    int yDim = domain.GetYDim();
+    sprintf_s(fpsReport, 
+        "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
+        tSteps, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
+    glfwSetWindowTitle(m_window, fpsReport);
 }
 
 void Window::UpdateWindowTitle(const float fps, Domain &domain, const int tSteps)
@@ -268,10 +382,16 @@ void Window::GlfwDrawLoop()
 
     graphicsManager->RunSurfaceRefraction();
 
-    ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
+    ResizeWrapper(m_window, m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
-    graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
+    graphicsManager->UpdateViewMatrices();
     graphicsManager->UpdateViewTransformations();
+
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     graphicsManager->RenderVbo();
 
@@ -284,6 +404,7 @@ void Window::GlfwDrawLoop()
     Domain domain = *cudaLbm->GetDomain();
     const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
     std::cout << tStepsPerFrame << ", " << m_fpsTracker.GetFps() << std::endl;
+    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
 }
 void Window::DrawLoop()
 {
@@ -301,7 +422,7 @@ void Window::DrawLoop()
 
     ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
-    graphicsManager->CenterGraphicsViewToGraphicsPanel(m_leftPanelWidth);
+    graphicsManager->UpdateViewMatrices();
     graphicsManager->UpdateViewTransformations();
 
     graphicsManager->RenderVbo();
@@ -358,6 +479,9 @@ void Window::InitializeGlfw(int argc, char **argv)
     // Set the required callback functions
     //glfwSetKeyCallback(window, key_callback);
     glfwSetWindowSizeCallback(window, ResizeWrapper); //glfw is in C so cannot bind instance method...
+    glfwSetCursorPosCallback(window, MouseMotionWrapper);
+    glfwSetMouseButtonCallback(window, MouseButtonWrapper);
+    glfwSetScrollCallback(window, MouseWheelWrapper);
 
     // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
     glewExperimental = GL_TRUE;

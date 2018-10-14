@@ -41,12 +41,15 @@ public:
     void Resize(const int width, const int height);
     void MouseButton(const int button, const int state,
         const int x, const int y);
+    void GlfwMouseButton(const int button, const int state, const int mod);
     void MouseMotion(const int x, const int y);
     void Keyboard(const unsigned char key,
         const int /*x*/, const int /*y*/);
     void MouseWheel(const int button, const int direction,
         const int x, const int y);
+    void GlfwMouseWheel(double xwheel, double ywheel);
     void UpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
+    void GlfwUpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
     void DrawLoop();
     void GlfwDrawLoop();
     void InitializeGLUT(int argc, char **argv);
@@ -60,10 +63,3 @@ public:
         return s_window;
     }
 };
-
-void ResizeWrapper(const int x, const int y);
-void MouseButtonWrapper(const int button, const int state, const int x, const int y);
-void MouseMotionWrapper(const int x, const int y);
-void MouseWheelWrapper(const int button, const int direction, const int x, const int y);
-void KeyboardWrapper(const unsigned char key, const int x, const int y);
-void DrawLoopWrapper();

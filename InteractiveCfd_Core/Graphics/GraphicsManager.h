@@ -76,7 +76,7 @@ public:
 
     bool IsCudaCapable();
 
-    void CenterGraphicsViewToGraphicsPanel(const int leftPanelWidth);
+    void UpdateViewMatrices();
     void SetUpGLInterop();
     void SetUpShaders();
     void SetUpCuda();
