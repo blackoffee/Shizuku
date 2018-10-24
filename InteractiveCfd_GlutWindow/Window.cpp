@@ -1,3 +1,6 @@
+#include "../imgui/imgui.h"
+#include "../imgui/imgui_impl_glfw.h"
+#include "../imgui/imgui_impl_opengl3.h"
 #include "Window.h"
 #include "Layout.h"
 #include "Panel/Button.h"
@@ -6,12 +9,14 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 #include "Domain.h"
-#include "../Ogl/Ogl.h"
-#include "../Ogl/Shader.h"
+//#include "../Ogl/Ogl.h"
+//#include "../Ogl/Shader.h"
+
 #include <GLFW/glfw3.h>
 #include <GLUT/freeglut.h>
 #include <typeinfo>
 #include <memory>
+
 
 namespace
 {
@@ -373,19 +378,19 @@ void Window::GlfwDrawLoop()
     m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_windowPanel->GetPanel("Graphics")->GetGraphicsManager();
     graphicsManager->UpdateGraphicsInputs();
-    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+//    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
-    graphicsManager->RunSimulation();
+//    graphicsManager->RunSimulation();
 
-    // render caustic floor to texture
-    graphicsManager->RenderFloorToTexture();
+//    // render caustic floor to texture
+//    graphicsManager->RenderFloorToTexture();
 
-    graphicsManager->RunSurfaceRefraction();
+//    graphicsManager->RunSurfaceRefraction();
 
-    ResizeWrapper(m_window, m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
+//    ResizeWrapper(m_window, m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 
-    graphicsManager->UpdateViewMatrices();
-    graphicsManager->UpdateViewTransformations();
+//    graphicsManager->UpdateViewMatrices();
+//    graphicsManager->UpdateViewTransformations();
 
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -396,14 +401,11 @@ void Window::GlfwDrawLoop()
     graphicsManager->RenderVbo();
 
     //Layout::Draw2D(*m_windowPanel);
-
-
     m_fpsTracker.Tock();
 
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     Domain domain = *cudaLbm->GetDomain();
     const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-    std::cout << tStepsPerFrame << ", " << m_fpsTracker.GetFps() << std::endl;
     GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
 }
 void Window::DrawLoop()
@@ -428,6 +430,7 @@ void Window::DrawLoop()
     graphicsManager->RenderVbo();
 
     //Layout::Draw2D(*m_windowPanel);
+
 
 
     glutSwapBuffers();
@@ -537,6 +540,14 @@ void Window::GlfwDisplay()
 //    glm::vec3 cameraFront{ 0.f, 0.0f, -1.0f };
 //    glm::vec3 cameraUp{ 0.f, 1.0f, 0.0f };
 
+//    // Setup Dear ImGui binding
+//    IMGUI_CHECKVERSION();
+//    ImGui::CreateContext();
+//    ImGuiIO& io = ImGui::GetIO(); (void)io;
+//    const char* glsl_version = "#version 430 core";
+//    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+//    ImGui_ImplOpenGL3_Init(glsl_version);
+//    ImGui::StyleColorsDark();
 
     while (!glfwWindowShouldClose(m_window))
     {
@@ -544,39 +555,11 @@ void Window::GlfwDisplay()
         glfwPollEvents();
         GlfwDrawLoop();
 
-//        vao->Bind();
-
-//        // Render
-//        // Clear the colorbuffer
-//        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-
-//        projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 10.0f);
-
-
-
-
-
-//        //Draw ref frame
-//        basicShader->Use();
-//        ogl.BindBO(GL_ARRAY_BUFFER, *vbo);
-//        ogl.BindBO(GL_ELEMENT_ARRAY_BUFFER, *ebo);
-
-//        basicShader->SetUniform("Transform", view);
-//        basicShader->SetUniform("Projection", projection);
-// 
-//        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (const void*)(0));
-
-//        ogl.UnbindBO(GL_ARRAY_BUFFER);
-//        ogl.UnbindBO(GL_ELEMENT_ARRAY_BUFFER);
-//        basicShader->Unset();
-
-
-
-
-//        vao->Unbind();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        bool test;
+        ImGui::ShowDemoWindow(&test);
 
         glfwSwapBuffers(m_window);
     }

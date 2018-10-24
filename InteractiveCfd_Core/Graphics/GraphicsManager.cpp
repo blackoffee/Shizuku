@@ -145,8 +145,8 @@ void GraphicsManager::UpdateViewMatrices()
     //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
     glm::mat4 modelMat;
     modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
-    modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
     modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
+    modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
     modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
     modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
     SetModelMatrix(modelMat);
