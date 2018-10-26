@@ -1,4 +1,6 @@
 #pragma once
+#include <stdio.h>
+
 #define MAXOBSTS 100
 #define MAX_XDIM 768
 #define MAX_YDIM 768

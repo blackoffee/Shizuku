@@ -283,6 +283,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SliderDrag.h" />
     <ClInclude Include="Command\Zoom.h" />
+    <ClInclude Include="CudaCheck.h" />
     <ClInclude Include="FpsTracker.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />

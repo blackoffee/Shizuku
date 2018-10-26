@@ -4,6 +4,7 @@
 
 #include "kernel.h"
 #include "LbmNode.h"
+#include "CudaCheck.h"
 #include "VectorUtils.h"
 #include "Graphics/CudaLbm.h"
 
@@ -1179,8 +1180,8 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    cudaBindTextureToArray(floorTex, floorLightTexture);
-    cudaBindTextureToArray(envTex, envTexture);
+    gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
+    gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
     SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
 }

@@ -130,6 +130,9 @@
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="VectorUtils.h" />
+    <ClInclude Include="CudaCheck.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\FloorShader.vert.glsl" />

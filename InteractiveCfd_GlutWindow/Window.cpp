@@ -378,7 +378,7 @@ void Window::GlfwDrawLoop()
     graphicsManager->RunSimulation();
 
     // render caustic floor to texture
-    graphicsManager->RenderFloorToTexture();
+    //graphicsManager->RenderFloorToTexture();
 
     graphicsManager->RunSurfaceRefraction();
 
@@ -403,7 +403,6 @@ void Window::GlfwDrawLoop()
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     Domain domain = *cudaLbm->GetDomain();
     const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-    std::cout << tStepsPerFrame << ", " << m_fpsTracker.GetFps() << std::endl;
     GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
 }
 void Window::DrawLoop()
@@ -416,9 +415,9 @@ void Window::DrawLoop()
     graphicsManager->RunSimulation();
 
     // render caustic floor to texture
-    //graphicsManager->RenderFloorToTexture();
+    graphicsManager->RenderFloorToTexture();
 
-    //graphicsManager->RunSurfaceRefraction();
+    graphicsManager->RunSurfaceRefraction();
 
     ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
 

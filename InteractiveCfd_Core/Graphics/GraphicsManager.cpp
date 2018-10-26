@@ -8,6 +8,7 @@
 #include "Layout.h"
 #include "kernel.h"
 #include "Domain.h"
+#include "CudaCheck.h"
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -318,9 +319,9 @@ void GraphicsManager::RunSurfaceRefraction()
         RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
 
         // unmap buffer object
-        cudaGraphicsUnmapResources(1, &vbo_resource, 0);
-        cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0);
-        cudaGraphicsUnmapResources(1, &envTextureResource, 0);
+        gpuErrchk(cudaGraphicsUnmapResources(1, &vbo_resource, 0));
+        gpuErrchk(cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0));
+        gpuErrchk(cudaGraphicsUnmapResources(1, &envTextureResource, 0));
     }
 }
 
