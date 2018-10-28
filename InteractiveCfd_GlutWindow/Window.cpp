@@ -2,12 +2,14 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 #include "Domain.h"
-#include "../Ogl/Ogl.h"
-#include "../Ogl/Shader.h"
+#include "../Shizuku.Core/Ogl/Ogl.h"
+#include "../Shizuku.Core/Ogl/Shader.h"
+
 #include <GLFW/glfw3.h>
 #include <GLUT/freeglut.h>
 #include <typeinfo>
 #include <memory>
+
 
 namespace
 {
