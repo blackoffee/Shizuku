@@ -253,12 +253,6 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
-    <ClCompile Include="Layout.cpp" />
-    <ClCompile Include="Panel\Button.cpp" />
-    <ClCompile Include="Panel\ButtonGroup.cpp" />
-    <ClCompile Include="Panel\Panel.cpp" />
-    <ClCompile Include="Panel\Slider.cpp" />
-    <ClCompile Include="Panel\SliderBar.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>Document</FileType>
     </CudaCompile>
@@ -285,14 +279,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\GraphicsManager.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />
     <ClInclude Include="kernel.h" />
-    <ClInclude Include="Layout.h" />
     <ClInclude Include="LbmNode.h" />
     <ClInclude Include="common.h" />
-    <ClInclude Include="Panel\Button.h" />
-    <ClInclude Include="Panel\ButtonGroup.h" />
-    <ClInclude Include="Panel\Panel.h" />
-    <ClInclude Include="Panel\Slider.h" />
-    <ClInclude Include="Panel\SliderBar.h" />
     <ClInclude Include="VectorUtils.h" />
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />

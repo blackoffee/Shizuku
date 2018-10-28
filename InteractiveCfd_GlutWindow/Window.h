@@ -30,7 +30,9 @@ private:
     GraphicsManager* m_graphics;
 public:
     Window();
+    Window(GraphicsManager& graphics);
     void SetGraphicsManager(GraphicsManager& graphics);
+    void RegisterCommands();
     float GetFloatCoordX(const int x);
     float GetFloatCoordY(const int y);
     void InitializeGL();

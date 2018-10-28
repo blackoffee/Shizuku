@@ -11,11 +11,14 @@ int main(int argc, char **argv)
     graphicsManager->SetViewport(500, 500);
     graphicsManager->SetContourVar(ContourVariable::WATER_RENDERING);
 
+    //Window window = Window(*graphicsManager);
+    Window::Instance().SetGraphicsManager(*graphicsManager);
+    Window::Instance().RegisterCommands();
+
     bool glfw = true;
     if (glfw)
     {
         Window::Instance().InitializeGlfw(argc, argv);
-        Window::Instance().SetGraphicsManager(*graphicsManager);
 
         //graphicsManager->UseCuda(false);
         graphicsManager->SetUpGLInterop();

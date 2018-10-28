@@ -79,9 +79,7 @@ namespace
 
 }
 
-Window::Window() :
-    m_leftPanelWidth(250),
-    m_leftPanelHeight(500),
+Window::Window() : 
     m_zoom(Zoom(*m_graphics)),
     m_pan(Pan(*m_graphics)),
     m_rotate(Rotate(*m_graphics)),
@@ -92,10 +90,20 @@ Window::Window() :
 {
 }
 
-
-void Window::SetGraphicsManager(GraphicsManager& graphics)
+void Window::SetGraphicsManager(GraphicsManager &graphics)
 {
     m_graphics = &graphics;
+}
+
+void Window::RegisterCommands()
+{
+    m_zoom = Zoom(*m_graphics);
+    m_pan = Pan(*m_graphics);
+    m_rotate = Rotate(*m_graphics);
+    m_addObstruction = AddObstruction(*m_graphics);
+    m_removeObstruction = RemoveObstruction(*m_graphics);
+    m_moveObstruction = MoveObstruction(*m_graphics);
+    m_pauseSimulation = PauseSimulation(*m_graphics);
 }
 
 float Window::GetFloatCoordX(const int x)

@@ -1,10 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CudaCompile Include="Domain.cu" />
-    <CudaCompile Include="kernel.cu" />
-    <CudaCompile Include="LbmNode.cu" />
-    <CudaCompile Include="VectorUtils.cu" />
+    <CudaCompile Include="Domain.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="kernel.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="LbmNode.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="VectorUtils.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Command\AddObstruction.cpp">
@@ -29,10 +37,8 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="FpsTracker.cpp" />
-    <ClCompile Include="Layout.cpp" />
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -42,26 +48,14 @@
     <ClCompile Include="Graphics\CudaLbm.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Panel\Panel.cpp">
-      <Filter>Panel</Filter>
-    </ClCompile>
-    <ClCompile Include="Panel\Button.cpp">
-      <Filter>Panel</Filter>
-    </ClCompile>
-    <ClCompile Include="Panel\ButtonGroup.cpp">
-      <Filter>Panel</Filter>
-    </ClCompile>
-    <ClCompile Include="Panel\Slider.cpp">
-      <Filter>Panel</Filter>
-    </ClCompile>
-    <ClCompile Include="Panel\SliderBar.cpp">
-      <Filter>Panel</Filter>
-    </ClCompile>
     <ClCompile Include="Command\PauseRayTracing.cpp">
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Command\PauseSimulation.cpp">
       <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,14 +78,9 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="common.h" />
-    <ClInclude Include="Domain.h" />
     <ClInclude Include="FpsTracker.h" />
-    <ClInclude Include="kernel.h" />
-    <ClInclude Include="Layout.h" />
-    <ClInclude Include="LbmNode.h" />
     <ClInclude Include="RectFloat.h" />
     <ClInclude Include="RectInt.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="Command\Pan.h">
       <Filter>Command</Filter>
     </ClInclude>
@@ -104,22 +93,6 @@
     <ClInclude Include="Graphics\CudaLbm.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Panel\Panel.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
-    <ClInclude Include="Panel\Button.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
-    <ClInclude Include="Panel\ButtonGroup.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
-    <ClInclude Include="Panel\Slider.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
-    <ClInclude Include="Panel\SliderBar.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
-    <ClInclude Include="VectorUtils.h" />
     <ClInclude Include="CudaCheck.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -129,10 +102,23 @@
     <ClInclude Include="Command\PauseSimulation.h">
       <Filter>Command</Filter>
     </ClInclude>
+    <ClInclude Include="Domain.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="LbmNode.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="VectorUtils.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\FloorShader.vert.glsl" />
-    <None Include="Shaders\FloorShader.frag.glsl" />
     <None Include="Shaders\SurfaceShader.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
@@ -143,6 +129,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\SurfaceShader.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\FloorShader.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\FloorShader.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -156,8 +148,8 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{5572258e-85d1-4c30-8691-d0a082b7aae4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Panel">
-      <UniqueIdentifier>{f9951763-99c8-4613-bfb6-a385b51a891b}</UniqueIdentifier>
+    <Filter Include="Cuda">
+      <UniqueIdentifier>{749be78f-86d4-478a-91d7-32ec281a29cc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
