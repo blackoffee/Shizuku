@@ -560,7 +560,7 @@ void Window::GlfwDisplay()
     while (!glfwWindowShouldClose(m_window))
     {
         // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-        //glfwPollEvents();
+        glfwPollEvents();
         GlfwDrawLoop();
 
 //        vao->Bind();
