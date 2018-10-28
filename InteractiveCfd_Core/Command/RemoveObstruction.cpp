@@ -1,9 +1,8 @@
 #include "RemoveObstruction.h"
 #include "Graphics/GraphicsManager.h"
 
-RemoveObstruction::RemoveObstruction(Panel &rootPanel) : Command(rootPanel)
+RemoveObstruction::RemoveObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
     m_currentObst = -1;
     m_state = INACTIVE;
 }

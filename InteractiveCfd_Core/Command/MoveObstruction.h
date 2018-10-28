@@ -7,7 +7,7 @@ class FW_API MoveObstruction : public Command
     float m_initialX;
     float m_initialY;
 public:
-    MoveObstruction(Panel &rootPanel);
+    MoveObstruction(GraphicsManager &graphicsManager);
     void Start(const float currentX, const float currentY);
     void Track(const float currentX, const float currentY);
     void End();

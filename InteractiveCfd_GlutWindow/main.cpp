@@ -1,19 +1,21 @@
 #include "Window.h"
-#include "Layout.h"
-#include "Panel/Panel.h"
 #include "Graphics/GraphicsManager.h"
 
 int main(int argc, char **argv)
 {
-    Panel* windowPanel = Window::Instance().GetWindowPanel();
+    GraphicsManager* graphicsManager = &(GraphicsManager());
 
-    Layout::SetUpWindow(*windowPanel);
-    GraphicsManager* graphicsManager = windowPanel->GetPanel("Graphics")->GetGraphicsManager();
+    //Layout::SetUpWindow(*windowPanel, *graphicsManager);
+    //GraphicsManager* graphicsManager = windowPanel->GetPanel("Graphics")->GetGraphicsManager();
+
+    graphicsManager->SetViewport(500, 500);
+    graphicsManager->SetContourVar(ContourVariable::WATER_RENDERING);
 
     bool glfw = true;
     if (glfw)
     {
         Window::Instance().InitializeGlfw(argc, argv);
+        Window::Instance().SetGraphicsManager(*graphicsManager);
 
         //graphicsManager->UseCuda(false);
         graphicsManager->SetUpGLInterop();

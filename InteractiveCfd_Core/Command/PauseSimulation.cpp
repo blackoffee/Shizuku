@@ -2,9 +2,8 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 
-PauseSimulation::PauseSimulation(Panel &rootPanel) : Command(rootPanel)
+PauseSimulation::PauseSimulation(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
 }
 
 void PauseSimulation::Start()

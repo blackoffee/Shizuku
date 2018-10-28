@@ -6,22 +6,19 @@
 #define FW_API __declspec(dllimport)   
 #endif  
 
-class Panel;
-class Button;
-class SliderBar;
 class GraphicsManager;
 
 class FW_API Command
 {
+private:
+    GraphicsManager* m_graphics;
 protected:
-    Panel* m_rootPanel;
     enum State {ACTIVE, INACTIVE};
     State m_state;
     Command();
-    Command(Panel &rootPanel);
+    Command(GraphicsManager &graphicsManager);
     void Start();
     void Track();
     void End();
-    Panel* GetRootPanel();
     GraphicsManager* GetGraphicsManager();
 };

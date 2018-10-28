@@ -2,12 +2,9 @@
 #include "ShaderManager.h"
 #include "CudaLbm.h"
 #include "Shader.h"
-#include "Panel/Slider.h"
-#include "Panel/SliderBar.h"
-#include "Panel/Panel.h"
-#include "Layout.h"
 #include "kernel.h"
 #include "Domain.h"
+#include "../RectFloat.h"
 #include "CudaCheck.h"
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -17,6 +14,27 @@
 #undef min
 #undef max
 
+namespace{
+    float intCoordToFloatCoord(const int x, const int xDim)
+    {
+        return (static_cast<float> (x) / xDim)*2.f - 1.f;
+    }
+
+    int floatCoordToIntCoord(const float x, const int xDim)
+    {
+        return static_cast<int> ((x+1.f)/2.f*xDim);
+    }
+}
+
+GraphicsManager::GraphicsManager()
+{
+    m_graphics = new ShaderManager;
+    m_graphics->CreateCudaLbm();
+    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
+    m_rotate = { 45.f, 0.f, 45.f };
+    m_translate = { 0.f, 0.f, 0.0f };
+}
+
 GraphicsManager::GraphicsManager(Panel* panel)
 {
     m_parent = panel;
@@ -25,6 +43,18 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
     m_rotate = { 45.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
+}
+
+void GraphicsManager::SetViewport(int x, int y)
+{
+    m_viewX = x;
+    m_viewY = y;
+}
+
+void GraphicsManager::GetViewport(int& x, int& y)
+{
+    x = m_viewX;
+    y = m_viewY;
 }
 
 void GraphicsManager::UseCuda(bool useCuda)
@@ -135,8 +165,7 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    Panel* rootPanel = m_parent->GetRootPanel();
-    float scaleUp = rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    float scaleUp = 1.7f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     SetScaleFactor(scaleUp);
 
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
@@ -184,7 +213,7 @@ void GraphicsManager::SetUpCuda()
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();
 
-    float u = m_parent->GetRootPanel()->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float u = 0.08f;// m_parent->GetRootPanel()->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
 
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
@@ -227,7 +256,6 @@ void GraphicsManager::RunCuda()
     ShaderManager* graphics = GetGraphics();
     cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
     cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorLightTextureResource();
-    Panel* rootPanel = m_parent->GetRootPanel();
 
     float4 *dptr;
     cudaArray *floorTexture;
@@ -280,7 +308,6 @@ void GraphicsManager::RunSurfaceRefraction()
         cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
         cudaGraphicsResource* floorLightTextureResource = graphics->GetCudaFloorLightTextureResource();
         cudaGraphicsResource* envTextureResource = graphics->GetCudaEnvTextureResource();
-        Panel* rootPanel = m_parent->GetRootPanel();
 
         float4 *dptr;
         cudaArray *floorLightTexture;
@@ -384,14 +411,14 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut,
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();    
-    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / m_parent->GetRectFloatAbs();
+    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / RectFloat(0.f, 0.f, 1.f, 1.f);// m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_w), MAX_XDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_viewX), MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        std::min(static_cast<float>(m_parent->GetRectIntAbs().m_h), MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_parent->GetRectIntAbs().m_w)*
+        std::min(static_cast<float>(m_viewY), MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_viewX)*
         graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_parent->GetRectIntAbs().m_h)*
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_viewY)*
         graphicsToSimDomainScalingFactorY;
 }
 
@@ -493,8 +520,8 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
 void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     const float mouseXf, const float mouseYf, const float planeZ)
 {
-    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
-    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    int mouseX = floatCoordToIntCoord(mouseXf, m_viewX);
+    int mouseY = floatCoordToIntCoord(mouseYf, m_viewY);
     GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, planeZ);
 }
 
@@ -530,8 +557,8 @@ void GraphicsManager::Rotate(const float dx, const float dy)
 
 int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
 {
-    int mouseX = floatCoordToIntCoord(mouseXf, m_parent->GetRootPanel()->GetWidth());
-    int mouseY = floatCoordToIntCoord(mouseYf, m_parent->GetRootPanel()->GetHeight());
+    int mouseX = floatCoordToIntCoord(mouseXf, m_viewX);
+    int mouseY = floatCoordToIntCoord(mouseYf, m_viewY);
     return PickObstruction(mouseX, mouseY);
 }
 
@@ -551,8 +578,8 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
 {
     int simX1, simY1, simX2, simY2;
     int xi, yi, dxi, dyi;
-    int windowWidth = m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-    int windowHeight = m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+    int windowWidth = m_viewX;// m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+    int windowHeight = m_viewY;// m_parent->GetRootPanel()->GetRectIntAbs().m_h;
     xi = floatCoordToIntCoord(mouseXf, windowWidth);
     yi = floatCoordToIntCoord(mouseYf, windowHeight);
     dxi = dxf*static_cast<float>(windowWidth) / 2.f;
@@ -693,11 +720,10 @@ void GraphicsManager::UpdateViewTransformations()
 
 void GraphicsManager::UpdateGraphicsInputs()
 {
-    Panel* rootPanel = m_parent->GetRootPanel();
-    m_contourMinValue = Layout::GetCurrentContourSliderValue(*rootPanel, 1);
-    m_contourMaxValue = Layout::GetCurrentContourSliderValue(*rootPanel, 2);
-    m_currentObstSize = Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
-    m_scaleFactor = Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
+    m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
+    m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
+    m_scaleFactor = 1.7f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }
@@ -731,9 +757,8 @@ void GraphicsManager::UpdateObstructionScales()
 
 void GraphicsManager::UpdateLbmInputs()
 {
-    Panel* rootPanel = m_parent->GetRootPanel();
-    float u = rootPanel->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    float omega = rootPanel->GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    float u = 0.05f;// rootPanel->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    float omega = 1.9f;//1.8 - 1.99   rootPanel->GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetInletVelocity(u);
     cudaLbm->SetOmega(omega);

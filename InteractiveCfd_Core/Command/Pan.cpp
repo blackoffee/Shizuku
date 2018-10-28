@@ -1,9 +1,8 @@
 #include "Pan.h"
 #include "Graphics/GraphicsManager.h"
 
-Pan::Pan(Panel &rootPanel) : Command(rootPanel)
+Pan::Pan(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 

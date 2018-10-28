@@ -4,7 +4,7 @@
 class FW_API PauseRayTracing : public Command
 {
 public:
-    PauseRayTracing(Panel &rootPanel);
+    PauseRayTracing(GraphicsManager &graphicsManager);
     void Start();
     void End();
 };

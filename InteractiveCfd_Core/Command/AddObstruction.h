@@ -4,7 +4,7 @@
 class FW_API AddObstruction : public Command
 {
 public:
-    AddObstruction(Panel &rootPanel);
+    AddObstruction(GraphicsManager &graphicsManager);
     void Start(const float currentX, const float currentY);
 };
 

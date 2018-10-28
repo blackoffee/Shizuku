@@ -43,8 +43,15 @@ private:
     bool m_useCuda = true;
     float4* m_rayCastIntersect_d;
 
+    int m_viewX;
+    int m_viewY;
+
 public:
+    GraphicsManager();
     GraphicsManager(Panel* panel);
+
+    void SetViewport(int x, int y);
+    void GetViewport(int& x, int& y);
 
     void UseCuda(bool useCuda);
 

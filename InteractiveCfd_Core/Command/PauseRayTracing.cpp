@@ -1,9 +1,8 @@
 #include "PauseRayTracing.h"
 #include "Graphics/GraphicsManager.h"
 
-PauseRayTracing::PauseRayTracing(Panel &rootPanel) : Command(rootPanel)
+PauseRayTracing::PauseRayTracing(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
 }
 
 void PauseRayTracing::Start()

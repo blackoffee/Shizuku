@@ -15,7 +15,7 @@
 extern const int g_leftPanelWidth(150);
 extern const int g_leftPanelHeight(500);
 
-void Layout::SetUpWindow(Panel &rootPanel)
+void Layout::SetUpWindow(Panel &rootPanel, GraphicsManager &graphicsManager)
 {
     const int windowWidth = 1200;
     const int windowHeight = g_leftPanelHeight+300;
@@ -56,7 +56,7 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.CreateSubPanel(RectInt(g_leftPanelWidth, 0, windowWidth-g_leftPanelWidth, windowHeight),
         Panel::DEF_ABS, "Graphics", Color(Color::RED));
     rootPanel.GetPanel("Graphics")->m_draw = false;
-    rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
+    //rootPanel.GetPanel("Graphics")->CreateGraphicsManager();
 
     const float sliderH = 1.4f/3.f/2.f;
     const float sliderBarW = 0.1f;
@@ -238,13 +238,18 @@ void Layout::SetUpWindow(Panel &rootPanel)
     rootPanel.GetSlider("Slider_Size")->SetMinValue(4.f);
     rootPanel.GetSlider("Slider_Size")->m_sliderBar1->UpdateValue();
     const float currentObstSize = rootPanel.GetSlider("Slider_Size")->m_sliderBar1->GetValue();
-    rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstSize(currentObstSize);
+    //rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstSize(currentObstSize);
 
-    Layout::SetUpButtons(rootPanel);
-    WaterRenderingButtonCallBack(rootPanel); //default is water rendering
+    //Layout::SetUpButtons(rootPanel);
+    //WaterRenderingButtonCallBack(rootPanel); //default is water rendering
     //CircleButtonCallBack(rootPanel); //default is circle shape
-    SquareButtonCallBack(rootPanel); //default is square shape
+    //SquareButtonCallBack(rootPanel); //default is square shape
     //ThreeDButtonCallBack(rootPanel);
+
+
+
+    //rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetViewport(windowWidth, windowHeight);
+    
 }
 
 /*----------------------------------------------------------------------------------------
@@ -389,38 +394,6 @@ void VertLineButtonCallBack(Panel &rootPanel)
     rootPanel.GetPanel("Graphics")->GetGraphicsManager()->SetCurrentObstShape(Shape::VERTICAL_LINE);
 }
 
-void ThreeDButtonCallBack(Panel &rootPanel)
-{
-    Button* button = rootPanel.GetButton("Pause Simulation");
-    PauseSimulation pause(rootPanel);
-    if (button->m_highlighted == true)
-    {
-        pause.End();
-        button->SetHighlight(false);
-    }
-    else
-    {
-        pause.Start();
-        button->SetHighlight(true);
-    }
-}
-
-void TwoDButtonCallBack(Panel &rootPanel)
-{
-    Button* button = rootPanel.GetButton("Pause Ray Tracing");
-    PauseRayTracing pause(rootPanel);
-    if (button->m_highlighted == true)
-    {
-        pause.End();
-        button->SetHighlight(false);
-    }
-    else
-    {
-        pause.Start();
-        button->SetHighlight(true);
-    }
-}
-
 void Layout::SetUpButtons(Panel &rootPanel)
 {
     rootPanel.GetButton("Initialize")->SetCallback(InitializeButtonCallBack);
@@ -453,9 +426,6 @@ void Layout::SetUpButtons(Panel &rootPanel)
         rootPanel.GetButton("Vert. Line") };
     ButtonGroup* const shapeButtonGroup = rootPanel.CreateButtonGroup("ShapeButtons", buttons2);
 
-    rootPanel.GetButton("Pause Simulation")->SetCallback(ThreeDButtonCallBack);
-    rootPanel.GetButton("Pause Ray Tracing")->SetCallback(TwoDButtonCallBack);
-    
     std::vector<Button*> buttons3 = {
         rootPanel.GetButton("Pause Ray Tracing"),
         rootPanel.GetButton("Pause Simulation")

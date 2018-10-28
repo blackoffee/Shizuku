@@ -1,9 +1,8 @@
 #include "MoveObstruction.h"
 #include "Graphics/GraphicsManager.h"
 
-MoveObstruction::MoveObstruction(Panel &rootPanel) : Command(rootPanel)
+MoveObstruction::MoveObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
     m_currentObst = -1;
     m_state = INACTIVE;
 }

@@ -1,9 +1,8 @@
 #include "AddObstruction.h"
 #include "Graphics/GraphicsManager.h"
 
-AddObstruction::AddObstruction(Panel &rootPanel) : Command(rootPanel)
+AddObstruction::AddObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
-    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 

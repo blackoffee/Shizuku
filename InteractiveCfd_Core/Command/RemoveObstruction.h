@@ -5,7 +5,7 @@ class FW_API RemoveObstruction : public Command
 {
     int m_currentObst;
 public:
-    RemoveObstruction(Panel &rootPanel);
+    RemoveObstruction(GraphicsManager &rootGraphicsManager);
     void Start(const float currentX, const float currentY);
     void End(const float currentX, const float currentY);
 };

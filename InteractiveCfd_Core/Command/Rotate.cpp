@@ -1,9 +1,8 @@
 #include "Rotate.h"
 #include "Graphics/GraphicsManager.h"
 
-Rotate::Rotate(Panel &rootPanel) : Command(rootPanel)
+Rotate::Rotate(GraphicsManager &rootGraphicsManager) : Command(rootGraphicsManager)
 {
-    m_rootPanel = &rootPanel;
     m_state = INACTIVE;
 }
 

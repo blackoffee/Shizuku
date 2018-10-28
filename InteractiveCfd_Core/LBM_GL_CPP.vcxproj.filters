@@ -10,9 +10,6 @@
     <ClCompile Include="Command\AddObstruction.cpp">
       <Filter>Command</Filter>
     </ClCompile>
-    <ClCompile Include="Command\ButtonPress.cpp">
-      <Filter>Command</Filter>
-    </ClCompile>
     <ClCompile Include="Command\MoveObstruction.cpp">
       <Filter>Command</Filter>
     </ClCompile>
@@ -23,9 +20,6 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Command\Rotate.cpp">
-      <Filter>Command</Filter>
-    </ClCompile>
-    <ClCompile Include="Command\SliderDrag.cpp">
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Command\Zoom.cpp">
@@ -63,8 +57,12 @@
     <ClCompile Include="Panel\SliderBar.cpp">
       <Filter>Panel</Filter>
     </ClCompile>
-    <ClCompile Include="Command\PauseSimulation.cpp" />
-    <ClCompile Include="Command\PauseRayTracing.cpp" />
+    <ClCompile Include="Command\PauseRayTracing.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\PauseSimulation.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -82,13 +80,7 @@
     <ClInclude Include="Command\Rotate.h">
       <Filter>Command</Filter>
     </ClInclude>
-    <ClInclude Include="Command\SliderDrag.h">
-      <Filter>Command</Filter>
-    </ClInclude>
     <ClInclude Include="Command\Zoom.h">
-      <Filter>Command</Filter>
-    </ClInclude>
-    <ClInclude Include="Command\ButtonPress.h">
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="common.h" />
@@ -127,11 +119,15 @@
     <ClInclude Include="Panel\SliderBar.h">
       <Filter>Panel</Filter>
     </ClInclude>
-    <ClInclude Include="Command\PauseSimulation.h" />
-    <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="VectorUtils.h" />
     <ClInclude Include="CudaCheck.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\PauseRayTracing.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\PauseSimulation.h">
+      <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,19 +1,12 @@
 #include "Command.h"
-#include "Graphics/GraphicsManager.h"
-#include "Panel/Panel.h"
 
-Command::Command(Panel &rootPanel)
+Command::Command(GraphicsManager &graphicsManager)
 {
-    m_rootPanel = &rootPanel;
-}
-
-Panel* Command::GetRootPanel()
-{
-    return m_rootPanel;
+    m_graphics = &graphicsManager;
 }
 
 GraphicsManager* Command::GetGraphicsManager()
 {
-    return m_rootPanel->GetPanel("Graphics")->GetGraphicsManager();
+    return m_graphics;
 }
 

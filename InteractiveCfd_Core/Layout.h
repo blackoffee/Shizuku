@@ -9,6 +9,7 @@
 
 class Panel;
 class Slider;
+class GraphicsManager;
 
 FW_API void InitializeButtonCallBack(Panel &rootPanel);
 FW_API void VelMagButtonCallBack(Panel &rootPanel);
@@ -21,12 +22,10 @@ FW_API void SquareButtonCallBack(Panel &rootPanel);
 FW_API void CircleButtonCallBack(Panel &rootPanel);
 FW_API void HorLineButtonCallBack(Panel &rootPanel);
 FW_API void VertLineButtonCallBack(Panel &rootPanel);
-FW_API void ThreeDButtonCallBack(Panel &rootPanel);
-FW_API void TwoDButtonCallBack(Panel &rootPanel);
 
 namespace Layout
 {
-    FW_API void SetUpWindow(Panel &rootPanel);
+    FW_API void SetUpWindow(Panel &rootPanel, GraphicsManager &graphicsManager);
     FW_API Slider* GetCurrentContourSlider(Panel &rootPanel);
     FW_API float GetCurrentSliderValue(Panel &rootPanel, const std::string name, const int sliderNumber = 1);
     FW_API float GetCurrentContourSliderValue(Panel &rootPanel, const int sliderNumber = 1);

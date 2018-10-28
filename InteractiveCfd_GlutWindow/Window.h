@@ -2,8 +2,6 @@
 #include "Command/Zoom.h"
 #include "Command/Pan.h"
 #include "Command/Rotate.h"
-#include "Command/ButtonPress.h"
-#include "Command/SliderDrag.h"
 #include "Command/AddObstruction.h"
 #include "Command/RemoveObstruction.h"
 #include "Command/MoveObstruction.h"
@@ -12,17 +10,14 @@
 
 class Domain;
 class GLFWwindow;
+class GraphicsManager;
 
 class Window
 {
 private:
-    Panel* m_windowPanel;
-    Panel* m_currentPanel;
     Zoom m_zoom;
     Pan m_pan;
     Rotate m_rotate;
-    ButtonPress m_buttonPress;
-    SliderDrag m_sliderDrag;
     AddObstruction m_addObstruction;
     RemoveObstruction m_removeObstruction;
     MoveObstruction m_moveObstruction;
@@ -31,9 +26,11 @@ private:
     int m_leftPanelHeight;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
+
+    GraphicsManager* m_graphics;
 public:
     Window();
-    Panel* GetWindowPanel();
+    void SetGraphicsManager(GraphicsManager& graphics);
     float GetFloatCoordX(const int x);
     float GetFloatCoordY(const int y);
     void InitializeGL();
