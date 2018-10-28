@@ -361,7 +361,7 @@ int ShaderManager::RayCastMouseClick(float3 &rayCastIntersection, const float3 r
 
 void ShaderManager::RenderFloorToTexture(Domain &domain)
 {
-
+    glBindVertexArray(m_vao);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
@@ -399,18 +399,20 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glBindVertexArray(0);
 }
 
 void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
     const glm::mat4 &projectionMatrix)
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glMatrixMode(GL_MODELVIEW);
     //glLoadIdentity();
 
-    glBindVertexArray(m_vao);
+    //glBindVertexArray(m_vao);
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
@@ -418,7 +420,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_VERTEX_ARRAY);
 
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
@@ -429,8 +431,8 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     }
     //Draw water surface
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glBindVertexArray(0);
+    //glDisableClientState(GL_VERTEX_ARRAY);
+    //glBindVertexArray(0);
 }
 
 void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,

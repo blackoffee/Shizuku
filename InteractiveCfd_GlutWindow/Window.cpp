@@ -64,6 +64,22 @@ namespace
     {
         Window::Instance().DrawLoop();
     }
+
+
+    void GLAPIENTRY MessageCallback( GLenum source,
+                     GLenum type,
+                     GLuint id,
+                     GLenum severity,
+                     GLsizei length,
+                     const GLchar* message,
+                     const void* userParam )
+    {
+      printf( "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+               ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+                type, severity, message );
+    }
+
+
 }
 
 Window::Window() :
@@ -378,7 +394,7 @@ void Window::GlfwDrawLoop()
     graphicsManager->RunSimulation();
 
     // render caustic floor to texture
-    //graphicsManager->RenderFloorToTexture();
+    graphicsManager->RenderFloorToTexture();
 
     graphicsManager->RunSurfaceRefraction();
 
@@ -487,6 +503,10 @@ void Window::InitializeGlfw(int argc, char **argv)
     // Initialize GLEW to setup the OpenGL Function pointers
     glewInit();
 
+    // During init, enable debug output
+    glEnable              ( GL_DEBUG_OUTPUT );
+    glDebugMessageCallback(MessageCallback, 0);
+
     // Define the viewport dimensions
     glViewport(0, 0, width, height);
 
@@ -540,7 +560,7 @@ void Window::GlfwDisplay()
     while (!glfwWindowShouldClose(m_window))
     {
         // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-        glfwPollEvents();
+        //glfwPollEvents();
         GlfwDrawLoop();
 
 //        vao->Bind();
