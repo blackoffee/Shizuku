@@ -17,6 +17,20 @@
 #undef min
 #undef max
 
+
+void GLAPIENTRY MessageCallback( GLenum source,
+                 GLenum type,
+                 GLuint id,
+                 GLenum severity,
+                 GLsizei length,
+                 const GLchar* message,
+                 const void* userParam )
+{
+  printf( "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+}
+
 GraphicsManager::GraphicsManager(Panel* panel)
 {
     m_parent = panel;
@@ -25,6 +39,11 @@ GraphicsManager::GraphicsManager(Panel* panel)
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
     m_rotate = { 45.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
+
+
+    // During init, enable debug output
+    glEnable              ( GL_DEBUG_OUTPUT );
+    glDebugMessageCallback( MessageCallback, 0 );
 }
 
 void GraphicsManager::UseCuda(bool useCuda)

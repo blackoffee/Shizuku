@@ -1,6 +1,9 @@
+#pragma once
+
 #include <stdio.h>
 #include "common.h"
 #include "cuda_runtime.h"
+#include <GLEW/glew.h>
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
