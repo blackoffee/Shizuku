@@ -14,6 +14,8 @@
 #undef min
 #undef max
 
+using namespace Shizuku::Core;
+
 namespace{
     float intCoordToFloatCoord(const int x, const int xDim)
     {
@@ -35,26 +37,15 @@ GraphicsManager::GraphicsManager()
     m_translate = { 0.f, 0.f, 0.0f };
 }
 
-GraphicsManager::GraphicsManager(Panel* panel)
+void GraphicsManager::SetViewport(const Rect<int>& size)
 {
-    m_parent = panel;
-    m_graphics = new ShaderManager;
-    m_graphics->CreateCudaLbm();
-    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-    m_rotate = { 45.f, 0.f, 45.f };
-    m_translate = { 0.f, 0.f, 0.0f };
+    m_viewSize = size;
+    glViewport(0, 0, size.Width, size.Height);
 }
 
-void GraphicsManager::SetViewport(int x, int y)
+Rect<int>& GraphicsManager::GetViewport()
 {
-    m_viewX = x;
-    m_viewY = y;
-}
-
-void GraphicsManager::GetViewport(int& x, int& y)
-{
-    x = m_viewX;
-    y = m_viewY;
+    return m_viewSize;
 }
 
 void GraphicsManager::UseCuda(bool useCuda)
@@ -62,12 +53,12 @@ void GraphicsManager::UseCuda(bool useCuda)
     m_useCuda = useCuda;
 }
 
-float3 GraphicsManager::GetRotationTransforms()
+glm::vec3 GraphicsManager::GetRotationTransforms()
 {
     return m_rotate;
 }
 
-float3 GraphicsManager::GetTranslationTransforms()
+glm::vec3 GraphicsManager::GetTranslationTransforms()
 {
     return m_translate;
 }
@@ -413,16 +404,16 @@ void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut,
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();    
     RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / RectFloat(0.f, 0.f, 1.f, 1.f);// m_parent->GetRectFloatAbs();
     float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        std::min(static_cast<float>(m_viewX), MAX_XDIM*m_scaleFactor);
+        std::min(static_cast<float>(m_viewSize.Width), MAX_XDIM*m_scaleFactor);
     float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        std::min(static_cast<float>(m_viewY), MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_viewX)*
+        std::min(static_cast<float>(m_viewSize.Height), MAX_YDIM*m_scaleFactor);
+    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_viewSize.Width)*
         graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_viewY)*
+    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_viewSize.Height)*
         graphicsToSimDomainScalingFactorY;
 }
 
-void GraphicsManager::GetMouseRay(float3 &rayOrigin, float3 &rayDir,
+void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir,
     const int mouseX, const int mouseY)
 {
     glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
@@ -470,14 +461,16 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    float3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
-    int returnVal = 0;
-    float3 selectedCoordF;
     int rayCastResult;
+    int returnVal = 0;
 
     if (m_useCuda)
     {
+        glm::vec3 rayOrigin;
+        glm::vec3 rayDir;
+        GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
+        float3 selectedCoordF;
+
         // map OpenGL buffer object for writing from CUDA
         cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
         float4 *dptr;
@@ -487,25 +480,42 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
 
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         Domain* domain = GetCudaLbm()->GetDomain();
-        rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d, 
-            rayOrigin, rayDir, obst_d, *domain);
+        rayCastResult = RayCastMouseClick(selectedCoordF, dptr, m_rayCastIntersect_d,
+            float3{ rayOrigin.x, rayOrigin.y, rayOrigin.z }, float3{ rayDir.x, rayDir.y, rayDir.z }, obst_d, *domain);
+
         cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
+
+        if (rayCastResult == 0)
+        {
+            m_currentZ = selectedCoordF.z;
+
+            xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
+            yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
+        }
+        else
+        {
+            returnVal = 1;
+        }
     }
     else
     {
+        glm::vec3 rayOrigin, rayDir;
+        GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
+        glm::vec3 selectedCoordF;
+
         rayCastResult = GetGraphics()->RayCastMouseClick(selectedCoordF, rayOrigin, rayDir);
-    }
 
-    if (rayCastResult == 0)
-    {
-        m_currentZ = selectedCoordF.z;
+        if (rayCastResult == 0)
+        {
+            m_currentZ = selectedCoordF.z;
 
-        xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
-        yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
-    }
-    else
-    {
-        returnVal = 1;
+            xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
+            yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
+        }
+        else
+        {
+            returnVal = 1;
+        }
     }
 
     return returnVal;
@@ -520,8 +530,8 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
 void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     const float mouseXf, const float mouseYf, const float planeZ)
 {
-    int mouseX = floatCoordToIntCoord(mouseXf, m_viewX);
-    int mouseY = floatCoordToIntCoord(mouseYf, m_viewY);
+    int mouseX = floatCoordToIntCoord(mouseXf, m_viewSize.Width);
+    int mouseY = floatCoordToIntCoord(mouseYf, m_viewSize.Height);
     GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, planeZ);
 }
 
@@ -529,7 +539,7 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     const int mouseX, const int mouseY, const float planeZ)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    float3 rayOrigin, rayDir;
+    glm::vec3 rayOrigin, rayDir;
     GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
 
     glm::vec4 cameraPos = GetCameraPosition();
@@ -557,8 +567,8 @@ void GraphicsManager::Rotate(const float dx, const float dy)
 
 int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
 {
-    int mouseX = floatCoordToIntCoord(mouseXf, m_viewX);
-    int mouseY = floatCoordToIntCoord(mouseYf, m_viewY);
+    int mouseX = floatCoordToIntCoord(mouseXf, m_viewSize.Width);
+    int mouseY = floatCoordToIntCoord(mouseYf, m_viewSize.Height);
     return PickObstruction(mouseX, mouseY);
 }
 
@@ -578,8 +588,8 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
 {
     int simX1, simY1, simX2, simY2;
     int xi, yi, dxi, dyi;
-    int windowWidth = m_viewX;// m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-    int windowHeight = m_viewY;// m_parent->GetRootPanel()->GetRectIntAbs().m_h;
+    int windowWidth = m_viewSize.Width;// m_parent->GetRootPanel()->GetRectIntAbs().m_w;
+    int windowHeight = m_viewSize.Height;// m_parent->GetRootPanel()->GetRectIntAbs().m_h;
     xi = floatCoordToIntCoord(mouseXf, windowWidth);
     yi = floatCoordToIntCoord(mouseYf, windowHeight);
     dxi = dxf*static_cast<float>(windowWidth) / 2.f;

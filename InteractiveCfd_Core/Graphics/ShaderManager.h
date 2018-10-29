@@ -83,11 +83,11 @@ public:
     void SetInletVelocity(const float u);
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
-    void RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
+    void RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
         const float contMin, const float contMax);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
-    int RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
-        const float3 rayDir);
+    int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
+        const glm::vec3 rayDir);
     void RenderFloorToTexture(Domain &domain);
     void RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
         const glm::mat4 &projectionMatrix);
@@ -98,6 +98,6 @@ public:
 void SetUniform(GLuint shaderId, const GLchar* varName, const int varValue);
 void SetUniform(GLuint shaderId, const GLchar* varName, const float varValue);
 void SetUniform(GLuint shaderId, const GLchar* varName, const bool varValue);
-void SetUniform(GLuint shaderId, const GLchar* varName, const float3 varValue);
+void SetUniform(GLuint shaderId, const GLchar* varName, const glm::vec3 varValue);
 void RunSubroutine(GLuint shaderId, const GLchar* subroutineName,
     const int3 workGroupSize);

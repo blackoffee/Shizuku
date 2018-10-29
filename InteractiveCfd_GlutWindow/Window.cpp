@@ -1,7 +1,6 @@
 #include "Window.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
-#include "Domain.h"
 #include "../Shizuku.Core/Ogl/Ogl.h"
 #include "../Shizuku.Core/Ogl/Shader.h"
 
@@ -13,19 +12,9 @@
 
 namespace
 {
-    void ResizeWrapper(const int x, const int y)
-    {
-        Window::Instance().Resize(x, y);
-    }
-
     void ResizeWrapper(GLFWwindow* window, int width, int height)
     {
-        Window::Instance().Resize(width, height);
-    }
-
-    void MouseButtonWrapper(const int button, const int state, const int x, const int y)
-    {
-        Window::Instance().MouseButton(button, state, x, y);
+        Window::Instance().Resize(Rect<int>(width, height));
     }
 
     void MouseButtonWrapper(GLFWwindow* window, int button, int state, int mods)
@@ -48,21 +37,10 @@ namespace
         Window::Instance().GlfwMouseWheel(xwheel, ywheel);
     }
 
-    void MouseWheelWrapper(const int button, const int direction, const int x, const int y)
-    {
-        Window::Instance().MouseWheel(button, direction, x, y);
-    }
-
     void KeyboardWrapper(const unsigned char key, const int x, const int y)
     {
         Window::Instance().Keyboard(key, x, y);
     }
-
-    void DrawLoopWrapper()
-    {
-        Window::Instance().DrawLoop();
-    }
-
 
     void GLAPIENTRY MessageCallback( GLenum source,
                      GLenum type,
@@ -110,22 +88,18 @@ void Window::RegisterCommands()
 
 float Window::GetFloatCoordX(const int x)
 {
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    return static_cast<float>(x)/viewX*2.f - 1.f;
+    return static_cast<float>(x)/m_graphics->GetViewport().Width*2.f - 1.f;
 }
 float Window::GetFloatCoordY(const int y)
 {
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    return static_cast<float>(y)/viewY*2.f - 1.f;
+    return static_cast<float>(y)/m_graphics->GetViewport().Height*2.f - 1.f;
 }
 
 void Window::InitializeGL()
 {
     glEnable(GL_LIGHT0);
     glewInit();
-    glViewport(0,0,800,600);
+    glViewport(0,0,m_size.Width,m_size.Height);
 }
 
 void TimerEvent(int value)
@@ -139,193 +113,58 @@ void TimerEvent(int value)
 
 void Window::GlfwResize(GLFWwindow* window, int width, int height)
 {
-    Resize(width, height);
+    Resize(Rect<int>(width, height));
 }
 
-void Window::Resize(const int width, const int height)
+void Window::Resize(Rect<int> size)
 {
-    m_graphics->SetViewport(width, height);
-    //int windowWidth = m_windowPanel->GetWidth();
-    //int windowHeight = m_windowPanel->GetHeight();
-    //Layout::UpdateDomainDimensionsBasedOnWindowSize(*m_windowPanel, m_leftPanelHeight, m_leftPanelWidth);
-
-//    RectInt rect = { 200, 100, width, height };
-//    m_windowPanel->SetSize_Absolute(rect);
-//    rect = { 0, windowHeight - m_leftPanelHeight, m_leftPanelWidth, m_leftPanelHeight };
-//    m_windowPanel->GetPanel("CDV")->SetSize_Absolute(rect);
-//    rect = { m_leftPanelWidth, 0, windowWidth - m_leftPanelWidth, windowHeight };
-//    m_windowPanel->GetPanel("Graphics")->SetSize_Absolute(rect);
-//    m_windowPanel->UpdateAll();
-
-    glViewport(0, 0, width, height);
-}
-
-void Window::MouseButton(const int button, const int state,
-    const int x, const int y)
-{
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(viewY - y);
-    //m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-    int mod = glutGetModifiers();
-    //if (m_currentPanel == NULL)
-    //{
-    //    return;
-    //}
-    //if (m_currentPanel->GetGraphicsManager() != NULL)
-    {
-        if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN
-            && mod == GLUT_ACTIVE_CTRL)
-        {
-            m_pan.Start(xf, yf);
-        }
-        else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
-        {
-            m_rotate.Start(xf, yf);
-            m_removeObstruction.Start(xf, yf);
-        }
-        else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
-        {
-            m_addObstruction.Start(xf, yf);
-        }
-        else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-        {
-            m_moveObstruction.Start(xf, yf);
-        }
-        else
-        {
-            m_pan.End();
-            m_rotate.End();
-            m_moveObstruction.End();
-            m_removeObstruction.End(xf, yf);
-        }
-    }
-//    else
-//    {
-//        std::string panelType = typeid(*m_currentPanel).name();
-//        if (panelType == "class Button")
-//        {
-//            Button* buttonPanel = dynamic_cast<Button*>(m_currentPanel);
-//            if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-//            {
-//                m_buttonPress.Start(buttonPanel);
-//            }
-//            else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-//            {
-//                m_buttonPress.End(buttonPanel);
-//            }
-//        }
-//        else if (panelType == "class SliderBar")
-//        {
-//            SliderBar* sliderBar = dynamic_cast<SliderBar*>(m_currentPanel);
-//            if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-//            {
-//                m_sliderDrag.Start(sliderBar, xf, yf);
-//            }
-//            else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-//            {
-//                m_sliderDrag.End();
-//            }
-//        }
-//    }
+    m_size = size;
+    m_graphics->SetViewport(size);
 }
 
 void Window::GlfwMouseButton(const int button, const int state, const int mod)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
+
     float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(viewY - y);
-    //m_currentPanel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-    //if (m_currentPanel == NULL)
-    //{
-    //    return;
-    //}
-    //if (m_currentPanel->GetGraphicsManager() != NULL)
+    float yf = GetFloatCoordY(m_size.Height - y);
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
+        && mod == GLFW_MOD_CONTROL)
     {
-        if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
-            && mod == GLFW_MOD_CONTROL)
-        {
-            m_pan.Start(xf, yf);
-        }
-        else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
-        {
-            m_rotate.Start(xf, yf);
-            m_removeObstruction.Start(xf, yf);
-        }
-        else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
-        {
-            m_addObstruction.Start(xf, yf);
-        }
-        else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
-        {
-            m_moveObstruction.Start(xf, yf);
-        }
-        else
-        {
-            m_pan.End();
-            m_rotate.End();
-            m_moveObstruction.End();
-            m_removeObstruction.End(xf, yf);
-        }
+        m_pan.Start(xf, yf);
     }
-//    else
-//    {
-//        std::string panelType = typeid(*m_currentPanel).name();
-//        if (panelType == "class Button")
-//        {
-//            Button* buttonPanel = dynamic_cast<Button*>(m_currentPanel);
-//            if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
-//            {
-//                m_buttonPress.Start(buttonPanel);
-//            }
-//            else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_RELEASE)
-//            {
-//                m_buttonPress.End(buttonPanel);
-//            }
-//        }
-//        else if (panelType == "class SliderBar")
-//        {
-//            SliderBar* sliderBar = dynamic_cast<SliderBar*>(m_currentPanel);
-//            if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
-//            {
-//                m_sliderDrag.Start(sliderBar, xf, yf);
-//            }
-//            else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_RELEASE)
-//            {
-//                m_sliderDrag.End();
-//            }
-//        }
-//    }
+    else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
+    {
+        m_rotate.Start(xf, yf);
+        m_removeObstruction.Start(xf, yf);
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
+    {
+        m_addObstruction.Start(xf, yf);
+    }
+    else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
+    {
+        m_moveObstruction.Start(xf, yf);
+    }
+    else
+    {
+        m_pan.End();
+        m_rotate.End();
+        m_moveObstruction.End();
+        m_removeObstruction.End(xf, yf);
+    }
 }
 
 void Window::MouseMotion(const int x, const int y)
 {
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
     float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(viewY - y);
-//    if (m_currentPanel == NULL)
-//    {
-//        return;
-//    }
-//    if (m_currentPanel->GetGraphicsManager() != NULL)
-    {
-        m_pan.Track(xf, yf);
-        m_rotate.Track(xf, yf);
-        m_moveObstruction.Track(xf, yf);
-    }
-//    else
-//    {
-//        m_sliderDrag.Track(xf, yf);
-//    }
-
-
+    float yf = GetFloatCoordY(m_size.Height - y);
+    m_pan.Track(xf, yf);
+    m_rotate.Track(xf, yf);
+    m_moveObstruction.Track(xf, yf);
 }
+
 void Window::Keyboard(const unsigned char key,
     const int x, const int y)
 {
@@ -342,52 +181,23 @@ void Window::Keyboard(const unsigned char key,
     }
 }
 
-void Window::MouseWheel(const int button, const int direction,
-    const int x, const int y)
-{
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    //Panel* panel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-    //if (panel->GetGraphicsManager() != NULL)
-    {
-        m_zoom.Start(direction, 0.3f);
-    }
-}
-
 void Window::GlfwMouseWheel(double xwheel, double ywheel)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    //Panel* panel = GetPanelThatPointIsIn(m_windowPanel, xf, yf);
-    //if (panel->GetGraphicsManager() != NULL)
-    {
-        const int dir = ywheel > 0 ? 1 : 0;
-        m_zoom.Start(dir, 0.3f);
-    }
+    const int dir = ywheel > 0 ? 1 : 0;
+    m_zoom.Start(dir, 0.3f);
 }
 
-void Window::GlfwUpdateWindowTitle(const float fps, Domain &domain, const int tSteps)
+void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
 {
     char fpsReport[256];
-    int xDim = domain.GetXDim();
-    int yDim = domain.GetYDim();
+    int xDim = domainSize.Width;
+    int yDim = domainSize.Height;
     sprintf_s(fpsReport, 
         "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         tSteps, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
     glfwSetWindowTitle(m_window, fpsReport);
-}
-
-void Window::UpdateWindowTitle(const float fps, Domain &domain, const int tSteps)
-{
-    char fpsReport[256];
-    int xDim = domain.GetXDim();
-    int yDim = domain.GetYDim();
-    sprintf_s(fpsReport, 
-        "Interactive CFD running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        tSteps, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
-    glutSetWindowTitle(fpsReport);
 }
 
 void Window::GlfwDrawLoop()
@@ -404,9 +214,9 @@ void Window::GlfwDrawLoop()
 
     graphicsManager->RunSurfaceRefraction();
 
-    int viewX, viewY;
-    m_graphics->GetViewport(viewX, viewY);
-    ResizeWrapper(m_window, viewX, viewY);
+    //int viewX, viewY;
+    //m_graphics->GetViewport(viewX, viewY);
+    //ResizeWrapper(m_window, viewX, viewY);
 
     graphicsManager->UpdateViewMatrices();
     graphicsManager->UpdateViewTransformations();
@@ -425,69 +235,12 @@ void Window::GlfwDrawLoop()
     m_fpsTracker.Tock();
 
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    Domain domain = *cudaLbm->GetDomain();
     const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
+    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
 }
 
-void Window::DrawLoop()
+void Window::InitializeGlfw()
 {
-    m_fpsTracker.Tick();
-    GraphicsManager* graphicsManager = m_graphics;
-    graphicsManager->UpdateGraphicsInputs();
-    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
-
-    graphicsManager->RunSimulation();
-
-    // render caustic floor to texture
-    graphicsManager->RenderFloorToTexture();
-
-    graphicsManager->RunSurfaceRefraction();
-
-    //ResizeWrapper(m_windowPanel->GetWidth(), m_windowPanel->GetHeight());
-
-    graphicsManager->UpdateViewMatrices();
-    graphicsManager->UpdateViewTransformations();
-
-    graphicsManager->RenderVbo();
-
-    //Layout::Draw2D(*m_windowPanel);
-
-
-    glutSwapBuffers();
-    m_fpsTracker.Tock();
-
-    //CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    //Domain domain = *cudaLbm->GetDomain();
-    //const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-    //UpdateWindowTitle(m_fpsTracker.GetFps(), domain, tStepsPerFrame);
-}
-
-void Window::InitializeGLUT(int argc, char **argv)
-{
-//    int width = m_windowPanel->GetWidth();
-//    int height = m_windowPanel->GetHeight();
-//    glutInit(&argc, argv);
-//    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-//    glutInitWindowSize(width, height);
-//    glutInitWindowPosition(50, 30);
-
-//    glutCreateWindow("Loading Interactive CFD...");
-
-//    glutReshapeFunc(ResizeWrapper);
-//    glutMouseFunc(MouseButtonWrapper);
-//    glutMotionFunc(MouseMotionWrapper);
-//    glutKeyboardFunc(KeyboardWrapper);
-//    glutMouseWheelFunc(MouseWheelWrapper);
-
-//    glutDisplayFunc(DrawLoopWrapper);
-//    glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
-}
-
-void Window::InitializeGlfw(int argc, char **argv)
-{
-    int width = 500;// m_windowPanel->GetWidth();
-    int height =  500;//m_windowPanel->GetHeight();
     glfwInit();
     // Set all the required options for GLFW
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -496,7 +249,7 @@ void Window::InitializeGlfw(int argc, char **argv)
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
     // Create a GLFWwindow object that we can use for GLFW's functions
-    GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(m_size.Width, m_size.Height, "LearnOpenGL", nullptr, nullptr);
     glfwMakeContextCurrent(window);
     m_window = window;
 
@@ -515,15 +268,6 @@ void Window::InitializeGlfw(int argc, char **argv)
     // During init, enable debug output
     glEnable              ( GL_DEBUG_OUTPUT );
     glDebugMessageCallback(MessageCallback, 0);
-
-    // Define the viewport dimensions
-    glViewport(0, 0, width, height);
-
-}
-
-void Window::Display()
-{
-    glutMainLoop();
 }
 
 void Window::GlfwDisplay()

@@ -1,6 +1,6 @@
 #pragma once
 #include "common.h"
-#include "cuda_runtime.h"
+#include "Shizuku.Core/Rect.h"
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
@@ -13,17 +13,19 @@
 #define FW_API __declspec(dllimport)   
 #endif  
 
-class Panel;
+using namespace Shizuku::Core;
+
 class ShaderManager;
 class CudaLbm;
+struct float4;
 
 class FW_API GraphicsManager
 {
 private:
     float m_currentZ = -1000.f;
     //view transformations
-    float3 m_rotate;
-    float3 m_translate;
+    glm::vec3 m_rotate;
+    glm::vec3 m_translate;
     int m_currentObstId = -1;
     float m_currentObstSize = 0.f;
     Shape m_currentObstShape = Shape::SQUARE;
@@ -31,7 +33,6 @@ private:
     bool m_rayTracingPaused = false;
     glm::vec4 m_cameraPosition;
     Obstruction* m_obstructions;
-    Panel* m_parent;
     float m_scaleFactor = 1.f;
     GLint m_viewport[4];
     GLdouble m_modelMatrix[16];
@@ -43,20 +44,18 @@ private:
     bool m_useCuda = true;
     float4* m_rayCastIntersect_d;
 
-    int m_viewX;
-    int m_viewY;
+    Rect<int> m_viewSize;
 
 public:
     GraphicsManager();
-    GraphicsManager(Panel* panel);
 
-    void SetViewport(int x, int y);
-    void GetViewport(int& x, int& y);
+    void SetViewport(const Rect<int>& size);
+    Rect<int>& GetViewport();
 
     void UseCuda(bool useCuda);
 
-    float3 GetRotationTransforms();
-    float3 GetTranslationTransforms();
+    glm::vec3 GetRotationTransforms();
+    glm::vec3 GetTranslationTransforms();
 
     void SetCurrentObstSize(const float size);
 
@@ -118,7 +117,7 @@ public:
     void SetProjectionMatrix(glm::mat4 projMatrix);
 
     void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
-    void GetMouseRay(float3 &rayOrigin, float3 &rayDir, const int mouseX, const int mouseY);
+    void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const int mouseX, const int mouseY);
     glm::vec4 GetCameraDirection();
     glm::vec4 GetCameraPosition();
     int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, 

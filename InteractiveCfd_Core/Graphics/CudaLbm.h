@@ -1,6 +1,6 @@
 #pragma once
 #include "common.h"
-#include "cuda_runtime.h"
+#include "Shizuku.Core/Rect.h"
 
 #ifdef LBM_GL_CPP_EXPORTS  
 #define FW_API __declspec(dllexport)   
@@ -30,6 +30,7 @@ public:
     CudaLbm();
     CudaLbm(const int maxX, const int maxY);
     Domain* GetDomain();
+    Shizuku::Core::Rect<int> GetDomainSize();
     float* GetFA();
     float* GetFB();
     int* GetImage();

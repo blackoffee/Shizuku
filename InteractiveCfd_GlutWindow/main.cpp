@@ -3,41 +3,24 @@
 
 int main(int argc, char **argv)
 {
+    Rect<int> windowSize = Rect<int>(800, 600);
     GraphicsManager* graphicsManager = &(GraphicsManager());
 
-    //Layout::SetUpWindow(*windowPanel, *graphicsManager);
-    //GraphicsManager* graphicsManager = windowPanel->GetPanel("Graphics")->GetGraphicsManager();
-
-    graphicsManager->SetViewport(500, 500);
+    graphicsManager->SetViewport(windowSize);
     graphicsManager->SetContourVar(ContourVariable::WATER_RENDERING);
 
-    //Window window = Window(*graphicsManager);
     Window::Instance().SetGraphicsManager(*graphicsManager);
     Window::Instance().RegisterCommands();
 
-    bool glfw = true;
-    if (glfw)
-    {
-        Window::Instance().InitializeGlfw(argc, argv);
+    Window::Instance().Resize(windowSize);
+    Window::Instance().InitializeGlfw();
 
-        //graphicsManager->UseCuda(false);
-        graphicsManager->SetUpGLInterop();
-        graphicsManager->SetUpCuda();
-        graphicsManager->SetUpShaders();
+    //graphicsManager->UseCuda(false);
+    graphicsManager->SetUpGLInterop();
+    graphicsManager->SetUpCuda();
+    graphicsManager->SetUpShaders();
 
-        Window::Instance().GlfwDisplay();
-    }
-    else{
-        Window::Instance().InitializeGLUT(argc, argv);
-        Window::Instance().InitializeGL();
-
-        //graphicsManager->UseCuda(false);
-        graphicsManager->SetUpGLInterop();
-        graphicsManager->SetUpCuda();
-        graphicsManager->SetUpShaders();
-
-        Window::Instance().Display();
-    }
+    Window::Instance().GlfwDisplay();
 
     return 0;
 }

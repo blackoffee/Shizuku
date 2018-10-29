@@ -24,5 +24,6 @@
     <ClInclude Include="Ogl\Ogl.h">
       <Filter>Ogl</Filter>
     </ClInclude>
+    <ClInclude Include="Rect.h" />
   </ItemGroup>
 </Project>

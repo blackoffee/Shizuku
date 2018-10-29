@@ -308,8 +308,8 @@ void ShaderManager::InitializeObstSsbo()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-int ShaderManager::RayCastMouseClick(float3 &rayCastIntersection, const float3 rayOrigin,
-    const float3 rayDir)
+int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
+    const glm::vec3 rayDir)
 {
     Domain domain = *m_cudaLbm->GetDomain();
     int xDim = domain.GetXDim();
@@ -435,7 +435,7 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //glBindVertexArray(0);
 }
 
-void ShaderManager::RunComputeShader(const float3 cameraPosition, const ContourVariable contVar,
+void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
         const float contMin, const float contMax)
 {
     const GLuint ssbo_lbmA = GetShaderStorageBuffer("LbmA");
@@ -626,7 +626,7 @@ void SetUniform(GLuint shaderId, const GLchar* varName, const bool varValue)
     glUniform1i(targetLocation, varValue);
 }
 
-void SetUniform(GLuint shaderId, const GLchar* varName, const float3 varValue)
+void SetUniform(GLuint shaderId, const GLchar* varName, const glm::vec3 varValue)
 {
     const GLint targetLocation = glGetUniformLocation(shaderId, varName);
     glUniform3f(targetLocation, varValue.x, varValue.y, varValue.z);

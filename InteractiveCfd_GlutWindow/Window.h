@@ -7,10 +7,12 @@
 #include "Command/MoveObstruction.h"
 #include "Command/PauseSimulation.h"
 #include "FpsTracker.h"
+#include "Shizuku.Core/Rect.h"
 
-class Domain;
 class GLFWwindow;
 class GraphicsManager;
+
+using namespace Shizuku::Core;
 
 class Window
 {
@@ -26,6 +28,7 @@ private:
     int m_leftPanelHeight;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
+    Rect<int> m_size;
 
     GraphicsManager* m_graphics;
 public:
@@ -37,23 +40,15 @@ public:
     float GetFloatCoordY(const int y);
     void InitializeGL();
     void GlfwResize(GLFWwindow* window, int width, int height);
-    void Resize(const int width, const int height);
-    void MouseButton(const int button, const int state,
-        const int x, const int y);
+    void Resize(Rect<int> size);
     void GlfwMouseButton(const int button, const int state, const int mod);
     void MouseMotion(const int x, const int y);
     void Keyboard(const unsigned char key,
         const int /*x*/, const int /*y*/);
-    void MouseWheel(const int button, const int direction,
-        const int x, const int y);
     void GlfwMouseWheel(double xwheel, double ywheel);
-    void UpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
-    void GlfwUpdateWindowTitle(const float fps, Domain &domain, const int tSteps);
-    void DrawLoop();
+    void GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
     void GlfwDrawLoop();
-    void InitializeGLUT(int argc, char **argv);
-    void InitializeGlfw(int argc, char **argv);
-    void Display();
+    void InitializeGlfw();
     void GlfwDisplay();
 
     static Window& Instance()
