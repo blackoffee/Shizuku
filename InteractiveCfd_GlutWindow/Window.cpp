@@ -5,7 +5,6 @@
 #include "../Shizuku.Core/Ogl/Shader.h"
 
 #include <GLFW/glfw3.h>
-#include <GLUT/freeglut.h>
 #include <typeinfo>
 #include <memory>
 
@@ -100,15 +99,6 @@ void Window::InitializeGL()
     glEnable(GL_LIGHT0);
     glewInit();
     glViewport(0,0,m_size.Width,m_size.Height);
-}
-
-void TimerEvent(int value)
-{
-    if (glutGetWindow())
-    {
-        glutPostRedisplay();
-        glutTimerFunc(REFRESH_DELAY, TimerEvent, 0);
-    }
 }
 
 void Window::GlfwResize(GLFWwindow* window, int width, int height)
