@@ -1,4 +1,8 @@
 #include "Shader.h"
+
+#include <fstream>
+#include <sstream>
+#include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Shizuku{

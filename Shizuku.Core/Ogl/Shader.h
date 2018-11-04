@@ -1,19 +1,14 @@
 #pragma once
 
+#include <GLEW/glew.h>
+#include <glm/glm.hpp>
+#include <string>
+
 #ifdef SHIZUKU_CORE_EXPORTS  
 #define CORE_API __declspec(dllexport)   
 #else  
 #define CORE_API __declspec(dllimport)   
 #endif  
-
-#include <GLEW/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-
 
 namespace Shizuku{
     namespace Core{
@@ -26,7 +21,7 @@ namespace Shizuku{
             GLuint GetId();
         };
 
-        class ShaderProgram
+        class CORE_API ShaderProgram
         {
             GLuint ProgramID;
             std::string m_name;

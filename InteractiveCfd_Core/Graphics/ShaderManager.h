@@ -16,8 +16,13 @@
 #endif  
 
 class CudaLbm;
-class ShaderProgram;
 class Domain;
+
+namespace Shizuku{
+namespace Core{
+    class ShaderProgram;
+}
+}
 
 class FW_API ShaderManager
 {
@@ -38,10 +43,10 @@ private:
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
     GLuint m_floorFbo;
-    ShaderProgram* m_shaderProgram;
-    ShaderProgram* m_lightingProgram;
-    ShaderProgram* m_obstProgram;
-    ShaderProgram* m_floorProgram;
+    Shizuku::Core::ShaderProgram* m_shaderProgram;
+    Shizuku::Core::ShaderProgram* m_lightingProgram;
+    Shizuku::Core::ShaderProgram* m_obstProgram;
+    Shizuku::Core::ShaderProgram* m_floorProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
@@ -64,10 +69,10 @@ public:
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop(unsigned int size);
     void CleanUpGLInterOp();
-    ShaderProgram* GetShaderProgram();
-    ShaderProgram* GetLightingProgram();
-    ShaderProgram* GetObstProgram();
-    ShaderProgram* GetFloorProgram();
+    Shizuku::Core::ShaderProgram* GetShaderProgram();
+    Shizuku::Core::ShaderProgram* GetLightingProgram();
+    Shizuku::Core::ShaderProgram* GetObstProgram();
+    Shizuku::Core::ShaderProgram* GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpTextures();

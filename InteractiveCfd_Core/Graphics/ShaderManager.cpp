@@ -1,5 +1,5 @@
 #include "ShaderManager.h"
-#include "Shader.h"
+#include "Shizuku.Core/Ogl/Shader.h"
 #include "CudaLbm.h"
 #include "Domain.h"
 #include "helper_cuda.h"
@@ -9,6 +9,8 @@
 #include <string>
 #include <cstring>
 #include <assert.h>
+
+using namespace Shizuku::Core;
 
 ShaderManager::ShaderManager()
 {
@@ -185,14 +187,14 @@ ShaderProgram* ShaderManager::GetFloorProgram()
 
 void ShaderManager::CompileShaders()
 {
-    GetShaderProgram()->Initialize();
+    GetShaderProgram()->Initialize("Surface");
     GetShaderProgram()->CreateShader("SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
     GetShaderProgram()->CreateShader("SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
-    GetLightingProgram()->Initialize();
+    GetLightingProgram()->Initialize("Lighting");
     GetLightingProgram()->CreateShader("SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
-    GetObstProgram()->Initialize();
+    GetObstProgram()->Initialize("Obstructions");
     GetObstProgram()->CreateShader("Obstructions.comp.glsl", GL_COMPUTE_SHADER);
-    GetFloorProgram()->Initialize();
+    GetFloorProgram()->Initialize("Floor");
     GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
     GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
 }

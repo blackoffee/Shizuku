@@ -54,9 +54,6 @@
     <ClCompile Include="Command\PauseSimulation.cpp">
       <Filter>Command</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -113,9 +110,6 @@
     </ClInclude>
     <ClInclude Include="VectorUtils.h">
       <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

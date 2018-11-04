@@ -1,7 +1,7 @@
 #include "GraphicsManager.h"
 #include "ShaderManager.h"
 #include "CudaLbm.h"
-#include "Shader.h"
+#include "Shizuku.Core/Ogl/Shader.h"
 #include "kernel.h"
 #include "Domain.h"
 #include "../RectFloat.h"
