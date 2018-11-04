@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -20,6 +21,7 @@ class Domain;
 
 namespace Shizuku{
 namespace Core{
+    class Ogl;
     class ShaderProgram;
 }
 }
@@ -50,8 +52,11 @@ private:
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
+
 public:
     ShaderManager();
+
+    std::shared_ptr<Shizuku::Core::Ogl> Ogl;
 
     void CreateCudaLbm();
     CudaLbm* GetCudaLbm();

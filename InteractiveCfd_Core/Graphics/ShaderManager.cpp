@@ -1,5 +1,6 @@
 #include "ShaderManager.h"
 #include "Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
 #include "Domain.h"
 #include "helper_cuda.h"
@@ -18,6 +19,8 @@ ShaderManager::ShaderManager()
     m_lightingProgram = new ShaderProgram;
     m_obstProgram = new ShaderProgram;
     m_floorProgram = new ShaderProgram;
+
+    Ogl = std::shared_ptr < Shizuku::Core::Ogl >(new Shizuku::Core::Ogl());
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -60,8 +63,8 @@ void ShaderManager::CleanUpGLInterOp()
 
 void ShaderManager::CreateVbo(const unsigned int size, const unsigned int vboResFlags)
 {
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
+    std::shared_ptr<Ogl::Vao> main = Ogl->CreateVao("main");
+    main->Bind();
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -69,7 +72,7 @@ void ShaderManager::CreateVbo(const unsigned int size, const unsigned int vboRes
     glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindVertexArray(0);
+    main->Unbind();
 
     cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, m_vbo, vboResFlags);
 }
@@ -79,9 +82,7 @@ void ShaderManager::DeleteVbo()
     cudaGraphicsUnregisterResource(m_cudaGraphicsResource);
     glBindBuffer(1, m_vbo);
     glDeleteBuffers(1, &m_vbo);
-    glDeleteVertexArrays(1, &m_vao);
     m_vbo = 0;
-    m_vao = 0;
 }
 
 void ShaderManager::CreateElementArrayBuffer()
@@ -113,12 +114,12 @@ void ShaderManager::CreateElementArrayBuffer()
             elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+5] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
         }
     }
-    glBindVertexArray(m_vao);
+    Ogl->GetVao("main")->Bind();
     glGenBuffers(1, &m_elementArrayBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
     free(elementIndices);
-    glBindVertexArray(0);
+    Ogl->GetVao("main")->Unbind();
 }
 
 void ShaderManager::DeleteElementArrayBuffer(){
@@ -362,7 +363,7 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
 
 void ShaderManager::RenderFloorToTexture(Domain &domain)
 {
-    glBindVertexArray(m_vao);
+    Ogl->GetVao("main")->Bind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
@@ -401,7 +402,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glBindVertexArray(0);
+    Ogl->GetVao("main")->Unbind();
 }
 
 void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
@@ -413,7 +414,6 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //glMatrixMode(GL_MODELVIEW);
     //glLoadIdentity();
 
-    //glBindVertexArray(m_vao);
     //Draw solution field
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
@@ -421,7 +421,6 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-    //glEnableClientState(GL_VERTEX_ARRAY);
 
     int yDimVisible = domain.GetYDimVisible();
     if (renderFloor)
@@ -432,8 +431,6 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     }
     //Draw water surface
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-    //glDisableClientState(GL_VERTEX_ARRAY);
-    //glBindVertexArray(0);
 }
 
 void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
@@ -591,7 +588,7 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
 {
     ShaderProgram* shader = GetShaderProgram();
 
-    glBindVertexArray(m_vao);
+    Ogl->GetVao("main")->Bind();
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
     shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
@@ -600,5 +597,5 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
     RenderVbo(renderFloor, domain, modelMatrix, projectionMatrix);
 
     shader->Unset();
-    glBindVertexArray(0);
+    Ogl->GetVao("main")->Unbind();
 }

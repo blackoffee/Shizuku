@@ -6,8 +6,6 @@
 #define CORE_API __declspec(dllimport)   
 #endif  
 
-#include "Shader.h"
-
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,10 +15,10 @@
 #include <string>
 #include <memory>
 
-class ShaderProgram;
-
 namespace Shizuku{
     namespace Core{
+        class ShaderProgram;
+
         class CORE_API Ogl
         {
         public:
@@ -37,7 +35,7 @@ namespace Shizuku{
             void BindBO(GLenum target, Buffer &buffer);
             void BindSSBO(GLuint base, Buffer &buffer, GLenum target = GL_SHADER_STORAGE_BUFFER);
             void UnbindBO(GLenum target);
-            struct Vao
+            struct CORE_API Vao
             {
                 Vao();
                 Vao(GLuint id, std::string name);
