@@ -323,19 +323,18 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     ShaderProgram* const shader = GetLightingProgram();
     shader->Use();
 
-    GLuint shaderID = shader->GetId();
-    SetUniform(shaderID, "maxXDim", MAX_XDIM);
-    SetUniform(shaderID, "maxyDim", MAX_YDIM);
-    SetUniform(shaderID, "maxObsts", MAXOBSTS);
-    SetUniform(shaderID, "xDim", xDim);
-    SetUniform(shaderID, "yDim", yDim);
-    SetUniform(shaderID, "xDimVisible", domain.GetXDimVisible());
-    SetUniform(shaderID, "yDimVisible", domain.GetYDimVisible());
-    SetUniform(shaderID, "rayOrigin", rayOrigin);
-    SetUniform(shaderID, "rayDir", rayDir);
+    shader->SetUniform("maxXDim", MAX_XDIM);
+    shader->SetUniform("maxyDim", MAX_YDIM);
+    shader->SetUniform("maxObsts", MAXOBSTS);
+    shader->SetUniform("xDim", xDim);
+    shader->SetUniform("yDim", yDim);
+    shader->SetUniform("xDimVisible", domain.GetXDimVisible());
+    shader->SetUniform("yDimVisible", domain.GetYDimVisible());
+    shader->SetUniform("rayOrigin", rayOrigin);
+    shader->SetUniform("rayDir", rayDir);
 
-    RunSubroutine(shaderID, "ResetRayCastData", int3{ 1, 1, 1 });
-    RunSubroutine(shaderID, "RayCast", int3{ xDim, yDim, 1 });
+    shader->RunSubroutine("ResetRayCastData", glm::ivec3{ 1, 1, 1 });
+    shader->RunSubroutine("RayCast", glm::ivec3{ xDim, yDim, 1 });
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rayIntersection);
     GLfloat* intersect = (GLfloat*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0,
@@ -350,7 +349,7 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     }
     else
     {
-        RunSubroutine(shaderID, "ResetRayCastData", int3{ 1, 1, 1 });
+        shader->RunSubroutine("ResetRayCastData", glm::ivec3{ 1, 1, 1 });
         rayCastIntersection.x = intersectionCoord.x;
         rayCastIntersection.y = intersectionCoord.y;
         rayCastIntersection.z = intersectionCoord.z;
@@ -378,8 +377,8 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     ShaderProgram* floorShader = GetFloorProgram();
     floorShader->Use();
 
-    SetUniform(floorShader->GetId(), "xDimVisible", domain.GetXDimVisible());
-    SetUniform(floorShader->GetId(), "yDimVisible", domain.GetYDimVisible());
+    floorShader->SetUniform("xDimVisible", domain.GetXDimVisible());
+    floorShader->SetUniform("yDimVisible", domain.GetYDimVisible());
     glViewport(0, 0, 1024, 1024);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -456,39 +455,38 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
     Domain domain = *m_cudaLbm->GetDomain();
     const int xDim = domain.GetXDim();
     const int yDim = domain.GetYDim();
-    GLuint shaderID = shader->GetId();
-    SetUniform(shaderID, "maxXDim", MAX_XDIM);
-    SetUniform(shaderID, "maxyDim", MAX_YDIM);
-    SetUniform(shaderID, "maxObsts", MAXOBSTS);
-    SetUniform(shaderID, "xDim", xDim);
-    SetUniform(shaderID, "yDim", yDim);
-    SetUniform(shaderID, "xDimVisible", domain.GetXDimVisible());
-    SetUniform(shaderID, "yDimVisible", domain.GetYDimVisible());
-    SetUniform(shaderID, "cameraPosition", cameraPosition);
-    SetUniform(shaderID, "uMax", m_inletVelocity);
-    SetUniform(shaderID, "omega", m_omega);
-    SetUniform(shaderID, "contourVar", contVar);
-    SetUniform(shaderID, "contourMin", contMin);
-    SetUniform(shaderID, "contourMax", contMax);
+    shader->SetUniform("maxXDim", MAX_XDIM);
+    shader->SetUniform("maxyDim", MAX_YDIM);
+    shader->SetUniform("maxObsts", MAXOBSTS);
+    shader->SetUniform("xDim", xDim);
+    shader->SetUniform("yDim", yDim);
+    shader->SetUniform("xDimVisible", domain.GetXDimVisible());
+    shader->SetUniform("yDimVisible", domain.GetYDimVisible());
+    shader->SetUniform("cameraPosition", cameraPosition);
+    shader->SetUniform("uMax", m_inletVelocity);
+    shader->SetUniform("omega", m_omega);
+    shader->SetUniform("contourVar", contVar);
+    shader->SetUniform("contourMin", contMin);
+    shader->SetUniform("contourMax", contMax);
 
     for (int i = 0; i < 5; i++)
     {
-        RunSubroutine(shaderID, "MarchLbm", int3{ xDim, yDim, 1 });
+        shader->RunSubroutine("MarchLbm", glm::ivec3{ xDim, yDim, 1 });
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmA);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmB);
 
-        RunSubroutine(shaderID, "MarchLbm", int3{ xDim, yDim, 1 });
+        shader->RunSubroutine("MarchLbm", glm::ivec3{ xDim, yDim, 1 });
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
     }
     
-    RunSubroutine(shaderID, "UpdateFluidVbo", int3{ xDim, yDim, 1 });
-    RunSubroutine(shaderID, "DeformFloorMeshUsingCausticRay", int3{ xDim, yDim, 1 });
-    RunSubroutine(shaderID, "ComputeFloorLightIntensitiesFromMeshDeformation", int3{ xDim, yDim, 1 });
-    RunSubroutine(shaderID, "ApplyCausticLightingToFloor", int3{ xDim, yDim, 1 });
-    RunSubroutine(shaderID, "PhongLighting", int3{ xDim, yDim, 2 });
-    RunSubroutine(shaderID, "UpdateObstructionTransientStates", int3{ xDim, yDim, 1 });
-    RunSubroutine(shaderID, "CleanUpVbo", int3{ MAX_XDIM, MAX_YDIM, 2 });
+    shader->RunSubroutine("UpdateFluidVbo", glm::ivec3{ xDim, yDim, 1 });
+    shader->RunSubroutine("DeformFloorMeshUsingCausticRay", glm::ivec3{ xDim, yDim, 1 });
+    shader->RunSubroutine("ComputeFloorLightIntensitiesFromMeshDeformation", glm::ivec3{ xDim, yDim, 1 });
+    shader->RunSubroutine("ApplyCausticLightingToFloor", glm::ivec3{ xDim, yDim, 1 });
+    shader->RunSubroutine("PhongLighting", glm::ivec3{ xDim, yDim, 2 });
+    shader->RunSubroutine("UpdateObstructionTransientStates", glm::ivec3{ xDim, yDim, 1 });
+    shader->RunSubroutine("CleanUpVbo", glm::ivec3{ MAX_XDIM, MAX_YDIM, 2 });
     
     shader->Unset();
 
@@ -504,18 +502,16 @@ void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstr
     ShaderProgram* const shader = GetObstProgram();
     shader->Use();
 
-    GLuint shaderId = shader->GetId();
+    shader->SetUniform("targetObst.shape", newObst.shape);
+    shader->SetUniform("targetObst.x", newObst.x);
+    shader->SetUniform("targetObst.y", newObst.y);
+    shader->SetUniform("targetObst.r1", newObst.r1);
+    shader->SetUniform("targetObst.u", newObst.u);
+    shader->SetUniform("targetObst.v", newObst.v);
+    shader->SetUniform("targetObst.state", newObst.state);
+    shader->SetUniform("targetObstId", obstId);
 
-    SetUniform(shaderId, "targetObst.shape", newObst.shape);
-    SetUniform(shaderId, "targetObst.x", newObst.x);
-    SetUniform(shaderId, "targetObst.y", newObst.y);
-    SetUniform(shaderId, "targetObst.r1", newObst.r1);
-    SetUniform(shaderId, "targetObst.u", newObst.u);
-    SetUniform(shaderId, "targetObst.v", newObst.v);
-    SetUniform(shaderId, "targetObst.state", newObst.state);
-    SetUniform(shaderId, "targetObstId", obstId);
-
-    RunSubroutine(shader->GetId(), "UpdateObstruction", int3{ 1, 1, 1 });
+    shader->RunSubroutine("UpdateObstruction", glm::ivec3{ 1, 1, 1 });
 
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -534,17 +530,16 @@ void ShaderManager::InitializeComputeShaderData()
     shader->Use();
 
     Domain domain = *m_cudaLbm->GetDomain();
-    GLuint shaderId = shader->GetId();
-    SetUniform(shaderId, "maxXDim", MAX_XDIM);
-    SetUniform(shaderId, "maxYDim", MAX_YDIM);
-    SetUniform(shaderId, "maxObsts", MAXOBSTS);//
-    SetUniform(shaderId, "xDim", domain.GetXDim());
-    SetUniform(shaderId, "yDim", domain.GetYDim());
-    SetUniform(shaderId, "xDimVisible", domain.GetXDim());
-    SetUniform(shaderId, "yDimVisible", domain.GetYDim());
-    SetUniform(shaderId, "uMax", m_inletVelocity);
+    shader->SetUniform("maxXDim", MAX_XDIM);
+    shader->SetUniform("maxYDim", MAX_YDIM);
+    shader->SetUniform("maxObsts", MAXOBSTS);//
+    shader->SetUniform("xDim", domain.GetXDim());
+    shader->SetUniform("yDim", domain.GetYDim());
+    shader->SetUniform("xDimVisible", domain.GetXDim());
+    shader->SetUniform("yDimVisible", domain.GetYDim());
+    shader->SetUniform("uMax", m_inletVelocity);
 
-    RunSubroutine(shaderId, "InitializeDomain", int3{ MAX_XDIM, MAX_YDIM, 1 });
+    shader->RunSubroutine("InitializeDomain", glm::ivec3{ MAX_XDIM, MAX_YDIM, 1 });
 
     shader->Unset();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -597,49 +592,13 @@ void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain
     ShaderProgram* shader = GetShaderProgram();
 
     glBindVertexArray(m_vao);
-    shader->Use();//
+    shader->Use();
     glActiveTexture(GL_TEXTURE0);
-    GLint modelMatrixLocation = glGetUniformLocation(shader->GetId(), "modelMatrix");
-    GLint projectionMatrixLocation = glGetUniformLocation(shader->GetId(), "projectionMatrix");
-    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(glm::transpose(modelMatrix)));
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(glm::transpose(projectionMatrix)));
+    shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
+    shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
 
     RenderVbo(renderFloor, domain, modelMatrix, projectionMatrix);
 
     shader->Unset();
     glBindVertexArray(0);
 }
-
-void SetUniform(GLuint shaderId, const GLchar* varName, const int varValue)
-{
-    const GLint targetLocation = glGetUniformLocation(shaderId, varName);
-    glUniform1i(targetLocation, varValue);
-}
-
-void SetUniform(GLuint shaderId, const GLchar* varName, const float varValue)
-{
-    const GLint targetLocation = glGetUniformLocation(shaderId, varName);
-    glUniform1f(targetLocation, varValue);
-}
-
-void SetUniform(GLuint shaderId, const GLchar* varName, const bool varValue)
-{
-    const GLint targetLocation = glGetUniformLocation(shaderId, varName);
-    glUniform1i(targetLocation, varValue);
-}
-
-void SetUniform(GLuint shaderId, const GLchar* varName, const glm::vec3 varValue)
-{
-    const GLint targetLocation = glGetUniformLocation(shaderId, varName);
-    glUniform3f(targetLocation, varValue.x, varValue.y, varValue.z);
-}
-
-void RunSubroutine(GLuint shaderId, const GLchar* subroutineName, const int3 workGroupSize)
-{
-    const GLuint subroutine = glGetSubroutineIndex(shaderId, GL_COMPUTE_SHADER,
-        subroutineName);
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &subroutine);
-    glDispatchCompute(workGroupSize.x, workGroupSize.y, workGroupSize.z);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-}
-

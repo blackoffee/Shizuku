@@ -99,10 +99,3 @@ public:
     void RenderVboUsingShaders(const bool renderFloor, Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };
-
-void SetUniform(GLuint shaderId, const GLchar* varName, const int varValue);
-void SetUniform(GLuint shaderId, const GLchar* varName, const float varValue);
-void SetUniform(GLuint shaderId, const GLchar* varName, const bool varValue);
-void SetUniform(GLuint shaderId, const GLchar* varName, const glm::vec3 varValue);
-void RunSubroutine(GLuint shaderId, const GLchar* subroutineName,
-    const int3 workGroupSize);
