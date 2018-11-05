@@ -117,9 +117,10 @@ void ShaderManager::CreateElementArrayBuffer()
         }
     }
     Ogl->GetVao("main")->Bind();
-    glGenBuffers(1, &m_elementArrayBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
+    Ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "surface_indices", GL_DYNAMIC_DRAW);
+    //glGenBuffers(1, &m_elementArrayBuffer);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
     free(elementIndices);
     Ogl->GetVao("main")->Unbind();
 }
@@ -387,7 +388,8 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
 
     Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
     //glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
@@ -421,7 +423,8 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
     //Draw solution field
     Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
     //glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
+    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
