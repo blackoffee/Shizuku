@@ -22,7 +22,7 @@ namespace Shizuku{
         class CORE_API Ogl
         {
         public:
-            struct Buffer
+            struct CORE_API Buffer
             {
                 GLuint m_id;
                 std::string m_name;
