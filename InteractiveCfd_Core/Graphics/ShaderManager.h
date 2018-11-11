@@ -39,9 +39,6 @@ private:
     cudaGraphicsResource* m_cudaGraphicsResource;
     cudaGraphicsResource* m_cudaFloorLightTextureResource;
     cudaGraphicsResource* m_cudaEnvTextureResource;
-    GLuint m_vao;
-    GLuint m_vbo;
-    GLuint m_elementArrayBuffer;
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
     GLuint m_floorFbo;
@@ -63,17 +60,12 @@ public:
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     cudaGraphicsResource* GetCudaFloorLightTextureResource();
     cudaGraphicsResource* GetCudaEnvTextureResource();
-    GLuint GetVbo();
-    GLuint GetElementArrayBuffer();
     void CreateVbo(const unsigned int size, const unsigned int vboResFlags);
-    void DeleteVbo();
     void CreateElementArrayBuffer();
-    void DeleteElementArrayBuffer();
     template <typename T> void CreateShaderStorageBuffer(T defaultValue,
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop(unsigned int size);
-    void CleanUpGLInterOp();
     Shizuku::Core::ShaderProgram* GetShaderProgram();
     Shizuku::Core::ShaderProgram* GetLightingProgram();
     Shizuku::Core::ShaderProgram* GetObstProgram();

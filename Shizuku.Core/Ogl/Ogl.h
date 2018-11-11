@@ -73,14 +73,7 @@ namespace Shizuku{
         {
             GLuint temp;
             glGenBuffers(1, &temp);
-            if (target == GL_SHADER_STORAGE_BUFFER)
-            {
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, base, temp);
-            }
-            else
-            {
-                glBindBuffer(target, temp);
-            }
+            glBindBuffer(target, temp);
             glBufferData(target, numberOfElements*sizeof(T), data, drawMode);
             glBindBuffer(target, 0);
             std::shared_ptr<Ogl::Buffer> buffer = std::make_shared<Ogl::Buffer>(temp, name);

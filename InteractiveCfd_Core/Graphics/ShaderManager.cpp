@@ -55,12 +55,6 @@ void ShaderManager::CreateVboForCudaInterop(const unsigned int size)
     CreateElementArrayBuffer();
 }
 
-void ShaderManager::CleanUpGLInterOp()
-{
-    DeleteVbo();
-    DeleteElementArrayBuffer();
-}
-
 void ShaderManager::CreateVbo(const unsigned int size, const unsigned int vboResFlags)
 {
     std::shared_ptr<Ogl::Vao> main = Ogl->CreateVao("main");
@@ -68,23 +62,9 @@ void ShaderManager::CreateVbo(const unsigned int size, const unsigned int vboRes
 
     std::shared_ptr<Ogl::Buffer> vbo = Ogl->CreateBuffer<float>(GL_ARRAY_BUFFER, 0, size, "surface", GL_DYNAMIC_DRAW);
 
-    //glGenBuffers(1, &m_vbo);
-    //glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    //glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_DRAW);
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     main->Unbind();
 
     cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, vbo->GetId(), vboResFlags);
-}
-
-void ShaderManager::DeleteVbo()
-{
-    //cudaGraphicsUnregisterResource(m_cudaGraphicsResource);
-    //glBindBuffer(1, m_vbo);
-    //glDeleteBuffers(1, &m_vbo);
-    //m_vbo = 0;
 }
 
 void ShaderManager::CreateElementArrayBuffer()
@@ -118,32 +98,21 @@ void ShaderManager::CreateElementArrayBuffer()
     }
     Ogl->GetVao("main")->Bind();
     Ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "surface_indices", GL_DYNAMIC_DRAW);
-    //glGenBuffers(1, &m_elementArrayBuffer);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*numberOfElements*3*2, elementIndices, GL_DYNAMIC_DRAW);
     free(elementIndices);
     Ogl->GetVao("main")->Unbind();
-}
-
-void ShaderManager::DeleteElementArrayBuffer(){
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDeleteBuffers(1, &m_elementArrayBuffer);
 }
 
 template <typename T>
 void ShaderManager::CreateShaderStorageBuffer(T defaultValue, const unsigned int numberOfElements, const std::string name)
 {
-    GLuint temp;
-    glGenBuffers(1, &temp);
     T* data = new T[numberOfElements];
     for (int i = 0; i < numberOfElements; i++)
     {
         data[i] = defaultValue;
     }
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, temp);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numberOfElements*sizeof(T), data, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, temp);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    GLuint temp = Ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, data, numberOfElements, name, GL_STATIC_DRAW)->GetId();
+
     m_ssbos.push_back(Ssbo{ temp, name });
 }
 
@@ -157,17 +126,6 @@ GLuint ShaderManager::GetShaderStorageBuffer(const std::string name)
         }
     }
     return NULL;
-}
-
-GLuint ShaderManager::GetElementArrayBuffer()
-{
-    return m_elementArrayBuffer;
-}
-
-GLuint ShaderManager::GetVbo()
-{
-    return Ogl->GetBuffer("surface")->GetId();
-    //return m_vbo;
 }
 
 ShaderProgram* ShaderManager::GetShaderProgram()
@@ -206,6 +164,7 @@ void ShaderManager::CompileShaders()
 
 void ShaderManager::AllocateStorageBuffers()
 {
+
     CreateShaderStorageBuffer(GLfloat(0), MAX_XDIM*MAX_YDIM*9, "LbmA");
     CreateShaderStorageBuffer(GLfloat(0), MAX_XDIM*MAX_YDIM*9, "LbmB");
     CreateShaderStorageBuffer(GLint(0), MAX_XDIM*MAX_YDIM, "Floor");
@@ -306,13 +265,13 @@ void ShaderManager::SetUpTextures()
 
 void ShaderManager::InitializeObstSsbo()
 {
-    const GLuint obstSsbo = GetShaderStorageBuffer("Obstructions");
     CudaLbm* cudaLbm = GetCudaLbm();
     Obstruction* obst_h = cudaLbm->GetHostObst();
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstSsbo);
+
+    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("Obstructions");
+    Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
     glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(Obstruction), obst_h, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
 }
 
 int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
@@ -322,8 +281,9 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     int xDim = domain.GetXDim();
     int yDim = domain.GetYDim();
     glm::vec4 intersectionCoord{ 0, 0, 0, 0 };
-    const GLuint ssbo_rayIntersection = GetShaderStorageBuffer("RayIntersection");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_rayIntersection);
+
+    std::shared_ptr<Ogl::Buffer> rayIntSsbo = Ogl->GetBuffer("RayIntersection");
+    Ogl->BindSSBO(4, *rayIntSsbo);
 
     ShaderProgram* const shader = GetLightingProgram();
     shader->Use();
@@ -341,7 +301,7 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     shader->RunSubroutine("ResetRayCastData", glm::ivec3{ 1, 1, 1 });
     shader->RunSubroutine("RayCast", glm::ivec3{ xDim, yDim, 1 });
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rayIntersection);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayIntSsbo->GetId());
     GLfloat* intersect = (GLfloat*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0,
         sizeof(glm::vec4), GL_MAP_READ_BIT);
     std::memcpy(&intersectionCoord, intersect, sizeof(glm::vec4));
@@ -372,12 +332,6 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-
-    //glOrtho(-1,1,-1,1,-100,20);
-    //gluPerspective(45.0, 1.0, 0.1, 10.0);
-
 
     ShaderProgram* floorShader = GetFloorProgram();
     floorShader->Use();
@@ -387,9 +341,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glViewport(0, 0, 1024, 1024);
 
     Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
-    //glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
@@ -414,17 +366,9 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
 void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
     const glm::mat4 &projectionMatrix)
 {
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
-
     //Draw solution field
     Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
-    //glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
     glEnableVertexAttribArray(1);
@@ -444,16 +388,17 @@ void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm:
 void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
         const float contMin, const float contMax)
 {
-    const GLuint ssbo_lbmA = GetShaderStorageBuffer("LbmA");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
-    const GLuint ssbo_lbmB = GetShaderStorageBuffer("LbmB");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
+    std::shared_ptr<Ogl::Buffer> ssbo_lbmA = Ogl->GetBuffer("LbmA");
+    Ogl->BindSSBO(0, *ssbo_lbmA);
+    std::shared_ptr<Ogl::Buffer> ssbo_lbmB = Ogl->GetBuffer("LbmB");
+    Ogl->BindSSBO(1, *ssbo_lbmB);
     Ogl->BindBO(GL_SHADER_STORAGE_BUFFER, *Ogl->GetBuffer("surface"));
-    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_vbo);
-    const GLuint ssbo_floor = GetShaderStorageBuffer("Floor");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_floor);
-    const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_obsts);
+    std::shared_ptr<Ogl::Buffer> vbo = Ogl->GetBuffer("surface");
+    Ogl->BindSSBO(2, *vbo);
+    std::shared_ptr<Ogl::Buffer> ssbo_floor = Ogl->GetBuffer("Floor");
+    Ogl->BindSSBO(3, *ssbo_floor);
+    std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
+    Ogl->BindSSBO(5, *ssbo_obsts);
     ShaderProgram* const shader = GetLightingProgram();
 
     shader->Use();
@@ -478,12 +423,12 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
     for (int i = 0; i < 5; i++)
     {
         shader->RunSubroutine("MarchLbm", glm::ivec3{ xDim, yDim, 1 });
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmA);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmB);
+        Ogl->BindSSBO(1, *ssbo_lbmA);
+        Ogl->BindSSBO(0, *ssbo_lbmB);
 
         shader->RunSubroutine("MarchLbm", glm::ivec3{ xDim, yDim, 1 });
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
+        Ogl->BindSSBO(0, *ssbo_lbmA);
+        Ogl->BindSSBO(1, *ssbo_lbmB);
     }
     
     shader->RunSubroutine("UpdateFluidVbo", glm::ivec3{ xDim, yDim, 1 });
@@ -503,8 +448,8 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
 
 void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor)
 {
-    const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_obsts);
+    std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
+    Ogl->BindSSBO(0, *ssbo_obsts);
     ShaderProgram* const shader = GetObstProgram();
     shader->Use();
 
@@ -525,12 +470,14 @@ void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstr
 
 void ShaderManager::InitializeComputeShaderData()
 {
-    const GLuint ssbo_lbmA = GetShaderStorageBuffer("LbmA");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_lbmA);
-    const GLuint ssbo_lbmB = GetShaderStorageBuffer("LbmB");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_lbmB);
-    const GLuint ssbo_obsts = GetShaderStorageBuffer("Obstructions");
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_obsts);
+
+    std::shared_ptr<Ogl::Buffer> ssbo_lbmA = Ogl->GetBuffer("LbmA");
+    Ogl->BindSSBO(0, *ssbo_lbmA);
+    std::shared_ptr<Ogl::Buffer> ssbo_lbmB = Ogl->GetBuffer("LbmB");
+    Ogl->BindSSBO(1, *ssbo_lbmB);
+    std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
+    Ogl->BindSSBO(5, *ssbo_obsts);
+
     ShaderProgram* const shader = GetLightingProgram();
 
     shader->Use();
