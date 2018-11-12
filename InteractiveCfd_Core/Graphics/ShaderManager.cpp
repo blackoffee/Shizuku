@@ -15,20 +15,20 @@ using namespace Shizuku::Core;
 
 ShaderManager::ShaderManager()
 {
-    m_shaderProgram = new ShaderProgram;
-    m_lightingProgram = new ShaderProgram;
-    m_obstProgram = new ShaderProgram;
-    m_floorProgram = new ShaderProgram;
+    m_shaderProgram = std::make_shared<ShaderProgram>();
+    m_lightingProgram = std::make_shared<ShaderProgram>();
+    m_obstProgram = std::make_shared<ShaderProgram>();
+    m_floorProgram = std::make_shared<ShaderProgram>();
 
-    Ogl = std::shared_ptr < Shizuku::Core::Ogl >(new Shizuku::Core::Ogl());
+    Ogl = std::make_shared < Shizuku::Core::Ogl >();
 }
 
 void ShaderManager::CreateCudaLbm()
 {
-    m_cudaLbm = new CudaLbm;
+    m_cudaLbm = std::make_shared<CudaLbm>();
 }
 
-CudaLbm* ShaderManager::GetCudaLbm()
+std::shared_ptr<CudaLbm> ShaderManager::GetCudaLbm()
 {
     return m_cudaLbm;
 }
@@ -128,22 +128,22 @@ GLuint ShaderManager::GetShaderStorageBuffer(const std::string name)
     return NULL;
 }
 
-ShaderProgram* ShaderManager::GetShaderProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetShaderProgram()
 {
     return m_shaderProgram;
 }
 
-ShaderProgram* ShaderManager::GetLightingProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetLightingProgram()
 {
     return m_lightingProgram;
 }
 
-ShaderProgram* ShaderManager::GetObstProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetObstProgram()
 {
     return m_obstProgram;
 }
 
-ShaderProgram* ShaderManager::GetFloorProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetFloorProgram()
 {
     return m_floorProgram;
 }
@@ -177,41 +177,14 @@ void ShaderManager::SetUpTextures()
     int width, height;
     unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
     assert(image != NULL);
-//    float* tex = new float[width*height];
-//    for (int i = 0; i < width*height; ++i)
-//    {
-//        unsigned char color[4];
-//        std::memcpy(&color, &image[3 * i], 3*sizeof(unsigned char));
-//        color[3] = unsigned char(255);
-//        std::memcpy(&tex[i], &color, sizeof(float));
-////        for (int j = 0; j < 4; ++j)
-////        {
-////            printf("%u,", color[j]);
-////        }
-////        std::cout << std::endl;
-//    }
-
     float* tex = new float[4*width*height];
     for (int i = 0; i < width*height; ++i)
     {
-        unsigned char color[4];
-        std::memcpy(&color, &image[3 * i], 3*sizeof(unsigned char));
-        color[3] = unsigned char(255);
-        tex[4*i] = color[0];
-        tex[4*i+1] = color[1];
-        tex[4*i+2] = color[2];
-        tex[4*i+3] = color[3];
-//        if (i > (width) * 1024 + 1024 && i < (width) * 1024 + 2048)
-//        {
-//            for (int j = 0; j < 4; ++j)
-//            {
-//                printf("%f,", tex[4*i+j]);
-//            }
-//            std::cout << std::endl;
-//        }
+        tex[4*i] = image[3*i];
+        tex[4*i+1] = image[3*i + 1];
+        tex[4*i+2] = image[3*i + 2];
+        tex[4 * i + 3] = unsigned char(255);// color[3];
     }
-
-
 
     glGenTextures(1, &m_envTexture);
     glBindTexture(GL_TEXTURE_2D, m_envTexture);
@@ -265,7 +238,7 @@ void ShaderManager::SetUpTextures()
 
 void ShaderManager::InitializeObstSsbo()
 {
-    CudaLbm* cudaLbm = GetCudaLbm();
+    std::shared_ptr<CudaLbm> cudaLbm = GetCudaLbm();
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
     std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("Obstructions");
@@ -285,7 +258,7 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     std::shared_ptr<Ogl::Buffer> rayIntSsbo = Ogl->GetBuffer("RayIntersection");
     Ogl->BindSSBO(4, *rayIntSsbo);
 
-    ShaderProgram* const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
     shader->Use();
 
     shader->SetUniform("maxXDim", MAX_XDIM);
@@ -333,7 +306,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    ShaderProgram* floorShader = GetFloorProgram();
+    std::shared_ptr<ShaderProgram> floorShader = GetFloorProgram();
     floorShader->Use();
 
     floorShader->SetUniform("xDimVisible", domain.GetXDimVisible());
@@ -353,9 +326,6 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
         BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
 
     floorShader->Unset();
-
-
-
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -399,7 +369,7 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
     Ogl->BindSSBO(3, *ssbo_floor);
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(5, *ssbo_obsts);
-    ShaderProgram* const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
 
     shader->Use();
 
@@ -450,7 +420,7 @@ void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstr
 {
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(0, *ssbo_obsts);
-    ShaderProgram* const shader = GetObstProgram();
+    std::shared_ptr<ShaderProgram> const shader = GetObstProgram();
     shader->Use();
 
     shader->SetUniform("targetObst.shape", newObst.shape);
@@ -478,7 +448,7 @@ void ShaderManager::InitializeComputeShaderData()
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(5, *ssbo_obsts);
 
-    ShaderProgram* const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
 
     shader->Use();
 
@@ -542,7 +512,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
-    ShaderProgram* shader = GetShaderProgram();
+    std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
 
     Ogl->GetVao("main")->Bind();
     shader->Use();

@@ -26,6 +26,8 @@ namespace Core{
 }
 }
 
+using namespace Shizuku::Core;
+
 class FW_API ShaderManager
 {
 private:
@@ -35,17 +37,17 @@ private:
         GLuint m_id;
         std::string m_name;
     };
-    CudaLbm* m_cudaLbm;
+    std::shared_ptr<CudaLbm> m_cudaLbm;
     cudaGraphicsResource* m_cudaGraphicsResource;
     cudaGraphicsResource* m_cudaFloorLightTextureResource;
     cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
     GLuint m_floorFbo;
-    Shizuku::Core::ShaderProgram* m_shaderProgram;
-    Shizuku::Core::ShaderProgram* m_lightingProgram;
-    Shizuku::Core::ShaderProgram* m_obstProgram;
-    Shizuku::Core::ShaderProgram* m_floorProgram;
+    std::shared_ptr<ShaderProgram> m_shaderProgram;
+    std::shared_ptr<ShaderProgram> m_lightingProgram;
+    std::shared_ptr<ShaderProgram> m_obstProgram;
+    std::shared_ptr<ShaderProgram> m_floorProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
@@ -56,7 +58,7 @@ public:
     std::shared_ptr<Shizuku::Core::Ogl> Ogl;
 
     void CreateCudaLbm();
-    CudaLbm* GetCudaLbm();
+    std::shared_ptr<CudaLbm> GetCudaLbm();
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     cudaGraphicsResource* GetCudaFloorLightTextureResource();
     cudaGraphicsResource* GetCudaEnvTextureResource();
@@ -66,10 +68,10 @@ public:
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop(unsigned int size);
-    Shizuku::Core::ShaderProgram* GetShaderProgram();
-    Shizuku::Core::ShaderProgram* GetLightingProgram();
-    Shizuku::Core::ShaderProgram* GetObstProgram();
-    Shizuku::Core::ShaderProgram* GetFloorProgram();
+    std::shared_ptr<ShaderProgram> GetShaderProgram();
+    std::shared_ptr<ShaderProgram> GetLightingProgram();
+    std::shared_ptr<ShaderProgram> GetObstProgram();
+    std::shared_ptr<ShaderProgram> GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpTextures();

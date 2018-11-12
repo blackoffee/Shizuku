@@ -136,7 +136,7 @@ void GraphicsManager::SetScaleFactor(const float scaleFactor)
 
 CudaLbm* GraphicsManager::GetCudaLbm()
 {
-    return m_graphics->GetCudaLbm();
+    return m_graphics->GetCudaLbm().get();
 }
 
 ShaderManager* GraphicsManager::GetGraphics()
