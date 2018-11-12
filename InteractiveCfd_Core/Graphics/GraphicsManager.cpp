@@ -33,7 +33,7 @@ GraphicsManager::GraphicsManager()
     m_graphics = new ShaderManager;
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-    m_rotate = { 45.f, 0.f, 45.f };
+    m_rotate = { 75.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
 }
 
@@ -165,7 +165,7 @@ void GraphicsManager::UpdateViewMatrices()
     SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
     //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
     glm::mat4 modelMat;
-    modelMat = glm::translate(modelMat, glm::vec3{ 0.2, 0.5, -2.0 });
+    modelMat = glm::translate(modelMat, glm::vec3{ -0.3, 0, -2.5 });
     modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
     modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
     modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
