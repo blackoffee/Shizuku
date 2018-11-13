@@ -51,6 +51,7 @@ private:
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
+    void CreateElementArrayBuffer();
 
 public:
     ShaderManager();
@@ -62,8 +63,6 @@ public:
     cudaGraphicsResource* GetCudaSolutionGraphicsResource();
     cudaGraphicsResource* GetCudaFloorLightTextureResource();
     cudaGraphicsResource* GetCudaEnvTextureResource();
-    void CreateVbo(const unsigned int size, const unsigned int vboResFlags);
-    void CreateElementArrayBuffer();
     template <typename T> void CreateShaderStorageBuffer(T defaultValue,
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
@@ -75,6 +74,7 @@ public:
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpTextures();
+    void SetUpSurfaceVao();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 
@@ -93,8 +93,6 @@ public:
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
     void RenderFloorToTexture(Domain &domain);
-    void RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
-        const glm::mat4 &projectionMatrix);
-    void RenderVboUsingShaders(const bool renderFloor, Domain &domain,
+    void RenderSurface(const bool renderFloor, Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };

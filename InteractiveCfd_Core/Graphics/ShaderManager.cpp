@@ -51,20 +51,9 @@ cudaGraphicsResource* ShaderManager::GetCudaEnvTextureResource()
 void ShaderManager::CreateVboForCudaInterop(const unsigned int size)
 {
     cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
-    CreateVbo(size, cudaGraphicsMapFlagsWriteDiscard);
-    CreateElementArrayBuffer();
-}
-
-void ShaderManager::CreateVbo(const unsigned int size, const unsigned int vboResFlags)
-{
-    std::shared_ptr<Ogl::Vao> main = Ogl->CreateVao("main");
-    main->Bind();
-
     std::shared_ptr<Ogl::Buffer> vbo = Ogl->CreateBuffer<float>(GL_ARRAY_BUFFER, 0, size, "surface", GL_DYNAMIC_DRAW);
-
-    main->Unbind();
-
-    cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, vbo->GetId(), vboResFlags);
+    cudaGraphicsGLRegisterBuffer(&m_cudaGraphicsResource, vbo->GetId(), cudaGraphicsMapFlagsWriteDiscard);
+    CreateElementArrayBuffer();
 }
 
 void ShaderManager::CreateElementArrayBuffer()
@@ -96,10 +85,9 @@ void ShaderManager::CreateElementArrayBuffer()
             elementIndices[numberOfElements*3+j*(MAX_XDIM-1)*6+i*6+5] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
         }
     }
-    Ogl->GetVao("main")->Bind();
+
     Ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "surface_indices", GL_DYNAMIC_DRAW);
     free(elementIndices);
-    Ogl->GetVao("main")->Unbind();
 }
 
 template <typename T>
@@ -298,9 +286,26 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     return returnVal;
 }
 
+void ShaderManager::SetUpSurfaceVao()
+{
+    std::shared_ptr<Ogl::Vao> surface = Ogl->CreateVao("surface");
+    surface->Bind();
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
+    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
+
+    surface->Unbind();
+}
+
 void ShaderManager::RenderFloorToTexture(Domain &domain)
 {
-    Ogl->GetVao("main")->Bind();
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+    surface->Bind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
@@ -313,13 +318,6 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     floorShader->SetUniform("yDimVisible", domain.GetYDimVisible());
     glViewport(0, 0, 1024, 1024);
 
-    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
-    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-
     int yDimVisible = domain.GetYDimVisible();
     //Draw floor
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
@@ -330,29 +328,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    Ogl->GetVao("main")->Unbind();
-}
-
-void ShaderManager::RenderVbo(const bool renderFloor, Domain &domain, const glm::mat4 &modelMatrix,
-    const glm::mat4 &projectionMatrix)
-{
-    //Draw solution field
-    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
-    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surface_indices"));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
-
-    int yDimVisible = domain.GetYDimVisible();
-    if (renderFloor)
-    {
-        //Draw floor
-        glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-            BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
-    }
-    //Draw water surface
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+    surface->Unbind();
 }
 
 void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
@@ -413,8 +389,6 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
-
-
 
 void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor)
 {
@@ -509,19 +483,29 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
-void ShaderManager::RenderVboUsingShaders(const bool renderFloor, Domain &domain,
+void ShaderManager::RenderSurface(const bool renderFloor, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
 
-    Ogl->GetVao("main")->Bind();
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
     shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
     shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
 
-    RenderVbo(renderFloor, domain, modelMatrix, projectionMatrix);
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+    surface->Bind();
+    int yDimVisible = domain.GetYDimVisible();
+    if (renderFloor)
+    {
+        //Draw floor
+        glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+            BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+    }
+
+    //Draw water surface
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+    surface->Unbind();
 
     shader->Unset();
-    Ogl->GetVao("main")->Unbind();
 }

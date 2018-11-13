@@ -191,6 +191,7 @@ void GraphicsManager::SetUpShaders()
     graphics->InitializeComputeShaderData();
 
     graphics->SetUpTextures();
+    graphics->SetUpSurfaceVao();
 }
 
 void GraphicsManager::SetUpCuda()
@@ -257,7 +258,6 @@ void GraphicsManager::RunCuda()
 
     cudaGraphicsMapResources(1, &floorTextureResource, 0);
     cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
-
 
     UpdateLbmInputs();
     float u = cudaLbm->GetInletVelocity();
@@ -369,17 +369,8 @@ void GraphicsManager::RenderFloorToTexture()
 void GraphicsManager::RenderVbo()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    ////Colors in Cuda vbo not rendered properly
-//    if (m_useCuda)
-//    {
-//        GetGraphics()->RenderVbo(ShouldRenderFloor(), *cudaLbm->GetDomain(),
-//            GetModelMatrix(), GetProjectionMatrix());
-//    }
-//    else
-//    {
-        GetGraphics()->RenderVboUsingShaders(ShouldRenderFloor(), *cudaLbm->GetDomain(),
-            GetModelMatrix(), GetProjectionMatrix());
-//    }
+    GetGraphics()->RenderSurface(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+        GetModelMatrix(), GetProjectionMatrix());
 }
 
 bool GraphicsManager::ShouldRenderFloor()
@@ -809,8 +800,6 @@ void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
         m_projectionMatrix[i] = source[i];
     }
 }
-
-
 
 float GetDistanceBetweenTwoPoints(const float x1, const float y1,
     const float x2, const float y2)
