@@ -21,11 +21,6 @@ namespace
         Window::Instance().GlfwMouseButton(button, state, mods);
     }
 
-    void MouseMotionWrapper(const int x, const int y)
-    {
-        Window::Instance().MouseMotion(x, y);
-    }
-
     void MouseMotionWrapper(GLFWwindow* window, double x, double y)
     {
         Window::Instance().MouseMotion(x, y);
@@ -36,9 +31,9 @@ namespace
         Window::Instance().GlfwMouseWheel(xwheel, ywheel);
     }
 
-    void KeyboardWrapper(const unsigned char key, const int x, const int y)
+    void KeyboardWrapper(GLFWwindow* window, int key, int scancode, int action, int mode)
     {
-        Window::Instance().Keyboard(key, x, y);
+        Window::Instance().GlfwKeyboard(key, scancode, action, mode);
     }
 
     void GLAPIENTRY MessageCallback( GLenum source,
@@ -53,9 +48,6 @@ namespace
                ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
                 type, severity, message );
     }
-
-
-
 }
 
 Window::Window() : 
@@ -155,10 +147,17 @@ void Window::MouseMotion(const int x, const int y)
     m_moveObstruction.Track(xf, yf);
 }
 
-void Window::Keyboard(const unsigned char key,
-    const int x, const int y)
+void Window::GlfwMouseWheel(double xwheel, double ywheel)
 {
-    if (key == 32)
+    double x, y;
+    glfwGetCursorPos(m_window, &x, &y);
+    const int dir = ywheel > 0 ? 1 : 0;
+    m_zoom.Start(dir, 0.3f);
+}
+
+void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
+{
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
         if (m_graphics->GetCudaLbm()->IsPaused())
         {
@@ -169,14 +168,6 @@ void Window::Keyboard(const unsigned char key,
             m_pauseSimulation.Start();
         }
     }
-}
-
-void Window::GlfwMouseWheel(double xwheel, double ywheel)
-{
-    double x, y;
-    glfwGetCursorPos(m_window, &x, &y);
-    const int dir = ywheel > 0 ? 1 : 0;
-    m_zoom.Start(dir, 0.3f);
 }
 
 void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
@@ -238,7 +229,7 @@ void Window::InitializeGlfw()
     glfwMakeContextCurrent(window);
     m_window = window;
 
-    //glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, KeyboardWrapper);
     glfwSetWindowSizeCallback(window, ResizeWrapper); //glfw is in C so cannot bind instance method...
     glfwSetCursorPosCallback(window, MouseMotionWrapper);
     glfwSetMouseButtonCallback(window, MouseButtonWrapper);

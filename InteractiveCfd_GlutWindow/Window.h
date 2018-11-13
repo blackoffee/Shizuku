@@ -43,9 +43,8 @@ public:
     void Resize(Rect<int> size);
     void GlfwMouseButton(const int button, const int state, const int mod);
     void MouseMotion(const int x, const int y);
-    void Keyboard(const unsigned char key,
-        const int /*x*/, const int /*y*/);
     void GlfwMouseWheel(double xwheel, double ywheel);
+    void GlfwKeyboard(int key, int scancode, int action, int mode);
     void GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
     void GlfwDrawLoop();
     void InitializeGlfw();
