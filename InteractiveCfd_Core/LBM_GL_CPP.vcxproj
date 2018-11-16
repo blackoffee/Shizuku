@@ -286,6 +286,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Domain.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Output.frag.glsl" />
+    <None Include="Shaders\Output.vert.glsl" />
     <None Include="Shaders\SurfaceShader.comp.glsl" />
     <None Include="Shaders\FloorShader.frag.glsl" />
     <None Include="Shaders\FloorShader.vert.glsl" />

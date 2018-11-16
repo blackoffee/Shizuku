@@ -19,6 +19,7 @@ ShaderManager::ShaderManager()
     m_lightingProgram = std::make_shared<ShaderProgram>();
     m_obstProgram = std::make_shared<ShaderProgram>();
     m_floorProgram = std::make_shared<ShaderProgram>();
+    m_outputProgram = std::make_shared<ShaderProgram>();
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
 }
@@ -148,6 +149,9 @@ void ShaderManager::CompileShaders()
     GetFloorProgram()->Initialize("Floor");
     GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
     GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
+    m_outputProgram->Initialize("Output");
+    m_outputProgram->CreateShader("Output.vert.glsl", GL_VERTEX_SHADER);
+    m_outputProgram->CreateShader("Output.frag.glsl", GL_FRAGMENT_SHADER);
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -160,7 +164,7 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
-void ShaderManager::SetUpTextures()
+void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
 {
     int width, height;
     unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
@@ -213,15 +217,47 @@ void ShaderManager::SetUpTextures()
     GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, drawBuffers);
 
-    //if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        //return false;
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        throw "Framebuffer creation failed";
 
     cudaGraphicsGLRegisterImage(&m_cudaFloorLightTextureResource, m_floorLightTexture, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+
+    //! Output Fbo
+    glGenTextures(1, &m_outputTexture);
+    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+
+    const GLuint outWidth = p_viewSize.Width;
+    const GLuint outHeight = p_viewSize.Height;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, outWidth, outHeight, 0, GL_RGBA, GL_FLOAT, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenRenderbuffers(1, &m_outputRbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_outputRbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, outWidth, outHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // set up FBO and texture to render to 
+    glGenFramebuffers(1, &m_outputFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_outputTexture, 0);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_outputRbo);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        throw "Framebuffer creation failed";
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void ShaderManager::InitializeObstSsbo()
@@ -302,7 +338,31 @@ void ShaderManager::SetUpSurfaceVao()
     surface->Unbind();
 }
 
-void ShaderManager::RenderFloorToTexture(Domain &domain)
+void ShaderManager::SetUpOutputVao()
+{
+    std::shared_ptr<Ogl::Vao> output = Ogl->CreateVao("output");
+    output->Bind();
+
+    const GLfloat quadVertices[] = {
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        1.0f,  1.0f, 0.0f,
+    };
+
+    Ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 18, "output", GL_STATIC_DRAW);
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("output"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    output->Unbind();
+}
+
+void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize)
 {
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
@@ -329,6 +389,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     surface->Unbind();
+    glViewport(0, 0, p_viewSize.Width, p_viewSize.Height);
 }
 
 void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
@@ -486,6 +547,10 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 void ShaderManager::RenderSurface(const bool renderFloor, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
+    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
 
     shader->Use();
@@ -508,4 +573,22 @@ void ShaderManager::RenderSurface(const bool renderFloor, Domain &domain,
     surface->Unbind();
 
     shader->Unset();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+
+    //Draw quad
+    std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
+    outputVao->Bind();
+
+    m_outputProgram->Use();
+    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    m_outputProgram->Unset();
+
+    outputVao->Unbind();
 }

@@ -156,7 +156,7 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    float scaleUp = 1.7f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+    const float scaleUp = 2.3f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
     SetScaleFactor(scaleUp);
 
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
@@ -190,8 +190,9 @@ void GraphicsManager::SetUpShaders()
     UpdateLbmInputs();
     graphics->InitializeComputeShaderData();
 
-    graphics->SetUpTextures();
+    graphics->SetUpTextures(m_viewSize);
     graphics->SetUpSurfaceVao();
+    graphics->SetUpOutputVao();
 }
 
 void GraphicsManager::SetUpCuda()
@@ -363,7 +364,7 @@ void GraphicsManager::RunSimulation()
 void GraphicsManager::RenderFloorToTexture()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderFloorToTexture(*cudaLbm->GetDomain());
+    GetGraphics()->RenderFloorToTexture(*cudaLbm->GetDomain(), m_viewSize);
 }
 
 void GraphicsManager::RenderVbo()

@@ -8,8 +8,6 @@ uniform vec4 viewportMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
 
-out vec3 texCoords;
-
 vec4 unpackColor(float f)
 {
     uint f2 = floatBitsToUint(f);
@@ -39,10 +37,6 @@ void main()
     gl_Position = projectionMatrix*modelMatrix*vec4(position, 1.f);
 
     vec4 unpackedColor = unpackColor(color);
-
-    texCoords = (position.xyz+vec3(1.f))*0.5f;
-
-
 
     fColor.x = unpackedColor.x;
     fColor.y = unpackedColor.y;// color.y*sin((time + position.x + 1.f)*0.3f);

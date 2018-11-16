@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "Shizuku.Core/Rect.h"
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -44,10 +45,14 @@ private:
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
     GLuint m_floorFbo;
+    GLuint m_outputFbo;
+    GLuint m_outputTexture;
+    GLuint m_outputRbo;
     std::shared_ptr<ShaderProgram> m_shaderProgram;
     std::shared_ptr<ShaderProgram> m_lightingProgram;
     std::shared_ptr<ShaderProgram> m_obstProgram;
     std::shared_ptr<ShaderProgram> m_floorProgram;
+    std::shared_ptr<ShaderProgram> m_outputProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
@@ -73,8 +78,9 @@ public:
     std::shared_ptr<ShaderProgram> GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
-    void SetUpTextures();
+    void SetUpTextures(const Rect<int>& p_viewSize);
     void SetUpSurfaceVao();
+    void SetUpOutputVao();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 
@@ -92,7 +98,7 @@ public:
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
-    void RenderFloorToTexture(Domain &domain);
+    void RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void RenderSurface(const bool renderFloor, Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };

@@ -131,6 +131,12 @@
     <None Include="Shaders\FloorShader.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\Output.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Output.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">
