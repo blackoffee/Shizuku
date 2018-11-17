@@ -190,21 +190,21 @@ void Window::GlfwDrawLoop()
     m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_graphics;
     graphicsManager->UpdateGraphicsInputs();
-//    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
-//    graphicsManager->RunSimulation();
+    graphicsManager->RunSimulation();
 
-//    // render caustic floor to texture
-//    graphicsManager->RenderFloorToTexture();
+    // render caustic floor to texture
+    graphicsManager->RenderFloorToTexture();
 
-//    graphicsManager->RunSurfaceRefraction();
+    graphicsManager->RunSurfaceRefraction();
 
-    //int viewX, viewY;
-    //m_graphics->GetViewport(viewX, viewY);
-    //ResizeWrapper(m_window, viewX, viewY);
+  //int viewX, viewY;
+  //m_graphics->GetViewport(viewX, viewY);
+  //ResizeWrapper(m_window, viewX, viewY);
 
-//    graphicsManager->UpdateViewMatrices();
-//    graphicsManager->UpdateViewTransformations();
+    graphicsManager->UpdateViewMatrices();
+    graphicsManager->UpdateViewTransformations();
 
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -249,23 +249,55 @@ void Window::InitializeGlfw()
 
 void Window::GlfwDisplay()
 {
-//    // Setup Dear ImGui binding
-//    IMGUI_CHECKVERSION();
-//    ImGui::CreateContext();
-//    ImGuiIO& io = ImGui::GetIO(); (void)io;
-//    const char* glsl_version = "#version 430 core";
-//    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-//    ImGui_ImplOpenGL3_Init(glsl_version);
-//    ImGui::StyleColorsDark();
+    // Setup Dear ImGui binding
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    const char* glsl_version = "#version 430 core";
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui::StyleColorsDark();
     while (!glfwWindowShouldClose(m_window))
     {
+        glClear(GL_COLOR_BUFFER_BIT);
         glfwPollEvents();
         GlfwDrawLoop();
+
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        bool test;
-        ImGui::ShowDemoWindow(&test);
+
+        ImGui::SetNextWindowSize(ImVec2(200,150));
+        ImGui::SetNextWindowPos(ImVec2(600,50));
+
+        ImGui::Begin("controller");
+        {
+            //ImGui::SliderFloat("red", &triangleColor[0], 0.0f, 1.0f, "%.3f");
+            //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
+            //ImGui::SliderFloat("blue", &triangleColor[8], 0.0f, 1.0f, "%.3f");
+
+            for (int i=0; i<5; i++) ImGui::Spacing(); // vertical spacing x 5
+
+            // Button
+            if (ImGui::Button("Quit")) break; // exit main loop
+        }
+        ImGui::End();
+
+
+        //bool test = true;
+        //ImGui::ShowDemoWindow(&test);
+        ImGui::Render();
+
+        int display_w, display_h;
+        glfwMakeContextCurrent(m_window);
+        glfwGetFramebufferSize(m_window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+        glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
         glfwSwapBuffers(m_window);
     }
     glfwTerminate();
