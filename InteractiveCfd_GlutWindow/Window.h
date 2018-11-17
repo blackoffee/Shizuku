@@ -55,4 +55,7 @@ public:
         static Window s_window = Window();
         return s_window;
     }
+
+private:
+    void TogglePaused();
 };

@@ -725,7 +725,7 @@ void GraphicsManager::UpdateGraphicsInputs()
     m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
     m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
     m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
-    m_scaleFactor = 1.7f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }

@@ -163,14 +163,19 @@ void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
 {
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
-        if (m_graphics->GetCudaLbm()->IsPaused())
-        {
-            m_pauseSimulation.End();
-        }
-        else
-        {
-            m_pauseSimulation.Start();
-        }
+        TogglePaused();
+    }
+}
+
+void Window::TogglePaused()
+{
+    if (m_graphics->GetCudaLbm()->IsPaused())
+    {
+        m_pauseSimulation.End();
+    }
+    else
+    {
+        m_pauseSimulation.Start();
     }
 }
 
@@ -257,12 +262,19 @@ void Window::GlfwDisplay()
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
+
+    ImGui::GetIO().WantCaptureKeyboard = true;
+
     while (!glfwWindowShouldClose(m_window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
         glfwPollEvents();
         GlfwDrawLoop();
 
+
+        ImGuiIO& io = ImGui::GetIO();
+        if (ImGui::IsMouseClicked(0))
+            GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -271,7 +283,7 @@ void Window::GlfwDisplay()
         ImGui::SetNextWindowSize(ImVec2(200,150));
         ImGui::SetNextWindowPos(ImVec2(600,50));
 
-        ImGui::Begin("controller");
+        ImGui::Begin("Settings");
         {
             //ImGui::SliderFloat("red", &triangleColor[0], 0.0f, 1.0f, "%.3f");
             //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
@@ -281,6 +293,8 @@ void Window::GlfwDisplay()
 
             // Button
             if (ImGui::Button("Quit")) break; // exit main loop
+
+            if (ImGui::Button("Pause")) TogglePaused(); // exit main loop
         }
         ImGui::End();
 
@@ -296,6 +310,7 @@ void Window::GlfwDisplay()
         //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
 
         glfwSwapBuffers(m_window);
