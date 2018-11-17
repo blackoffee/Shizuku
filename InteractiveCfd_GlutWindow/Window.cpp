@@ -1,8 +1,12 @@
+#include "../imgui/imgui.h"
+#include "../imgui/imgui_impl_glfw.h"
+#include "../imgui/imgui_impl_opengl3.h"
 #include "Window.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
 #include "../Shizuku.Core/Ogl/Ogl.h"
 #include "../Shizuku.Core/Ogl/Shader.h"
+
 
 #include <GLFW/glfw3.h>
 #include <typeinfo>
@@ -186,21 +190,21 @@ void Window::GlfwDrawLoop()
     m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_graphics;
     graphicsManager->UpdateGraphicsInputs();
-    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
+//    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
-    graphicsManager->RunSimulation();
+//    graphicsManager->RunSimulation();
 
-    // render caustic floor to texture
-    graphicsManager->RenderFloorToTexture();
+//    // render caustic floor to texture
+//    graphicsManager->RenderFloorToTexture();
 
-    graphicsManager->RunSurfaceRefraction();
+//    graphicsManager->RunSurfaceRefraction();
 
     //int viewX, viewY;
     //m_graphics->GetViewport(viewX, viewY);
     //ResizeWrapper(m_window, viewX, viewY);
 
-    graphicsManager->UpdateViewMatrices();
-    graphicsManager->UpdateViewTransformations();
+//    graphicsManager->UpdateViewMatrices();
+//    graphicsManager->UpdateViewTransformations();
 
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -215,6 +219,7 @@ void Window::GlfwDrawLoop()
     CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
     const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
     GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
+
 }
 
 void Window::InitializeGlfw()
@@ -244,10 +249,23 @@ void Window::InitializeGlfw()
 
 void Window::GlfwDisplay()
 {
+//    // Setup Dear ImGui binding
+//    IMGUI_CHECKVERSION();
+//    ImGui::CreateContext();
+//    ImGuiIO& io = ImGui::GetIO(); (void)io;
+//    const char* glsl_version = "#version 430 core";
+//    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+//    ImGui_ImplOpenGL3_Init(glsl_version);
+//    ImGui::StyleColorsDark();
     while (!glfwWindowShouldClose(m_window))
     {
         glfwPollEvents();
         GlfwDrawLoop();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        bool test;
+        ImGui::ShowDemoWindow(&test);
         glfwSwapBuffers(m_window);
     }
     glfwTerminate();
