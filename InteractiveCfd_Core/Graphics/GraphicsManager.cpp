@@ -174,9 +174,6 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-//    const float scaleUp = 2.5f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-//    SetScaleFactor(scaleUp);
-
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
 ;
@@ -224,7 +221,7 @@ void GraphicsManager::SetUpCuda()
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();
 
-    float u = 0.08f;// m_parent->GetRootPanel()->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
+    const float u = cudaLbm->GetInletVelocity();
 
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
@@ -767,11 +764,10 @@ void GraphicsManager::UpdateObstructionScales()
 
 void GraphicsManager::UpdateLbmInputs()
 {
-    float u = 0.05f;// rootPanel->GetSlider("Slider_InletV")->m_sliderBar1->GetValue();
-    float omega = 1.9f;//1.8 - 1.99   rootPanel->GetSlider("Slider_Visc")->m_sliderBar1->GetValue();
+    float omega = 1.9f;
     CudaLbm* cudaLbm = GetCudaLbm();
-    cudaLbm->SetInletVelocity(u);
     cudaLbm->SetOmega(omega);
+    const float u = cudaLbm->GetInletVelocity();
     ShaderManager* graphics = GetGraphics();
     graphics->UpdateLbmInputs(u, omega);
 }

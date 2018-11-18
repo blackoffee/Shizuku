@@ -2,8 +2,20 @@
 #include "../imgui/imgui_impl_glfw.h"
 #include "Window.h"
 #include "../imgui/imgui_impl_opengl3.h"
+
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
+
+#include "Command/Zoom.h"
+#include "Command/Pan.h"
+#include "Command/Rotate.h"
+#include "Command/AddObstruction.h"
+#include "Command/RemoveObstruction.h"
+#include "Command/MoveObstruction.h"
+#include "Command/PauseSimulation.h"
+#include "Command/SetSimulationScale.h"
+#include "Command/SetTimestepsPerFrame.h"
+#include "Command/SetInletVelocity.h"
 
 #include "../Shizuku.Core/Ogl/Ogl.h"
 #include "../Shizuku.Core/Ogl/Shader.h"
@@ -56,17 +68,9 @@ namespace
 }
 
 Window::Window() : 
-    m_zoom(Zoom(*m_graphics)),
-    m_pan(Pan(*m_graphics)),
-    m_rotate(Rotate(*m_graphics)),
-    m_addObstruction(AddObstruction(*m_graphics)),
-    m_removeObstruction(RemoveObstruction(*m_graphics)),
-    m_moveObstruction(MoveObstruction(*m_graphics)),
-    m_pauseSimulation(PauseSimulation(*m_graphics)),
-    m_setSimulationScale(SetSimulationScale(*m_graphics)),
-    m_timestepsPerFrame(SetTimestepsPerFrame(*m_graphics)),
     m_simulationScale(2.0f),
-    m_timesteps(10)
+    m_velocity(0.05f),
+    m_timesteps(6)
 {
 }
 
@@ -77,15 +81,20 @@ void Window::SetGraphicsManager(GraphicsManager &graphics)
 
 void Window::RegisterCommands()
 {
-    m_zoom = Zoom(*m_graphics);
-    m_pan = Pan(*m_graphics);
-    m_rotate = Rotate(*m_graphics);
-    m_addObstruction = AddObstruction(*m_graphics);
-    m_removeObstruction = RemoveObstruction(*m_graphics);
-    m_moveObstruction = MoveObstruction(*m_graphics);
-    m_pauseSimulation = PauseSimulation(*m_graphics);
-    m_setSimulationScale = SetSimulationScale(*m_graphics);
-    m_timestepsPerFrame = SetTimestepsPerFrame(*m_graphics);
+    m_zoom = std::make_shared<Zoom>(*m_graphics);
+    m_pan = std::make_shared<Pan>(*m_graphics);
+    m_rotate = std::make_shared<Rotate>(*m_graphics);
+    m_addObstruction = std::make_shared<AddObstruction>(*m_graphics);
+    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_graphics);
+    m_moveObstruction = std::make_shared<MoveObstruction>(*m_graphics);
+    m_pauseSimulation = std::make_shared<PauseSimulation>(*m_graphics);
+    m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_graphics);
+    m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_graphics);
+    m_setVelocity = std::make_shared<SetInletVelocity>(*m_graphics);
+
+    m_setSimulationScale->Start(m_simulationScale);
+    m_timestepsPerFrame->Start(m_timesteps);
+    m_setVelocity->Start(m_velocity);
 }
 
 float Window::GetFloatCoordX(const int x)
@@ -146,27 +155,27 @@ void Window::GlfwMouseButton(const int button, const int state, const int mod)
     if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
         && mod == GLFW_MOD_CONTROL)
     {
-        m_pan.Start(xf, yf);
+        m_pan->Start(xf, yf);
     }
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
-        m_rotate.Start(xf, yf);
-        m_removeObstruction.Start(xf, yf);
+        m_rotate->Start(xf, yf);
+        m_removeObstruction->Start(xf, yf);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
-        m_addObstruction.Start(xf, yf);
+        m_addObstruction->Start(xf, yf);
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
     {
-        m_moveObstruction.Start(xf, yf);
+        m_moveObstruction->Start(xf, yf);
     }
     else
     {
-        m_pan.End();
-        m_rotate.End();
-        m_moveObstruction.End();
-        m_removeObstruction.End(xf, yf);
+        m_pan->End();
+        m_rotate->End();
+        m_moveObstruction->End();
+        m_removeObstruction->End(xf, yf);
     }
 }
 
@@ -174,9 +183,9 @@ void Window::MouseMotion(const int x, const int y)
 {
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(m_size.Height - y);
-    m_pan.Track(xf, yf);
-    m_rotate.Track(xf, yf);
-    m_moveObstruction.Track(xf, yf);
+    m_pan->Track(xf, yf);
+    m_rotate->Track(xf, yf);
+    m_moveObstruction->Track(xf, yf);
 }
 
 void Window::GlfwMouseWheel(double xwheel, double ywheel)
@@ -184,7 +193,7 @@ void Window::GlfwMouseWheel(double xwheel, double ywheel)
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
     const int dir = ywheel > 0 ? 1 : 0;
-    m_zoom.Start(dir, 0.6f);
+    m_zoom->Start(dir, 0.6f);
 }
 
 void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
@@ -199,11 +208,11 @@ void Window::TogglePaused()
 {
     if (m_graphics->GetCudaLbm()->IsPaused())
     {
-        m_pauseSimulation.End();
+        m_pauseSimulation->End();
     }
     else
     {
-        m_pauseSimulation.Start();
+        m_pauseSimulation->Start();
     }
 }
 
@@ -276,14 +285,20 @@ void Window::DrawUI()
 
     ImGui::Begin("Settings");
     {
+        const float oldScale = m_simulationScale;
         ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
-        m_setSimulationScale.Start(m_simulationScale);
+        if (oldScale != m_simulationScale)
+            m_setSimulationScale->Start(m_simulationScale);
 
+        const float oldTimesteps = m_timesteps;
         ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 2, 30);
-        m_timestepsPerFrame.Start(m_timesteps);
+        if (oldTimesteps != m_timesteps)
+            m_timestepsPerFrame->Start(m_timesteps);
 
-        //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
-        //ImGui::SliderFloat("blue", &triangleColor[8], 0.0f, 1.0f, "%.3f");
+        const float oldVel = m_velocity;
+        ImGui::SliderFloat("Velocity", &m_velocity, 0.0f, 0.12f, "%.3f");
+        if (oldVel != m_velocity)
+            m_setVelocity->Start(m_velocity);
 
         ImGui::Spacing();
 

@@ -1,41 +1,44 @@
 #pragma once
-#include "Command/Zoom.h"
-#include "Command/Pan.h"
-#include "Command/Rotate.h"
-#include "Command/AddObstruction.h"
-#include "Command/RemoveObstruction.h"
-#include "Command/MoveObstruction.h"
-#include "Command/PauseSimulation.h"
-#include "Command/SetSimulationScale.h"
-#include "Command/SetTimestepsPerFrame.h"
 #include "FpsTracker.h"
 #include "Shizuku.Core/Rect.h"
+#include <memory>
 
 class GLFWwindow;
 class GraphicsManager;
+class Zoom;
+class Pan;
+class Rotate;
+class AddObstruction;
+class RemoveObstruction;
+class MoveObstruction;
+class PauseSimulation; 
+class SetSimulationScale;
+class SetTimestepsPerFrame;
+class SetInletVelocity;
 
 using namespace Shizuku::Core;
 
 class Window
 {
 private:
-    Zoom m_zoom;
-    Pan m_pan;
-    Rotate m_rotate;
-    AddObstruction m_addObstruction;
-    RemoveObstruction m_removeObstruction;
-    MoveObstruction m_moveObstruction;
-    PauseSimulation m_pauseSimulation;
-    SetSimulationScale m_setSimulationScale;
-    SetTimestepsPerFrame m_timestepsPerFrame;
-    int m_leftPanelWidth;
-    int m_leftPanelHeight;
+    std::shared_ptr<Zoom> m_zoom;
+    std::shared_ptr<Pan> m_pan;
+    std::shared_ptr<Rotate> m_rotate;
+    std::shared_ptr<AddObstruction> m_addObstruction;
+    std::shared_ptr<RemoveObstruction> m_removeObstruction;
+    std::shared_ptr<MoveObstruction> m_moveObstruction;
+    std::shared_ptr<PauseSimulation> m_pauseSimulation;
+    std::shared_ptr<SetSimulationScale> m_setSimulationScale;
+    std::shared_ptr<SetTimestepsPerFrame> m_timestepsPerFrame;
+    std::shared_ptr<SetInletVelocity> m_setVelocity;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
     Rect<int> m_size;
 
     float m_simulationScale;
     int m_timesteps;
+    float m_velocity;
+    float m_viscosity;
 
     GraphicsManager* m_graphics;
 public:
