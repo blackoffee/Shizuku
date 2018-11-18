@@ -178,11 +178,6 @@
     <ClCompile Include="unittest1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LBM_GL_CPP\LBM_GL_CPP.vcxproj">
-      <Project>{2ca37005-4ac9-46f2-a584-c4b67153fa97}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <CudaCompile Include="..\LBM_GL_CPP\kernel.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

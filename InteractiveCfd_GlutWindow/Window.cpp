@@ -3,22 +3,22 @@
 #include "Window.h"
 #include "../imgui/imgui_impl_opengl3.h"
 
-#include "Graphics/GraphicsManager.h"
-#include "Graphics/CudaLbm.h"
+#include "Shizuku.Flow/Graphics/GraphicsManager.h"
+#include "Shizuku.Flow/Graphics/CudaLbm.h"
 
-#include "Command/Zoom.h"
-#include "Command/Pan.h"
-#include "Command/Rotate.h"
-#include "Command/AddObstruction.h"
-#include "Command/RemoveObstruction.h"
-#include "Command/MoveObstruction.h"
-#include "Command/PauseSimulation.h"
-#include "Command/SetSimulationScale.h"
-#include "Command/SetTimestepsPerFrame.h"
-#include "Command/SetInletVelocity.h"
+#include "Shizuku.Flow/Command/Zoom.h"
+#include "Shizuku.Flow/Command/Pan.h"
+#include "Shizuku.Flow/Command/Rotate.h"
+#include "Shizuku.Flow/Command/AddObstruction.h"
+#include "Shizuku.Flow/Command/RemoveObstruction.h"
+#include "Shizuku.Flow/Command/MoveObstruction.h"
+#include "Shizuku.Flow/Command/PauseSimulation.h"
+#include "Shizuku.Flow/Command/SetSimulationScale.h"
+#include "Shizuku.Flow/Command/SetTimestepsPerFrame.h"
+#include "Shizuku.Flow/Command/SetInletVelocity.h"
 
-#include "../Shizuku.Core/Ogl/Ogl.h"
-#include "../Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Ogl/Ogl.h"
+#include "Shizuku.Core/Ogl/Shader.h"
 
 #include <GLFW/glfw3.h>
 #include <typeinfo>

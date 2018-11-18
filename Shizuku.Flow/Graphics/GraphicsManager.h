@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "../common.h"
 #include "Shizuku.Core/Rect.h"
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>

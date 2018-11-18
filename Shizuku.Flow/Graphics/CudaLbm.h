@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "../common.h"
 #include "Shizuku.Core/Rect.h"
 
 #ifdef LBM_GL_CPP_EXPORTS  

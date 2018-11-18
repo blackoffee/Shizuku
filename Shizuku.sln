@@ -3,19 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shizuku.Flow", "InteractiveCfd_Core\LBM_GL_CPP.vcxproj", "{2CA37005-4AC9-46F2-A584-C4B67153FA97}"
-	ProjectSection(ProjectDependencies) = postProject
-		{FD45C1A4-DCD0-4D08-977B-1869A5A45286} = {FD45C1A4-DCD0-4D08-977B-1869A5A45286}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utest_LBM_GL_CPP", "utest_LBM_GL_CPP\utest_LBM_GL_CPP.vcxproj", "{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shizuku", "InteractiveCfd_GlutWindow\GLUT_Window_Manager.vcxproj", "{7633F095-C71C-49BF-A436-D13DB1BD6B3A}"
 	ProjectSection(ProjectDependencies) = postProject
+		{2CA37005-4AC9-46F2-A584-C4B67153FA97} = {2CA37005-4AC9-46F2-A584-C4B67153FA97}
 		{FD45C1A4-DCD0-4D08-977B-1869A5A45286} = {FD45C1A4-DCD0-4D08-977B-1869A5A45286}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shizuku.Core", "Shizuku.Core\Shizuku.Core.vcxproj", "{FD45C1A4-DCD0-4D08-977B-1869A5A45286}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shizuku.Flow", "Shizuku.Flow\Shizuku.Flow.vcxproj", "{2CA37005-4AC9-46F2-A584-C4B67153FA97}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FD45C1A4-DCD0-4D08-977B-1869A5A45286} = {FD45C1A4-DCD0-4D08-977B-1869A5A45286}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +24,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Debug|x64.ActiveCfg = Debug|x64
-		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Debug|x64.Build.0 = Debug|x64
-		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Release|x64.ActiveCfg = Release|x64
-		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Release|x64.Build.0 = Release|x64
 		{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}.Debug|x64.ActiveCfg = Release|x64
 		{D1BDDEBB-7CFC-4B75-A578-7782FD87A545}.Release|x64.ActiveCfg = Release|x64
 		{7633F095-C71C-49BF-A436-D13DB1BD6B3A}.Debug|x64.ActiveCfg = Debug|x64
@@ -37,6 +34,10 @@ Global
 		{FD45C1A4-DCD0-4D08-977B-1869A5A45286}.Debug|x64.Build.0 = Debug|x64
 		{FD45C1A4-DCD0-4D08-977B-1869A5A45286}.Release|x64.ActiveCfg = Release|x64
 		{FD45C1A4-DCD0-4D08-977B-1869A5A45286}.Release|x64.Build.0 = Release|x64
+		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Debug|x64.ActiveCfg = Debug|x64
+		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Debug|x64.Build.0 = Debug|x64
+		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Release|x64.ActiveCfg = Release|x64
+		{2CA37005-4AC9-46F2-A584-C4B67153FA97}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
