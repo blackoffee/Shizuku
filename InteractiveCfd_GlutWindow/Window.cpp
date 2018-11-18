@@ -273,25 +273,24 @@ void Window::DrawUI()
     if (ImGui::IsKeyPressed(32))
         TogglePaused();
 
-//    if (ImGui::IsMouseDown(0))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
-//    if (ImGui::IsMouseDown(1))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
-//    if (ImGui::IsMouseDown(2))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
+    if (ImGui::IsMouseDown(0))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+    if (ImGui::IsMouseDown(1))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
+    if (ImGui::IsMouseDown(2))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
 
-//    if (ImGui::IsMouseReleased(0))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
-//    if (ImGui::IsMouseReleased(1))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
-//    if (ImGui::IsMouseReleased(2))
-//        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
+    if (ImGui::IsMouseReleased(0))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+    if (ImGui::IsMouseReleased(1))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
+    if (ImGui::IsMouseReleased(2))
+        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
 
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::CaptureMouseFromApp(false);
 
     ImGui::SetNextWindowSize(ImVec2(200,150));
     ImGui::SetNextWindowPos(ImVec2(600,50));
