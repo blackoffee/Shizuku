@@ -276,7 +276,9 @@ void GraphicsManager::RunCuda()
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
     Domain* domain = cudaLbm->GetDomain();
-    MarchSolution(cudaLbm);
+    if (!cudaLbm->IsPaused())
+        MarchSolution(cudaLbm);
+
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);

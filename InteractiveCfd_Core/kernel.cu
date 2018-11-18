@@ -1059,8 +1059,6 @@ void MarchSolution(CudaLbm* cudaLbm)
     for (int i = 0; i < tStep; i++)
     {
         MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, u, *simDomain);
-        if (cudaLbm->IsPaused())
-            return;
         MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
     }
 }

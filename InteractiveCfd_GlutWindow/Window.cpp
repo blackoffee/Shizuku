@@ -107,13 +107,22 @@ void Window::InitializeGL()
 
 void Window::InitializeImGui()
 {
-    // Setup Dear ImGui binding
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     const char* glsl_version = "#version 430 core";
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
+}
+
+void Window::RegisterGlfwInputs()
+{
+    //glfw is in C so cannot bind instance method...
+    glfwSetKeyCallback(m_window, KeyboardWrapper);
+    glfwSetWindowSizeCallback(m_window, ResizeWrapper); 
+    glfwSetCursorPosCallback(m_window, MouseMotionWrapper);
+    glfwSetMouseButtonCallback(m_window, MouseButtonWrapper);
+    glfwSetScrollCallback(m_window, MouseWheelWrapper);
 }
 
 void Window::GlfwResize(GLFWwindow* window, int width, int height)
@@ -218,14 +227,9 @@ void Window::Draw3D()
 
     graphicsManager->RunSimulation();
 
-    // render caustic floor to texture
     graphicsManager->RenderFloorToTexture();
 
     graphicsManager->RunSurfaceRefraction();
-
-  //int viewX, viewY;
-  //m_graphics->GetViewport(viewX, viewY);
-  //ResizeWrapper(m_window, viewX, viewY);
 
     graphicsManager->UpdateViewMatrices();
     graphicsManager->UpdateViewTransformations();
@@ -255,12 +259,6 @@ void Window::InitializeGlfw()
     glfwMakeContextCurrent(window);
     m_window = window;
 
-    glfwSetKeyCallback(window, KeyboardWrapper);
-    glfwSetWindowSizeCallback(window, ResizeWrapper); //glfw is in C so cannot bind instance method...
-    glfwSetCursorPosCallback(window, MouseMotionWrapper);
-    glfwSetMouseButtonCallback(window, MouseButtonWrapper);
-    glfwSetScrollCallback(window, MouseWheelWrapper);
-
     glewExperimental = GL_TRUE;
     glewInit();
 
@@ -270,30 +268,11 @@ void Window::InitializeGlfw()
 
 void Window::DrawUI()
 {
-    if (ImGui::IsKeyPressed(32))
-        TogglePaused();
-
-    if (ImGui::IsMouseDown(0))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
-    if (ImGui::IsMouseDown(1))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
-    if (ImGui::IsMouseDown(2))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
-
-    if (ImGui::IsMouseReleased(0))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
-    if (ImGui::IsMouseReleased(1))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
-    if (ImGui::IsMouseReleased(2))
-        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
-
-
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 3.0f);
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    ImGui::SetNextWindowSize(ImVec2(200,150));
-    ImGui::SetNextWindowPos(ImVec2(600,50));
 
     ImGui::Begin("Settings");
     {
@@ -306,14 +285,12 @@ void Window::DrawUI()
         //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
         //ImGui::SliderFloat("blue", &triangleColor[8], 0.0f, 1.0f, "%.3f");
 
-        for (int i=0; i<5; i++) ImGui::Spacing(); // vertical spacing x 5
+        ImGui::Spacing();
 
-        if (ImGui::Button("Pause")) TogglePaused(); // exit main loop
+        if (ImGui::Button("Pause")) TogglePaused();
     }
     ImGui::End();
 
-    //bool test = false;
-    //ImGui::ShowDemoWindow(&test);
     ImGui::Render();
 
     int display_w, display_h;
