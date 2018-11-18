@@ -236,8 +236,12 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
-    <CudaCompile Include="LbmNode.cu" />
+    <CudaCompile Include="kernel.cu">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
+    <CudaCompile Include="LbmNode.cu">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Command\AddObstruction.cpp" />
@@ -258,12 +262,12 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
     <CudaCompile Include="VectorUtils.cu">
-      <FileType>Document</FileType>
+      <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="RectFloat.cpp" />
     <ClCompile Include="RectInt.cpp" />
     <CudaCompile Include="Domain.cu">
-      <FileType>Document</FileType>
+      <FileType>CppCode</FileType>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

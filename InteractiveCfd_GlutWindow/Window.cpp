@@ -184,7 +184,7 @@ void Window::GlfwMouseWheel(double xwheel, double ywheel)
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
     const int dir = ywheel > 0 ? 1 : 0;
-    m_zoom.Start(dir, 0.3f);
+    m_zoom.Start(dir, 0.6f);
 }
 
 void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
@@ -276,10 +276,10 @@ void Window::DrawUI()
 
     ImGui::Begin("Settings");
     {
-        ImGui::SliderFloat("Scale", &m_simulationScale, 2.5f, 1.0f, "%.3f");
+        ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
         m_setSimulationScale.Start(m_simulationScale);
 
-        ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 4, 40);
+        ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 2, 30);
         m_timestepsPerFrame.Start(m_timesteps);
 
         //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");

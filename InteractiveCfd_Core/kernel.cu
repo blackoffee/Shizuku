@@ -1056,7 +1056,7 @@ void MarchSolution(CudaLbm* cudaLbm)
 
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    for (int i = 0; i < tStep; i++)
+    for (int i = 0; i < tStep; i+=2)
     {
         MarchLBM << <grid, threads >> >(fA_d, fB_d, omega, im_d, obst_d, u, *simDomain);
         MarchLBM << <grid, threads >> >(fB_d, fA_d, omega, im_d, obst_d, u, *simDomain);
