@@ -4,7 +4,6 @@
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "kernel.h"
 #include "Domain.h"
-#include "../RectFloat.h"
 #include "CudaCheck.h"
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -390,23 +389,6 @@ bool GraphicsManager::ShouldRefractSurface()
         return true;
     }
     return false;
-}
-
-// only used in 2D mode
-void GraphicsManager::GetSimCoordFromFloatCoord(int &xOut, int &yOut, 
-    const float xf, const float yf)
-{
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();    
-    RectFloat coordsInRelFloat = RectFloat(xf, yf, 1.f, 1.f) / RectFloat(0.f, 0.f, 1.f, 1.f);// m_parent->GetRectFloatAbs();
-    float graphicsToSimDomainScalingFactorX = static_cast<float>(xDimVisible) /
-        std::min(static_cast<float>(m_viewSize.Width), MAX_XDIM*m_scaleFactor);
-    float graphicsToSimDomainScalingFactorY = static_cast<float>(yDimVisible) /
-        std::min(static_cast<float>(m_viewSize.Height), MAX_YDIM*m_scaleFactor);
-    xOut = floatCoordToIntCoord(coordsInRelFloat.m_x, m_viewSize.Width)*
-        graphicsToSimDomainScalingFactorX;
-    yOut = floatCoordToIntCoord(coordsInRelFloat.m_y, m_viewSize.Height)*
-        graphicsToSimDomainScalingFactorY;
 }
 
 void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir,

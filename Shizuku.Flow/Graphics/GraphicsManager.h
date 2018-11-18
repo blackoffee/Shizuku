@@ -119,7 +119,6 @@ public:
     void SetModelMatrix(glm::mat4 modelMatrix);
     void SetProjectionMatrix(glm::mat4 projMatrix);
 
-    void GetSimCoordFromFloatCoord(int &xOut, int &yOut, const float xf, const float yf);
     void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const int mouseX, const int mouseY);
     glm::vec4 GetCameraDirection();
     glm::vec4 GetCameraPosition();

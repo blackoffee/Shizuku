@@ -8,6 +8,9 @@
     <Filter Include="Ogl">
       <UniqueIdentifier>{031f93fe-ce1e-4340-81bf-4c2c39b10018}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{9e88fee9-8859-49af-bb31-5e0cfc28b333}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ogl\Ogl.cpp">
@@ -15,6 +18,9 @@
     </ClCompile>
     <ClCompile Include="Ogl\Shader.cpp">
       <Filter>Ogl</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\FpsTracker.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -25,5 +31,8 @@
       <Filter>Ogl</Filter>
     </ClInclude>
     <ClInclude Include="Rect.h" />
+    <ClInclude Include="Utilities\FpsTracker.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

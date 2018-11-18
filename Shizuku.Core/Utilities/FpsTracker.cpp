@@ -1,5 +1,7 @@
 #include "FpsTracker.h"
 
+using namespace Shizuku::Core;
+
 FpsTracker::FpsTracker()
 {
     m_frameCount = 0;

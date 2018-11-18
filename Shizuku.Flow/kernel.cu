@@ -366,11 +366,17 @@ __global__ void CleanUpVBO(float4* vbo, Domain simDomain)
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     if (x >= xDimVisible || y >= yDimVisible)
     {
+        float zcoord = -1.f;
+        if (x == xDimVisible)
+        {
+            zcoord = vbo[(x - 1) + y*MAX_XDIM].z;
+        }
+
         unsigned char b[] = { 0,0,0,0 };
         float color;
         std::memcpy(&color, &b, sizeof(color));
         //clean up surface mesh
-        vbo[j] = make_float4(xcoord, ycoord, -1.f, color);
+        vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
         //clean up floor mesh
         vbo[j+MAX_XDIM*MAX_YDIM] = make_float4(xcoord, ycoord, -1.f, color);
     }

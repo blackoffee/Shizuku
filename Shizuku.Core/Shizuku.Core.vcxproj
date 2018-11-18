@@ -21,11 +21,13 @@
   <ItemGroup>
     <ClCompile Include="Ogl\Ogl.cpp" />
     <ClCompile Include="Ogl\Shader.cpp" />
+    <ClCompile Include="Utilities\FpsTracker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ogl\Ogl.h" />
     <ClInclude Include="Ogl\Shader.h" />
     <ClInclude Include="Rect.h" />
+    <ClInclude Include="Utilities\FpsTracker.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FD45C1A4-DCD0-4D08-977B-1869A5A45286}</ProjectGuid>

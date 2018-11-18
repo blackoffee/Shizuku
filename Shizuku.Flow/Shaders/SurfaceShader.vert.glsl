@@ -22,10 +22,10 @@ vec4 unpackColor(float f)
     float bf = float(b);
     float af = float(a);
     vec4 color;
-    color.x = rf/256.0;
-    color.y = gf/256.0;
-    color.z = bf/256.0;
-    color.w = af/256.0;
+    color.x = rf/255.0;
+    color.y = gf/255.0;
+    color.z = bf/255.0;
+    color.w = af/255.0;
 
     return color;
 }

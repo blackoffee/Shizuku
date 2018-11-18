@@ -257,15 +257,12 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
-    <ClCompile Include="FpsTracker.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
-    <ClCompile Include="RectFloat.cpp" />
-    <ClCompile Include="RectInt.cpp" />
     <CudaCompile Include="Domain.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -285,7 +282,6 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
-    <ClInclude Include="FpsTracker.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />
@@ -293,8 +289,6 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="LbmNode.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="VectorUtils.h" />
-    <ClInclude Include="RectFloat.h" />
-    <ClInclude Include="RectInt.h" />
     <ClInclude Include="Domain.h" />
   </ItemGroup>
   <ItemGroup>
