@@ -16,6 +16,7 @@
 #include "Shizuku.Flow/Command/SetSimulationScale.h"
 #include "Shizuku.Flow/Command/SetTimestepsPerFrame.h"
 #include "Shizuku.Flow/Command/SetInletVelocity.h"
+#include "Shizuku.Flow/Command/SetContourMode.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
@@ -65,12 +66,35 @@ namespace
                 type, severity, message );
     }
 
+    const char* MakeReadableString(const ContourMode contour)
+    {
+        switch (contour)
+        {
+        case ContourMode::VelocityMagnitude:
+            return "Velocity.mag";
+        case ContourMode::VelocityU:
+            return "Velocity.u";
+        case ContourMode::VelocityV:
+            return "Velocity.v";
+        case ContourMode::Pressure:
+            return "Pressure";
+        case ContourMode::StrainRate:
+            return "Strain Rate";
+        case ContourMode::Water:
+            return "Water";
+        default:
+            throw "Unexpected contour mode";
+        }
+    }
+
 }
 
 Window::Window() : 
-    m_simulationScale(2.0f),
+    m_simulationScale(2.5f),
     m_velocity(0.05f),
-    m_timesteps(6)
+    m_timesteps(6),
+    m_contourMode(ContourMode::Water),
+    m_firstUIDraw(true)
 {
 }
 
@@ -91,10 +115,12 @@ void Window::RegisterCommands()
     m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_graphics);
     m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_graphics);
     m_setVelocity = std::make_shared<SetInletVelocity>(*m_graphics);
+    m_setContourMode = std::make_shared<SetContourMode>(*m_graphics);
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(m_velocity);
+    m_setContourMode->Start(m_contourMode);
 }
 
 float Window::GetFloatCoordX(const int x)
@@ -283,8 +309,35 @@ void Window::DrawUI()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    if (m_firstUIDraw)
+    {
+        ImGui::SetNextWindowSize(ImVec2(350,200));
+        ImGui::SetNextWindowPos(ImVec2(430,20));
+    }
+
     ImGui::Begin("Settings");
     {
+        const ContourMode contour = m_contourMode;
+        const char* currentItem = MakeReadableString(contour);
+        if (ImGui::BeginCombo("Contour Mode", currentItem)) 
+        {
+            for (int i = 0; i < static_cast<int>(ContourMode::NUMB_CONTOUR_MODE); ++i)
+            {
+                const ContourMode contourItem = static_cast<ContourMode>(i);
+                bool isSelected = (contourItem == contour);
+                if (ImGui::Selectable(MakeReadableString(contourItem), isSelected))
+                {
+                    currentItem = MakeReadableString(contourItem);
+                    m_contourMode = contourItem;
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        if (contour != m_contourMode)
+            m_setContourMode->Start(m_contourMode);
+
         const float oldScale = m_simulationScale;
         ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
         if (oldScale != m_simulationScale)
@@ -313,6 +366,8 @@ void Window::DrawUI()
     glfwGetFramebufferSize(m_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    m_firstUIDraw = false;
 }
 
 void Window::GlfwDisplay()

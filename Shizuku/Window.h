@@ -15,8 +15,11 @@ class PauseSimulation;
 class SetSimulationScale;
 class SetTimestepsPerFrame;
 class SetInletVelocity;
+class SetContourMode;
 
 using namespace Shizuku::Core;
+
+enum ContourMode;
 
 class Window
 {
@@ -31,6 +34,7 @@ private:
     std::shared_ptr<SetSimulationScale> m_setSimulationScale;
     std::shared_ptr<SetTimestepsPerFrame> m_timestepsPerFrame;
     std::shared_ptr<SetInletVelocity> m_setVelocity;
+    std::shared_ptr<SetContourMode> m_setContourMode;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
     Rect<int> m_size;
@@ -39,6 +43,9 @@ private:
     int m_timesteps;
     float m_velocity;
     float m_viscosity;
+    ContourMode m_contourMode;
+
+    bool m_firstUIDraw;
 
     GraphicsManager* m_graphics;
 public:
