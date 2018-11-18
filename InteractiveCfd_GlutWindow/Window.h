@@ -6,6 +6,8 @@
 #include "Command/RemoveObstruction.h"
 #include "Command/MoveObstruction.h"
 #include "Command/PauseSimulation.h"
+#include "Command/SetSimulationScale.h"
+#include "Command/SetTimestepsPerFrame.h"
 #include "FpsTracker.h"
 #include "Shizuku.Core/Rect.h"
 
@@ -24,11 +26,16 @@ private:
     RemoveObstruction m_removeObstruction;
     MoveObstruction m_moveObstruction;
     PauseSimulation m_pauseSimulation;
+    SetSimulationScale m_setSimulationScale;
+    SetTimestepsPerFrame m_timestepsPerFrame;
     int m_leftPanelWidth;
     int m_leftPanelHeight;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
     Rect<int> m_size;
+
+    float m_simulationScale;
+    int m_timesteps;
 
     GraphicsManager* m_graphics;
 public:
@@ -46,9 +53,11 @@ public:
     void GlfwMouseWheel(double xwheel, double ywheel);
     void GlfwKeyboard(int key, int scancode, int action, int mode);
     void GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
-    void GlfwDrawLoop();
+    void Draw3D();
     void InitializeGlfw();
+    void InitializeImGui();
     void GlfwDisplay();
+    void DrawUI();
 
     static Window& Instance()
     {

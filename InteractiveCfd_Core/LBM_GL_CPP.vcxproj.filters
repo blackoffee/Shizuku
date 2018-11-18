@@ -54,6 +54,18 @@
     <ClCompile Include="Command\PauseSimulation.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Command\SetSimulationScale.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetInletVelocity.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetViscosity.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetTimestepsPerFrame.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -110,6 +122,18 @@
     </ClInclude>
     <ClInclude Include="VectorUtils.h">
       <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetSimulationScale.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetInletVelocity.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetViscosity.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetTimestepsPerFrame.h">
+      <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

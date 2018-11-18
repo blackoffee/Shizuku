@@ -6,7 +6,7 @@ CudaLbm::CudaLbm()
 {
     m_domain = new Domain;
     m_isPaused = false;
-    m_timeStepsPerFrame = TIMESTEPS_PER_FRAME / 2;
+    m_timeStepsPerFrame = 15;
 }
 
 CudaLbm::CudaLbm(const int maxX, const int maxY)

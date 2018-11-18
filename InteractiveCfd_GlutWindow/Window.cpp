@@ -1,12 +1,12 @@
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_glfw.h"
-#include "../imgui/imgui_impl_opengl3.h"
 #include "Window.h"
+#include "../imgui/imgui_impl_opengl3.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
+
 #include "../Shizuku.Core/Ogl/Ogl.h"
 #include "../Shizuku.Core/Ogl/Shader.h"
-
 
 #include <GLFW/glfw3.h>
 #include <typeinfo>
@@ -52,6 +52,7 @@ namespace
                ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
                 type, severity, message );
     }
+
 }
 
 Window::Window() : 
@@ -61,7 +62,11 @@ Window::Window() :
     m_addObstruction(AddObstruction(*m_graphics)),
     m_removeObstruction(RemoveObstruction(*m_graphics)),
     m_moveObstruction(MoveObstruction(*m_graphics)),
-    m_pauseSimulation(PauseSimulation(*m_graphics))
+    m_pauseSimulation(PauseSimulation(*m_graphics)),
+    m_setSimulationScale(SetSimulationScale(*m_graphics)),
+    m_timestepsPerFrame(SetTimestepsPerFrame(*m_graphics)),
+    m_simulationScale(2.0f),
+    m_timesteps(10)
 {
 }
 
@@ -79,6 +84,8 @@ void Window::RegisterCommands()
     m_removeObstruction = RemoveObstruction(*m_graphics);
     m_moveObstruction = MoveObstruction(*m_graphics);
     m_pauseSimulation = PauseSimulation(*m_graphics);
+    m_setSimulationScale = SetSimulationScale(*m_graphics);
+    m_timestepsPerFrame = SetTimestepsPerFrame(*m_graphics);
 }
 
 float Window::GetFloatCoordX(const int x)
@@ -95,6 +102,18 @@ void Window::InitializeGL()
     glEnable(GL_LIGHT0);
     glewInit();
     glViewport(0,0,m_size.Width,m_size.Height);
+}
+
+
+void Window::InitializeImGui()
+{
+    // Setup Dear ImGui binding
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    const char* glsl_version = "#version 430 core";
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui::StyleColorsDark();
 }
 
 void Window::GlfwResize(GLFWwindow* window, int width, int height)
@@ -186,11 +205,11 @@ void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize,
     int yDim = domainSize.Height;
     sprintf_s(fpsReport, 
         "Shizuku Flow running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
-        tSteps, fps, TIMESTEPS_PER_FRAME*fps, xDim, yDim);
+        tSteps, fps, m_timesteps*fps, xDim, yDim);
     glfwSetWindowTitle(m_window, fpsReport);
 }
 
-void Window::GlfwDrawLoop()
+void Window::Draw3D()
 {
     m_fpsTracker.Tick();
     GraphicsManager* graphicsManager = m_graphics;
@@ -211,9 +230,6 @@ void Window::GlfwDrawLoop()
     graphicsManager->UpdateViewMatrices();
     graphicsManager->UpdateViewTransformations();
 
-
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
@@ -252,66 +268,74 @@ void Window::InitializeGlfw()
     glDebugMessageCallback(MessageCallback, 0);
 }
 
+void Window::DrawUI()
+{
+    if (ImGui::IsKeyPressed(32))
+        TogglePaused();
+
+//    if (ImGui::IsMouseDown(0))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+//    if (ImGui::IsMouseDown(1))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
+//    if (ImGui::IsMouseDown(2))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_PRESS, 0);
+
+//    if (ImGui::IsMouseReleased(0))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+//    if (ImGui::IsMouseReleased(1))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_RELEASE, 0);
+//    if (ImGui::IsMouseReleased(2))
+//        GlfwMouseButton(GLFW_MOUSE_BUTTON_MIDDLE, GLFW_RELEASE, 0);
+
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::CaptureMouseFromApp(false);
+
+    ImGui::SetNextWindowSize(ImVec2(200,150));
+    ImGui::SetNextWindowPos(ImVec2(600,50));
+
+    ImGui::Begin("Settings");
+    {
+        ImGui::SliderFloat("Scale", &m_simulationScale, 2.5f, 1.0f, "%.3f");
+        m_setSimulationScale.Start(m_simulationScale);
+
+        ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 4, 40);
+        m_timestepsPerFrame.Start(m_timesteps);
+
+        //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
+        //ImGui::SliderFloat("blue", &triangleColor[8], 0.0f, 1.0f, "%.3f");
+
+        for (int i=0; i<5; i++) ImGui::Spacing(); // vertical spacing x 5
+
+        if (ImGui::Button("Pause")) TogglePaused(); // exit main loop
+    }
+    ImGui::End();
+
+    //bool test = false;
+    //ImGui::ShowDemoWindow(&test);
+    ImGui::Render();
+
+    int display_w, display_h;
+    glfwMakeContextCurrent(m_window);
+    glfwGetFramebufferSize(m_window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
 void Window::GlfwDisplay()
 {
-    // Setup Dear ImGui binding
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    const char* glsl_version = "#version 430 core";
-    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-    ImGui::StyleColorsDark();
-
-    ImGui::GetIO().WantCaptureKeyboard = true;
-
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     while (!glfwWindowShouldClose(m_window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         glfwPollEvents();
-        GlfwDrawLoop();
 
+        Draw3D();
 
-        ImGuiIO& io = ImGui::GetIO();
-        if (ImGui::IsMouseClicked(0))
-            GlfwMouseButton(GLFW_MOUSE_BUTTON_RIGHT, GLFW_PRESS, 0);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::SetNextWindowSize(ImVec2(200,150));
-        ImGui::SetNextWindowPos(ImVec2(600,50));
-
-        ImGui::Begin("Settings");
-        {
-            //ImGui::SliderFloat("red", &triangleColor[0], 0.0f, 1.0f, "%.3f");
-            //ImGui::SliderFloat("green", &triangleColor[4], 0.0f, 1.0f, "%.3f");
-            //ImGui::SliderFloat("blue", &triangleColor[8], 0.0f, 1.0f, "%.3f");
-
-            for (int i=0; i<5; i++) ImGui::Spacing(); // vertical spacing x 5
-
-            // Button
-            if (ImGui::Button("Quit")) break; // exit main loop
-
-            if (ImGui::Button("Pause")) TogglePaused(); // exit main loop
-        }
-        ImGui::End();
-
-
-        //bool test = true;
-        //ImGui::ShowDemoWindow(&test);
-        ImGui::Render();
-
-        int display_w, display_h;
-        glfwMakeContextCurrent(m_window);
-        glfwGetFramebufferSize(m_window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClearColor(0.2f, 0.3f, 0.8f, 1.0f);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-
+        DrawUI();
 
         glfwSwapBuffers(m_window);
     }

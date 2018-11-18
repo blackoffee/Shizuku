@@ -248,6 +248,10 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
+    <ClCompile Include="Command\SetInletVelocity.cpp" />
+    <ClCompile Include="Command\SetSimulationScale.cpp" />
+    <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
+    <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
     <ClCompile Include="FpsTracker.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
@@ -271,6 +275,10 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
     <ClInclude Include="Command\Rotate.h" />
+    <ClInclude Include="Command\SetInletVelocity.h" />
+    <ClInclude Include="Command\SetSimulationScale.h" />
+    <ClInclude Include="Command\SetTimestepsPerFrame.h" />
+    <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
     <ClInclude Include="FpsTracker.h" />

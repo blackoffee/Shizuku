@@ -134,6 +134,24 @@ void GraphicsManager::SetScaleFactor(const float scaleFactor)
     m_scaleFactor = scaleFactor;
 }
 
+void GraphicsManager::SetVelocity(const float p_velocity)
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->SetInletVelocity(p_velocity);
+}
+
+void GraphicsManager::SetViscosity(const float p_viscosity)
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->SetOmega(1.0f/p_viscosity);
+}
+
+void GraphicsManager::SetTimestepsPerFrame(const int p_steps)
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
+    cudaLbm->SetTimeStepsPerFrame(p_steps);
+}
+
 CudaLbm* GraphicsManager::GetCudaLbm()
 {
     return m_graphics->GetCudaLbm().get();
@@ -156,8 +174,8 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    const float scaleUp = 2.3f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
-    SetScaleFactor(scaleUp);
+//    const float scaleUp = 2.5f; //high:1 low:2.5  // rootPanel->GetSlider("Slider_Resolution")->m_sliderBar1->GetValue();
+//    SetScaleFactor(scaleUp);
 
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
@@ -230,17 +248,6 @@ void GraphicsManager::SetUpCuda()
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 }
 
-int TimeStepSelector(const int nodes)
-{
-    if (nodes < 100000)
-    {
-        return std::min(60.f, 60 - 40 * (float)(nodes - 10000)/100000);
-    }
-    else
-    {
-        return std::max(10.f, 20 - 20 * (float)(nodes - 100000)/150000);
-    }
-}
 
 void GraphicsManager::RunCuda()
 {
@@ -269,8 +276,6 @@ void GraphicsManager::RunCuda()
     Obstruction* obst_h = cudaLbm->GetHostObst();
 
     Domain* domain = cudaLbm->GetDomain();
-    cudaLbm->SetTimeStepsPerFrame(TimeStepSelector(domain->GetXDim()*domain->GetYDim()));
-    //printf("scalef: %i\n", TimeStepSelector(domain->GetXDim()*domain->GetYDim()));
     MarchSolution(cudaLbm);
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
  
@@ -591,8 +596,9 @@ void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const flo
     Obstruction obst = m_obstructions[obstId];
     obst.x = simX2*m_scaleFactor;
     obst.y = simY2*m_scaleFactor;
-    float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / (TIMESTEPS_PER_FRAME)));
-    float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / (TIMESTEPS_PER_FRAME)));
+    const int stepsPerFrame = GetCudaLbm()->GetTimeStepsPerFrame();
+    const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / stepsPerFrame));
+    const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / stepsPerFrame));
     obst.u = u;
     obst.v = v;
     obst.state = State::ACTIVE;
@@ -725,7 +731,7 @@ void GraphicsManager::UpdateGraphicsInputs()
     m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
     m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
     m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
-    m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    //m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }

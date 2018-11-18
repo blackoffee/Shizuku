@@ -76,6 +76,9 @@ public:
 
     float GetScaleFactor();
     void SetScaleFactor(const float scaleFactor);
+    void SetVelocity(const float p_velocity);
+    void SetViscosity(const float p_viscosity);
+    void SetTimestepsPerFrame(const int p_steps);
 
     CudaLbm* GetCudaLbm();
     ShaderManager* GetGraphics();

@@ -14,6 +14,7 @@ int main(int argc, char **argv)
 
     Window::Instance().Resize(windowSize);
     Window::Instance().InitializeGlfw();
+    Window::Instance().InitializeImGui();
 
     //graphicsManager->UseCuda(false);
     graphicsManager->SetUpGLInterop();
