@@ -11,6 +11,9 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{9e88fee9-8859-49af-bb31-5e0cfc28b333}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Types">
+      <UniqueIdentifier>{83e92ad3-dc3a-4fe9-a5a9-505da45715de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ogl\Ogl.cpp">
@@ -33,6 +36,9 @@
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Utilities\FpsTracker.h">
       <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Types\MinMax.h">
+      <Filter>Types</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

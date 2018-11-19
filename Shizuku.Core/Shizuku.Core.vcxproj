@@ -27,6 +27,7 @@
     <ClInclude Include="Ogl\Ogl.h" />
     <ClInclude Include="Ogl\Shader.h" />
     <ClInclude Include="Rect.h" />
+    <ClInclude Include="Types\MinMax.h" />
     <ClInclude Include="Utilities\FpsTracker.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

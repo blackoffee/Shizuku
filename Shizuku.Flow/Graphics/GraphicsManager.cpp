@@ -84,22 +84,27 @@ void GraphicsManager::SetViewMode(const ViewMode viewMode)
 
 float GraphicsManager::GetContourMinValue()
 {
-    return m_contourMinValue;
+    return m_contourMinMax.Min;
 }
 
 float GraphicsManager::GetContourMaxValue()
 {
-    return m_contourMaxValue;
+    return m_contourMinMax.Max;
 }
 
-void GraphicsManager::SetContourMinValue(const float contourMinValue)
+void GraphicsManager::SetContourMinValue(const float p_value)
 {
-    m_contourMinValue = contourMinValue;
+    m_contourMinMax.Min = p_value;
 }
 
-void GraphicsManager::SetContourMaxValue(const float contourMaxValue)
+void GraphicsManager::SetContourMaxValue(const float p_value)
 {
-    m_contourMaxValue = contourMaxValue;
+    m_contourMinMax.Max = p_value;
+}
+
+void GraphicsManager::SetContourMinMax(const MinMax<float>& p_minMax)
+{
+    m_contourMinMax = p_minMax;
 }
 
 ContourVariable GraphicsManager::GetContourVar()
@@ -275,7 +280,7 @@ void GraphicsManager::RunCuda()
     if (!cudaLbm->IsPaused())
         MarchSolution(cudaLbm);
 
-    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinValue, m_contourMaxValue, m_viewMode);
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
@@ -349,7 +354,7 @@ void GraphicsManager::RunSurfaceRefraction()
 
 void GraphicsManager::RunComputeShader()
 {
-    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinValue, m_contourMaxValue);
+    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max);
 }
 
 void GraphicsManager::RunSimulation()
@@ -638,10 +643,14 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
     }
 }
 
-
 void GraphicsManager::SetRayTracingPausedState(const bool state)
 {
     m_rayTracingPaused = state;
+}
+
+bool GraphicsManager::IsRayTracingPaused()
+{
+    return m_rayTracingPaused;
 }
 
 int GraphicsManager::FindUnusedObstructionId()
@@ -709,8 +718,8 @@ void GraphicsManager::UpdateViewTransformations()
 
 void GraphicsManager::UpdateGraphicsInputs()
 {
-    m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
-    m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
+    //m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
+    //m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
     m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
     //m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
     UpdateDomainDimensions();

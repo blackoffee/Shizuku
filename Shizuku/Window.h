@@ -1,6 +1,7 @@
 #pragma once
 #include "Shizuku.Core/Utilities/FpsTracker.h"
 #include "Shizuku.Core/Rect.h"
+#include "Shizuku.Core/Types/MinMax.h"
 #include <memory>
 
 class GLFWwindow;
@@ -12,10 +13,12 @@ class AddObstruction;
 class RemoveObstruction;
 class MoveObstruction;
 class PauseSimulation; 
+class PauseRayTracing;
 class SetSimulationScale;
 class SetTimestepsPerFrame;
 class SetInletVelocity;
 class SetContourMode;
+class SetContourMinMax;
 
 using namespace Shizuku::Core;
 
@@ -31,10 +34,12 @@ private:
     std::shared_ptr<RemoveObstruction> m_removeObstruction;
     std::shared_ptr<MoveObstruction> m_moveObstruction;
     std::shared_ptr<PauseSimulation> m_pauseSimulation;
+    std::shared_ptr<PauseRayTracing> m_pauseRayTracing;
     std::shared_ptr<SetSimulationScale> m_setSimulationScale;
     std::shared_ptr<SetTimestepsPerFrame> m_timestepsPerFrame;
     std::shared_ptr<SetInletVelocity> m_setVelocity;
     std::shared_ptr<SetContourMode> m_setContourMode;
+    std::shared_ptr<SetContourMinMax> m_setContourMinMax;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
     Rect<int> m_size;
@@ -44,6 +49,9 @@ private:
     float m_velocity;
     float m_viscosity;
     ContourMode m_contourMode;
+    MinMax<float> m_contourMinMax;
+    bool m_paused;
+    bool m_rayTracingPaused;
 
     bool m_firstUIDraw;
 
@@ -78,4 +86,6 @@ public:
 
 private:
     void TogglePaused();
+    void SetPaused(const bool p_paused);
+    void SetRayTracingPaused(const bool p_paused);
 };

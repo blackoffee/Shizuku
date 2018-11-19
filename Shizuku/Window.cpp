@@ -13,10 +13,12 @@
 #include "Shizuku.Flow/Command/RemoveObstruction.h"
 #include "Shizuku.Flow/Command/MoveObstruction.h"
 #include "Shizuku.Flow/Command/PauseSimulation.h"
+#include "Shizuku.Flow/Command/PauseRayTracing.h"
 #include "Shizuku.Flow/Command/SetSimulationScale.h"
 #include "Shizuku.Flow/Command/SetTimestepsPerFrame.h"
 #include "Shizuku.Flow/Command/SetInletVelocity.h"
 #include "Shizuku.Flow/Command/SetContourMode.h"
+#include "Shizuku.Flow/Command/SetContourMinMax.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
@@ -94,7 +96,9 @@ Window::Window() :
     m_velocity(0.05f),
     m_timesteps(6),
     m_contourMode(ContourMode::Water),
-    m_firstUIDraw(true)
+    m_firstUIDraw(true),
+    m_contourMinMax(0.0f, 1.0f),
+    m_paused(false)
 {
 }
 
@@ -112,10 +116,12 @@ void Window::RegisterCommands()
     m_removeObstruction = std::make_shared<RemoveObstruction>(*m_graphics);
     m_moveObstruction = std::make_shared<MoveObstruction>(*m_graphics);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_graphics);
+    m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_graphics);
     m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_graphics);
     m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_graphics);
     m_setVelocity = std::make_shared<SetInletVelocity>(*m_graphics);
     m_setContourMode = std::make_shared<SetContourMode>(*m_graphics);
+    m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_graphics);
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);
@@ -242,6 +248,27 @@ void Window::TogglePaused()
     }
 }
 
+void Window::SetPaused(const bool p_paused)
+{
+
+    if (m_graphics->GetCudaLbm()->IsPaused() && !p_paused)
+    {
+        m_pauseSimulation->End();
+    }
+    else if (!m_graphics->GetCudaLbm()->IsPaused() && p_paused)
+    {
+        m_pauseSimulation->Start();
+    }
+}
+
+void Window::SetRayTracingPaused(const bool p_paused)
+{
+    if (m_graphics->IsRayTracingPaused() && !p_paused)
+        m_pauseRayTracing->End();
+    else if (!m_graphics->IsRayTracingPaused() && p_paused)
+        m_pauseRayTracing->Start();
+}
+
 void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
 {
     char fpsReport[256];
@@ -338,6 +365,36 @@ void Window::DrawUI()
         if (contour != m_contourMode)
             m_setContourMode->Start(m_contourMode);
 
+        if (m_contourMode != ContourMode::Water)
+        {
+            MinMax<float> maxRange;
+            const char* format = "%.3f";
+            switch (m_contourMode){
+            case VelocityMagnitude:
+            case VelocityU:
+                maxRange = MinMax<float>(0.f, 2.5f*m_velocity);
+                break;
+            case VelocityV:
+                maxRange = MinMax<float>(-m_velocity, m_velocity);
+                break;
+            case Pressure:
+                maxRange = MinMax<float>(0.99f, 1.01f);
+                break;
+            case StrainRate:
+                maxRange = MinMax<float>(0.f, m_velocity*m_velocity);
+                format = "%.5f";
+                break;
+            }
+
+            const MinMax<float> oldMinMax = m_contourMinMax;
+            m_contourMinMax.Clamp(maxRange);
+            float minMax[2] = { m_contourMinMax.Min, m_contourMinMax.Max };
+            ImGui::SliderFloat2("Contour Range", minMax, maxRange.Min, maxRange.Max, format);
+            m_contourMinMax = MinMax<float>(minMax[0], minMax[1]);
+            if (m_contourMinMax != oldMinMax)
+                m_setContourMinMax->Start(m_contourMinMax);
+        }
+
         const float oldScale = m_simulationScale;
         ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
         if (oldScale != m_simulationScale)
@@ -355,7 +412,13 @@ void Window::DrawUI()
 
         ImGui::Spacing();
 
-        if (ImGui::Button("Pause")) TogglePaused();
+        const bool oldPaused = m_paused;
+        if (ImGui::Checkbox("Pause Simulation", &m_paused) && m_paused != oldPaused)
+            SetPaused(m_paused);
+
+        const bool oldRayTracingPaused = m_rayTracingPaused;
+        if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
+            SetRayTracingPaused(m_rayTracingPaused);
     }
     ImGui::End();
 

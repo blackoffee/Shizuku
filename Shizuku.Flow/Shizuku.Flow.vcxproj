@@ -252,6 +252,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
+    <ClCompile Include="Command\SetContourMinMax.cpp" />
     <ClCompile Include="Command\SetContourMode.cpp" />
     <ClCompile Include="Command\SetInletVelocity.cpp" />
     <ClCompile Include="Command\SetSimulationScale.cpp" />
@@ -277,6 +278,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
     <ClInclude Include="Command\Rotate.h" />
+    <ClInclude Include="Command\SetContourMinMax.h" />
     <ClInclude Include="Command\SetContourMode.h" />
     <ClInclude Include="Command\SetInletVelocity.h" />
     <ClInclude Include="Command\SetSimulationScale.h" />

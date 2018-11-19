@@ -66,6 +66,9 @@
     <ClCompile Include="Command\SetContourMode.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Command\SetContourMinMax.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -133,6 +136,9 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\SetContourMode.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetContourMinMax.h">
       <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
