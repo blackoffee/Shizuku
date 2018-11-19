@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API AddObstruction : public Command
+class FLOW_API AddObstruction : public Command
 {
 public:
     AddObstruction(GraphicsManager &graphicsManager);

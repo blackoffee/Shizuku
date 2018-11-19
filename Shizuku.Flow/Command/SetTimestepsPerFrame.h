@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API SetTimestepsPerFrame : public Command
+class FLOW_API SetTimestepsPerFrame : public Command
 {
 public:
     SetTimestepsPerFrame(GraphicsManager &graphicsManager);

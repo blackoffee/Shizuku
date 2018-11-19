@@ -11,10 +11,10 @@
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-#ifdef LBM_GL_CPP_EXPORTS  
-#define FW_API __declspec(dllexport)   
+#ifdef SHIZUKU_FLOW_EXPORTS  
+#define FLOW_API __declspec(dllexport)   
 #else  
-#define FW_API __declspec(dllimport)   
+#define FLOW_API __declspec(dllimport)   
 #endif  
 
 class CudaLbm;
@@ -29,7 +29,7 @@ namespace Core{
 
 using namespace Shizuku::Core;
 
-class FW_API ShaderManager
+class FLOW_API ShaderManager
 {
 private:
     class Ssbo

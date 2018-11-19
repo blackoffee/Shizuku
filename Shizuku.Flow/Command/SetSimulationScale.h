@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API SetSimulationScale : public Command
+class FLOW_API SetSimulationScale : public Command
 {
 public:
     SetSimulationScale(GraphicsManager &graphicsManager);

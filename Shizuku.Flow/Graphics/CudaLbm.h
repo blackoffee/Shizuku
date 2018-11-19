@@ -2,15 +2,15 @@
 #include "../common.h"
 #include "Shizuku.Core/Rect.h"
 
-#ifdef LBM_GL_CPP_EXPORTS  
-#define FW_API __declspec(dllexport)   
+#ifdef SHIZUKU_FLOW_EXPORTS  
+#define FLOW_API __declspec(dllexport)   
 #else  
-#define FW_API __declspec(dllimport)   
+#define FLOW_API __declspec(dllimport)   
 #endif  
 
 class Domain;
 
-class FW_API CudaLbm
+class FLOW_API CudaLbm
 {
 private:
     int m_maxX;

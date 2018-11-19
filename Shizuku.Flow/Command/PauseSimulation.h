@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API PauseSimulation : public Command
+class FLOW_API PauseSimulation : public Command
 {
 public:
     PauseSimulation(GraphicsManager &graphicsManager);

@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API Rotate : public Command
+class FLOW_API Rotate : public Command
 {
     float m_initialX;
     float m_initialY;

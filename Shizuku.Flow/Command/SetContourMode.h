@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-enum FW_API ContourMode{
+enum FLOW_API ContourMode{
     VelocityMagnitude,
     VelocityU,
     VelocityV,
@@ -11,7 +11,7 @@ enum FW_API ContourMode{
     NUMB_CONTOUR_MODE //max
 };
 
-class FW_API SetContourMode : public Command
+class FLOW_API SetContourMode : public Command
 {
 public:
     SetContourMode(GraphicsManager &graphicsManager);

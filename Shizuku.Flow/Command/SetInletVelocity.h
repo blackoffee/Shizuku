@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API SetInletVelocity : public Command
+class FLOW_API SetInletVelocity : public Command
 {
 public:
     SetInletVelocity(GraphicsManager &graphicsManager);

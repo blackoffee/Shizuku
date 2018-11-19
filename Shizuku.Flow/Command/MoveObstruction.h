@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API MoveObstruction : public Command
+class FLOW_API MoveObstruction : public Command
 {
     int m_currentObst;
     float m_initialX;

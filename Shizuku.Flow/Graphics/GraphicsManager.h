@@ -8,10 +8,10 @@
 #include <string>
 
 
-#ifdef LBM_GL_CPP_EXPORTS  
-#define FW_API __declspec(dllexport)   
+#ifdef SHIZUKU_FLOW_EXPORTS  
+#define FLOW_API __declspec(dllexport)   
 #else  
-#define FW_API __declspec(dllimport)   
+#define FLOW_API __declspec(dllimport)   
 #endif  
 
 using namespace Shizuku::Core;
@@ -20,7 +20,7 @@ class ShaderManager;
 class CudaLbm;
 struct float4;
 
-class FW_API GraphicsManager
+class FLOW_API GraphicsManager
 {
 private:
     float m_currentZ = -1000.f;

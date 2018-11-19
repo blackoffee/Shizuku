@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API SetViscosity : public Command
+class FLOW_API SetViscosity : public Command
 {
 public:
     SetViscosity(GraphicsManager &graphicsManager);

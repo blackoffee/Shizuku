@@ -1,14 +1,14 @@
 #pragma once
 
-#ifdef LBM_GL_CPP_EXPORTS  
-#define FW_API __declspec(dllexport)   
+#ifdef SHIZUKU_FLOW_EXPORTS  
+#define FLOW_API __declspec(dllexport)   
 #else  
-#define FW_API __declspec(dllimport)   
+#define FLOW_API __declspec(dllimport)   
 #endif  
 
 class GraphicsManager;
 
-class FW_API Command
+class FLOW_API Command
 {
 private:
     GraphicsManager* m_graphics;

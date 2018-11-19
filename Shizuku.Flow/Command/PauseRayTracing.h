@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API PauseRayTracing : public Command
+class FLOW_API PauseRayTracing : public Command
 {
 public:
     PauseRayTracing(GraphicsManager &graphicsManager);

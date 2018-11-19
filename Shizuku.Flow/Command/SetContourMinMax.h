@@ -2,7 +2,7 @@
 #include "Command.h"
 #include "Shizuku.Core/Types/MinMax.h"
 
-class FW_API SetContourMinMax : public Command
+class FLOW_API SetContourMinMax : public Command
 {
 public:
     SetContourMinMax(GraphicsManager &graphicsManager);

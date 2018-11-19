@@ -1,7 +1,7 @@
 #pragma once
 #include "Command.h"
 
-class FW_API RemoveObstruction : public Command
+class FLOW_API RemoveObstruction : public Command
 {
     int m_currentObst;
 public:
