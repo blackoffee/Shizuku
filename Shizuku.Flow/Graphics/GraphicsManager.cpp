@@ -10,8 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <algorithm>
-#undef min
-#undef max
 
 using namespace Shizuku::Core;
 
@@ -80,26 +78,6 @@ ViewMode GraphicsManager::GetViewMode()
 void GraphicsManager::SetViewMode(const ViewMode viewMode)
 {
     m_viewMode = viewMode;
-}
-
-float GraphicsManager::GetContourMinValue()
-{
-    return m_contourMinMax.Min;
-}
-
-float GraphicsManager::GetContourMaxValue()
-{
-    return m_contourMinMax.Max;
-}
-
-void GraphicsManager::SetContourMinValue(const float p_value)
-{
-    m_contourMinMax.Min = p_value;
-}
-
-void GraphicsManager::SetContourMaxValue(const float p_value)
-{
-    m_contourMinMax.Max = p_value;
 }
 
 void GraphicsManager::SetContourMinMax(const MinMax<float>& p_minMax)
@@ -354,7 +332,7 @@ void GraphicsManager::RunSurfaceRefraction()
 
 void GraphicsManager::RunComputeShader()
 {
-    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max);
+    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinMax);
 }
 
 void GraphicsManager::RunSimulation()

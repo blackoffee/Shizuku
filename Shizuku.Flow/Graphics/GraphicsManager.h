@@ -39,8 +39,6 @@ private:
     GLdouble m_modelMatrix[16];
     GLdouble m_projectionMatrix[16];
     MinMax<float> m_contourMinMax;
-    float m_contourMinValue;
-    float m_contourMaxValue;
     ContourVariable m_contourVar;
     ShaderManager* m_graphics;
     bool m_useCuda = true;
@@ -67,10 +65,6 @@ public:
     ViewMode GetViewMode();
     void SetViewMode(const ViewMode viewMode);
 
-    float GetContourMinValue();
-    float GetContourMaxValue();
-    void SetContourMinValue(const float contourMinValue);
-    void SetContourMaxValue(const float contourMaxValue);
     void SetContourMinMax(const MinMax<float>& p_minMax);
     ContourVariable GetContourVar();
     void SetContourVar(const ContourVariable contourVar);

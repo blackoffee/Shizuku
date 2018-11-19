@@ -392,8 +392,8 @@ void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_view
     glViewport(0, 0, p_viewSize.Width, p_viewSize.Height);
 }
 
-void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
-        const float contMin, const float contMax)
+void ShaderManager::RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar,
+        const MinMax<float>& p_minMax)
 {
     std::shared_ptr<Ogl::Buffer> ssbo_lbmA = Ogl->GetBuffer("LbmA");
     Ogl->BindSSBO(0, *ssbo_lbmA);
@@ -420,12 +420,12 @@ void ShaderManager::RunComputeShader(const glm::vec3 cameraPosition, const Conto
     shader->SetUniform("yDim", yDim);
     shader->SetUniform("xDimVisible", domain.GetXDimVisible());
     shader->SetUniform("yDimVisible", domain.GetYDimVisible());
-    shader->SetUniform("cameraPosition", cameraPosition);
+    shader->SetUniform("cameraPosition", p_cameraPosition);
     shader->SetUniform("uMax", m_inletVelocity);
     shader->SetUniform("omega", m_omega);
-    shader->SetUniform("contourVar", contVar);
-    shader->SetUniform("contourMin", contMin);
-    shader->SetUniform("contourMax", contMax);
+    shader->SetUniform("contourVar", p_contVar);
+    shader->SetUniform("contourMin", p_minMax.Min);
+    shader->SetUniform("contourMax", p_minMax.Max);
 
     for (int i = 0; i < 5; i++)
     {

@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "Shizuku.Core/Rect.h"
+#include "Shizuku.Core/Types/MinMax.h"
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -93,8 +94,7 @@ public:
     void SetInletVelocity(const float u);
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
-    void RunComputeShader(const glm::vec3 cameraPosition, const ContourVariable contVar,
-        const float contMin, const float contMax);
+    void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const MinMax<float>& p_minMax);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
