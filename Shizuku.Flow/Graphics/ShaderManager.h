@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "ShadingMode.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "cuda_runtime.h"
@@ -29,6 +30,7 @@ namespace Core{
 }
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Flow;
 
 class FLOW_API ShaderManager
 {
@@ -88,17 +90,18 @@ public:
     void BindFloorLightTexture();
     void BindEnvTexture();
     void UnbindFloorTexture();
-    
+
     void SetOmega(const float omega);
     float GetOmega();
     void SetInletVelocity(const float u);
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
+
     void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const MinMax<float>& p_minMax);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
     void RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void RenderSurface(const bool renderFloor, Domain &domain,
+    void RenderSurface(const ShadingMode p_shadingMode , Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };

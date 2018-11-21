@@ -12,6 +12,7 @@
 #include <algorithm>
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Flow;
 
 namespace{
     float intCoordToFloatCoord(const int x, const int xDim)
@@ -32,6 +33,7 @@ GraphicsManager::GraphicsManager()
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
     m_rotate = { 60.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
+    m_surfaceShadingMode = RayTracing;
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
@@ -95,6 +97,10 @@ void GraphicsManager::SetContourVar(const ContourVariable contourVar)
     m_contourVar = contourVar;
 }
 
+void GraphicsManager::SetSurfaceShadingMode(const ShadingMode p_mode)
+{
+    m_surfaceShadingMode = p_mode;
+}
 
 Shape GraphicsManager::GetCurrentObstShape()
 {
@@ -263,10 +269,14 @@ void GraphicsManager::RunCuda()
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
-    if (ShouldRenderFloor() && !ShouldRefractSurface())
+    if ( !ShouldRefractSurface())
     {
-        LightSurface(dptr, obst_d, cameraPosition, *domain);
+        if (m_surfaceShadingMode == Phong)
+        {
+            SurfacePhongLighting(dptr, obst_d, cameraPosition, *domain);
+        }
     }
+
     LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
     CleanUpDeviceVBO(dptr, *domain);
 
@@ -321,7 +331,8 @@ void GraphicsManager::RunSurfaceRefraction()
             cameraPos = m_cameraPosition;
         }
 
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain);
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain,
+            m_surfaceShadingMode == SimplifiedRayTracing);
 
         // unmap buffer object
         gpuErrchk(cudaGraphicsUnmapResources(1, &vbo_resource, 0));
@@ -356,18 +367,14 @@ void GraphicsManager::RenderFloorToTexture()
 void GraphicsManager::RenderVbo()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderSurface(ShouldRenderFloor(), *cudaLbm->GetDomain(),
+    GetGraphics()->RenderSurface(m_surfaceShadingMode, *cudaLbm->GetDomain(),
         GetModelMatrix(), GetProjectionMatrix());
-}
-
-bool GraphicsManager::ShouldRenderFloor()
-{
-    return true;
 }
 
 bool GraphicsManager::ShouldRefractSurface()
 {
-    if (m_contourVar == ContourVariable::WATER_RENDERING)
+    if (m_contourVar == ContourVariable::WATER_RENDERING && 
+        (m_surfaceShadingMode == RayTracing || m_surfaceShadingMode == SimplifiedRayTracing))
     {
         return true;
     }

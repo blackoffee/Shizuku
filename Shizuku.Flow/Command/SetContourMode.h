@@ -11,6 +11,7 @@ enum FLOW_API ContourMode{
     NUMB_CONTOUR_MODE //max
 };
 
+
 class FLOW_API SetContourMode : public Command
 {
 public:

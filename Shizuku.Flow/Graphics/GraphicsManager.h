@@ -1,12 +1,12 @@
 #pragma once
 #include "../common.h"
+#include "ShadingMode.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
-
 
 #ifdef SHIZUKU_FLOW_EXPORTS  
 #define FLOW_API __declspec(dllexport)   
@@ -15,6 +15,7 @@
 #endif  
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Flow;
 
 class ShaderManager;
 class CudaLbm;
@@ -43,6 +44,7 @@ private:
     ShaderManager* m_graphics;
     bool m_useCuda = true;
     float4* m_rayCastIntersect_d;
+    ShadingMode m_surfaceShadingMode;
 
     Rect<int> m_viewSize;
 
@@ -92,8 +94,9 @@ public:
     void RunSimulation();
     void RenderFloorToTexture();
     void RenderVbo();
-    bool ShouldRenderFloor();
     bool ShouldRefractSurface();
+
+    void SetSurfaceShadingMode(const ShadingMode p_mode);
 
     void Zoom(const int dir, const float mag);
     void Pan(const float dx, const float dy);

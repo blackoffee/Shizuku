@@ -1,4 +1,5 @@
 #include "ShaderManager.h"
+#include "GraphicsManager.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
@@ -544,7 +545,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
-void ShaderManager::RenderSurface(const bool renderFloor, Domain &domain,
+void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
@@ -561,11 +562,14 @@ void ShaderManager::RenderSurface(const bool renderFloor, Domain &domain,
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
     int yDimVisible = domain.GetYDimVisible();
-    if (renderFloor)
+     //Draw floor
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+
+    if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
     {
-        //Draw floor
-        glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-            BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     //Draw water surface

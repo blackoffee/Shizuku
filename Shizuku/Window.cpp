@@ -19,6 +19,7 @@
 #include "Shizuku.Flow/Command/SetInletVelocity.h"
 #include "Shizuku.Flow/Command/SetContourMode.h"
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
+#include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
@@ -89,6 +90,20 @@ namespace
         }
     }
 
+    const char* MakeReadableString(const SurfaceShadingMode p_shadingMode)
+    {
+        switch (p_shadingMode)
+        {
+        case SurfaceShadingMode::RayTracing:
+            return "Ray Tracing";
+        case SurfaceShadingMode::SimplifiedRayTracing:
+            return "Simplified Ray Tracing";
+        case SurfaceShadingMode::Phong:
+            return "Phong";
+        default:
+            throw "Unexpected contour mode";
+        }
+    }
 }
 
 Window::Window() : 
@@ -98,7 +113,8 @@ Window::Window() :
     m_contourMode(ContourMode::Water),
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
-    m_paused(false)
+    m_paused(false),
+    m_shadingMode(SurfaceShadingMode::RayTracing)
 {
 }
 
@@ -122,11 +138,13 @@ void Window::RegisterCommands()
     m_setVelocity = std::make_shared<SetInletVelocity>(*m_graphics);
     m_setContourMode = std::make_shared<SetContourMode>(*m_graphics);
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_graphics);
+    m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_graphics);
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(m_velocity);
     m_setContourMode->Start(m_contourMode);
+    m_setSurfaceShadingMode->Start(m_shadingMode);
 }
 
 float Window::GetFloatCoordX(const int x)
@@ -419,6 +437,27 @@ void Window::DrawUI()
         const bool oldRayTracingPaused = m_rayTracingPaused;
         if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
             SetRayTracingPaused(m_rayTracingPaused);
+
+        const SurfaceShadingMode shadingMode = m_shadingMode;
+        const char* currentShadingItem = MakeReadableString(shadingMode);
+        if (ImGui::BeginCombo("Shading Mode", currentShadingItem)) 
+        {
+            for (int i = 0; i < static_cast<int>(SurfaceShadingMode::NUMB_SHADING_MODE); ++i)
+            {
+                const SurfaceShadingMode shadingItem = static_cast<SurfaceShadingMode>(i);
+                bool isSelected = (shadingItem == shadingMode);
+                if (ImGui::Selectable(MakeReadableString(shadingItem), isSelected))
+                {
+                    currentShadingItem = MakeReadableString(shadingItem);
+                    m_shadingMode = shadingItem;
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        if (shadingMode != m_shadingMode)
+            m_setSurfaceShadingMode->Start(m_shadingMode);
     }
     ImGui::End();
 

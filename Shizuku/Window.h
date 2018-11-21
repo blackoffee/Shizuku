@@ -19,10 +19,12 @@ class SetTimestepsPerFrame;
 class SetInletVelocity;
 class SetContourMode;
 class SetContourMinMax;
+class SetSurfaceShadingMode;
 
 using namespace Shizuku::Core;
 
 enum ContourMode;
+enum SurfaceShadingMode;
 
 class Window
 {
@@ -40,6 +42,7 @@ private:
     std::shared_ptr<SetInletVelocity> m_setVelocity;
     std::shared_ptr<SetContourMode> m_setContourMode;
     std::shared_ptr<SetContourMinMax> m_setContourMinMax;
+    std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
     FpsTracker m_fpsTracker;
     GLFWwindow* m_window;
     Rect<int> m_size;
@@ -51,6 +54,7 @@ private:
     ContourMode m_contourMode;
     MinMax<float> m_contourMinMax;
     bool m_paused;
+    SurfaceShadingMode m_shadingMode;
     bool m_rayTracingPaused;
 
     bool m_firstUIDraw;

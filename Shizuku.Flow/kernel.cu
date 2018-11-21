@@ -879,7 +879,7 @@ texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
 __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
-    float3 cameraPosition, Domain simDomain)
+    float3 cameraPosition, Domain simDomain, const bool simplified)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -976,39 +976,151 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     }
     else
     {
-        unsigned char refractedColor[4];
-        if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+        if (simplified)
         {
-            std::memcpy(refractedColor, &(vbo[(int)(refractionIntersect.x+0.5f) + (int)(refractionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
-                sizeof(refractedColor));
-        }
-        else
-        {
+            unsigned char refractedColor[4];
             refractedColor[0] = textureColor.x*255.f;
             refractedColor[1] = textureColor.y*255.f;
             refractedColor[2] = textureColor.z*255.f;
             refractedColor[3] = 255;
-        }
 
-        unsigned char reflectedColor[4];
-        float3 reflectedRayDest = elementPosition + xDimVisible*reflectedRay;
-        if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
-        {
-            std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
-                sizeof(reflectedColor));
-        }
-        else
-        {
+            unsigned char reflectedColor[4];
             reflectedColor[0] = skyColor.x;
             reflectedColor[1] = skyColor.y;
             reflectedColor[2] = skyColor.z;
             reflectedColor[3] = 255;
+
+            color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
+            color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
+            color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
+            color[3] = 120;
         }
+        else
+        {
+            unsigned char refractedColor[4];
+            if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            {
+                std::memcpy(refractedColor, &(vbo[(int)(refractionIntersect.x+0.5f) + (int)(refractionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
+                    sizeof(refractedColor));
+            }
+            else
+            {
+                refractedColor[0] = textureColor.x*255.f;
+                refractedColor[1] = textureColor.y*255.f;
+                refractedColor[2] = textureColor.z*255.f;
+                refractedColor[3] = 255;
+            }
+
+            unsigned char reflectedColor[4];
+            float3 reflectedRayDest = elementPosition + xDimVisible*reflectedRay;
+            if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            {
+                std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
+                    sizeof(reflectedColor));
+            }
+            else
+            {
+                reflectedColor[0] = skyColor.x;
+                reflectedColor[1] = skyColor.y;
+                reflectedColor[2] = skyColor.z;
+                reflectedColor[3] = 255;
+            }
+
+            color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
+            color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
+            color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
+            color[3] = 255;
+        }
+    }
+    std::memcpy(&(vbo[j].w), color, sizeof(color));
+}
+
+__global__ void SimplifiedRefraction(float4* vbo, Obstruction *obstructions,
+    float3 cameraPosition, Domain simDomain)
+{
+    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    int y = threadIdx.y + blockIdx.y*blockDim.y;
+    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+    int xDimVisible = simDomain.GetXDimVisible();
+    int yDimVisible = simDomain.GetYDimVisible();
+
+    unsigned char color[4];
+    std::memcpy(color, &(vbo[j].w), sizeof(color));
+
+    color[3] = 50;
+
+    float3 n = { 0, 0, 1 };
+    float slope_x = 0.f;
+    float slope_y = 0.f;
+    float cellSize = 2.f / xDimVisible;
+    if (x == 0)
+    {
+        n.x = 0.f;
+    }
+    else if (y == 0)
+    {
+        n.y = 0.f;
+    }
+    else if (x >= xDimVisible - 1)
+    {
+        n.x = 0.f;
+    }
+    else if (y >= yDimVisible - 1)
+    {
+        n.y = 0.f;
+    }
+    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+    {
+        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+            (2.f*cellSize);
+        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+            (2.f*cellSize);
+        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+        n.z = 2.f*cellSize*2.f*cellSize;
+        color[3] = 255;
+    }
+    Normalize(n);
+    const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
+    float3 elementPosition = {(float)x,(float)y,waterDepth }; //non-normalized
+    //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
+    float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
+    //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+    Normalize(viewingRay);
+    float cosTheta = dmax(0.f,dmin(1.f,DotProduct(viewingRay, -1.f*n)));
+    //if (threadIdx.x == 10) printf("view: %f, %f, %f\n", viewingRay.x, viewingRay.y, viewingRay.z);
+    //if (threadIdx.x == 10) printf("n: %f, %f, %f\n", n.x, n.y, n.z);
+    float nu = 1.f / WATER_REFRACTIVE_INDEX;
+    float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
+    float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
+
+    if (x > xDimVisible - 1 || y > yDimVisible - 1)
+    {
+        color[0] = 0;
+        color[1] = 0; 
+        color[2] = 0; 
+        color[3] = 0; 
+    }
+    else
+    {
+        unsigned char refractedColor[4];
+        refractedColor[0] = 120;
+        refractedColor[1] = 160;
+        refractedColor[2] = 220;
+        refractedColor[3] = 255;
+
+        unsigned char reflectedColor[4];
+        reflectedColor[0] = 255;
+        reflectedColor[1] = 255;
+        reflectedColor[2] = 255;
+        reflectedColor[3] = 255;
 
         color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
         color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
         color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
-        color[3] = 255;
+        color[3] = 120;
     }
     std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
@@ -1106,7 +1218,7 @@ void CleanUpDeviceVBO(float4* vis, Domain &simDomain)
     CleanUpVBO << <grid, threads>> >(vis, simDomain);
 }
 
-void LightSurface(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
+void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
     Domain &simDomain)
 {
     int xDim = simDomain.GetXDim();
@@ -1177,7 +1289,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     }
 }
 
-void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+void RefractSurfaceSimplified(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain)
 {
     int xDim = simDomain.GetXDim();
@@ -1187,6 +1299,19 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
     gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
+    SimplifiedRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
+}
+
+void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+    Domain &simDomain, const bool simplified)
+{
+    int xDim = simDomain.GetXDim();
+    int yDim = simDomain.GetYDim();
+    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
+    gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
+    gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
+    float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
+    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified);
 }
 

@@ -256,6 +256,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetContourMode.cpp" />
     <ClCompile Include="Command\SetInletVelocity.cpp" />
     <ClCompile Include="Command\SetSimulationScale.cpp" />
+    <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
@@ -282,6 +283,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetContourMode.h" />
     <ClInclude Include="Command\SetInletVelocity.h" />
     <ClInclude Include="Command\SetSimulationScale.h" />
+    <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
     <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\Zoom.h" />
@@ -289,6 +291,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />
+    <ClInclude Include="Graphics\ShadingMode.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="LbmNode.h" />
     <ClInclude Include="common.h" />
