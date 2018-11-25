@@ -21,6 +21,12 @@ class SetContourMode;
 class SetContourMinMax;
 class SetSurfaceShadingMode;
 
+namespace Shizuku{
+    namespace Flow{
+        class Flow;
+    }
+}
+
 using namespace Shizuku::Core;
 
 enum ContourMode;
@@ -59,11 +65,12 @@ private:
 
     bool m_firstUIDraw;
 
-    GraphicsManager* m_graphics;
+    //GraphicsManager* m_graphics;
+    std::shared_ptr<Shizuku::Flow::Flow> m_flow;
 public:
     Window();
     Window(GraphicsManager& graphics);
-    void SetGraphicsManager(GraphicsManager& graphics);
+    void SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow);
     void RegisterCommands();
     void RegisterGlfwInputs();
     float GetFloatCoordX(const int x);

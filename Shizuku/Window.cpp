@@ -21,6 +21,8 @@
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 
+#include "Shizuku.Flow/Flow.h"
+
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 
@@ -28,6 +30,7 @@
 #include <typeinfo>
 #include <memory>
 
+using namespace Shizuku::Flow;
 
 namespace
 {
@@ -118,27 +121,27 @@ Window::Window() :
 {
 }
 
-void Window::SetGraphicsManager(GraphicsManager &graphics)
+void Window::SetGraphics(std::shared_ptr<Flow> flow)
 {
-    m_graphics = &graphics;
+    m_flow = flow;
 }
 
 void Window::RegisterCommands()
 {
-    m_zoom = std::make_shared<Zoom>(*m_graphics);
-    m_pan = std::make_shared<Pan>(*m_graphics);
-    m_rotate = std::make_shared<Rotate>(*m_graphics);
-    m_addObstruction = std::make_shared<AddObstruction>(*m_graphics);
-    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_graphics);
-    m_moveObstruction = std::make_shared<MoveObstruction>(*m_graphics);
-    m_pauseSimulation = std::make_shared<PauseSimulation>(*m_graphics);
-    m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_graphics);
-    m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_graphics);
-    m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_graphics);
-    m_setVelocity = std::make_shared<SetInletVelocity>(*m_graphics);
-    m_setContourMode = std::make_shared<SetContourMode>(*m_graphics);
-    m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_graphics);
-    m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_graphics);
+    m_zoom = std::make_shared<Zoom>(*m_flow->Graphics());
+    m_pan = std::make_shared<Pan>(*m_flow->Graphics());
+    m_rotate = std::make_shared<Rotate>(*m_flow->Graphics());
+    m_addObstruction = std::make_shared<AddObstruction>(*m_flow->Graphics());
+    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_flow->Graphics());
+    m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow->Graphics());
+    m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow->Graphics());
+    m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow->Graphics());
+    m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_flow->Graphics());
+    m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_flow->Graphics());
+    m_setVelocity = std::make_shared<SetInletVelocity>(*m_flow->Graphics());
+    m_setContourMode = std::make_shared<SetContourMode>(*m_flow->Graphics());
+    m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow->Graphics());
+    m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow->Graphics());
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);
@@ -149,11 +152,11 @@ void Window::RegisterCommands()
 
 float Window::GetFloatCoordX(const int x)
 {
-    return static_cast<float>(x)/m_graphics->GetViewport().Width*2.f - 1.f;
+    return static_cast<float>(x)/m_flow->Graphics()->GetViewport().Width*2.f - 1.f;
 }
 float Window::GetFloatCoordY(const int y)
 {
-    return static_cast<float>(y)/m_graphics->GetViewport().Height*2.f - 1.f;
+    return static_cast<float>(y)/m_flow->Graphics()->GetViewport().Height*2.f - 1.f;
 }
 
 void Window::InitializeGL()
@@ -192,7 +195,7 @@ void Window::GlfwResize(GLFWwindow* window, int width, int height)
 void Window::Resize(Rect<int> size)
 {
     m_size = size;
-    m_graphics->SetViewport(size);
+    m_flow->Resize(size);
 }
 
 void Window::GlfwMouseButton(const int button, const int state, const int mod)
@@ -256,7 +259,7 @@ void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
 
 void Window::TogglePaused()
 {
-    if (m_graphics->GetCudaLbm()->IsPaused())
+    if (m_flow->Graphics()->GetCudaLbm()->IsPaused())
     {
         m_pauseSimulation->End();
     }
@@ -269,11 +272,11 @@ void Window::TogglePaused()
 void Window::SetPaused(const bool p_paused)
 {
 
-    if (m_graphics->GetCudaLbm()->IsPaused() && !p_paused)
+    if (m_flow->Graphics()->GetCudaLbm()->IsPaused() && !p_paused)
     {
         m_pauseSimulation->End();
     }
-    else if (!m_graphics->GetCudaLbm()->IsPaused() && p_paused)
+    else if (!m_flow->Graphics()->GetCudaLbm()->IsPaused() && p_paused)
     {
         m_pauseSimulation->Start();
     }
@@ -281,9 +284,9 @@ void Window::SetPaused(const bool p_paused)
 
 void Window::SetRayTracingPaused(const bool p_paused)
 {
-    if (m_graphics->IsRayTracingPaused() && !p_paused)
+    if (m_flow->Graphics()->IsRayTracingPaused() && !p_paused)
         m_pauseRayTracing->End();
-    else if (!m_graphics->IsRayTracingPaused() && p_paused)
+    else if (!m_flow->Graphics()->IsRayTracingPaused() && p_paused)
         m_pauseRayTracing->Start();
 }
 
@@ -301,29 +304,17 @@ void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize,
 void Window::Draw3D()
 {
     m_fpsTracker.Tick();
-    GraphicsManager* graphicsManager = m_graphics;
-    graphicsManager->UpdateGraphicsInputs();
-    graphicsManager->GetCudaLbm()->UpdateDeviceImage();
 
-    graphicsManager->RunSimulation();
 
-    graphicsManager->RenderFloorToTexture();
+    m_flow->Update();
 
-    graphicsManager->RunSurfaceRefraction();
-
-    graphicsManager->UpdateViewMatrices();
-    graphicsManager->UpdateViewTransformations();
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    graphicsManager->RenderVbo();
+    m_flow->Draw3D();
 
     m_fpsTracker.Tock();
 
-    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-    const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
+//    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
+//    const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
+//    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
 
 }
 

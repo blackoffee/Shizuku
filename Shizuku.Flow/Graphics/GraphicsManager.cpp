@@ -293,7 +293,7 @@ void GraphicsManager::RunCuda()
 
     cudaThreadSynchronize();
     const double time = m_stopwatch.Tock();
-    std::cout << "Time: " << time << "  Average: " << m_stopwatch.GetAverage() << std::endl;
+    //std::cout << "Time: " << time << "  Average: " << m_stopwatch.GetAverage() << std::endl;
 }
 
 void GraphicsManager::RunSurfaceRefraction()

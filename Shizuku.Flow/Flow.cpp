@@ -1,5 +1,6 @@
 #include "Flow.h"
 #include "Graphics/GraphicsManager.h"
+#include "Graphics/CudaLbm.h"
 #include <memory>
 
 using namespace Shizuku::Core;
@@ -42,10 +43,27 @@ void Flow::Initialize()
 
 void Flow::Update()
 {
+    m_impl->Graphics()->UpdateGraphicsInputs();
+    m_impl->Graphics()->GetCudaLbm()->UpdateDeviceImage();
+
+    m_impl->Graphics()->RunSimulation();
+
+    m_impl->Graphics()->RenderFloorToTexture();
+
+    m_impl->Graphics()->RunSurfaceRefraction();
+
+    m_impl->Graphics()->UpdateViewMatrices();
+    m_impl->Graphics()->UpdateViewTransformations();
+
+
 }
 
 void Flow::Draw3D()
 {
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    m_impl->Graphics()->RenderVbo();
 }
 
 void Flow::Resize(const Rect<int>& p_size)
