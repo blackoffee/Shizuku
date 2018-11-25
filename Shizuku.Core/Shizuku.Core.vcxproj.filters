@@ -25,6 +25,12 @@
     <ClCompile Include="Utilities\FpsTracker.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Stopwatch.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\StopwatchImpl.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ogl\Shader.h">
@@ -39,6 +45,12 @@
     </ClInclude>
     <ClInclude Include="Types\MinMax.h">
       <Filter>Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Stopwatch.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\StopwatchImpl.h">
+      <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

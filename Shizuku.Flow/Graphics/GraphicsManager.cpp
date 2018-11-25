@@ -1,15 +1,18 @@
 #include "GraphicsManager.h"
 #include "ShaderManager.h"
 #include "CudaLbm.h"
-#include "Shizuku.Core/Ogl/Shader.h"
 #include "kernel.h"
 #include "Domain.h"
 #include "CudaCheck.h"
+
+#include "Shizuku.Core/Ogl/Shader.h"
+
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <algorithm>
+#include <iostream>
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
@@ -34,6 +37,8 @@ GraphicsManager::GraphicsManager()
     m_rotate = { 60.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
     m_surfaceShadingMode = RayTracing;
+    const int framesForAverage = 20;
+    m_stopwatch = Stopwatch(framesForAverage);
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
@@ -236,6 +241,8 @@ void GraphicsManager::SetUpCuda()
 
 void GraphicsManager::RunCuda()
 {
+    m_stopwatch.Tick();
+
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
     ShaderManager* graphics = GetGraphics();
@@ -284,6 +291,9 @@ void GraphicsManager::RunCuda()
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);
     cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
 
+    cudaThreadSynchronize();
+    const double time = m_stopwatch.Tock();
+    std::cout << "Time: " << time << "  Average: " << m_stopwatch.GetAverage() << std::endl;
 }
 
 void GraphicsManager::RunSurfaceRefraction()

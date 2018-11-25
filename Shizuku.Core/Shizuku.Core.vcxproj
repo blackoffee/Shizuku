@@ -22,6 +22,8 @@
     <ClCompile Include="Ogl\Ogl.cpp" />
     <ClCompile Include="Ogl\Shader.cpp" />
     <ClCompile Include="Utilities\FpsTracker.cpp" />
+    <ClCompile Include="Utilities\Stopwatch.cpp" />
+    <ClCompile Include="Utilities\StopwatchImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ogl\Ogl.h" />
@@ -29,6 +31,8 @@
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Types\MinMax.h" />
     <ClInclude Include="Utilities\FpsTracker.h" />
+    <ClInclude Include="Utilities\Stopwatch.h" />
+    <ClInclude Include="Utilities\StopwatchImpl.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FD45C1A4-DCD0-4D08-977B-1869A5A45286}</ProjectGuid>

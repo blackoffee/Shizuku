@@ -3,6 +3,7 @@
 #include "ShadingMode.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
+#include "Shizuku.Core/Utilities/Stopwatch.h"
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
@@ -23,6 +24,16 @@ struct float4;
 
 class FLOW_API GraphicsManager
 {
+public:
+    enum TimerKey
+    {
+        SolveFluid,
+        PrepareSurface,
+        PrepareFloor,
+        ProcessSurface,
+        ProcessFloor
+    };
+
 private:
     float m_currentZ = -1000.f;
     //view transformations
@@ -47,6 +58,7 @@ private:
     ShadingMode m_surfaceShadingMode;
 
     Rect<int> m_viewSize;
+    Stopwatch m_stopwatch;
 
 public:
     GraphicsManager();
