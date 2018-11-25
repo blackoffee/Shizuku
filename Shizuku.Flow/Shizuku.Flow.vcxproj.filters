@@ -72,6 +72,7 @@
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Flow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -150,6 +151,7 @@
     <ClInclude Include="Graphics\ShadingMode.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Flow.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
