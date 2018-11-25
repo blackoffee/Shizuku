@@ -159,14 +159,6 @@ float Window::GetFloatCoordY(const int y)
     return static_cast<float>(y)/m_flow->Graphics()->GetViewport().Height*2.f - 1.f;
 }
 
-void Window::InitializeGL()
-{
-    glEnable(GL_LIGHT0);
-    glewInit();
-    glViewport(0,0,m_size.Width,m_size.Height);
-}
-
-
 void Window::InitializeImGui()
 {
     IMGUI_CHECKVERSION();
@@ -312,10 +304,9 @@ void Window::Draw3D()
 
     m_fpsTracker.Tock();
 
-//    CudaLbm* cudaLbm = graphicsManager->GetCudaLbm();
-//    const int tStepsPerFrame = graphicsManager->GetCudaLbm()->GetTimeStepsPerFrame();
-//    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
-
+    CudaLbm* cudaLbm = m_flow->Graphics()->GetCudaLbm();
+    const int tStepsPerFrame = cudaLbm->GetTimeStepsPerFrame();
+    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
 }
 
 void Window::InitializeGlfw()
@@ -463,7 +454,7 @@ void Window::DrawUI()
     m_firstUIDraw = false;
 }
 
-void Window::GlfwDisplay()
+void Window::Display()
 {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     while (!glfwWindowShouldClose(m_window))

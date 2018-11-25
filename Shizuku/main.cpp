@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
     flow->Initialize();
 
-    Window::Instance().GlfwDisplay();
+    Window::Instance().Display();
 
     return 0;
 }

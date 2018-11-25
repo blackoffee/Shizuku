@@ -5,7 +5,6 @@
 #include <memory>
 
 class GLFWwindow;
-class GraphicsManager;
 class Zoom;
 class Pan;
 class Rotate;
@@ -27,10 +26,10 @@ namespace Shizuku{
     }
 }
 
-using namespace Shizuku::Core;
-
 enum ContourMode;
 enum SurfaceShadingMode;
+
+using namespace Shizuku::Core;
 
 class Window
 {
@@ -65,29 +64,23 @@ private:
 
     bool m_firstUIDraw;
 
-    //GraphicsManager* m_graphics;
     std::shared_ptr<Shizuku::Flow::Flow> m_flow;
 public:
     Window();
-    Window(GraphicsManager& graphics);
     void SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow);
     void RegisterCommands();
     void RegisterGlfwInputs();
-    float GetFloatCoordX(const int x);
-    float GetFloatCoordY(const int y);
-    void InitializeGL();
-    void GlfwResize(GLFWwindow* window, int width, int height);
     void Resize(Rect<int> size);
+    void Display();
+    void InitializeGlfw();
+    void InitializeImGui();
+
+    void GlfwResize(GLFWwindow* window, int width, int height);
     void GlfwMouseButton(const int button, const int state, const int mod);
     void MouseMotion(const int x, const int y);
     void GlfwMouseWheel(double xwheel, double ywheel);
     void GlfwKeyboard(int key, int scancode, int action, int mode);
     void GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
-    void Draw3D();
-    void InitializeGlfw();
-    void InitializeImGui();
-    void GlfwDisplay();
-    void DrawUI();
 
     static Window& Instance()
     {
@@ -96,6 +89,12 @@ public:
     }
 
 private:
+    float GetFloatCoordX(const int x);
+    float GetFloatCoordY(const int y);
+
+    void Draw3D();
+    void DrawUI();
+
     void TogglePaused();
     void SetPaused(const bool p_paused);
     void SetRayTracingPaused(const bool p_paused);
