@@ -4,7 +4,7 @@
 #include "Shizuku.Core/Types/MinMax.h"
 #include <memory>
 
-class GLFWwindow;
+struct GLFWwindow;
 class Zoom;
 class Pan;
 class Rotate;
@@ -15,10 +15,10 @@ class PauseSimulation;
 class PauseRayTracing;
 class SetSimulationScale;
 class SetTimestepsPerFrame;
-class SetInletVelocity;
 class SetContourMode;
 class SetContourMinMax;
 class SetSurfaceShadingMode;
+class SetInletVelocity;
 
 namespace Shizuku{
     namespace Flow{

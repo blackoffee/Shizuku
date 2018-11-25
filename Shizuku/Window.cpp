@@ -20,6 +20,7 @@
 #include "Shizuku.Flow/Command/SetContourMode.h"
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
+#include "Shizuku.Flow/Command/Parameter/Parameter.h"
 
 #include "Shizuku.Flow/Flow.h"
 
@@ -27,6 +28,9 @@
 #include "Shizuku.Core/Ogl/Shader.h"
 
 #include <GLFW/glfw3.h>
+
+#include <boost/any.hpp>
+
 #include <typeinfo>
 #include <memory>
 
@@ -145,7 +149,7 @@ void Window::RegisterCommands()
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);
-    m_setVelocity->Start(m_velocity);
+    m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
     m_setContourMode->Start(m_contourMode);
     m_setSurfaceShadingMode->Start(m_shadingMode);
 }
@@ -408,7 +412,7 @@ void Window::DrawUI()
         const float oldVel = m_velocity;
         ImGui::SliderFloat("Velocity", &m_velocity, 0.0f, 0.12f, "%.3f");
         if (oldVel != m_velocity)
-            m_setVelocity->Start(m_velocity);
+            m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
 
         ImGui::Spacing();
 

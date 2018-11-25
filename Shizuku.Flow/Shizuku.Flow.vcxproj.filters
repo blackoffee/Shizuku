@@ -73,6 +73,9 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp" />
+    <ClCompile Include="Command\Parameter\Parameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -152,6 +155,9 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Flow.h" />
+    <ClInclude Include="Command\Parameter\Parameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
@@ -191,6 +197,9 @@
     </Filter>
     <Filter Include="Cuda">
       <UniqueIdentifier>{749be78f-86d4-478a-91d7-32ec281a29cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Command\Parameter">
+      <UniqueIdentifier>{1aeac10c-fda6-4ebd-b3ff-668def3ec6b4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

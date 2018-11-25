@@ -1,13 +1,24 @@
 #include "SetInletVelocity.h"
 #include "Graphics/GraphicsManager.h"
+#include "Parameter/Parameter.h"
+
+using namespace Shizuku::Flow;
 
 SetInletVelocity::SetInletVelocity(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {
 }
 
-void SetInletVelocity::Start(const float p_velocity)
+void SetInletVelocity::Start(boost::any const p_param)
 {
     GraphicsManager* graphicsManager = GetGraphicsManager();
-    graphicsManager->SetVelocity(p_velocity);
+    try
+    {
+        const VelocityParameter& vel = boost::any_cast<VelocityParameter>(p_param);
+        graphicsManager->SetVelocity(vel.velocity);
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
 
