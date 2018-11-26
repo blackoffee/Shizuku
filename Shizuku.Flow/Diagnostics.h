@@ -19,6 +19,6 @@ namespace Shizuku { namespace Flow{
     public:
         Diagnostics();
         Diagnostics(Flow& p_flow);
-        Rect<int>& SimulationDomain();
+        Rect<int> SimulationDomain();
     };
 } }

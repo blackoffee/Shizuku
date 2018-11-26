@@ -34,6 +34,7 @@
 #include <typeinfo>
 #include <memory>
 
+using namespace Shizuku::Presentation;
 using namespace Shizuku::Flow;
 
 namespace

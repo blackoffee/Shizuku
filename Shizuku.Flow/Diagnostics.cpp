@@ -23,7 +23,7 @@ Diagnostics::Diagnostics(Flow& p_flow)
     m_flow = &p_flow;
 }
 
-Rect<int>& Diagnostics::SimulationDomain()
+Rect<int> Diagnostics::SimulationDomain()
 {
     return m_flow->Graphics()->GetCudaLbm()->GetDomainSize();
 }

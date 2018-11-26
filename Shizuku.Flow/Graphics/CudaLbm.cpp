@@ -22,7 +22,7 @@ Domain* CudaLbm::GetDomain()
 
 Shizuku::Core::Rect<int> CudaLbm::GetDomainSize()
 {
-    return Shizuku::Core::Rect<int>(m_domain->GetXDim(), m_domain->GetYDim());
+    return Shizuku::Core::Rect<int>(m_domain->GetXDimVisible(), m_domain->GetYDimVisible());
 }
 
 float* CudaLbm::GetFA()

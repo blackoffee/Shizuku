@@ -2,6 +2,7 @@
 #include "Shizuku.Flow/Flow.h"
 #include <memory>
 
+using namespace Shizuku::Presentation;
 using namespace Shizuku::Flow;
 
 int main(int argc, char **argv)
