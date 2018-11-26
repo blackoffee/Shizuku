@@ -2,6 +2,8 @@
 #include "Graphics/GraphicsManager.h"
 #include "common.h"
 
+using namespace Shizuku::Flow::Command;
+
 SetContourMinMax::SetContourMinMax(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {
 }

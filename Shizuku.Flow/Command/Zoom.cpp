@@ -1,6 +1,8 @@
 #include "Zoom.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 Zoom::Zoom(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
 }

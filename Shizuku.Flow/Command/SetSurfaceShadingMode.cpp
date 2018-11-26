@@ -2,6 +2,8 @@
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/ShadingMode.h"
 
+using namespace Shizuku::Flow::Command;
+
 SetSurfaceShadingMode::SetSurfaceShadingMode(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {
 }

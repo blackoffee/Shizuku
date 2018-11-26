@@ -73,7 +73,7 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp" />
-    <ClCompile Include="Command\Parameter\Parameter.cpp">
+    <ClCompile Include="Command\Parameter\VelocityParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
   </ItemGroup>
@@ -155,7 +155,7 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Flow.h" />
-    <ClInclude Include="Command\Parameter\Parameter.h">
+    <ClInclude Include="Command\Parameter\VelocityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
   </ItemGroup>

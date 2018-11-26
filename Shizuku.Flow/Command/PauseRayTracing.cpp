@@ -1,6 +1,8 @@
 #include "PauseRayTracing.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 PauseRayTracing::PauseRayTracing(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
 }

@@ -1,6 +1,8 @@
 #include "Pan.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 Pan::Pan(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
     m_state = INACTIVE;

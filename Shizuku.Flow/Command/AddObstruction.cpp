@@ -1,6 +1,8 @@
 #include "AddObstruction.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 AddObstruction::AddObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
     m_state = INACTIVE;

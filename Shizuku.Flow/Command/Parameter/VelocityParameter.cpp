@@ -1,6 +1,6 @@
-#include "Command/Parameter/Parameter.h"
+#include "Command/Parameter/VelocityParameter.h"
 
-//using namespace Shizuku::Flow;
+using namespace Shizuku::Flow::Command;
 
 VelocityParameter::VelocityParameter()
 {

@@ -1,8 +1,8 @@
 #include "SetInletVelocity.h"
 #include "Graphics/GraphicsManager.h"
-#include "Parameter/Parameter.h"
+#include "Parameter/VelocityParameter.h"
 
-using namespace Shizuku::Flow;
+using namespace Shizuku::Flow::Command;
 
 SetInletVelocity::SetInletVelocity(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {

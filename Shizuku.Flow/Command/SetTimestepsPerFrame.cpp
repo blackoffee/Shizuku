@@ -1,6 +1,8 @@
 #include "SetTimestepsPerFrame.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 SetTimestepsPerFrame::SetTimestepsPerFrame(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {
 }

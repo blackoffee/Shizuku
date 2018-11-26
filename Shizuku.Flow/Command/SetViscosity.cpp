@@ -1,6 +1,8 @@
 #include "SetViscosity.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 SetViscosity::SetViscosity(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
 {
 }

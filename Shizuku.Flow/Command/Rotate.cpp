@@ -1,6 +1,8 @@
 #include "Rotate.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 Rotate::Rotate(GraphicsManager &rootGraphicsManager) : Command(rootGraphicsManager)
 {
     m_state = INACTIVE;

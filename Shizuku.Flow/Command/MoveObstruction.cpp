@@ -1,6 +1,8 @@
 #include "MoveObstruction.h"
 #include "Graphics/GraphicsManager.h"
 
+using namespace Shizuku::Flow::Command;
+
 MoveObstruction::MoveObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
 {
     m_currentObst = -1;

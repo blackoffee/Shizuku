@@ -20,7 +20,7 @@
 #include "Shizuku.Flow/Command/SetContourMode.h"
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
-#include "Shizuku.Flow/Command/Parameter/Parameter.h"
+#include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 
 #include "Shizuku.Flow/Flow.h"
 

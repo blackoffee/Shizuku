@@ -5,31 +5,33 @@
 #include <memory>
 
 struct GLFWwindow;
-class Zoom;
-class Pan;
-class Rotate;
-class AddObstruction;
-class RemoveObstruction;
-class MoveObstruction;
-class PauseSimulation; 
-class PauseRayTracing;
-class SetSimulationScale;
-class SetTimestepsPerFrame;
-class SetContourMode;
-class SetContourMinMax;
-class SetSurfaceShadingMode;
-class SetInletVelocity;
 
 namespace Shizuku{
     namespace Flow{
         class Flow;
+        namespace Command{
+            class Zoom;
+            class Pan;
+            class Rotate;
+            class AddObstruction;
+            class RemoveObstruction;
+            class MoveObstruction;
+            class PauseSimulation; 
+            class PauseRayTracing;
+            class SetSimulationScale;
+            class SetTimestepsPerFrame;
+            class SetContourMode;
+            class SetContourMinMax;
+            class SetSurfaceShadingMode;
+            class SetInletVelocity;
+            enum ContourMode;
+            enum SurfaceShadingMode;
+        }
     }
 }
 
-enum ContourMode;
-enum SurfaceShadingMode;
-
 using namespace Shizuku::Core;
+using namespace Shizuku::Flow::Command;
 
 class Window
 {
