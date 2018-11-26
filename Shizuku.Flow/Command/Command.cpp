@@ -1,14 +1,9 @@
 #include "Command.h"
 
-using namespace Shizuku::Flow::Command;
+using namespace Shizuku::Flow;
 
-Command::Command(GraphicsManager &graphicsManager)
+Command::Command::Command(Flow &p_flow)
 {
-    m_graphics = &graphicsManager;
-}
-
-GraphicsManager* Command::GetGraphicsManager()
-{
-    return m_graphics;
+    m_flow = &p_flow;
 }
 

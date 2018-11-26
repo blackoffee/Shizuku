@@ -1,9 +1,10 @@
 #include "MoveObstruction.h"
 #include "Graphics/GraphicsManager.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-MoveObstruction::MoveObstruction(GraphicsManager &graphicsManager) : Command(graphicsManager)
+MoveObstruction::MoveObstruction(Flow& p_flow) : Command(p_flow)
 {
     m_currentObst = -1;
     m_state = INACTIVE;
@@ -13,7 +14,7 @@ void MoveObstruction::Start(const float currentX, const float currentY)
 {
     m_initialX = currentX;
     m_initialY = currentY;
-    m_currentObst = GetGraphicsManager()->PickObstruction(currentX, currentY);
+    m_currentObst = m_flow->Graphics()->PickObstruction(currentX, currentY);
     if (m_currentObst >= 0)
     {
         m_state = ACTIVE;
@@ -30,7 +31,7 @@ void MoveObstruction::Track(const float currentX, const float currentY)
     {
         float dx = currentX - m_initialX;
         float dy = currentY - m_initialY;
-        GetGraphicsManager()->MoveObstruction(m_currentObst, currentX, currentY, dx, dy);
+        m_flow->Graphics()->MoveObstruction(m_currentObst, currentX, currentY, dx, dy);
     }
     m_initialX = currentX;
     m_initialY = currentY;

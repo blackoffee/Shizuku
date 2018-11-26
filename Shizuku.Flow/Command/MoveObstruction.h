@@ -8,7 +8,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
         float m_initialX;
         float m_initialY;
     public:
-        MoveObstruction(GraphicsManager &graphicsManager);
+        MoveObstruction(Flow& p_flow);
         void Start(const float currentX, const float currentY);
         void Track(const float currentX, const float currentY);
         void End();

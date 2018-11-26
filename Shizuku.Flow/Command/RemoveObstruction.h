@@ -6,7 +6,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
         int m_currentObst;
     public:
-        RemoveObstruction(GraphicsManager &rootGraphicsManager);
+        RemoveObstruction(Flow& p_flow);
         void Start(const float currentX, const float currentY);
         void End(const float currentX, const float currentY);
     };

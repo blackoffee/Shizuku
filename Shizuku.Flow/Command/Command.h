@@ -8,22 +8,22 @@
 #define FLOW_API __declspec(dllimport)   
 #endif  
 
-class GraphicsManager;
+namespace Shizuku{ namespace Flow{
+    class Flow;
+} }
 
 namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API Command
     {
-    private:
-        GraphicsManager* m_graphics;
     protected:
+        Flow* m_flow;
         enum State { ACTIVE, INACTIVE };
         State m_state;
         Command();
-        Command(GraphicsManager &graphicsManager);
+        Command(Flow& p_flow);
         void Start();
         void Start(boost::any const p_param);
         void Track();
         void End();
-        GraphicsManager* GetGraphicsManager();
     };
 } } }

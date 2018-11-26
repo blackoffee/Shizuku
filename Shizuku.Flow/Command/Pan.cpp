@@ -1,9 +1,10 @@
 #include "Pan.h"
 #include "Graphics/GraphicsManager.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-Pan::Pan(GraphicsManager &graphicsManager) : Command(graphicsManager)
+Pan::Pan(Flow& p_flow) : Command(p_flow)
 {
     m_state = INACTIVE;
 }
@@ -21,7 +22,7 @@ void Pan::Track(const float currentX, const float currentY)
     float dy = currentY - m_initialY;
     if (m_state == ACTIVE)
     {
-        GetGraphicsManager()->Pan(dx, dy);
+        m_flow->Graphics()->Pan(dx, dy);
     }
     m_initialX = currentX;
     m_initialY = currentY;

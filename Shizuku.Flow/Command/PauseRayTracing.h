@@ -5,7 +5,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API PauseRayTracing : public Command
     {
     public:
-        PauseRayTracing(GraphicsManager &graphicsManager);
+        PauseRayTracing(Flow& p_flow);
         void Start();
         void End();
     };

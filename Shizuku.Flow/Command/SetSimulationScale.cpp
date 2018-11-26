@@ -1,15 +1,16 @@
 #include "SetSimulationScale.h"
 #include "Graphics/GraphicsManager.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-SetSimulationScale::SetSimulationScale(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
+SetSimulationScale::SetSimulationScale(Flow& p_flow) : Command(p_flow)
 {
 }
 
 void SetSimulationScale::Start(const float p_scale)
 {
-    GraphicsManager* graphicsManager = GetGraphicsManager();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
     graphicsManager->SetScaleFactor(p_scale);
 }
 

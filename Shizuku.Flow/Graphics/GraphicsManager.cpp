@@ -27,6 +27,14 @@ namespace{
     {
         return static_cast<int> ((x+1.f)/2.f*xDim);
     }
+
+    float GetDistanceBetweenTwoPoints(const float x1, const float y1,
+        const float x2, const float y2)
+    {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        return sqrt(dx*dx + dy*dy);
+    }
 }
 
 GraphicsManager::GraphicsManager()
@@ -792,11 +800,4 @@ void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
     }
 }
 
-float GetDistanceBetweenTwoPoints(const float x1, const float y1,
-    const float x2, const float y2)
-{
-    float dx = x2 - x1;
-    float dy = y2 - y1;
-    return sqrt(dx*dx + dy*dy);
-}
 

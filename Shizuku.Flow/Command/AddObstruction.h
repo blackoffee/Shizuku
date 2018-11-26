@@ -5,7 +5,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API AddObstruction : public Command
     {
     public:
-        AddObstruction(GraphicsManager &graphicsManager);
+        AddObstruction(Flow& p_flow);
         void Start(const float currentX, const float currentY);
     };
 } } }

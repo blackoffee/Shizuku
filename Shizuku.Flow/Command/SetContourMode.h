@@ -16,7 +16,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API SetContourMode : public Command
     {
     public:
-        SetContourMode(GraphicsManager &graphicsManager);
+        SetContourMode(Flow& p_flow);
         void Start(const ContourMode p_contourMode);
     };
 } } }

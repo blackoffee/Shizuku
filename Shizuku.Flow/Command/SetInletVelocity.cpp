@@ -1,16 +1,17 @@
 #include "SetInletVelocity.h"
 #include "Graphics/GraphicsManager.h"
 #include "Parameter/VelocityParameter.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-SetInletVelocity::SetInletVelocity(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
+SetInletVelocity::SetInletVelocity(Flow& p_flow) : Command(p_flow)
 {
 }
 
 void SetInletVelocity::Start(boost::any const p_param)
 {
-    GraphicsManager* graphicsManager = GetGraphicsManager();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
     try
     {
         const VelocityParameter& vel = boost::any_cast<VelocityParameter>(p_param);

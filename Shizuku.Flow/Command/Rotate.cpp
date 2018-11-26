@@ -1,9 +1,10 @@
 #include "Rotate.h"
 #include "Graphics/GraphicsManager.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-Rotate::Rotate(GraphicsManager &rootGraphicsManager) : Command(rootGraphicsManager)
+Rotate::Rotate(Flow& p_flow) : Command(p_flow)
 {
     m_state = INACTIVE;
 }
@@ -21,7 +22,7 @@ void Rotate::Track(const float currentX, const float currentY)
     float dy = (currentY - m_initialY)*45.f;
     if (m_state == ACTIVE)
     {
-        GetGraphicsManager()->Rotate(dx, dy);
+        m_flow->Graphics()->Rotate(dx, dy);
     }
     m_initialX = currentX;
     m_initialY = currentY;

@@ -1,16 +1,17 @@
 #include "SetSurfaceShadingMode.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/ShadingMode.h"
+#include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
 
-SetSurfaceShadingMode::SetSurfaceShadingMode(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
+SetSurfaceShadingMode::SetSurfaceShadingMode(Flow& p_flow) : Command(p_flow)
 {
 }
 
 void SetSurfaceShadingMode::Start(const SurfaceShadingMode p_mode)
 {
-    GraphicsManager* graphicsManager = GetGraphicsManager();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
     switch (p_mode)
     {
     case SurfaceShadingMode::RayTracing:

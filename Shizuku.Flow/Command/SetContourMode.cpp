@@ -1,16 +1,17 @@
 #include "SetContourMode.h"
 #include "Graphics/GraphicsManager.h"
+#include "Flow.h"
 #include "common.h"
 
 using namespace Shizuku::Flow::Command;
 
-SetContourMode::SetContourMode(GraphicsManager &p_graphicsManager) : Command(p_graphicsManager)
+SetContourMode::SetContourMode(Flow &p_flow) : Command(p_flow)
 {
 }
 
 void SetContourMode::Start(const ContourMode p_contourMode)
 {
-    GraphicsManager* graphicsManager = GetGraphicsManager();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
     ContourVariable contour;
     switch (p_contourMode)
     {

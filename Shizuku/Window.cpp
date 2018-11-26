@@ -132,20 +132,20 @@ void Window::SetGraphics(std::shared_ptr<Flow> flow)
 
 void Window::RegisterCommands()
 {
-    m_zoom = std::make_shared<Zoom>(*m_flow->Graphics());
-    m_pan = std::make_shared<Pan>(*m_flow->Graphics());
-    m_rotate = std::make_shared<Rotate>(*m_flow->Graphics());
-    m_addObstruction = std::make_shared<AddObstruction>(*m_flow->Graphics());
-    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_flow->Graphics());
-    m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow->Graphics());
-    m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow->Graphics());
-    m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow->Graphics());
-    m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_flow->Graphics());
-    m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_flow->Graphics());
-    m_setVelocity = std::make_shared<SetInletVelocity>(*m_flow->Graphics());
-    m_setContourMode = std::make_shared<SetContourMode>(*m_flow->Graphics());
-    m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow->Graphics());
-    m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow->Graphics());
+    m_zoom = std::make_shared<Zoom>(*m_flow);
+    m_pan = std::make_shared<Pan>(*m_flow);
+    m_rotate = std::make_shared<Rotate>(*m_flow);
+    m_addObstruction = std::make_shared<AddObstruction>(*m_flow);
+    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_flow);
+    m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow);
+    m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
+    m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
+    m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_flow);
+    m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_flow);
+    m_setVelocity = std::make_shared<SetInletVelocity>(*m_flow);
+    m_setContourMode = std::make_shared<SetContourMode>(*m_flow);
+    m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
+    m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
 
     m_setSimulationScale->Start(m_simulationScale);
     m_timestepsPerFrame->Start(m_timesteps);

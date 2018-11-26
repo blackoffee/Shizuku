@@ -5,7 +5,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API PauseSimulation : public Command
     {
     public:
-        PauseSimulation(GraphicsManager &graphicsManager);
+        PauseSimulation(Flow& p_flow);
         void Start();
         void End();
     };

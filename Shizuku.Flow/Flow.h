@@ -10,12 +10,11 @@
 
 using namespace Shizuku::Core;
 
-class GraphicsManager;
 
 namespace Shizuku
 {
     namespace Flow{
-
+        class GraphicsManager;
         class Impl;
         class FLOW_API Flow{
         public:

@@ -7,7 +7,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
         float m_initialX;
         float m_initialY;
     public:
-        Rotate(GraphicsManager &graphicsManager);
+        Rotate(Flow& p_flow);
         void Start(const float initialX, const float initialY);
         void Track(const float currentX, const float currentY);
         void End();
