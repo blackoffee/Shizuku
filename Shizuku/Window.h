@@ -9,6 +9,7 @@ struct GLFWwindow;
 namespace Shizuku{
     namespace Flow{
         class Flow;
+        class Diagnostics;
         namespace Command{
             class Zoom;
             class Pan;
@@ -51,6 +52,7 @@ private:
     std::shared_ptr<SetContourMinMax> m_setContourMinMax;
     std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
     FpsTracker m_fpsTracker;
+    std::shared_ptr<Shizuku::Flow::Diagnostics> m_diag;
     GLFWwindow* m_window;
     Rect<int> m_size;
 

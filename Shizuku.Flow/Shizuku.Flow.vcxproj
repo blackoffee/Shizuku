@@ -261,6 +261,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
+    <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Flow.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
@@ -291,6 +292,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
+    <ClInclude Include="Diagnostics.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />

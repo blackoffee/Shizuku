@@ -6,7 +6,6 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
     public:
         PauseRayTracing(Flow& p_flow);
-        void Start();
-        void End();
+        void Start(boost::any const p_param);
     };
 } } }

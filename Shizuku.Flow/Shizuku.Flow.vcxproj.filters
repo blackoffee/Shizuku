@@ -76,6 +76,7 @@
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
+    <ClCompile Include="Diagnostics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -158,6 +159,7 @@
     <ClInclude Include="Command\Parameter\VelocityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
+    <ClInclude Include="Diagnostics.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

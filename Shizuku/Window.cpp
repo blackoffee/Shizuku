@@ -4,7 +4,6 @@
 #include "../imgui/imgui_impl_opengl3.h"
 
 #include "Shizuku.Flow/Graphics/GraphicsManager.h"
-#include "Shizuku.Flow/Graphics/CudaLbm.h"
 
 #include "Shizuku.Flow/Command/Zoom.h"
 #include "Shizuku.Flow/Command/Pan.h"
@@ -22,6 +21,7 @@
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 
+#include "Shizuku.Flow/Diagnostics.h"
 #include "Shizuku.Flow/Flow.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
@@ -128,6 +128,7 @@ Window::Window() :
 void Window::SetGraphics(std::shared_ptr<Flow> flow)
 {
     m_flow = flow;
+    m_diag = std::make_shared<Diagnostics>(*flow);
 }
 
 void Window::RegisterCommands()
@@ -255,35 +256,8 @@ void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
 
 void Window::TogglePaused()
 {
-    if (m_flow->Graphics()->GetCudaLbm()->IsPaused())
-    {
-        m_pauseSimulation->End();
-    }
-    else
-    {
-        m_pauseSimulation->Start();
-    }
-}
-
-void Window::SetPaused(const bool p_paused)
-{
-
-    if (m_flow->Graphics()->GetCudaLbm()->IsPaused() && !p_paused)
-    {
-        m_pauseSimulation->End();
-    }
-    else if (!m_flow->Graphics()->GetCudaLbm()->IsPaused() && p_paused)
-    {
-        m_pauseSimulation->Start();
-    }
-}
-
-void Window::SetRayTracingPaused(const bool p_paused)
-{
-    if (m_flow->Graphics()->IsRayTracingPaused() && !p_paused)
-        m_pauseRayTracing->End();
-    else if (!m_flow->Graphics()->IsRayTracingPaused() && p_paused)
-        m_pauseRayTracing->Start();
+    m_paused = !m_paused;
+    m_pauseSimulation->Start(boost::any(bool(m_paused)));
 }
 
 void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
@@ -301,16 +275,13 @@ void Window::Draw3D()
 {
     m_fpsTracker.Tick();
 
-
     m_flow->Update();
 
     m_flow->Draw3D();
 
     m_fpsTracker.Tock();
 
-    CudaLbm* cudaLbm = m_flow->Graphics()->GetCudaLbm();
-    const int tStepsPerFrame = cudaLbm->GetTimeStepsPerFrame();
-    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), cudaLbm->GetDomainSize(), tStepsPerFrame);
+    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
 }
 
 void Window::InitializeGlfw()
@@ -418,11 +389,11 @@ void Window::DrawUI()
 
         const bool oldPaused = m_paused;
         if (ImGui::Checkbox("Pause Simulation", &m_paused) && m_paused != oldPaused)
-            SetPaused(m_paused);
+            m_pauseSimulation->Start(boost::any(bool(m_paused)));
 
         const bool oldRayTracingPaused = m_rayTracingPaused;
         if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
-            SetRayTracingPaused(m_rayTracingPaused);
+            m_pauseRayTracing->Start(boost::any(bool(m_rayTracingPaused)));
 
         const SurfaceShadingMode shadingMode = m_shadingMode;
         const char* currentShadingItem = MakeReadableString(shadingMode);

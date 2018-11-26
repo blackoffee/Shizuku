@@ -10,30 +10,26 @@
 
 using namespace Shizuku::Core;
 
+namespace Shizuku { namespace Flow{
+    class GraphicsManager;
+    class Impl;
+    class FLOW_API Flow{
+    public:
+        Flow();
+        ~Flow();
 
-namespace Shizuku
-{
-    namespace Flow{
-        class GraphicsManager;
-        class Impl;
-        class FLOW_API Flow{
-        public:
-            Flow();
-            ~Flow();
+        void Initialize();
 
-            void Initialize();
+        void Update();
 
-            void Update();
+        void Draw3D();
 
-            void Draw3D();
+        void Resize(const Rect<int>& p_size);
 
-            void Resize(const Rect<int>& p_size);
+        //TODO: remove this
+        GraphicsManager* Graphics();
 
-            //TODO: remove this
-            GraphicsManager* Graphics();
-
-        private:
-            Impl* m_impl;
-        };
-    }
-}
+    private:
+        Impl* m_impl;
+    };
+} }

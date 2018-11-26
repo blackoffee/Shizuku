@@ -8,14 +8,15 @@ PauseRayTracing::PauseRayTracing(Flow& p_flow) : Command(p_flow)
 {
 }
 
-void PauseRayTracing::Start()
+void PauseRayTracing::Start(boost::any const p_param)
 {
-    GraphicsManager* graphicsManager= m_flow->Graphics();
-    graphicsManager->SetRayTracingPausedState(true);
-}
-
-void PauseRayTracing::End()
-{
-    GraphicsManager* graphicsManager= m_flow->Graphics();
-    graphicsManager->SetRayTracingPausedState(false);
+    try
+    {
+        const bool& paused = boost::any_cast<bool>(p_param);
+        m_flow->Graphics()->SetRayTracingPausedState(paused);
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
