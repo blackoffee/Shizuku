@@ -27,7 +27,7 @@ class CudaLbm;
 struct float4;
 
 namespace Shizuku{ namespace Flow{
-    class FLOW_API GraphicsManager
+    class GraphicsManager
     {
     public:
         enum TimerKey
@@ -116,8 +116,8 @@ namespace Shizuku{ namespace Flow{
         void SetSurfaceShadingMode(const ShadingMode p_mode);
 
         void Zoom(const int dir, const float mag);
-        void Pan(const float dx, const float dy);
-        void Rotate(const float dx, const float dy);
+        void Pan(const Point<int>& p_posDiff);
+        void Rotate(const Point<int>& p_posDiff);
         int PickObstruction(const Point<int>& p_pos);
         void UnpickObstruction();
         void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);

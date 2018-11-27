@@ -1,6 +1,7 @@
 #include "Pan.h"
 #include "Graphics/GraphicsManager.h"
 #include "Flow.h"
+#include "Parameter/ScreenPointParameter.h"
 
 using namespace Shizuku::Flow::Command;
 
@@ -9,26 +10,41 @@ Pan::Pan(Flow& p_flow) : Command(p_flow)
     m_state = INACTIVE;
 }
 
-void Pan::Start(const float initialX, const float initialY)
+void Pan::Start(boost::any const p_param)
 {
-    m_state = ACTIVE;
-    m_initialX = initialX;
-    m_initialY = initialY;
-}
-
-void Pan::Track(const float currentX, const float currentY)
-{
-    float dx = currentX - m_initialX;
-    float dy = currentY - m_initialY;
-    if (m_state == ACTIVE)
+    try
     {
-        m_flow->Graphics()->Pan(dx, dy);
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        m_state = ACTIVE;
+        m_initialPos = pos.position;
     }
-    m_initialX = currentX;
-    m_initialY = currentY;
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
 
-void Pan::End()
+void Pan::Track(boost::any const p_param)
+{
+    try
+    {
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        if (m_state == ACTIVE)
+        {
+            Point<int> posDiff = pos.position - m_initialPos;
+            m_flow->Graphics()->Pan(posDiff);
+        }
+
+        m_initialPos = pos.position;
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
+}
+
+void Pan::End(boost::any const p_param)
 {
     m_state = INACTIVE;
 }
+

@@ -529,15 +529,18 @@ void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
     yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
 
-
-void GraphicsManager::Pan(const float dx, const float dy)
+void GraphicsManager::Pan(const Point<int>& p_posDiff)
 {
+    const float dx = ((float)p_posDiff.X / m_viewSize.Width)*2.f;
+    const float dy = ((float)p_posDiff.Y / m_viewSize.Height)*2.f;
     m_translate.x += dx;
     m_translate.y += dy;
 }
 
-void GraphicsManager::Rotate(const float dx, const float dy)
+void GraphicsManager::Rotate(const Point<int>& p_posDiff)
 {
+    const float dx = ((float)p_posDiff.X / m_viewSize.Width)*100.f;
+    const float dy = ((float)p_posDiff.Y / m_viewSize.Height)*100.f;
     m_rotate.x += dy;
     m_rotate.z += dx;
 }

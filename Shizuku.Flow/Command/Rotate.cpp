@@ -1,6 +1,7 @@
 #include "Rotate.h"
 #include "Graphics/GraphicsManager.h"
 #include "Flow.h"
+#include "Parameter/ScreenPointParameter.h"
 
 using namespace Shizuku::Flow::Command;
 
@@ -9,26 +10,40 @@ Rotate::Rotate(Flow& p_flow) : Command(p_flow)
     m_state = INACTIVE;
 }
 
-void Rotate::Start(const float initialX, const float initialY)
+void Rotate::Start(boost::any const p_param)
 {
-    m_state = ACTIVE;
-    m_initialX = initialX;
-    m_initialY = initialY;
-}
-
-void Rotate::Track(const float currentX, const float currentY)
-{
-    float dx = (currentX - m_initialX)*45.f;
-    float dy = (currentY - m_initialY)*45.f;
-    if (m_state == ACTIVE)
+    try
     {
-        m_flow->Graphics()->Rotate(dx, dy);
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        m_state = ACTIVE;
+        m_initialPos = pos.position;
     }
-    m_initialX = currentX;
-    m_initialY = currentY;
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
 
-void Rotate::End()
+void Rotate::Track(boost::any const p_param)
+{
+    try
+    {
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        if (m_state == ACTIVE)
+        {
+            Point<int> posDiff = pos.position - m_initialPos;
+            m_flow->Graphics()->Rotate(posDiff);
+        }
+
+        m_initialPos = pos.position;
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
+}
+
+void Rotate::End(boost::any const p_param)
 {
     m_state = INACTIVE;
 }

@@ -76,17 +76,17 @@ namespace Shizuku{ namespace Presentation{
         void SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow);
         void RegisterCommands();
         void RegisterGlfwInputs();
-        void Resize(Rect<int> size);
+        void Resize(const Rect<int>& size);
         void Display();
         void InitializeGlfw();
         void InitializeImGui();
 
-        void GlfwResize(GLFWwindow* window, int width, int height);
-        void GlfwMouseButton(const int button, const int state, const int mod);
+        void Resize(GLFWwindow* window, int width, int height);
+        void MouseButton(const int button, const int state, const int mod);
         void MouseMotion(const int x, const int y);
-        void GlfwMouseWheel(double xwheel, double ywheel);
-        void GlfwKeyboard(int key, int scancode, int action, int mode);
-        void GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
+        void MouseWheel(double xwheel, double ywheel);
+        void Keyboard(int key, int scancode, int action, int mode);
+        void UpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps);
 
         static Window& Instance()
         {
@@ -95,9 +95,6 @@ namespace Shizuku{ namespace Presentation{
         }
 
     private:
-        float GetFloatCoordX(const int x);
-        float GetFloatCoordY(const int y);
-
         void Draw3D();
         void DrawUI();
 

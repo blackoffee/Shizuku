@@ -3,8 +3,6 @@
 #include "Window.h"
 #include "../imgui/imgui_impl_opengl3.h"
 
-#include "Shizuku.Flow/Graphics/GraphicsManager.h"
-
 #include "Shizuku.Flow/Command/Zoom.h"
 #include "Shizuku.Flow/Command/Pan.h"
 #include "Shizuku.Flow/Command/Rotate.h"
@@ -48,7 +46,7 @@ namespace
 
     void MouseButtonWrapper(GLFWwindow* window, int button, int state, int mods)
     {
-        Window::Instance().GlfwMouseButton(button, state, mods);
+        Window::Instance().MouseButton(button, state, mods);
     }
 
     void MouseMotionWrapper(GLFWwindow* window, double x, double y)
@@ -58,12 +56,12 @@ namespace
 
     void MouseWheelWrapper(GLFWwindow* window, double xwheel, double ywheel)
     {
-        Window::Instance().GlfwMouseWheel(xwheel, ywheel);
+        Window::Instance().MouseWheel(xwheel, ywheel);
     }
 
     void KeyboardWrapper(GLFWwindow* window, int key, int scancode, int action, int mode)
     {
-        Window::Instance().GlfwKeyboard(key, scancode, action, mode);
+        Window::Instance().Keyboard(key, scancode, action, mode);
     }
 
     void GLAPIENTRY MessageCallback( GLenum source,
@@ -158,15 +156,6 @@ void Window::RegisterCommands()
     m_setSurfaceShadingMode->Start(m_shadingMode);
 }
 
-float Window::GetFloatCoordX(const int x)
-{
-    return static_cast<float>(x)/m_flow->Graphics()->GetViewport().Width*2.f - 1.f;
-}
-float Window::GetFloatCoordY(const int y)
-{
-    return static_cast<float>(y)/m_flow->Graphics()->GetViewport().Height*2.f - 1.f;
-}
-
 void Window::InitializeImGui()
 {
     IMGUI_CHECKVERSION();
@@ -187,33 +176,31 @@ void Window::RegisterGlfwInputs()
     glfwSetScrollCallback(m_window, MouseWheelWrapper);
 }
 
-void Window::GlfwResize(GLFWwindow* window, int width, int height)
+void Window::Resize(GLFWwindow* window, int width, int height)
 {
     Resize(Rect<int>(width, height));
 }
 
-void Window::Resize(Rect<int> size)
+void Window::Resize(const Rect<int>& size)
 {
     m_size = size;
     m_flow->Resize(size);
 }
 
-void Window::GlfwMouseButton(const int button, const int state, const int mod)
+void Window::MouseButton(const int button, const int state, const int mod)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
+    const ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
 
-    float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(m_size.Height - y);
     if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
         && mod == GLFW_MOD_CONTROL)
     {
-        m_pan->Start(xf, yf);
+        m_pan->Start(param);
     }
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
-        m_rotate->Start(xf, yf);
+        m_rotate->Start(param);
         m_removeObstruction->Start(param);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
@@ -226,8 +213,8 @@ void Window::GlfwMouseButton(const int button, const int state, const int mod)
     }
     else
     {
-        m_pan->End();
-        m_rotate->End();
+        m_pan->End(boost::none);
+        m_rotate->End(boost::none);
         m_moveObstruction->End(boost::none);
         m_removeObstruction->End(param);
     }
@@ -235,15 +222,13 @@ void Window::GlfwMouseButton(const int button, const int state, const int mod)
 
 void Window::MouseMotion(const int x, const int y)
 {
-    ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
-    float xf = GetFloatCoordX(x);
-    float yf = GetFloatCoordY(m_size.Height - y);
-    m_pan->Track(xf, yf);
-    m_rotate->Track(xf, yf);
+    const ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
+    m_pan->Track(param);
+    m_rotate->Track(param);
     m_moveObstruction->Track(param);
 }
 
-void Window::GlfwMouseWheel(double xwheel, double ywheel)
+void Window::MouseWheel(double xwheel, double ywheel)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
@@ -251,7 +236,7 @@ void Window::GlfwMouseWheel(double xwheel, double ywheel)
     m_zoom->Start(dir, 0.6f);
 }
 
-void Window::GlfwKeyboard(int key, int scancode, int action, int mode)
+void Window::Keyboard(int key, int scancode, int action, int mode)
 {
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
@@ -265,7 +250,7 @@ void Window::TogglePaused()
     m_pauseSimulation->Start(boost::any(bool(m_paused)));
 }
 
-void Window::GlfwUpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
+void Window::UpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
 {
     char fpsReport[256];
     int xDim = domainSize.Width;
@@ -286,7 +271,7 @@ void Window::Draw3D()
 
     m_fpsTracker.Tock();
 
-    GlfwUpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
+    UpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
 }
 
 void Window::InitializeGlfw()
