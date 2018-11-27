@@ -7,7 +7,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
         int m_currentObst;
     public:
         RemoveObstruction(Flow& p_flow);
-        void Start(const float currentX, const float currentY);
-        void End(const float currentX, const float currentY);
+        void Start(boost::any const p_param);
+        void End(boost::any const p_param);
     };
 } } }

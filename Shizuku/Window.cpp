@@ -20,6 +20,7 @@
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
+#include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
 
 #include "Shizuku.Flow/Diagnostics.h"
 #include "Shizuku.Flow/Flow.h"
@@ -30,6 +31,7 @@
 #include <GLFW/glfw3.h>
 
 #include <boost/any.hpp>
+#include <boost/none.hpp>
 
 #include <typeinfo>
 #include <memory>
@@ -126,7 +128,7 @@ Window::Window() :
 {
 }
 
-void Window::SetGraphics(std::shared_ptr<Flow> flow)
+void Window::SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow)
 {
     m_flow = flow;
     m_diag = std::make_shared<Diagnostics>(*flow);
@@ -200,6 +202,7 @@ void Window::GlfwMouseButton(const int button, const int state, const int mod)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
+    ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
 
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(m_size.Height - y);
@@ -211,32 +214,33 @@ void Window::GlfwMouseButton(const int button, const int state, const int mod)
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
         m_rotate->Start(xf, yf);
-        m_removeObstruction->Start(xf, yf);
+        m_removeObstruction->Start(param);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
-        m_addObstruction->Start(xf, yf);
+        m_addObstruction->Start(param);
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
     {
-        m_moveObstruction->Start(xf, yf);
+        m_moveObstruction->Start(param);
     }
     else
     {
         m_pan->End();
         m_rotate->End();
-        m_moveObstruction->End();
-        m_removeObstruction->End(xf, yf);
+        m_moveObstruction->End(boost::none);
+        m_removeObstruction->End(param);
     }
 }
 
 void Window::MouseMotion(const int x, const int y)
 {
+    ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
     float xf = GetFloatCoordX(x);
     float yf = GetFloatCoordY(m_size.Height - y);
     m_pan->Track(xf, yf);
     m_rotate->Track(xf, yf);
-    m_moveObstruction->Track(xf, yf);
+    m_moveObstruction->Track(param);
 }
 
 void Window::GlfwMouseWheel(double xwheel, double ywheel)

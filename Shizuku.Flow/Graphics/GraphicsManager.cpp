@@ -6,6 +6,7 @@
 #include "CudaCheck.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Types/Point.h"
 
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -399,13 +400,12 @@ bool GraphicsManager::ShouldRefractSurface()
     return false;
 }
 
-void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir,
-    const int mouseX, const int mouseY)
+void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos)
 {
     glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
     glm::mat4 mvpInv = glm::inverse(mvp);
-    glm::vec4 v1 = { (float)mouseX/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)mouseY/(m_viewport[3]-m_viewport[1])*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
-    glm::vec4 v2 = { (float)mouseX/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)mouseY/(m_viewport[3]-m_viewport[1])*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
+    glm::vec4 v1 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
+    glm::vec4 v2 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
     glm::vec4 r1 = mvpInv*v1;
     glm::vec4 r2 = mvpInv*v2;
     rayOrigin.x = r1.x/r1.w;
@@ -442,8 +442,7 @@ glm::vec4 GraphicsManager::GetCameraPosition()
     return glm::inverse(proj*model)*glm::vec4(0, 0, 0, 1);
 }
 
-int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut,
-    const int mouseX, const int mouseY)
+int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos)
 {
     int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
@@ -454,7 +453,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     {
         glm::vec3 rayOrigin;
         glm::vec3 rayDir;
-        GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
+        GetMouseRay(rayOrigin, rayDir, p_pos);
         float3 selectedCoordF;
 
         // map OpenGL buffer object for writing from CUDA
@@ -486,7 +485,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     else
     {
         glm::vec3 rayOrigin, rayDir;
-        GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
+        GetMouseRay(rayOrigin, rayDir, p_pos);
         glm::vec3 selectedCoordF;
 
         rayCastResult = GetGraphics()->RayCastMouseClick(selectedCoordF, rayOrigin, rayDir);
@@ -507,33 +506,25 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     return returnVal;
 }
 
-void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
-    const int mouseX, const int mouseY)
-{
-    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, m_currentZ);
-}
-
-void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut,
-    const float mouseXf, const float mouseYf, const float planeZ)
-{
-    int mouseX = floatCoordToIntCoord(mouseXf, m_viewSize.Width);
-    int mouseY = floatCoordToIntCoord(mouseYf, m_viewSize.Height);
-    GetSimCoordFromMouseRay(xOut, yOut, mouseX, mouseY, planeZ);
-}
-
 void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
-    const int mouseX, const int mouseY, const float planeZ)
+    const Point<int>& p_pos, boost::optional<const float> planeZ)
 {
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     glm::vec3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, mouseX, mouseY);
+    GetMouseRay(rayOrigin, rayDir, p_pos);
 
-    glm::vec4 cameraPos = GetCameraPosition();
+    float z;
+    if (planeZ.is_initialized())
+        z = planeZ.value();
+    else
+        z = m_currentZ;
+
+    //glm::vec4 cameraPos = GetCameraPosition();
     //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
-    float t = (planeZ - rayOrigin.z)/rayDir.z;
-    float xf = rayOrigin.x + t*rayDir.x;
-    float yf = rayOrigin.y + t*rayDir.y;
+    const float t = (z - rayOrigin.z)/rayDir.z;
+    const float xf = rayOrigin.x + t*rayDir.x;
+    const float yf = rayOrigin.y + t*rayDir.y;
 
+    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
     xOut = (xf + 1.f)*0.5f*xDimVisible;
     yOut = (yf + 1.f)*0.5f*xDimVisible;
 }
@@ -551,17 +542,10 @@ void GraphicsManager::Rotate(const float dx, const float dy)
     m_rotate.z += dx;
 }
 
-int GraphicsManager::PickObstruction(const float mouseXf, const float mouseYf)
-{
-    int mouseX = floatCoordToIntCoord(mouseXf, m_viewSize.Width);
-    int mouseY = floatCoordToIntCoord(mouseYf, m_viewSize.Height);
-    return PickObstruction(mouseX, mouseY);
-}
-
-int GraphicsManager::PickObstruction(const int mouseX, const int mouseY)
+int GraphicsManager::PickObstruction(const Point<int>& p_pos)
 {
     int simX, simY;
-    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, mouseX, mouseY) == 0)
+    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, p_pos) == 0)
     {
         return FindClosestObstructionId(simX, simY);
     }
@@ -569,19 +553,11 @@ int GraphicsManager::PickObstruction(const int mouseX, const int mouseY)
 }
 
 
-void GraphicsManager::MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
-    const float dxf, const float dyf)
+void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff)
 {
     int simX1, simY1, simX2, simY2;
-    int xi, yi, dxi, dyi;
-    int windowWidth = m_viewSize.Width;// m_parent->GetRootPanel()->GetRectIntAbs().m_w;
-    int windowHeight = m_viewSize.Height;// m_parent->GetRootPanel()->GetRectIntAbs().m_h;
-    xi = floatCoordToIntCoord(mouseXf, windowWidth);
-    yi = floatCoordToIntCoord(mouseYf, windowHeight);
-    dxi = dxf*static_cast<float>(windowWidth) / 2.f;
-    dyi = dyf*static_cast<float>(windowHeight) / 2.f;
-    GetSimCoordFromMouseRay(simX1, simY1, xi-dxi, yi-dyi);
-    GetSimCoordFromMouseRay(simX2, simY2, xi, yi);
+    GetSimCoordFromMouseRay(simX1, simY1, p_pos-p_diff);
+    GetSimCoordFromMouseRay(simX2, simY2, p_pos);
     Obstruction obst = m_obstructions[obstId];
     obst.x = simX2*m_scaleFactor;
     obst.y = simY2*m_scaleFactor;

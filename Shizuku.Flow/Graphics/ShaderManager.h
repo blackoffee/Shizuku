@@ -97,7 +97,7 @@ public:
     float GetInletVelocity();
     void UpdateLbmInputs(const float u, const float omega);
 
-    void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const MinMax<float>& p_minMax);
+    void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const Types::MinMax<float>& p_minMax);
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);

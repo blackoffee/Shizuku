@@ -1,6 +1,7 @@
 #include "RemoveObstruction.h"
 #include "Graphics/GraphicsManager.h"
 #include "Flow.h"
+#include "Parameter/ScreenPointParameter.h"
 
 using namespace Shizuku::Flow::Command;
 
@@ -10,31 +11,45 @@ RemoveObstruction::RemoveObstruction(Flow& p_flow) : Command(p_flow)
     m_state = INACTIVE;
 }
 
-void RemoveObstruction::Start(const float currentX, const float currentY)
+void RemoveObstruction::Start(boost::any const p_param)
 {
     GraphicsManager* graphicsManager= m_flow->Graphics();
-    m_currentObst = graphicsManager->PickObstruction(currentX, currentY);
-        if (m_currentObst >= 0)
+    try
     {
-        m_state = ACTIVE;
-    }
-    else
-    {
-        m_state = INACTIVE;
-    }
-}
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        m_currentObst = graphicsManager->PickObstruction(pos.position);
 
-void RemoveObstruction::End(const float currentX, const float currentY)
-{
-    GraphicsManager* graphicsManager= m_flow->Graphics();
-    if (m_state == ACTIVE)
-    {
-        if (m_currentObst == graphicsManager->PickObstruction(currentX, currentY))
+        if (m_currentObst >= 0)
         {
-            graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
+            m_state = ACTIVE;
+        }
+        else
+        {
+            m_state = INACTIVE;
         }
     }
-    m_currentObst = -1;
-    m_state = INACTIVE;
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
 
+void RemoveObstruction::End(boost::any const p_param)
+{
+    GraphicsManager* graphicsManager= m_flow->Graphics();
+    try
+    {
+        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+        if (m_state == ACTIVE)
+        {
+            if (m_currentObst == graphicsManager->PickObstruction(pos.position))
+            {
+                graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
+            }
+        }
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
+}

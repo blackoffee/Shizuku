@@ -24,6 +24,8 @@ namespace Shizuku{ namespace Flow{ namespace Command{
         void Start();
         void Start(boost::any const p_param);
         void Track();
+        void Track(boost::any const p_param);
         void End();
+        void End(boost::any const p_param);
     };
 } } }

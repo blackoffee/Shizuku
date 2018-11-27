@@ -73,10 +73,13 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp" />
+    <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostics.cpp" />
+    <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -160,6 +163,15 @@
       <Filter>Command\Parameter</Filter>
     </ClInclude>
     <ClInclude Include="Diagnostics.h" />
+    <ClInclude Include="Command\Parameter\ScreenPointParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\MinMaxParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\ScaleParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

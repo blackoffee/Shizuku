@@ -3,9 +3,12 @@
 #include "ShadingMode.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
+#include "Shizuku.Core/Types/Point.h"
 #include "Shizuku.Core/Utilities/Stopwatch.h"
 #include <GLEW/glew.h>
 #include <glm/glm.hpp>
+#include <boost/optional.hpp>
+#include <boost/none.hpp>
 #include <vector>
 #include <string>
 
@@ -16,6 +19,7 @@
 #endif  
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;
 
 class ShaderManager;
@@ -114,11 +118,9 @@ namespace Shizuku{ namespace Flow{
         void Zoom(const int dir, const float mag);
         void Pan(const float dx, const float dy);
         void Rotate(const float dx, const float dy);
-        int PickObstruction(const float mouseXf, const float mouseYf);
-        int PickObstruction(const int mouseX, const int mouseY);
+        int PickObstruction(const Point<int>& p_pos);
         void UnpickObstruction();
-        void MoveObstruction(int obstId, const float mouseXf, const float mouseYf,
-            const float dxf, const float dyf);
+        void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
         void SetRayTracingPausedState(const bool state);
         bool IsRayTracingPaused();
        
@@ -133,16 +135,12 @@ namespace Shizuku{ namespace Flow{
         void SetModelMatrix(glm::mat4 modelMatrix);
         void SetProjectionMatrix(glm::mat4 projMatrix);
 
-        void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const int mouseX, const int mouseY);
+        void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos);
         glm::vec4 GetCameraDirection();
         glm::vec4 GetCameraPosition();
-        int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, 
-            const int mouseX, const int mouseY);
-        void GetSimCoordFromMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY);
-        void GetSimCoordFromMouseRay(int &xOut, int &yOut, const float mouseXf, const float mouseYf,
-            const float planeZ);
-        void GetSimCoordFromMouseRay(int &xOut, int &yOut, const int mouseX, const int mouseY,
-            const float planeZ);
+        int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos);
+        void GetSimCoordFromMouseRay(int &xOut, int &yOut, const Point<int>& p_pos,
+            boost::optional<const float> planeZ = boost::none);
         void AddObstruction(const int simX, const int simY);
         void RemoveObstruction(const int simX, const int simY);
         void RemoveSpecifiedObstruction(const int obstId);

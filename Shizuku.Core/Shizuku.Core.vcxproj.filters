@@ -52,5 +52,8 @@
     <ClInclude Include="Utilities\StopwatchImpl.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="Types\Point.h">
+      <Filter>Types</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

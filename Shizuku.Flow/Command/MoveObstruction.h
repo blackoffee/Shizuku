@@ -1,16 +1,16 @@
 #pragma once
 #include "Command.h"
+#include "Shizuku.Core/Types/Point.h"
 
 namespace Shizuku{ namespace Flow{ namespace Command{
     class FLOW_API MoveObstruction : public Command
     {
         int m_currentObst;
-        float m_initialX;
-        float m_initialY;
+        Shizuku::Core::Types::Point<int> m_initialPos;
     public:
         MoveObstruction(Flow& p_flow);
-        void Start(const float currentX, const float currentY);
-        void Track(const float currentX, const float currentY);
-        void End();
+        void Start(boost::any const p_param);
+        void Track(boost::any const p_param);
+        void End(boost::any const p_param);
     };
 } } }

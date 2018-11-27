@@ -13,6 +13,7 @@
 #include <assert.h>
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;
 
 ShaderManager::ShaderManager()

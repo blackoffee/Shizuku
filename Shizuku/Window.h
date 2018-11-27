@@ -32,6 +32,7 @@ namespace Shizuku{
 }
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow::Command;
 
 namespace Shizuku{ namespace Presentation{

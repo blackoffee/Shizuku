@@ -9,7 +9,7 @@ SetContourMinMax::SetContourMinMax(Flow& p_flow) : Command(p_flow)
 {
 }
 
-void SetContourMinMax::Start(const Shizuku::Core::MinMax<float>& p_minMax)
+void SetContourMinMax::Start(const Shizuku::Core::Types::MinMax<float>& p_minMax)
 {
     GraphicsManager* graphicsManager= m_flow->Graphics();
     graphicsManager->SetContourMinMax(p_minMax);
