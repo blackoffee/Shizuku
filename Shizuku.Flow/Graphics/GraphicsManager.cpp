@@ -404,8 +404,8 @@ void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const
 {
     glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
     glm::mat4 mvpInv = glm::inverse(mvp);
-    glm::vec4 v1 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
-    glm::vec4 v2 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
+    glm::vec4 v1 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
+    glm::vec4 v2 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
     glm::vec4 r1 = mvpInv*v1;
     glm::vec4 r2 = mvpInv*v2;
     rayOrigin.x = r1.x/r1.w;
@@ -700,6 +700,7 @@ void GraphicsManager::UpdateViewTransformations()
 
 void GraphicsManager::UpdateGraphicsInputs()
 {
+    glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
     //m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
     //m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
     m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");

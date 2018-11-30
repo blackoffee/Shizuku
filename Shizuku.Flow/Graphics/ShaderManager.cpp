@@ -550,10 +550,17 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
-    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+    //! Disabling for now. Need to recreate correct size textures on window resize
+    const bool offscreenRender = false;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (offscreenRender)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
+        glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
 
     shader->Use();
@@ -580,21 +587,23 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 
     shader->Unset();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if (offscreenRender)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
+        //Draw quad
+        std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
+        outputVao->Bind();
 
-    //Draw quad
-    std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
-    outputVao->Bind();
+        m_outputProgram->Use();
+        glBindTexture(GL_TEXTURE_2D, m_outputTexture);
 
-    m_outputProgram->Use();
-    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+        glDrawArrays(GL_TRIANGLES, 0 , 6);
 
-    glDrawArrays(GL_TRIANGLES, 0 , 6);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        m_outputProgram->Unset();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
-    m_outputProgram->Unset();
-
-    outputVao->Unbind();
+        outputVao->Unbind();
+    }
 }
