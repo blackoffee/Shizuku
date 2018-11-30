@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Shizuku.Flow/Flow.h"
+#include <string.h>
 #include <memory>
 
 using namespace Shizuku::Presentation;
@@ -15,7 +16,14 @@ int main(int argc, char **argv)
     Window::Instance().RegisterCommands();
 
     Window::Instance().Resize(windowSize);
-    Window::Instance().InitializeGlfw();
+    bool debug(false);
+    for (int i = 0; i < argc; ++i)
+    {
+        if (strcmp(argv[i],"-d") == 0)
+            debug = true;
+    }
+
+    Window::Instance().InitializeGlfw(debug);
     Window::Instance().InitializeImGui();
     Window::Instance().RegisterGlfwInputs();
 

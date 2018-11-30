@@ -276,7 +276,7 @@ void Window::Draw3D()
     UpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
 }
 
-void Window::InitializeGlfw()
+void Window::InitializeGlfw(const bool p_debug)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -291,8 +291,11 @@ void Window::InitializeGlfw()
     glewExperimental = GL_TRUE;
     glewInit();
 
-    glEnable              ( GL_DEBUG_OUTPUT );
-    glDebugMessageCallback(MessageCallback, 0);
+    if (p_debug)
+    {
+        glEnable              ( GL_DEBUG_OUTPUT );
+        glDebugMessageCallback(MessageCallback, 0);
+    }
 }
 
 void Window::DrawUI()

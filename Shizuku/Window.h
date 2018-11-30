@@ -78,7 +78,7 @@ namespace Shizuku{ namespace Presentation{
         void RegisterGlfwInputs();
         void Resize(const Rect<int>& size);
         void Display();
-        void InitializeGlfw();
+        void InitializeGlfw(const bool p_debug);
         void InitializeImGui();
 
         void Resize(GLFWwindow* window, int width, int height);
