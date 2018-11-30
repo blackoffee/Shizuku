@@ -10,7 +10,7 @@
 namespace Shizuku{ namespace Flow{ namespace Command{
     struct FLOW_API ScreenPointParameter
     {
-        Shizuku::Core::Types::Point<int> position;
+        Shizuku::Core::Types::Point<int> Position;
         ScreenPointParameter();
         ScreenPointParameter(const Shizuku::Core::Types::Point<int>& p_pos);
     };

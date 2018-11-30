@@ -18,7 +18,9 @@
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
+#include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
+#include "Shizuku.Flow/Command/Parameter/MinMaxParameter.h"
 
 #include "Shizuku.Flow/Diagnostics.h"
 #include "Shizuku.Flow/Flow.h"
@@ -149,7 +151,7 @@ void Window::RegisterCommands()
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
 
-    m_setSimulationScale->Start(m_simulationScale);
+    m_setSimulationScale->Start(boost::any(ScaleParameter(m_simulationScale)));
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
     m_setContourMode->Start(m_contourMode);
@@ -357,13 +359,13 @@ void Window::DrawUI()
             ImGui::SliderFloat2("Contour Range", minMax, maxRange.Min, maxRange.Max, format);
             m_contourMinMax = MinMax<float>(minMax[0], minMax[1]);
             if (m_contourMinMax != oldMinMax)
-                m_setContourMinMax->Start(m_contourMinMax);
+                m_setContourMinMax->Start(boost::any(MinMaxParameter(m_contourMinMax)));
         }
 
         const float oldScale = m_simulationScale;
         ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
         if (oldScale != m_simulationScale)
-            m_setSimulationScale->Start(m_simulationScale);
+            m_setSimulationScale->Start(boost::any(ScaleParameter(m_simulationScale)));
 
         const float oldTimesteps = m_timesteps;
         ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 2, 30);

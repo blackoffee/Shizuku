@@ -13,12 +13,6 @@
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-#ifdef SHIZUKU_FLOW_EXPORTS  
-#define FLOW_API __declspec(dllexport)   
-#else  
-#define FLOW_API __declspec(dllimport)   
-#endif  
-
 class CudaLbm;
 class Domain;
 
@@ -32,7 +26,7 @@ namespace Core{
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
 
-class FLOW_API ShaderManager
+class ShaderManager
 {
 private:
     class Ssbo

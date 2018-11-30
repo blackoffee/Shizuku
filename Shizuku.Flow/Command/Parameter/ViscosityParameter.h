@@ -7,13 +7,11 @@
 #endif  
 
 namespace Shizuku{ namespace Flow{ namespace Command{
-    struct FLOW_API ScaleParameter
+    struct FLOW_API ViscosityParameter
     {
-        float Scale;
-
-        ScaleParameter();
-
-        ScaleParameter(const float p_scale);
+        float Viscosity;
+        ViscosityParameter();
+        ViscosityParameter(const float p_velocity);
     };
 } } }
 

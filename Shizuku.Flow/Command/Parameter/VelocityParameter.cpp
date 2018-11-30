@@ -6,6 +6,6 @@ VelocityParameter::VelocityParameter()
 {
 }
 
-VelocityParameter::VelocityParameter(const float p_velocity) : velocity(p_velocity)
+VelocityParameter::VelocityParameter(const float p_velocity) : Velocity(p_velocity)
 {
 }

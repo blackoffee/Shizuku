@@ -1,6 +1,6 @@
 #include "SetContourMinMax.h"
 #include "Graphics/GraphicsManager.h"
-#include "common.h"
+#include "Parameter/MinMaxParameter.h"
 #include "Flow.h"
 
 using namespace Shizuku::Flow::Command;
@@ -9,9 +9,17 @@ SetContourMinMax::SetContourMinMax(Flow& p_flow) : Command(p_flow)
 {
 }
 
-void SetContourMinMax::Start(const Shizuku::Core::Types::MinMax<float>& p_minMax)
+void SetContourMinMax::Start(boost::any const p_param)
 {
     GraphicsManager* graphicsManager= m_flow->Graphics();
-    graphicsManager->SetContourMinMax(p_minMax);
+    try
+    {
+        const MinMaxParameter& minMax = boost::any_cast<MinMaxParameter>(p_param);
+        graphicsManager->SetContourMinMax(minMax.MinMax);
+    }
+    catch (boost::bad_any_cast &e)
+    {
+        throw (e.what());
+    }
 }
 

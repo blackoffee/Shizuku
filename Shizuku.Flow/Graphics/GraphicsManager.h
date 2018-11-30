@@ -12,12 +12,6 @@
 #include <vector>
 #include <string>
 
-#ifdef SHIZUKU_FLOW_EXPORTS  
-#define FLOW_API __declspec(dllexport)   
-#else  
-#define FLOW_API __declspec(dllimport)   
-#endif  
-
 using namespace Shizuku::Core;
 using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;

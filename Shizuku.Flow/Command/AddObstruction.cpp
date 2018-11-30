@@ -17,7 +17,7 @@ void AddObstruction::Start(boost::any const p_param)
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
         int simX, simY;
-        graphicsManager->GetSimCoordFromMouseRay(simX, simY, pos.position, -0.5f);
+        graphicsManager->GetSimCoordFromMouseRay(simX, simY, pos.Position, -0.5f);
         graphicsManager->AddObstruction(simX, simY);
     }
     catch (boost::bad_any_cast &e)

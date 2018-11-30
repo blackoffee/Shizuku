@@ -7,6 +7,6 @@ ScreenPointParameter::ScreenPointParameter()
 {
 }
 
-ScreenPointParameter::ScreenPointParameter(const Types::Point<int>& p_pos) : position(p_pos)
+ScreenPointParameter::ScreenPointParameter(const Types::Point<int>& p_pos) : Position(p_pos)
 {
 }

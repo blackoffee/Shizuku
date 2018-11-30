@@ -80,6 +80,15 @@
     <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
+    <ClCompile Include="Command\Parameter\ScaleParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\MinMaxParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\ViscosityParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -170,6 +179,9 @@
       <Filter>Command\Parameter</Filter>
     </ClInclude>
     <ClInclude Include="Command\Parameter\ScaleParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\ViscosityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
   </ItemGroup>

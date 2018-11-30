@@ -7,6 +7,6 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
     public:
         SetContourMinMax(Flow& p_flow);
-        void Start(const Shizuku::Core::Types::MinMax<float>& p_contourMode);
+        void Start(boost::any const p_param);
     };
 } } }
