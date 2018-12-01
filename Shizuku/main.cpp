@@ -8,6 +8,16 @@ using namespace Shizuku::Flow;
 
 int main(int argc, char **argv)
 {
+    bool debug(false);
+    bool diag(false);
+    for (int i = 0; i < argc; ++i)
+    {
+        if (strcmp(argv[i], "-d") == 0)
+            debug = true;
+        else if (strcmp(argv[i], "-v") == 0)
+            diag = true;
+    }
+
     std::shared_ptr<Flow> flow = std::make_shared<Flow>();
 
     Rect<int> windowSize = Rect<int>(800, 600);
@@ -16,16 +26,12 @@ int main(int argc, char **argv)
     Window::Instance().RegisterCommands();
 
     Window::Instance().Resize(windowSize);
-    bool debug(false);
-    for (int i = 0; i < argc; ++i)
-    {
-        if (strcmp(argv[i],"-d") == 0)
-            debug = true;
-    }
-
     Window::Instance().InitializeGlfw(debug);
     Window::Instance().InitializeImGui();
     Window::Instance().RegisterGlfwInputs();
+
+    if (diag)
+        Window::Instance().EnableDiagnostics();
 
     flow->Initialize();
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "TimeHistory.h"
 #include "Shizuku.Core/Utilities/FpsTracker.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
@@ -67,6 +68,9 @@ namespace Shizuku{ namespace Presentation{
         bool m_paused;
         SurfaceShadingMode m_shadingMode;
         bool m_rayTracingPaused;
+        bool m_diagEnabled;
+
+        TimeHistory m_history;
 
         bool m_firstUIDraw;
 
@@ -80,6 +84,7 @@ namespace Shizuku{ namespace Presentation{
         void Display();
         void InitializeGlfw(const bool p_debug);
         void InitializeImGui();
+        void EnableDiagnostics();
 
         void Resize(GLFWwindow* window, int width, int height);
         void MouseButton(const int button, const int state, const int mod);
@@ -93,6 +98,7 @@ namespace Shizuku{ namespace Presentation{
             static Window s_window = Window();
             return s_window;
         }
+
 
     private:
         void Draw3D();

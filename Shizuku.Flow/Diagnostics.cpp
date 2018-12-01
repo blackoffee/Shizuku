@@ -2,8 +2,10 @@
 
 #include "Diagnostics.h"
 #include "Flow.h"
+#include "TimerKey.h"
 #include "Graphics/GraphicsManager.h"
 #include "Graphics/CudaLbm.h"
+#include "Shizuku.Core/Utilities/Stopwatch.h"
 
 #ifdef SHIZUKU_FLOW_EXPORTS  
 #define FLOW_API __declspec(dllexport)   
@@ -26,4 +28,10 @@ Diagnostics::Diagnostics(Flow& p_flow)
 Rect<int> Diagnostics::SimulationDomain()
 {
     return m_flow->Graphics()->GetCudaLbm()->GetDomainSize();
+}
+
+double Diagnostics::GetTime(TimerKey p_key)
+{
+    std::map<TimerKey, Stopwatch> timers = m_flow->Graphics()->GetTimers();
+    return timers[p_key].GetAverage();
 }

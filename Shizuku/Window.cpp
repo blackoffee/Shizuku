@@ -24,6 +24,7 @@
 
 #include "Shizuku.Flow/Diagnostics.h"
 #include "Shizuku.Flow/Flow.h"
+#include "Shizuku.Flow/TimerKey.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
@@ -33,6 +34,7 @@
 #include <boost/any.hpp>
 #include <boost/none.hpp>
 
+#include <iostream>
 #include <typeinfo>
 #include <memory>
 
@@ -124,6 +126,8 @@ Window::Window() :
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
     m_paused(false),
+    m_diagEnabled(false),
+    //m_history(20),
     m_shadingMode(SurfaceShadingMode::RayTracing)
 {
 }
@@ -187,6 +191,11 @@ void Window::Resize(const Rect<int>& size)
 {
     m_size = size;
     m_flow->Resize(size);
+}
+
+void Window::EnableDiagnostics()
+{
+    m_diagEnabled = true;
 }
 
 void Window::MouseButton(const int button, const int state, const int mod)
@@ -413,6 +422,36 @@ void Window::DrawUI()
     }
     ImGui::End();
 
+
+    if (m_firstUIDraw)
+    {
+        ImGui::SetNextWindowSize(ImVec2(350,200));
+        ImGui::SetNextWindowPos(ImVec2(50,20));
+    }
+
+    ImGui::Begin("Diagnostics");
+    {
+        TimeHistory::Instance(TimerKey::SolveFluid).Append(m_diag->GetTime(TimerKey::SolveFluid));
+        TimeHistory::Instance(TimerKey::PrepareSurface).Append(m_diag->GetTime(TimerKey::PrepareSurface));
+
+        struct Funcs{
+            static float SolveFluid(void* data, int i) { return TimeHistory::Instance(TimerKey::SolveFluid).DataProvider(data, i); }
+            static float PrepareSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareSurface).DataProvider(data, i); }
+        };
+
+        float(*solveFluid) (void*, int) = Funcs::SolveFluid;
+        const MinMax<double> minMax = TimeHistory::Instance(TimerKey::SolveFluid).MinMax();
+        ImGui::PlotLines("Solve Fluid", solveFluid, NULL, (TimeHistory::Instance(TimerKey::SolveFluid).Size()), 0, NULL,
+            minMax.Min, minMax.Max, ImVec2(0,80));
+
+        float(*prepareSurf) (void*, int) = Funcs::PrepareSurf;
+        const MinMax<double> minMaxPrepareSurf = TimeHistory::Instance(TimerKey::PrepareSurface).MinMax();
+        ImGui::PlotLines("Prepare Surface", prepareSurf, NULL, (TimeHistory::Instance(TimerKey::PrepareSurface).Size()), 0, NULL,
+            minMaxPrepareSurf.Min, minMaxPrepareSurf.Max, ImVec2(0,80));
+    }
+    ImGui::End();
+
+
     ImGui::Render();
 
     int display_w, display_h;
@@ -422,6 +461,9 @@ void Window::DrawUI()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     m_firstUIDraw = false;
+
+    if (m_diagEnabled)
+        std::cout << m_diag->GetTime(TimerKey::SolveFluid) << std::endl;
 }
 
 void Window::Display()

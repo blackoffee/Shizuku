@@ -12,6 +12,7 @@ using namespace Shizuku::Core;
 
 namespace Shizuku { namespace Flow{
     class Flow;
+    enum TimerKey;
     struct FLOW_API Diagnostics
     {
     private:
@@ -20,5 +21,6 @@ namespace Shizuku { namespace Flow{
         Diagnostics();
         Diagnostics(Flow& p_flow);
         Rect<int> SimulationDomain();
+        double GetTime(TimerKey p_key);
     };
 } }

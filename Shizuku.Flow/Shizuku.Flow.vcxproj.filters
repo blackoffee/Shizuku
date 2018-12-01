@@ -184,6 +184,7 @@
     <ClInclude Include="Command\Parameter\ViscosityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
+    <ClInclude Include="TimerKey.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

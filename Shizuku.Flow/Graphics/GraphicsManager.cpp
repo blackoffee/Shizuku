@@ -4,6 +4,7 @@
 #include "kernel.h"
 #include "Domain.h"
 #include "CudaCheck.h"
+#include "TimerKey.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Types/Point.h"
@@ -46,8 +47,13 @@ GraphicsManager::GraphicsManager()
     m_rotate = { 60.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
     m_surfaceShadingMode = RayTracing;
+
     const int framesForAverage = 20;
-    m_stopwatch = Stopwatch(framesForAverage);
+    m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::PrepareFloor] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::PrepareSurface] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::ProcessFloor] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::ProcessSurface] = Stopwatch(framesForAverage);
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
@@ -246,7 +252,7 @@ void GraphicsManager::SetUpCuda()
 
 void GraphicsManager::RunCuda()
 {
-    m_stopwatch.Tick();
+    m_timers[TimerKey::SolveFluid].Tick();
 
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
@@ -274,6 +280,11 @@ void GraphicsManager::RunCuda()
     if (!cudaLbm->IsPaused())
         MarchSolution(cudaLbm);
 
+    cudaThreadSynchronize();
+    m_timers[TimerKey::SolveFluid].Tock();
+
+    m_timers[TimerKey::PrepareFloor].Tick();
+
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
@@ -295,14 +306,14 @@ void GraphicsManager::RunCuda()
     cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
 
     cudaThreadSynchronize();
-    const double time = m_stopwatch.Tock();
-    //std::cout << "Time: " << time << "  Average: " << m_stopwatch.GetAverage() << std::endl;
+    m_timers[TimerKey::PrepareFloor].Tock();
 }
 
 void GraphicsManager::RunSurfaceRefraction()
 {
     if (ShouldRefractSurface())
     {
+        m_timers[TimerKey::PrepareSurface].Tick();
         // map OpenGL buffer object for writing from CUDA
         CudaLbm* cudaLbm = GetCudaLbm();
         ShaderManager* graphics = GetGraphics();
@@ -352,6 +363,9 @@ void GraphicsManager::RunSurfaceRefraction()
         gpuErrchk(cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0));
         gpuErrchk(cudaGraphicsUnmapResources(1, &envTextureResource, 0));
     }
+
+    cudaThreadSynchronize();
+    m_timers[TimerKey::PrepareSurface].Tock();
 }
 
 void GraphicsManager::RunComputeShader()
@@ -758,4 +772,7 @@ void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
     }
 }
 
-
+std::map<TimerKey, Stopwatch>& GraphicsManager::GetTimers()
+{
+    return m_timers;
+}

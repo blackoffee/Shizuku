@@ -11,6 +11,7 @@
 #include <boost/none.hpp>
 #include <vector>
 #include <string>
+#include <map>
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Core::Types;
@@ -21,18 +22,9 @@ class CudaLbm;
 struct float4;
 
 namespace Shizuku{ namespace Flow{
+    enum TimerKey;
     class GraphicsManager
     {
-    public:
-        enum TimerKey
-        {
-            SolveFluid,
-            PrepareSurface,
-            PrepareFloor,
-            ProcessSurface,
-            ProcessFloor
-        };
-
     private:
         float m_currentZ = -1000.f;
         //view transformations
@@ -56,7 +48,7 @@ namespace Shizuku{ namespace Flow{
         ShadingMode m_surfaceShadingMode;
 
         Rect<int> m_viewSize;
-        Stopwatch m_stopwatch;
+        std::map<TimerKey, Stopwatch> m_timers;
 
     public:
         GraphicsManager();
@@ -139,5 +131,6 @@ namespace Shizuku{ namespace Flow{
         int FindClosestObstructionId(const int simX, const int simY);
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
      
+        std::map<TimerKey, Stopwatch>& GetTimers();
     };
 } }
