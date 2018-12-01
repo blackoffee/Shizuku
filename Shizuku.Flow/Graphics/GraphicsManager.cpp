@@ -311,9 +311,10 @@ void GraphicsManager::RunCuda()
 
 void GraphicsManager::RunSurfaceRefraction()
 {
+    m_timers[TimerKey::PrepareSurface].Tick();
+
     if (ShouldRefractSurface())
     {
-        m_timers[TimerKey::PrepareSurface].Tick();
         // map OpenGL buffer object for writing from CUDA
         CudaLbm* cudaLbm = GetCudaLbm();
         ShaderManager* graphics = GetGraphics();

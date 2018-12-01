@@ -116,6 +116,49 @@ namespace
             throw "Unexpected contour mode";
         }
     }
+
+    namespace TimeHistoryProviders{
+        static float SolveFluid(void* data, int i) { return TimeHistory::Instance(TimerKey::SolveFluid).DataProvider(data, i); }
+        static float PrepareFloor(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareFloor).DataProvider(data, i); }
+        static float PrepareSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareSurface).DataProvider(data, i); }
+        static float ProcessFloor(void* data, int i) { return TimeHistory::Instance(TimerKey::ProcessFloor).DataProvider(data, i); }
+        static float ProcessSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::ProcessSurface).DataProvider(data, i); }
+    }
+
+    void CreateHistoryPlotLines(Diagnostics& m_diag, const TimerKey p_key, const char* p_label)
+    {
+        const double time = m_diag.GetTime(p_key);
+        TimeHistory::Instance(p_key).Append(time);
+
+        float(*provider) (void*, int) = NULL;
+        switch (p_key)
+        {
+            case TimerKey::SolveFluid:
+                provider = TimeHistoryProviders::SolveFluid;
+                break;
+            case TimerKey::PrepareSurface:
+                provider = TimeHistoryProviders::PrepareSurf;
+                break;
+            case TimerKey::PrepareFloor:
+                provider = TimeHistoryProviders::PrepareFloor;
+                break;
+            case TimerKey::ProcessSurface:
+                provider = TimeHistoryProviders::ProcessSurf;
+                break;
+            case TimerKey::ProcessFloor:
+                provider = TimeHistoryProviders::ProcessFloor;
+                break;
+            default:
+                throw "Unexpected TimerKey";
+        }
+
+        const MinMax<double> minMax = TimeHistory::Instance(p_key).MinMax();
+        char timeStr[64];
+        sprintf_s(timeStr, "%f", time);
+        const int chartHeight = 64;
+        ImGui::PlotLines(p_label, provider, NULL, (TimeHistory::Instance(p_key).Size()), 0, timeStr,
+            minMax.Min, minMax.Max, ImVec2(0, chartHeight));
+    }
 }
 
 Window::Window() : 
@@ -264,8 +307,8 @@ void Window::TogglePaused()
 void Window::UpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
 {
     char fpsReport[256];
-    int xDim = domainSize.Width;
-    int yDim = domainSize.Height;
+    const int xDim = domainSize.Width;
+    const int yDim = domainSize.Height;
     sprintf_s(fpsReport, 
         "Shizuku Flow running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         tSteps, fps, m_timesteps*fps, xDim, yDim);
@@ -423,34 +466,24 @@ void Window::DrawUI()
     ImGui::End();
 
 
-    if (m_firstUIDraw)
+    if (m_diagEnabled)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,200));
-        ImGui::SetNextWindowPos(ImVec2(50,20));
+        if (m_firstUIDraw)
+        {
+            ImGui::SetNextWindowSize(ImVec2(370,250));
+            ImGui::SetNextWindowPos(ImVec2(20,20));
+        }
+
+        ImGui::Begin("Diagnostics");
+        {
+            CreateHistoryPlotLines(*m_diag, TimerKey::SolveFluid, "Solve Fluid");
+            CreateHistoryPlotLines(*m_diag, TimerKey::PrepareSurface, "Prepare Surface");
+            CreateHistoryPlotLines(*m_diag, TimerKey::PrepareFloor, "Prepare Floor");
+            //CreateHistoryPlotLines(*m_diag, TimerKey::ProcessSurface, "Process Surface");
+            //CreateHistoryPlotLines(*m_diag, TimerKey::ProcessFloor, "Process Floor");
+        }
+        ImGui::End();
     }
-
-    ImGui::Begin("Diagnostics");
-    {
-        TimeHistory::Instance(TimerKey::SolveFluid).Append(m_diag->GetTime(TimerKey::SolveFluid));
-        TimeHistory::Instance(TimerKey::PrepareSurface).Append(m_diag->GetTime(TimerKey::PrepareSurface));
-
-        struct Funcs{
-            static float SolveFluid(void* data, int i) { return TimeHistory::Instance(TimerKey::SolveFluid).DataProvider(data, i); }
-            static float PrepareSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareSurface).DataProvider(data, i); }
-        };
-
-        float(*solveFluid) (void*, int) = Funcs::SolveFluid;
-        const MinMax<double> minMax = TimeHistory::Instance(TimerKey::SolveFluid).MinMax();
-        ImGui::PlotLines("Solve Fluid", solveFluid, NULL, (TimeHistory::Instance(TimerKey::SolveFluid).Size()), 0, NULL,
-            minMax.Min, minMax.Max, ImVec2(0,80));
-
-        float(*prepareSurf) (void*, int) = Funcs::PrepareSurf;
-        const MinMax<double> minMaxPrepareSurf = TimeHistory::Instance(TimerKey::PrepareSurface).MinMax();
-        ImGui::PlotLines("Prepare Surface", prepareSurf, NULL, (TimeHistory::Instance(TimerKey::PrepareSurface).Size()), 0, NULL,
-            minMaxPrepareSurf.Min, minMaxPrepareSurf.Max, ImVec2(0,80));
-    }
-    ImGui::End();
-
 
     ImGui::Render();
 
@@ -462,8 +495,6 @@ void Window::DrawUI()
 
     m_firstUIDraw = false;
 
-    if (m_diagEnabled)
-        std::cout << m_diag->GetTime(TimerKey::SolveFluid) << std::endl;
 }
 
 void Window::Display()

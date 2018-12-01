@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
     std::shared_ptr<Flow> flow = std::make_shared<Flow>();
 
-    Rect<int> windowSize = Rect<int>(800, 600);
+    Rect<int> windowSize = Rect<int>(1000, 700);
 
     Window::Instance().SetGraphics(flow);
     Window::Instance().RegisterCommands();

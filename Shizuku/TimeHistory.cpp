@@ -27,6 +27,11 @@ float TimeHistory::DataProvider(void* p_data, int p_index)
     return static_cast<float>(m_queue[p_index]);
 }
 
+void TimeHistory::Resize(const int p_size)
+{
+    m_size = p_size;
+}
+
 int TimeHistory::Size()
 {
     return m_queue.size();
