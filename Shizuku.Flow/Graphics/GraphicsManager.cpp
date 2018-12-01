@@ -53,7 +53,6 @@ GraphicsManager::GraphicsManager()
 void GraphicsManager::SetViewport(const Rect<int>& size)
 {
     m_viewSize = size;
-    glViewport(0, 0, size.Width, size.Height);
 }
 
 Rect<int>& GraphicsManager::GetViewport()
@@ -266,8 +265,6 @@ void GraphicsManager::RunCuda()
     cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
 
     UpdateLbmInputs();
-    float u = cudaLbm->GetInletVelocity();
-    float omega = cudaLbm->GetOmega();
 
     float* floorTemp_d = cudaLbm->GetFloorTemp();
     Obstruction* obst_d = cudaLbm->GetDeviceObst();
@@ -688,20 +685,10 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     return closestObstId;
 }
 
-void GraphicsManager::UpdateViewTransformations()
-{
-    glGetIntegerv(GL_VIEWPORT, m_viewport);
-    //glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
-    //glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
-}
-
 void GraphicsManager::UpdateGraphicsInputs()
 {
     glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
-    //m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
-    //m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
-    m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
-    //m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    m_currentObstSize = 15;
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }
@@ -741,12 +728,6 @@ void GraphicsManager::UpdateLbmInputs()
     const float u = cudaLbm->GetInletVelocity();
     ShaderManager* graphics = GetGraphics();
     graphics->UpdateLbmInputs(u, omega);
-}
-
-
-glm::vec4 GraphicsManager::GetViewportMatrix()
-{
-    return glm::make_vec4(m_viewport);
 }
 
 glm::mat4 GraphicsManager::GetModelMatrix()

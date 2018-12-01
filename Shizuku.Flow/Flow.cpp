@@ -53,7 +53,6 @@ void Flow::Update()
     m_impl->Graphics()->RunSurfaceRefraction();
 
     m_impl->Graphics()->UpdateViewMatrices();
-    //m_impl->Graphics()->UpdateViewTransformations();
 }
 
 void Flow::Draw3D()

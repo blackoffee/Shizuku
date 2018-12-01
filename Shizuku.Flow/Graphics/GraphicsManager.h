@@ -46,7 +46,6 @@ namespace Shizuku{ namespace Flow{
         glm::vec4 m_cameraPosition;
         Obstruction* m_obstructions;
         float m_scaleFactor = 1.f;
-        GLint m_viewport[4];
         GLdouble m_modelMatrix[16];
         GLdouble m_projectionMatrix[16];
         MinMax<float> m_contourMinMax;
@@ -118,12 +117,10 @@ namespace Shizuku{ namespace Flow{
         void SetRayTracingPausedState(const bool state);
         bool IsRayTracingPaused();
        
-        void UpdateViewTransformations();
         void UpdateGraphicsInputs();
         void UpdateDomainDimensions();
         void UpdateObstructionScales();
         void UpdateLbmInputs();
-        glm::vec4 GetViewportMatrix();
         glm::mat4 GetModelMatrix();
         glm::mat4 GetProjectionMatrix();
         void SetModelMatrix(glm::mat4 modelMatrix);
