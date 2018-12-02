@@ -199,16 +199,22 @@
     <None Include="Shaders\SurfaceShader.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\FloorShader.frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\FloorShader.vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\Output.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Output.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Caustics.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Caustics.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Floor.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Floor.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -214,6 +214,7 @@ void GraphicsManager::SetUpShaders()
     graphics->SetUpFloorTexture();
     graphics->SetUpOutputTexture(m_viewSize);
     graphics->SetUpSurfaceVao();
+    graphics->SetUpFloorVao();
     graphics->SetUpOutputVao();
 }
 
@@ -389,16 +390,16 @@ void GraphicsManager::RunSimulation()
     }
 }
 
-void GraphicsManager::RenderFloorToTexture()
+void GraphicsManager::RenderCausticsToTexture()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderFloorToTexture(*cudaLbm->GetDomain(), m_viewSize);
+    GetGraphics()->RenderCausticsToTexture(*cudaLbm->GetDomain(), m_viewSize);
 }
 
-void GraphicsManager::RenderVbo()
+void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderSurface(m_surfaceShadingMode, *cudaLbm->GetDomain(),
+    GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
         GetModelMatrix(), GetProjectionMatrix());
 }
 

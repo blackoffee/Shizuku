@@ -94,8 +94,8 @@ namespace Shizuku{ namespace Flow{
         void RunSurfaceRefraction();
         void RunComputeShader();
         void RunSimulation();
-        void RenderFloorToTexture();
-        void RenderVbo();
+        void RenderCausticsToTexture();
+        void Render();
         bool ShouldRefractSurface();
 
         void SetSurfaceShadingMode(const ShadingMode p_mode);

@@ -49,12 +49,17 @@ private:
     std::shared_ptr<ShaderProgram> m_shaderProgram;
     std::shared_ptr<ShaderProgram> m_lightingProgram;
     std::shared_ptr<ShaderProgram> m_obstProgram;
-    std::shared_ptr<ShaderProgram> m_floorProgram;
+    std::shared_ptr<ShaderProgram> m_causticsProgram;
     std::shared_ptr<ShaderProgram> m_outputProgram;
+    std::shared_ptr<ShaderProgram> m_floorProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
     void CreateElementArrayBuffer();
+
+    void RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+    void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
 
 public:
     ShaderManager();
@@ -73,7 +78,7 @@ public:
     std::shared_ptr<ShaderProgram> GetShaderProgram();
     std::shared_ptr<ShaderProgram> GetLightingProgram();
     std::shared_ptr<ShaderProgram> GetObstProgram();
-    std::shared_ptr<ShaderProgram> GetFloorProgram();
+    std::shared_ptr<ShaderProgram> GetCausticsProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpEnvironmentTexture();
@@ -83,6 +88,7 @@ public:
     void SetUpSurfaceVao();
     void SetUpOutputVao();
     void SetUpWallVao();
+    void SetUpFloorVao();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 
@@ -100,7 +106,8 @@ public:
     void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
-    void RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void RenderSurface(const ShadingMode p_shadingMode , Domain &domain,
+
+    void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
+    void Render(const ShadingMode p_shadingMode , Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 };

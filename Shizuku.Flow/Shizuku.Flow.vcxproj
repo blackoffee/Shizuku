@@ -177,8 +177,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.jpg" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -315,11 +314,13 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Domain.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Floor.frag.glsl" />
+    <None Include="Shaders\Floor.vert.glsl" />
     <None Include="Shaders\Output.frag.glsl" />
     <None Include="Shaders\Output.vert.glsl" />
     <None Include="Shaders\SurfaceShader.comp.glsl" />
-    <None Include="Shaders\FloorShader.frag.glsl" />
-    <None Include="Shaders\FloorShader.vert.glsl" />
+    <None Include="Shaders\Caustics.frag.glsl" />
+    <None Include="Shaders\Caustics.vert.glsl" />
     <None Include="Shaders\SurfaceShader.frag.glsl" />
     <None Include="Shaders\Obstructions.comp.glsl" />
     <None Include="Shaders\SurfaceShader.vert.glsl" />

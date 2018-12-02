@@ -22,8 +22,9 @@ ShaderManager::ShaderManager()
     m_shaderProgram = std::make_shared<ShaderProgram>();
     m_lightingProgram = std::make_shared<ShaderProgram>();
     m_obstProgram = std::make_shared<ShaderProgram>();
-    m_floorProgram = std::make_shared<ShaderProgram>();
+    m_causticsProgram = std::make_shared<ShaderProgram>();
     m_outputProgram = std::make_shared<ShaderProgram>();
+    m_floorProgram = std::make_shared<ShaderProgram>();
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
 }
@@ -136,9 +137,9 @@ std::shared_ptr<ShaderProgram> ShaderManager::GetObstProgram()
     return m_obstProgram;
 }
 
-std::shared_ptr<ShaderProgram> ShaderManager::GetFloorProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetCausticsProgram()
 {
-    return m_floorProgram;
+    return m_causticsProgram;
 }
 
 void ShaderManager::CompileShaders()
@@ -150,12 +151,15 @@ void ShaderManager::CompileShaders()
     GetLightingProgram()->CreateShader("SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
     GetObstProgram()->Initialize("Obstructions");
     GetObstProgram()->CreateShader("Obstructions.comp.glsl", GL_COMPUTE_SHADER);
-    GetFloorProgram()->Initialize("Floor");
-    GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
-    GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
+    GetCausticsProgram()->Initialize("Caustics");
+    GetCausticsProgram()->CreateShader("Caustics.vert.glsl", GL_VERTEX_SHADER);
+    GetCausticsProgram()->CreateShader("Caustics.frag.glsl", GL_FRAGMENT_SHADER);
     m_outputProgram->Initialize("Output");
     m_outputProgram->CreateShader("Output.vert.glsl", GL_VERTEX_SHADER);
     m_outputProgram->CreateShader("Output.frag.glsl", GL_FRAGMENT_SHADER);
+    m_floorProgram->Initialize("Floor");
+    m_floorProgram->CreateShader("Floor.vert.glsl", GL_VERTEX_SHADER);
+    m_floorProgram->CreateShader("Floor.frag.glsl", GL_FRAGMENT_SHADER);
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -177,10 +181,10 @@ void ShaderManager::SetUpFloorTexture()
     float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
     {
-        tex[4 * i] = image[3 * i];
-        tex[4 * i + 1] = image[3 * i + 1];
-        tex[4 * i + 2] = image[3 * i + 2];
-        tex[4 * i + 3] = unsigned char(255);// color[3];
+        tex[4 * i] = image[3 * i]/255.f;
+        tex[4 * i + 1] = image[3 * i + 1]/255.f;
+        tex[4 * i + 2] = image[3 * i + 2]/255.f;
+        tex[4 * i + 3] = 1.f;// color[3];
     }
 
     glGenTextures(1, &m_poolFloorTexture);
@@ -191,8 +195,8 @@ void ShaderManager::SetUpFloorTexture()
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     SOIL_free_image_data(image);
 
@@ -377,6 +381,30 @@ void ShaderManager::SetUpSurfaceVao()
     surface->Unbind();
 }
 
+void ShaderManager::SetUpFloorVao()
+{
+    std::shared_ptr<Ogl::Vao> floor = Ogl->CreateVao("floor");
+    floor->Bind();
+
+    const GLfloat quadVertices[] = {
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+    };
+
+    Ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 18, "floor", GL_STATIC_DRAW);
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("floor"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    floor->Unbind();
+}
+
 void ShaderManager::SetUpOutputVao()
 {
     std::shared_ptr<Ogl::Vao> output = Ogl->CreateVao("output");
@@ -425,20 +453,21 @@ void ShaderManager::SetUpWallVao()
     wall->Unbind();
 }
 
-void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize)
+void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
 {
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
-    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+    glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
+    //glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    std::shared_ptr<ShaderProgram> floorShader = GetFloorProgram();
-    floorShader->Use();
+    std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
+    causticsShader->Use();
 
-    floorShader->SetUniform("xDimVisible", domain.GetXDimVisible());
-    floorShader->SetUniform("yDimVisible", domain.GetYDimVisible());
+    causticsShader->SetUniform("xDimVisible", domain.GetXDimVisible());
+    causticsShader->SetUniform("yDimVisible", domain.GetYDimVisible());
     glViewport(0, 0, 1024, 1024);
 
     int yDimVisible = domain.GetYDimVisible();
@@ -446,7 +475,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_view
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
         BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
 
-    floorShader->Unset();
+    causticsShader->Unset();
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -607,50 +636,28 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
-void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
+void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
 {
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
     //! Disabling for now. Need to recreate correct size textures on window resize
-    const bool offscreenRender = false;
+    const bool offscreenRender = true;
 
     if (offscreenRender)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
-        glBindTexture(GL_TEXTURE_2D, m_outputTexture);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
+    RenderFloor(p_modelMatrix, p_projectionMatrix);
 
-    shader->Use();
-    glActiveTexture(GL_TEXTURE0);
-    shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
-    shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
-
-    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
-    surface->Bind();
-    int yDimVisible = domain.GetYDimVisible();
-     //Draw floor
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
-
-    if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    //Draw water surface
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-    surface->Unbind();
-
-    shader->Unset();
+    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix);
 
     if (offscreenRender)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
         //Draw quad
         std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
@@ -666,4 +673,52 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 
         outputVao->Unbind();
     }
+}
+
+void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
+{
+    std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
+    floorShader->Use();
+    glActiveTexture(GL_TEXTURE0);
+    floorShader->SetUniform("modelMatrix", glm::transpose(p_modelMatrix));
+    floorShader->SetUniform("projectionMatrix", glm::transpose(p_projectionMatrix));
+    floorShader->SetUniform("texCoordScale", 3.f);
+
+    std::shared_ptr<Ogl::Vao> floor = Ogl->GetVao("floor");
+    floor->Bind();
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+    floor->Unbind();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    floorShader->Unset();
+
+//    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+//        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+}
+
+void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
+    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
+{
+    std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
+    shader->Use();
+    glActiveTexture(GL_TEXTURE0);
+    shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
+    shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
+
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+    surface->Bind();
+
+    if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    const int yDimVisible = domain.GetYDimVisible();
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+    surface->Unbind();
+
+    shader->Unset();   
 }

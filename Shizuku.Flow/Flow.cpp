@@ -48,7 +48,7 @@ void Flow::Update()
 
     m_impl->Graphics()->RunSimulation();
 
-    m_impl->Graphics()->RenderFloorToTexture();
+    m_impl->Graphics()->RenderCausticsToTexture();
 
     m_impl->Graphics()->RunSurfaceRefraction();
 
@@ -57,10 +57,7 @@ void Flow::Update()
 
 void Flow::Draw3D()
 {
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    m_impl->Graphics()->RenderVbo();
+    m_impl->Graphics()->Render();
 }
 
 void Flow::Resize(const Rect<int>& p_size)

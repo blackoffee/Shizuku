@@ -607,9 +607,9 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
     floor_d[x + y*MAX_XDIM] = 0.f;
 
-    unsigned char R = 120.0f;
-    unsigned char G = 160.0f;
-    unsigned char B = 220.0f;
+    unsigned char R = 255.0f;
+    unsigned char G = 255.0f;
+    unsigned char B = 255.0f;
     unsigned char A = 255.f;
 
     if (IsInsideObstruction(x, y, obstructions, 0.99f))
