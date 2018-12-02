@@ -29,13 +29,11 @@ vec4 unpackColor(float f)
     return color;
 }
 
-
-
 void main()
 {
     fColor = unpackColor(color);
 
     gl_Position = vec4(position,1.0f);
 
-    texCoord = 3.f * vec2(0.5f*(position.x+1.0f), 0.5f*(position.y+1.0f));
+    texCoord = texCoordScale * vec2(0.5f*(position.x+1.0f), 0.5f*(position.y+1.0f));
 }

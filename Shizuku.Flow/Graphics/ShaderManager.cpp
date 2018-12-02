@@ -198,6 +198,8 @@ void ShaderManager::SetUpFloorTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     SOIL_free_image_data(image);
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -466,8 +468,7 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
     std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
     causticsShader->Use();
 
-    causticsShader->SetUniform("xDimVisible", domain.GetXDimVisible());
-    causticsShader->SetUniform("yDimVisible", domain.GetYDimVisible());
+    causticsShader->SetUniform("texCoordScale", 3.f);
     glViewport(0, 0, 1024, 1024);
 
     int yDimVisible = domain.GetYDimVisible();
@@ -643,7 +644,7 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
     glDepthFunc(GL_LESS);
 
     //! Disabling for now. Need to recreate correct size textures on window resize
-    const bool offscreenRender = true;
+    const bool offscreenRender = false;
 
     if (offscreenRender)
     {
@@ -682,7 +683,6 @@ void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 
     glActiveTexture(GL_TEXTURE0);
     floorShader->SetUniform("modelMatrix", glm::transpose(p_modelMatrix));
     floorShader->SetUniform("projectionMatrix", glm::transpose(p_projectionMatrix));
-    floorShader->SetUniform("texCoordScale", 3.f);
 
     std::shared_ptr<Ogl::Vao> floor = Ogl->GetVao("floor");
     floor->Bind();
