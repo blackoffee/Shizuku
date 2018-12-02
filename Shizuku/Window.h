@@ -59,7 +59,7 @@ namespace Shizuku{ namespace Presentation{
         GLFWwindow* m_window;
         Rect<int> m_size;
 
-        float m_simulationScale;
+        float m_resolution;
         int m_timesteps;
         float m_velocity;
         float m_viscosity;

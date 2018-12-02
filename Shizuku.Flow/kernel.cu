@@ -95,7 +95,7 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     float3 rayDir = rayDest - rayOrigin;
     bool hit = false;
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
+        if (obstructions[i].state == State::ACTIVE)
         {
             float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, 0.f };
             float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };

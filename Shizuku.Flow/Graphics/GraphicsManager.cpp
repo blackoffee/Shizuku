@@ -703,7 +703,7 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
 void GraphicsManager::UpdateGraphicsInputs()
 {
     glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
-    m_currentObstSize = 15;
+    m_currentObstSize = 25;
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }

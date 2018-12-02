@@ -159,10 +159,15 @@ namespace
         ImGui::PlotLines(p_label, provider, NULL, (TimeHistory::Instance(p_key).Size()), 0, timeStr,
             minMax.Min, minMax.Max, ImVec2(0, chartHeight));
     }
+
+    float ScaleFromResolution(const float p_res)
+    {
+        return -p_res + 2.f;
+    }
 }
 
 Window::Window() : 
-    m_simulationScale(2.5f),
+    m_resolution(0.5f),
     m_velocity(0.05f),
     m_timesteps(6),
     m_contourMode(ContourMode::Water),
@@ -198,7 +203,7 @@ void Window::RegisterCommands()
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
 
-    m_setSimulationScale->Start(boost::any(ScaleParameter(m_simulationScale)));
+    m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
     m_setContourMode->Start(m_contourMode);
@@ -417,10 +422,10 @@ void Window::DrawUI()
                 m_setContourMinMax->Start(boost::any(MinMaxParameter(m_contourMinMax)));
         }
 
-        const float oldScale = m_simulationScale;
-        ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
-        if (oldScale != m_simulationScale)
-            m_setSimulationScale->Start(boost::any(ScaleParameter(m_simulationScale)));
+        const float oldRes = m_resolution;
+        ImGui::SliderFloat("Resolution", &m_resolution, 0.0f, 1.0f, "%.2f");
+        if (oldRes != m_resolution)
+            m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
 
         const float oldTimesteps = m_timesteps;
         ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 2, 30);

@@ -165,17 +165,17 @@ void CudaLbm::InitializeDeviceMemory()
         m_obst_h[i].y = -1000;
         m_obst_h[i].state = State::REMOVED;
     }	
-    m_obst_h[0].r1 = 15.0;
+    m_obst_h[0].r1 = 25.0;
     m_obst_h[0].x = 150;// g_xDim*0.2f;
-    m_obst_h[0].y = 250;// g_yDim*0.3f;
+    m_obst_h[0].y = 350;// g_yDim*0.3f;
     m_obst_h[0].u = 0;// g_yDim*0.3f;
     m_obst_h[0].v = 0;// g_yDim*0.3f;
     m_obst_h[0].shape = Shape::VERTICAL_LINE;
     m_obst_h[0].state = State::NEW;
 
-    m_obst_h[1].r1 = 12.0;
-    m_obst_h[1].x = 200;// g_xDim*0.2f;
-    m_obst_h[1].y = 180;// g_yDim*0.3f;
+    m_obst_h[1].r1 = 22.0;
+    m_obst_h[1].x = 250;// g_xDim*0.2f;
+    m_obst_h[1].y = 220;// g_yDim*0.3f;
     m_obst_h[1].u = 0;// g_yDim*0.3f;
     m_obst_h[1].v = 0;// g_yDim*0.3f;
     m_obst_h[1].shape = Shape::SQUARE;
