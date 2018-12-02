@@ -209,7 +209,10 @@ void GraphicsManager::SetUpShaders()
     UpdateLbmInputs();
     graphics->InitializeComputeShaderData();
 
-    graphics->SetUpTextures(m_viewSize);
+    graphics->SetUpEnvironmentTexture();
+    graphics->SetUpCausticsTexture();
+    graphics->SetUpFloorTexture();
+    graphics->SetUpOutputTexture(m_viewSize);
     graphics->SetUpSurfaceVao();
     graphics->SetUpOutputVao();
 }

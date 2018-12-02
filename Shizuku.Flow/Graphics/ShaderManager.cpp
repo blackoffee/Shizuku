@@ -10,6 +10,7 @@
 #include <GLEW/glew.h>
 #include <string>
 #include <cstring>
+#include <iostream>
 #include <assert.h>
 
 using namespace Shizuku::Core;
@@ -167,17 +168,48 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
-void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
+void ShaderManager::SetUpFloorTexture()
+{
+    int width, height;
+    unsigned char* image = SOIL_load_image("PoolFloor.png", &width, &height, 0, SOIL_LOAD_RGB);
+    std::cout << SOIL_last_result() << std::endl;
+    assert(image != NULL);
+    float* tex = new float[4 * width*height];
+    for (int i = 0; i < width*height; ++i)
+    {
+        tex[4 * i] = image[3 * i];
+        tex[4 * i + 1] = image[3 * i + 1];
+        tex[4 * i + 2] = image[3 * i + 2];
+        tex[4 * i + 3] = unsigned char(255);// color[3];
+    }
+
+    glGenTextures(1, &m_poolFloorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
+
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, tex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    SOIL_free_image_data(image);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void ShaderManager::SetUpEnvironmentTexture()
 {
     int width, height;
     unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
     assert(image != NULL);
-    float* tex = new float[4*width*height];
+    float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
     {
-        tex[4*i] = image[3*i];
-        tex[4*i+1] = image[3*i + 1];
-        tex[4*i+2] = image[3*i + 2];
+        tex[4 * i] = image[3 * i];
+        tex[4 * i + 1] = image[3 * i + 1];
+        tex[4 * i + 2] = image[3 * i + 2];
         tex[4 * i + 3] = unsigned char(255);// color[3];
     }
 
@@ -197,8 +229,10 @@ void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
     SOIL_free_image_data(image);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+}
 
-
+void ShaderManager::SetUpCausticsTexture()
+{
     // set up FBO and texture to render to 
     glGenFramebuffers(1, &m_floorFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
@@ -227,8 +261,10 @@ void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
-
+void ShaderManager::SetUpOutputTexture(const Rect<int>& p_viewSize)
+{
     //! Output Fbo
     glGenTextures(1, &m_outputTexture);
     glBindTexture(GL_TEXTURE_2D, m_outputTexture);
@@ -363,6 +399,30 @@ void ShaderManager::SetUpOutputVao()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     output->Unbind();
+}
+
+void ShaderManager::SetUpWallVao()
+{
+    std::shared_ptr<Ogl::Vao> wall = Ogl->CreateVao("wall");
+    wall->Bind();
+
+    const GLfloat quadVertices[] = {
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+    };
+
+    Ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 18, "wall", GL_STATIC_DRAW);
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("wall"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    wall->Unbind();
 }
 
 void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize)

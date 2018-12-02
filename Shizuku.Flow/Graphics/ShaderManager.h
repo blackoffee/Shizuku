@@ -41,6 +41,7 @@ private:
     cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
+    GLuint m_poolFloorTexture;
     GLuint m_floorFbo;
     GLuint m_outputFbo;
     GLuint m_outputTexture;
@@ -75,9 +76,13 @@ public:
     std::shared_ptr<ShaderProgram> GetFloorProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
-    void SetUpTextures(const Rect<int>& p_viewSize);
+    void SetUpEnvironmentTexture();
+    void SetUpFloorTexture();
+    void SetUpCausticsTexture();
+    void SetUpOutputTexture(const Rect<int>& p_viewSize);
     void SetUpSurfaceVao();
     void SetUpOutputVao();
+    void SetUpWallVao();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 

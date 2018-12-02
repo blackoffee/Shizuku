@@ -91,7 +91,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;WIN64;SHIZUK_FLOW_EXPORTS;_DEBUG;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;SHIZUK_FLOW_EXPORTS;_DEBUG;_CONSOLE;NDEBUG;REDUCED_RESOLUTION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -177,7 +177,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"
+copy "$(ProjectDir)\Resources\*.jpg" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
