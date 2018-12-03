@@ -175,7 +175,7 @@ void ShaderManager::AllocateStorageBuffers()
 void ShaderManager::SetUpFloorTexture()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("PoolFloor.png", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("Floor.png", &width, &height, 0, SOIL_LOAD_RGB);
     std::cout << SOIL_last_result() << std::endl;
     assert(image != NULL);
     float* tex = new float[4 * width*height];
@@ -208,7 +208,7 @@ void ShaderManager::SetUpFloorTexture()
 void ShaderManager::SetUpEnvironmentTexture()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("Environment.png", &width, &height, 0, SOIL_LOAD_RGB);
     assert(image != NULL);
     float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
