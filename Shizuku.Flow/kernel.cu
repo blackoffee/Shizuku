@@ -943,8 +943,8 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
     
     //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*waterDepth;
-    float dx = -refractedRay.x*waterDepth/refractedRay.z;
-    float dy = -refractedRay.y*waterDepth/refractedRay.z;
+    float dx = -refractedRay.x*elemSpaceWaterDepth/refractedRay.z;
+    float dy = -refractedRay.y*elemSpaceWaterDepth/refractedRay.z;
 
     float xf = (float)x + dx;
     float yf = (float)y + dy;
