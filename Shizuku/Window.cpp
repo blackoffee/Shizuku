@@ -17,10 +17,12 @@
 #include "Shizuku.Flow/Command/SetContourMode.h"
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
+#include "Shizuku.Flow/Command/SetWaterDepth.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/MinMaxParameter.h"
+#include "Shizuku.Flow/Command/Parameter/DepthParameter.h"
 
 #include "Shizuku.Flow/Diagnostics.h"
 #include "Shizuku.Flow/Flow.h"
@@ -173,6 +175,7 @@ Window::Window() :
     m_contourMode(ContourMode::Water),
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
+    m_depth(0.5f),
     m_paused(false),
     m_diagEnabled(false),
     //m_history(20),
@@ -202,12 +205,14 @@ void Window::RegisterCommands()
     m_setContourMode = std::make_shared<SetContourMode>(*m_flow);
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
+    m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
 
     m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
     m_setContourMode->Start(m_contourMode);
     m_setSurfaceShadingMode->Start(m_shadingMode);
+    m_setDepth->Start(boost::any(DepthParameter(m_depth)));
 }
 
 void Window::InitializeImGui()
@@ -365,7 +370,7 @@ void Window::DrawUI()
 
     if (m_firstUIDraw)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,200));
+        ImGui::SetNextWindowSize(ImVec2(350,240));
         ImGui::SetNextWindowPos(ImVec2(430,20));
     }
 
@@ -436,6 +441,11 @@ void Window::DrawUI()
         ImGui::SliderFloat("Velocity", &m_velocity, 0.0f, 0.12f, "%.3f");
         if (oldVel != m_velocity)
             m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
+
+        const float oldDepth = m_depth;
+        ImGui::SliderFloat("Depth", &m_depth, 0.0f, 5.f, "%.2f");
+        if (oldDepth != m_depth)
+            m_setDepth->Start(boost::any(DepthParameter(m_depth)));
 
         ImGui::Spacing();
 

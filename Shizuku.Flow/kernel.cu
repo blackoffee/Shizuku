@@ -271,7 +271,7 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
 // main LBM function including streaming and colliding
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int contourVar, const float contMin, const float contMax,
-    const int viewMode, const float uMax, Domain simDomain)
+    const int viewMode, const float uMax, Domain simDomain, const float waterDepth)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -296,7 +296,8 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
-    zcoord =  (-1.f+WATER_DEPTH_NORMALIZED) + 1.5f*(rho - 1.0f);
+    zcoord = -1.f + waterDepth + 1.5f*(rho - 1.0f);
+    //zcoord =  (-1.f+waterDepth) + 1.5f*(rho - 1.0f);
 
     //for color, need to convert 4 bytes (RGBA) to float
     float variableValue = 0.f;
@@ -495,7 +496,7 @@ __device__ float3 RefractRay(float3 incidentLight, float3 n)
 }
 
 __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
-    const int x, const int y, Domain simDomain)
+    const int x, const int y, Domain simDomain, const float waterDepth)
 {
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
@@ -521,10 +522,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
 //    float r = 1.0 / WATER_REFRACTIVE_INDEX;
 //    float c = -(DotProduct(n, incidentLight));
 //    refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
-    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
+    const float elemSpaceWaterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*waterDepth;
 
-    float dx = -refractedLight.x*waterDepth/refractedLight.z;
-    float dy = -refractedLight.y*waterDepth/refractedLight.z;
+    float dx = -refractedLight.x*elemSpaceWaterDepth/refractedLight.z;
+    float dy = -refractedLight.y*elemSpaceWaterDepth/refractedLight.z;
 
     return float2{ (float)x + dx, (float)y + dy };
 }
@@ -540,7 +541,7 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
 }
 
 __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
-    Obstruction* obstructions, Domain simDomain)
+    Obstruction* obstructions, Domain simDomain, const float waterDepth)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -558,7 +559,7 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
         else
         {
             lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
-                x, y, simDomain);
+                x, y, simDomain, waterDepth);
         }
 
         vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
@@ -879,7 +880,7 @@ texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
 __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
-    float3 cameraPosition, Domain simDomain, const bool simplified)
+    float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -925,8 +926,8 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[3] = 255;
     }
     Normalize(n);
-    const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
-    float3 elementPosition = {(float)x,(float)y,waterDepth }; //non-normalized
+    const float elemSpaceWaterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*waterDepth; //non-normalized
+    float3 elementPosition = {(float)x,(float)y,elemSpaceWaterDepth }; //non-normalized
     //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
     float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
     //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
@@ -941,7 +942,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
     float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
     
-    //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
+    //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*waterDepth;
     float dx = -refractedRay.x*waterDepth/refractedRay.z;
     float dy = -refractedRay.y*waterDepth/refractedRay.z;
 
@@ -1091,7 +1092,7 @@ void MarchSolution(CudaLbm* cudaLbm)
 }
 
 void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable contVar,
-    const float contMin, const float contMax, const ViewMode viewMode)
+    const float contMin, const float contMax, const ViewMode viewMode, const float waterDepth)
 {
     Domain* simDomain = cudaLbm->GetDomain();
     int xDim = simDomain->GetXDim();
@@ -1103,7 +1104,7 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable cont
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
-        viewMode, u, *simDomain);
+        viewMode, u, *simDomain, waterDepth);
 }
 
 // ! In order to maintain the same relative positions/sizes of obstructions when the simulation resolution
@@ -1147,7 +1148,7 @@ void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain)
 }
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
-    const float3 cameraPosition, Domain &simDomain)
+    const float3 cameraPosition, Domain &simDomain, const float waterDepth)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1155,7 +1156,7 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, incidentLight1, obst_d, simDomain);
+        (vis, incidentLight1, obst_d, simDomain, waterDepth);
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
         (vis, floor_d, obst_d, simDomain);
 
@@ -1199,7 +1200,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
 }
 
 void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
-    Domain &simDomain, const bool simplified)
+    Domain &simDomain, const float waterDepth, const bool simplified)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1208,6 +1209,6 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
     gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified);
+    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified, waterDepth);
 }
 

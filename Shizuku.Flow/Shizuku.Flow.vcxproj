@@ -253,6 +253,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp" />
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp" />
     <ClCompile Include="Command\Parameter\ViscosityParameter.cpp" />
+    <ClCompile Include="Command\Parameter\DepthParameter.cpp" />
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
@@ -264,6 +265,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
+    <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
     <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Flow.cpp" />
@@ -287,6 +289,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Parameter\ScreenPointParameter.h" />
     <ClInclude Include="Command\Parameter\VelocityParameter.h" />
     <ClInclude Include="Command\Parameter\ViscosityParameter.h" />
+    <ClInclude Include="Command\Parameter\DepthParameter.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
@@ -298,6 +301,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
     <ClInclude Include="Command\SetViscosity.h" />
+    <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
     <ClInclude Include="Diagnostics.h" />

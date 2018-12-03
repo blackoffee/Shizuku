@@ -46,6 +46,7 @@ namespace Shizuku{ namespace Flow{
         bool m_useCuda = true;
         float4* m_rayCastIntersect_d;
         ShadingMode m_surfaceShadingMode;
+        float m_waterDepth;
 
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
@@ -75,6 +76,9 @@ namespace Shizuku{ namespace Flow{
 
         void SetObstructionsPointer(Obstruction* obst);
 
+        float GetFloorZ();
+        float GetWaterHeight();
+        void SetWaterDepth(const float p_depth);
         float GetScaleFactor();
         void SetScaleFactor(const float scaleFactor);
         void SetVelocity(const float p_velocity);

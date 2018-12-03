@@ -26,6 +26,7 @@ namespace Shizuku{
             class SetContourMinMax;
             class SetSurfaceShadingMode;
             class SetInletVelocity;
+            class SetWaterDepth;
             enum ContourMode;
             enum SurfaceShadingMode;
         }
@@ -54,6 +55,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<SetContourMode> m_setContourMode;
         std::shared_ptr<SetContourMinMax> m_setContourMinMax;
         std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
+        std::shared_ptr<SetWaterDepth> m_setDepth;
         FpsTracker m_fpsTracker;
         std::shared_ptr<Shizuku::Flow::Diagnostics> m_diag;
         GLFWwindow* m_window;
@@ -63,6 +65,7 @@ namespace Shizuku{ namespace Presentation{
         int m_timesteps;
         float m_velocity;
         float m_viscosity;
+        float m_depth;
         ContourMode m_contourMode;
         MinMax<float> m_contourMinMax;
         bool m_paused;

@@ -47,6 +47,7 @@ GraphicsManager::GraphicsManager()
     m_rotate = { 60.f, 0.f, 45.f };
     m_translate = { 0.f, 0.f, 0.0f };
     m_surfaceShadingMode = RayTracing;
+    m_waterDepth = 0.2f;
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -129,6 +130,21 @@ Shape GraphicsManager::GetCurrentObstShape()
 void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
 {
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
+}
+
+float GraphicsManager::GetFloorZ()
+{
+    return -1.f;
+}
+
+float GraphicsManager::GetWaterHeight()
+{
+    return GetFloorZ() + m_waterDepth;
+}
+
+void GraphicsManager::SetWaterDepth(const float p_depth)
+{
+    m_waterDepth = p_depth;
 }
 
 float GraphicsManager::GetScaleFactor()
@@ -289,7 +305,7 @@ void GraphicsManager::RunCuda()
 
     m_timers[TimerKey::PrepareFloor].Tick();
 
-    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode);
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode, m_waterDepth);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
@@ -302,7 +318,7 @@ void GraphicsManager::RunCuda()
         }
     }
 
-    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
+    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth);
     CleanUpDeviceVBO(dptr, *domain);
 
     // unmap buffer object
@@ -360,7 +376,7 @@ void GraphicsManager::RunSurfaceRefraction()
             cameraPos = m_cameraPosition;
         }
 
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain,
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth,
             m_surfaceShadingMode == SimplifiedRayTracing);
 
         // unmap buffer object
