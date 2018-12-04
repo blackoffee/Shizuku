@@ -245,6 +245,17 @@ void GraphicsManager::SetUpCuda()
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();
 
+    DoInitializeFlow();
+}
+
+void GraphicsManager::InitializeFlow()
+{
+    DoInitializeFlow();
+}
+
+void GraphicsManager::DoInitializeFlow()
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
     const float u = cudaLbm->GetInletVelocity();
 
     float* fA_d = cudaLbm->GetFA();
@@ -264,15 +275,21 @@ void GraphicsManager::SetUpCuda()
     InitializeDomain(dptr, fA_d, im_d, u, *domain);
     InitializeDomain(dptr, fB_d, im_d, u, *domain);
 
-    InitializeFloor(dptr, floor_d, *domain);
+    InitializeSurface(dptr, *domain);
+    InitializeFloor(dptr, *domain);
 
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 }
 
-
 void GraphicsManager::RunCuda()
 {
     m_timers[TimerKey::SolveFluid].Tick();
+
+    if (m_scaleFactor != m_oldScaleFactor)
+    {
+        DoInitializeFlow();
+        m_oldScaleFactor = m_scaleFactor;
+    }
 
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
@@ -319,7 +336,6 @@ void GraphicsManager::RunCuda()
     }
 
     LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth);
-    CleanUpDeviceVBO(dptr, *domain);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);

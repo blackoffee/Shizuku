@@ -33,7 +33,6 @@ vec4 unpackColor(float f)
 
 void main()
 {
-    
     gl_Position = projectionMatrix*modelMatrix*vec4(position, 1.f);
 
     vec4 unpackedColor = unpackColor(color);
@@ -43,4 +42,6 @@ void main()
     fColor.z = unpackedColor.z;//color.z*sin((time + position.x + 1.f)*0.3f);
     fColor.w = unpackedColor.w;//color.z*sin((time + position.x + 1.f)*0.3f);
 
+    if (position.x >= 0.9999f)
+        fColor.w = 0.f;
 }

@@ -173,25 +173,13 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     return hit;
 }
 
-
-__device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord,
-    const int xDimVisible, const int yDimVisible)
-{
-    xcoord = threadIdx.x + blockDim.x*blockIdx.x;
-    ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-    xcoord /= xDimVisible *0.5f;
-    ycoord /= yDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
-    xcoord -= 1.0;// xdim / maxDim;
-    ycoord -= 1.0;// ydim / maxDim;
-}
-
 __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord,
     const int xDimVisible, const int yDimVisible)
 {
     xcoord = threadIdx.x + blockDim.x*blockIdx.x;
     ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-    xcoord /= xDimVisible *0.5f;
-    ycoord /= xDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
+    xcoord /= (xDimVisible-1) *0.5f;
+    ycoord /= (xDimVisible-1) *0.5f;//(float)(blockDim.y*gridDim.y);
     xcoord -= 1.0;// xdim / maxDim;
     ycoord -= 1.0;// ydim / maxDim;
 }
@@ -206,18 +194,6 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     LbmNode lbm;
     lbm.Initialize(f, 1.f, uMax, 0.f);
     lbm.WriteDistributions(f, x, y);
-
-    float xcoord, ycoord, zcoord;
-    int xDimVisible = simDomain.GetXDimVisible();
-    int yDimVisible = simDomain.GetYDimVisible();
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-    zcoord = 0.f;
-    unsigned char R(255), G(255), B(255), A(255);
-    unsigned char b[] = { R, G, B, A };
-    float color;
-    std::memcpy(&color, &b, sizeof(color));
-    int j = x + y*MAX_XDIM;
-    vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
 // main LBM function including streaming and colliding
@@ -335,18 +311,9 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     unsigned char B = 255;
     unsigned char A = 255;
 
-    if (contourVar == ContourVariable::WATER_RENDERING)
-    {
-        R = 100; G = 150; B = 255;
-        A = 100;
-    }
     if (im == 1 || im == 20){
         R = 204; G = 204; B = 204;
     }
-//    else if (im != 0 || x == xDimVisible-1)
-//    {
-//        zcoord = -1.f;
-//    }
 
     float color;
     unsigned char b[] = { R, G, B, A };
@@ -354,33 +321,6 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 
     //vbo aray to be displayed
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
-}
-
-__global__ void CleanUpVBO(float4* vbo, Domain simDomain)
-{
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-    int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float xcoord, ycoord;
-    int xDimVisible = simDomain.GetXDimVisible();
-    int yDimVisible = simDomain.GetYDimVisible();
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-    if (x >= xDimVisible || y >= yDimVisible)
-    {
-        float zcoord = -1.f;
-        if (x == xDimVisible)
-        {
-            zcoord = vbo[(x - 1) + y*MAX_XDIM].z;
-        }
-
-        unsigned char b[] = { 0,0,0,0 };
-        float color;
-        std::memcpy(&color, &b, sizeof(color));
-        //clean up surface mesh
-        vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
-        //clean up floor mesh
-        vbo[j+MAX_XDIM*MAX_YDIM] = make_float4(xcoord, ycoord, -1.f, color);
-    }
 }
 
 __global__ void PhongLighting(float4* vbo, Obstruction *obstructions, 
@@ -463,19 +403,17 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
 
-
-
-__global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomain)
+__global__ void InitializeMesh(float4* vbo, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
     float xcoord, ycoord, zcoord;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = -1.f;
-    unsigned char R(255), G(255), B(255), A(255);
+    unsigned char R(255), G(255), B(255), A(0);
 
     unsigned char b[] = { R, G, B, A };
     float color;
@@ -1041,7 +979,6 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
  * End of device functions
  */
 
-
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     Domain &simDomain)
 {
@@ -1121,13 +1058,6 @@ void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,obst);
 }
 
-void CleanUpDeviceVBO(float4* vis, Domain &simDomain)
-{
-    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-    dim3 grid(MAX_XDIM / BLOCKSIZEX, MAX_YDIM / BLOCKSIZEY);
-    CleanUpVBO << <grid, threads>> >(vis, simDomain);
-}
-
 void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
     Domain &simDomain)
 {
@@ -1138,13 +1068,18 @@ void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraP
     PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, simDomain);
 }
 
-void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain)
+void InitializeSurface(float4* vis, Domain &simDomain)
 {
-    int xDim = simDomain.GetXDim();
-    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, simDomain);
+    dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
+    InitializeMesh << <grid, threads >> >(vis, simDomain);
+}
+
+void InitializeFloor(float4* vis, Domain &simDomain)
+{
+    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+    dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
+    InitializeMesh << <grid, threads >> >(&vis[MAX_XDIM*MAX_YDIM], simDomain);
 }
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,

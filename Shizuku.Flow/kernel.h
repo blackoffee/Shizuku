@@ -21,12 +21,12 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm,
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     const Obstruction &newObst, const float scaleFactor);
 
-void CleanUpDeviceVBO(float4* vis, Domain &simDomain);
-
 void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition, 
     Domain &simDomain);
 
-void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain);
+void InitializeSurface(float4* vis, Domain &simDomain);
+
+void InitializeFloor(float4* vis, Domain &simDomain);
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     const float3 cameraPosition, Domain &simDomain, const float waterDepth);

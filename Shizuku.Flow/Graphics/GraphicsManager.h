@@ -38,6 +38,7 @@ namespace Shizuku{ namespace Flow{
         glm::vec4 m_cameraPosition;
         Obstruction* m_obstructions;
         float m_scaleFactor = 1.f;
+        float m_oldScaleFactor = 1.f;
         GLdouble m_modelMatrix[16];
         GLdouble m_projectionMatrix[16];
         MinMax<float> m_contourMinMax;
@@ -51,6 +52,7 @@ namespace Shizuku{ namespace Flow{
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
 
+        void DoInitializeFlow();
     public:
         GraphicsManager();
 
@@ -101,6 +103,7 @@ namespace Shizuku{ namespace Flow{
         void RenderCausticsToTexture();
         void Render();
         bool ShouldRefractSurface();
+        void InitializeFlow();
 
         void SetSurfaceShadingMode(const ShadingMode p_mode);
 
