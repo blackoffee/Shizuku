@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "ShadingMode.h"
+#include "Pillar.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "cuda_runtime.h"
@@ -60,6 +61,8 @@ private:
     void RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
     const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+
+    std::shared_ptr<Pillar> m_pillar;
 
 public:
     ShaderManager();

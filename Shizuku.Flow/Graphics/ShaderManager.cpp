@@ -27,6 +27,8 @@ ShaderManager::ShaderManager()
     m_floorProgram = std::make_shared<ShaderProgram>();
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
+
+    m_pillar = std::make_shared<Pillar>(Ogl);
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -160,6 +162,8 @@ void ShaderManager::CompileShaders()
     m_floorProgram->Initialize("Floor");
     m_floorProgram->CreateShader("Floor.vert.glsl", GL_VERTEX_SHADER);
     m_floorProgram->CreateShader("Floor.frag.glsl", GL_FRAGMENT_SHADER);
+
+    m_pillar->Initialize();
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -681,8 +685,8 @@ void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 
     std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
     floorShader->Use();
     glActiveTexture(GL_TEXTURE0);
-    floorShader->SetUniform("modelMatrix", glm::transpose(p_modelMatrix));
-    floorShader->SetUniform("projectionMatrix", glm::transpose(p_projectionMatrix));
+    floorShader->SetUniform("modelMatrix", p_modelMatrix);
+    floorShader->SetUniform("projectionMatrix", p_projectionMatrix);
 
     std::shared_ptr<Ogl::Vao> floor = Ogl->GetVao("floor");
     floor->Bind();
@@ -704,8 +708,8 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
-    shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
-    shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
+    shader->SetUniform("modelMatrix", modelMatrix);
+    shader->SetUniform("projectionMatrix", projectionMatrix);
 
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
@@ -721,4 +725,8 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     surface->Unbind();
 
     shader->Unset();   
+
+    m_pillar->SetPosition(Types::Point<float>(0.5, 0));
+    m_pillar->SetSize(Types::Point<float>(0.1, 0.1));
+    m_pillar->Draw(modelMatrix, projectionMatrix);
 }

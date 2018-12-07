@@ -19,17 +19,8 @@
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
 
-namespace{
-    float intCoordToFloatCoord(const int x, const int xDim)
-    {
-        return (static_cast<float> (x) / xDim)*2.f - 1.f;
-    }
-
-    int floatCoordToIntCoord(const float x, const int xDim)
-    {
-        return static_cast<int> ((x+1.f)/2.f*xDim);
-    }
-
+namespace
+{
     float GetDistanceBetweenTwoPoints(const float x1, const float y1,
         const float x2, const float y2)
     {
@@ -44,8 +35,8 @@ GraphicsManager::GraphicsManager()
     m_graphics = new ShaderManager;
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-    m_rotate = { 60.f, 0.f, 45.f };
-    m_translate = { 0.f, 0.f, 0.0f };
+    m_rotate = { 55.f, 60.f, 30.f };
+    m_translate = { 0.f, 0.6f, 0.f };
     m_surfaceShadingMode = RayTracing;
     m_waterDepth = 0.2f;
 
@@ -127,11 +118,6 @@ Shape GraphicsManager::GetCurrentObstShape()
     return m_currentObstShape;
 }
 
-void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
-{
-    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-}
-
 float GraphicsManager::GetFloorZ()
 {
     return -1.f;
@@ -197,15 +183,14 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 10.0f));
+    m_projection = glm::perspective(glm::radians(60.f), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
     //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
     glm::mat4 modelMat;
-    modelMat = glm::translate(modelMat, glm::vec3{ 0.0, 0.3, -1.5 });
-    modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
-    modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
-    modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
-    modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
-    SetModelMatrix(modelMat);
+    glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
+    rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
+    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
+    modelMat = trans*rot;
+    m_modelView = modelMat;
 }
 
 void GraphicsManager::SetUpGLInterop()
@@ -232,6 +217,7 @@ void GraphicsManager::SetUpShaders()
     graphics->SetUpSurfaceVao();
     graphics->SetUpFloorVao();
     graphics->SetUpOutputVao();
+
 }
 
 void GraphicsManager::SetUpCuda()
@@ -374,7 +360,7 @@ void GraphicsManager::RunSurfaceRefraction()
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
         Domain* domain = cudaLbm->GetDomain();
-        glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix()*GetModelMatrix());
+        glm::mat4 modelMatrixInv = glm::inverse(m_projection*m_modelView);
         glm::vec4 origin = { 0, 0, 0, 1 };
 
 
@@ -432,7 +418,7 @@ void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        GetModelMatrix(), GetProjectionMatrix());
+        m_modelView, m_projection);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -447,7 +433,7 @@ bool GraphicsManager::ShouldRefractSurface()
 
 void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos)
 {
-    glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
+    glm::mat4 mvp = m_projection*m_modelView;
     glm::mat4 mvpInv = glm::inverse(mvp);
     glm::vec4 v1 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
     glm::vec4 v2 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
@@ -472,19 +458,14 @@ void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const
 
 glm::vec4 GraphicsManager::GetCameraDirection()
 {
-    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
-    glm::mat4 model = glm::make_mat4(m_modelMatrix);
     glm::vec4 v = { 0.f, 0.f, 1.f, 1.f };
-    //return glm::vec4 { 0.f, 2.f, -1.f, 1.f };
-    return glm::inverse(proj*model)*v;
+    return glm::inverse(m_projection*m_modelView)*v;
 }
 
 
 glm::vec4 GraphicsManager::GetCameraPosition()
 {
-    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
-    glm::mat4 model = glm::make_mat4(m_modelMatrix);
-    return glm::inverse(proj*model)*glm::vec4(0, 0, 0, 1);
+    return glm::inverse(m_projection*m_modelView)*glm::vec4(0, 0, 0, 1);
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos)
@@ -770,7 +751,6 @@ void GraphicsManager::UpdateObstructionScales()
     }
 }
 
-
 void GraphicsManager::UpdateLbmInputs()
 {
     float omega = 1.9f;
@@ -779,34 +759,6 @@ void GraphicsManager::UpdateLbmInputs()
     const float u = cudaLbm->GetInletVelocity();
     ShaderManager* graphics = GetGraphics();
     graphics->UpdateLbmInputs(u, omega);
-}
-
-glm::mat4 GraphicsManager::GetModelMatrix()
-{
-    return glm::transpose(glm::make_mat4(m_modelMatrix));
-}
-
-glm::mat4 GraphicsManager::GetProjectionMatrix()
-{
-    return glm::transpose(glm::make_mat4(m_projectionMatrix));
-}
-
-void GraphicsManager::SetModelMatrix(glm::mat4 modelMatrix)
-{
-    const float *source = (const float*)glm::value_ptr(modelMatrix);
-    for (int i = 0; i < 16; ++i)
-    {
-        m_modelMatrix[i] = source[i];
-    }
-}
-
-void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
-{
-    const float *source = (const float*)glm::value_ptr(projMatrix);
-    for (int i = 0; i < 16; ++i)
-    {
-        m_projectionMatrix[i] = source[i];
-    }
 }
 
 std::map<TimerKey, Stopwatch>& GraphicsManager::GetTimers()

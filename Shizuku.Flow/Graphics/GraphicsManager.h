@@ -39,8 +39,8 @@ namespace Shizuku{ namespace Flow{
         Obstruction* m_obstructions;
         float m_scaleFactor = 1.f;
         float m_oldScaleFactor = 1.f;
-        GLdouble m_modelMatrix[16];
-        GLdouble m_projectionMatrix[16];
+        glm::mat4 m_modelView;
+        glm::mat4 m_projection;
         MinMax<float> m_contourMinMax;
         ContourVariable m_contourVar;
         ShaderManager* m_graphics;
@@ -52,7 +52,6 @@ namespace Shizuku{ namespace Flow{
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
 
-        void DoInitializeFlow();
     public:
         GraphicsManager();
 
@@ -76,8 +75,6 @@ namespace Shizuku{ namespace Flow{
         ContourVariable GetContourVar();
         void SetContourVar(const ContourVariable contourVar);
 
-        void SetObstructionsPointer(Obstruction* obst);
-
         float GetFloorZ();
         float GetWaterHeight();
         void SetWaterDepth(const float p_depth);
@@ -92,6 +89,7 @@ namespace Shizuku{ namespace Flow{
 
         bool IsCudaCapable();
 
+        void UpdateGraphicsInputs();
         void UpdateViewMatrices();
         void SetUpGLInterop();
         void SetUpShaders();
@@ -102,42 +100,41 @@ namespace Shizuku{ namespace Flow{
         void RunSimulation();
         void RenderCausticsToTexture();
         void Render();
-        bool ShouldRefractSurface();
         void InitializeFlow();
+        void UpdateDomainDimensions();
+        void UpdateObstructionScales();
+        void UpdateLbmInputs();
 
         void SetSurfaceShadingMode(const ShadingMode p_mode);
 
         void Zoom(const int dir, const float mag);
         void Pan(const Point<int>& p_posDiff);
         void Rotate(const Point<int>& p_posDiff);
-        int PickObstruction(const Point<int>& p_pos);
-        void UnpickObstruction();
-        void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
+
         void SetRayTracingPausedState(const bool state);
         bool IsRayTracingPaused();
        
-        void UpdateGraphicsInputs();
-        void UpdateDomainDimensions();
-        void UpdateObstructionScales();
-        void UpdateLbmInputs();
-        glm::mat4 GetModelMatrix();
-        glm::mat4 GetProjectionMatrix();
-        void SetModelMatrix(glm::mat4 modelMatrix);
-        void SetProjectionMatrix(glm::mat4 projMatrix);
-
-        void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos);
-        glm::vec4 GetCameraDirection();
-        glm::vec4 GetCameraPosition();
-        int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos);
         void GetSimCoordFromMouseRay(int &xOut, int &yOut, const Point<int>& p_pos,
             boost::optional<const float> planeZ = boost::none);
         void AddObstruction(const int simX, const int simY);
         void RemoveObstruction(const int simX, const int simY);
         void RemoveSpecifiedObstruction(const int obstId);
+        int PickObstruction(const Point<int>& p_pos);
+        void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
+     
+        std::map<TimerKey, Stopwatch>& GetTimers();
+
+    private:
+        void DoInitializeFlow();
+        bool ShouldRefractSurface();
+
+        void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos);
+        int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos);
+        glm::vec4 GetCameraDirection();
+        glm::vec4 GetCameraPosition();
+
         int FindUnusedObstructionId();
         int FindClosestObstructionId(const int simX, const int simY);
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
-     
-        std::map<TimerKey, Stopwatch>& GetTimers();
     };
 } }

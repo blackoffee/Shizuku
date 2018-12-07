@@ -95,6 +95,9 @@
     <ClCompile Include="Command\Parameter\DepthParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Pillar.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -197,6 +200,9 @@
     <ClInclude Include="Command\Parameter\DepthParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Pillar.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
@@ -227,6 +233,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Floor.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Pillar.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Pillar.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
