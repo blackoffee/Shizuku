@@ -50,7 +50,6 @@ namespace Shizuku{
             glBindBuffer(target, 0);
         }
 
-
         void Ogl::Vao::Bind()
         {
             glBindVertexArray(m_id);

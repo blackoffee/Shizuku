@@ -129,19 +129,19 @@ namespace Shizuku{
             glUniform1i(targetLocation, varValue);
         }
 
-        void ShaderProgram::SetUniform(const GLchar* varName, const glm::vec3 varValue)
+        void ShaderProgram::SetUniform(const GLchar* varName, const glm::vec3& varValue)
         {
             const GLint targetLocation = glGetUniformLocation(ProgramID, varName);
             glUniform3f(targetLocation, varValue.x, varValue.y, varValue.z);
         }
 
-        void ShaderProgram::SetUniform(const GLchar* varName, const glm::mat4 varValue)
+        void ShaderProgram::SetUniform(const GLchar* varName, const glm::mat4& varValue)
         {
             const GLint targetLocation = glGetUniformLocation(ProgramID, varName);
             glUniformMatrix4fv(targetLocation, 1, GL_FALSE, glm::value_ptr(varValue));
         }
 
-        void ShaderProgram::RunSubroutine(const GLchar* subroutineName, const glm::ivec3 workGroupSize)
+        void ShaderProgram::RunSubroutine(const GLchar* subroutineName, const glm::ivec3& workGroupSize)
         {
             const GLuint subroutine = glGetSubroutineIndex(ProgramID, GL_COMPUTE_SHADER,
                 subroutineName);
