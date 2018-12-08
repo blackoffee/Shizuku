@@ -23,35 +23,35 @@ void Pillar::PrepareBuffers()
 
     const GLfloat quadVertices[] = {
         //left
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f,  1.0f,
+        0.0f,  1.0f,  1.0f,
         //right
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
+         1.0f, 0.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+         1.0f, 0.0f,  1.0f,
          1.0f,  1.0f,  1.0f,
         //front
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
+        0.0f, 0.0f, 0.0f,
+         1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f,  1.0f,
+         1.0f, 0.0f,  1.0f,
         //back
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
+        0.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+        0.0f,  1.0f,  1.0f,
          1.0f,  1.0f,  1.0f,
         //top
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
+        0.0f, 0.0f,  1.0f,
+         1.0f, 0.0f,  1.0f,
+        0.0f,  1.0f,  1.0f,
          1.0f,  1.0f,  1.0f,
         //bottom
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
+        0.0f, 0.0f, 0.0f,
+         1.0f, 0.0f, 0.0f,
+        0.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
     };
 
     const GLfloat quadNormals[] = {
@@ -143,7 +143,7 @@ void Pillar::SetPosition(const Types::Point<float>& p_pos)
     m_def.SetPosition(p_pos);
 }
 
-void Pillar::SetSize(const Rect<float>& p_size)
+void Pillar::SetSize(const Types::Box<float>& p_size)
 {
     m_def.SetSize(p_size);
 }
@@ -151,8 +151,10 @@ void Pillar::SetSize(const Rect<float>& p_size)
 void Pillar::Draw(const glm::mat4& p_model, const glm::mat4& p_proj)
 {
     glm::mat4 modelMat;
-    glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(0.5f*m_def.Size().Width, 0.5f*m_def.Size().Height, 0.5f));
-    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3(m_def.Pos().X, m_def.Pos().Y, -0.5f));
+    glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(m_def.Size().Width, m_def.Size().Height, m_def.Size().Depth));
+    glm::mat4 trans = glm::translate(
+        glm::mat4(1),
+        glm::vec3(m_def.Pos().X-0.5f*m_def.Size().Width, m_def.Pos().Y-0.5f*m_def.Size().Height, -1.0f));
     modelMat = p_model * trans * scale;
     glm::mat4 modelInvTrans = glm::transpose(glm::inverse(modelMat));
 

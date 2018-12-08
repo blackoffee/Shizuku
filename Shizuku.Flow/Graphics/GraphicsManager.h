@@ -136,6 +136,7 @@ namespace Shizuku{ namespace Flow{
         glm::vec4 GetCameraDirection();
         glm::vec4 GetCameraPosition();
 
+        void UpdatePillar(const int p_obstId, const Obstruction& p_obst);
         int FindUnusedObstructionId();
         int FindClosestObstructionId(const int simX, const int simY);
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);

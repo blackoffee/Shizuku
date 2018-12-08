@@ -29,7 +29,7 @@ ShaderManager::ShaderManager()
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
 
-    m_pillar = std::make_shared<Pillar>(Ogl);
+    m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -164,7 +164,6 @@ void ShaderManager::CompileShaders()
     m_floorProgram->CreateShader("Floor.vert.glsl", GL_VERTEX_SHADER);
     m_floorProgram->CreateShader("Floor.frag.glsl", GL_FRAGMENT_SHADER);
 
-    m_pillar->Initialize();
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -728,11 +727,32 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     shader->Unset();   
 
     //m_pillar->SetPosition(Types::Point<float>(0.5, 0));
-    m_pillar->SetSize(Rect<float>(0.11, 0.11));
-    m_pillar->Draw(modelMatrix, projectionMatrix);
+    //m_pillar->SetSize(Rect<float>(0.11, 0.11));
+    //m_pillar->Draw(modelMatrix, projectionMatrix);
+
+    for (const auto pillar : m_pillars)
+    {
+        pillar.second->Draw(modelMatrix, projectionMatrix);
+    }
 }
 
-void ShaderManager::MovePillar(const int obstId, const PillarDefinition& p_def)
+void ShaderManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
 {
-    m_pillar->SetDefinition(p_def);
+    const auto mapIt = m_pillars.lower_bound(obstId);
+    if (mapIt != m_pillars.end() && !m_pillars.key_comp()(obstId, mapIt->first))
+    {
+        m_pillars[obstId]->SetDefinition(p_def);
+    }
+    else
+    {
+        std::shared_ptr<Pillar> pillar = std::make_shared<Pillar>(Ogl);
+        pillar->Initialize();
+        pillar->SetDefinition(p_def);
+        m_pillars.insert(mapIt, std::map<const int, std::shared_ptr<Pillar>>::value_type(obstId, pillar));
+    }
+}
+
+void ShaderManager::RemovePillar(const int obstId)
+{
+    m_pillars.erase(obstId);
 }

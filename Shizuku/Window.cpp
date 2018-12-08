@@ -371,7 +371,7 @@ void Window::DrawUI()
     if (m_firstUIDraw)
     {
         ImGui::SetNextWindowSize(ImVec2(350,240));
-        ImGui::SetNextWindowPos(ImVec2(430,20));
+        ImGui::SetNextWindowPos(ImVec2(m_size.Width-20-350,20));
     }
 
     ImGui::Begin("Settings");

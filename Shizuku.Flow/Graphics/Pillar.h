@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PillarDefinition.h"
-#include "Shizuku.Core/Rect.h"
+#include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 #include <glm/glm.hpp>
 #include <memory>
@@ -30,7 +30,7 @@ namespace Shizuku { namespace Flow{
         void Initialize();
         void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
-        void SetSize(const Rect<float>& p_size);
+        void SetSize(const Types::Box<float>& p_size);
 
         void Draw(const glm::mat4& p_model, const glm::mat4& p_proj);
     };

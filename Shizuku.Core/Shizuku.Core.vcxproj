@@ -29,6 +29,7 @@
     <ClInclude Include="Ogl\Ogl.h" />
     <ClInclude Include="Ogl\Shader.h" />
     <ClInclude Include="Rect.h" />
+    <ClInclude Include="Types\Box.h" />
     <ClInclude Include="Types\MinMax.h" />
     <ClInclude Include="Types\Point.h" />
     <ClInclude Include="Utilities\FpsTracker.h" />

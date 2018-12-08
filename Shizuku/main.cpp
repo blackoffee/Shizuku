@@ -23,11 +23,11 @@ int main(int argc, char **argv)
     Rect<int> windowSize = Rect<int>(1000, 700);
 
     Window::Instance().SetGraphics(flow);
-    Window::Instance().RegisterCommands();
 
     Window::Instance().Resize(windowSize);
     Window::Instance().InitializeGlfw(debug);
     Window::Instance().InitializeImGui();
+    Window::Instance().RegisterCommands();
     Window::Instance().RegisterGlfwInputs();
 
     if (diag)

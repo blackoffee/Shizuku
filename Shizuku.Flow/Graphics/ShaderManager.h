@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -68,7 +69,8 @@ private:
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
     const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
 
-    std::shared_ptr<Pillar> m_pillar;
+    //std::shared_ptr<Pillar> m_pillar;
+    std::map<const int, std::shared_ptr<Pillar>> m_pillars;
 
 public:
     ShaderManager();
@@ -120,5 +122,6 @@ public:
     void Render(const ShadingMode p_shadingMode , Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
 
-    void MovePillar(const int obstId, const PillarDefinition& p_def);
+    void UpdatePillar(const int obstId, const PillarDefinition& p_def);
+    void RemovePillar(const int obstId);
 };

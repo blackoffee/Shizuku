@@ -9,6 +9,7 @@
 #include "PillarDefinition.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 
 #include <GLEW/glew.h>
@@ -29,6 +30,11 @@ namespace
         float dx = x2 - x1;
         float dy = y2 - y1;
         return sqrt(dx*dx + dy*dy);
+    }
+
+    float PillarHeightFromDepth(const float p_depth)
+    {
+        return p_depth + 0.15f;
     }
 }
 
@@ -134,6 +140,14 @@ float GraphicsManager::GetWaterHeight()
 void GraphicsManager::SetWaterDepth(const float p_depth)
 {
     m_waterDepth = p_depth;
+
+    for (int i = 0; i < MAXOBSTS; i++)
+    {
+        if (m_obstructions[i].state != State::REMOVED)
+        {
+            UpdatePillar(i, m_obstructions[i]);
+        }
+    }
 }
 
 float GraphicsManager::GetScaleFactor()
@@ -610,15 +624,21 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
     
-    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    const int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    const Point<float> pillarPos(static_cast<float>(simX2)/xDimVisible*2.f-1.f,
-        static_cast<float>(simY2)/yDimVisible*2.f-1.f);
-    const Rect<float> pillarSize(static_cast<float>(obst.r1/m_scaleFactor)/xDimVisible*2.f,
-        static_cast<float>(obst.r1/m_scaleFactor)/yDimVisible*2.f);
-    m_graphics->MovePillar(obstId, PillarDefinition(pillarPos, pillarSize));
+    UpdatePillar(obstId, obst);
 }
 
+void GraphicsManager::UpdatePillar(const int p_obstId, const Obstruction& p_obst)
+{
+    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    const int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
+    const float scaleX = m_scaleFactor*xDimVisible*0.5f;
+    const float scaleY = m_scaleFactor*yDimVisible*0.5f;
+    const Point<float> pillarPos(static_cast<float>(p_obst.x)/scaleX-1.f,
+        static_cast<float>(p_obst.y)/scaleY-1.f);
+    const Box<float> pillarSize(static_cast<float>(2.f*p_obst.r1/scaleX),
+        static_cast<float>(2.f*p_obst.r1/scaleY), PillarHeightFromDepth(m_waterDepth));
+    m_graphics->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
+}
 
 void GraphicsManager::Zoom(const int dir, const float mag)
 {
@@ -641,6 +661,7 @@ void GraphicsManager::AddObstruction(const int simX, const int simY)
         UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
+    UpdatePillar(obstId, obst);
 }
 
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
@@ -659,6 +680,7 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
             UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], m_scaleFactor);
         else
             GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
+        GetGraphics()->RemovePillar(obstId);
     }
 }
 
