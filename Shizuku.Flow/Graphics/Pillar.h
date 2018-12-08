@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PillarDefinition.h"
+#include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/Point.h"
 #include <glm/glm.hpp>
 #include <memory>
@@ -18,8 +20,7 @@ namespace Shizuku { namespace Flow{
     {
     private:
         std::shared_ptr<Ogl> m_ogl;
-        Types::Point<float> m_position;
-        Types::Point<float> m_size;
+        PillarDefinition m_def;
         std::shared_ptr<ShaderProgram> m_shaderProgram;
         void PrepareBuffers();
         void PrepareShader();
@@ -27,8 +28,9 @@ namespace Shizuku { namespace Flow{
         Pillar(std::shared_ptr<Ogl> p_ogl);
 
         void Initialize();
+        void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
-        void SetSize(const Types::Point<float>& p_size);
+        void SetSize(const Rect<float>& p_size);
 
         void Draw(const glm::mat4& p_model, const glm::mat4& p_proj);
     };

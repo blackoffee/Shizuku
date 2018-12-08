@@ -98,6 +98,9 @@
     <ClCompile Include="Graphics\Pillar.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\PillarDefinition.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -201,6 +204,12 @@
       <Filter>Command\Parameter</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Pillar.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Obstruction.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\PillarDefinition.h">
       <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>

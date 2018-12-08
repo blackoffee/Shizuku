@@ -23,6 +23,9 @@ struct float4;
 
 namespace Shizuku{ namespace Flow{
     enum TimerKey;
+    class Obstruction;
+    enum Shape;
+
     class GraphicsManager
     {
     private:
@@ -32,7 +35,7 @@ namespace Shizuku{ namespace Flow{
         glm::vec3 m_translate;
         int m_currentObstId = -1;
         float m_currentObstSize = 0.f;
-        Shape m_currentObstShape = Shape::SQUARE;
+        Shape m_currentObstShape;
         ViewMode m_viewMode;
         bool m_rayTracingPaused = false;
         glm::vec4 m_cameraPosition;

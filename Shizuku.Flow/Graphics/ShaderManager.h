@@ -2,8 +2,10 @@
 #include "common.h"
 #include "ShadingMode.h"
 #include "Pillar.h"
+#include "PillarDefinition.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
+#include "Shizuku.Core/Types/Point.h"
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -21,6 +23,10 @@ namespace Shizuku{
 namespace Core{
     class Ogl;
     class ShaderProgram;
+}
+namespace Flow
+{
+    class Obstruction;
 }
 }
 
@@ -106,11 +112,13 @@ public:
     void UpdateLbmInputs(const float u, const float omega);
 
     void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const Types::MinMax<float>& p_minMax);
-    void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
+    void UpdateObstructionsUsingComputeShader(const int obstId, Shizuku::Flow::Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void Render(const ShadingMode p_shadingMode , Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
+
+    void MovePillar(const int obstId, const PillarDefinition& p_def);
 };

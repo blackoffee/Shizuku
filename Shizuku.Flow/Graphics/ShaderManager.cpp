@@ -1,5 +1,6 @@
 #include "ShaderManager.h"
 #include "GraphicsManager.h"
+#include "Obstruction.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
@@ -726,7 +727,12 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 
     shader->Unset();   
 
-    m_pillar->SetPosition(Types::Point<float>(0.5, 0));
-    m_pillar->SetSize(Types::Point<float>(0.1, 0.1));
+    //m_pillar->SetPosition(Types::Point<float>(0.5, 0));
+    m_pillar->SetSize(Rect<float>(0.11, 0.11));
     m_pillar->Draw(modelMatrix, projectionMatrix);
+}
+
+void ShaderManager::MovePillar(const int obstId, const PillarDefinition& p_def)
+{
+    m_pillar->SetDefinition(p_def);
 }

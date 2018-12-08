@@ -101,7 +101,7 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
+      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
 
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
 copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
@@ -174,7 +174,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
+      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
 
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
 copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
@@ -272,6 +272,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\Pillar.cpp" />
+    <ClCompile Include="Graphics\PillarDefinition.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>CppCode</FileType>
@@ -309,7 +310,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
+    <ClInclude Include="Graphics\Obstruction.h" />
     <ClInclude Include="Graphics\Pillar.h" />
+    <ClInclude Include="Graphics\PillarDefinition.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />
     <ClInclude Include="Graphics\ShadingMode.h" />
     <ClInclude Include="kernel.h" />

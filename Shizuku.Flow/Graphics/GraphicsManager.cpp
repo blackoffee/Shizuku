@@ -5,6 +5,8 @@
 #include "Domain.h"
 #include "CudaCheck.h"
 #include "TimerKey.h"
+#include "Obstruction.h"
+#include "PillarDefinition.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Types/Point.h"
@@ -39,6 +41,7 @@ GraphicsManager::GraphicsManager()
     m_translate = { 0.f, 0.6f, 0.f };
     m_surfaceShadingMode = RayTracing;
     m_waterDepth = 0.2f;
+    m_currentObstShape = Shape::SQUARE;
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -606,6 +609,14 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     {
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
+    
+    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    const int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
+    const Point<float> pillarPos(static_cast<float>(simX2)/xDimVisible*2.f-1.f,
+        static_cast<float>(simY2)/yDimVisible*2.f-1.f);
+    const Rect<float> pillarSize(static_cast<float>(obst.r1/m_scaleFactor)/xDimVisible*2.f,
+        static_cast<float>(obst.r1/m_scaleFactor)/yDimVisible*2.f);
+    m_graphics->MovePillar(obstId, PillarDefinition(pillarPos, pillarSize));
 }
 
 

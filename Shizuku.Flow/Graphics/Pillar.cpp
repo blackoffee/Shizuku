@@ -22,44 +22,105 @@ void Pillar::PrepareBuffers()
     pillar->Bind();
 
     const GLfloat quadVertices[] = {
-        //bottom
+        //left
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        //right
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        //front
         -1.0f, -1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        //back
         -1.0f,  1.0f, -1.0f,
          1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
         //top
         -1.0f, -1.0f,  1.0f,
          1.0f, -1.0f,  1.0f,
         -1.0f,  1.0f,  1.0f,
          1.0f,  1.0f,  1.0f,
+        //bottom
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+    };
+
+    const GLfloat quadNormals[] = {
+        //left
+         1.0f,  0.0f,  0.0f,
+         1.0f,  0.0f,  0.0f,
+         1.0f,  0.0f,  0.0f,
+         1.0f,  0.0f,  0.0f,
+        //right
+        -1.0f,  0.0f,  0.0f,
+        -1.0f,  0.0f,  0.0f,
+        -1.0f,  0.0f,  0.0f,
+        -1.0f,  0.0f,  0.0f,
+        //front
+         0.0f,  1.0f,  0.0f,
+         0.0f,  1.0f,  0.0f,
+         0.0f,  1.0f,  0.0f,
+         0.0f,  1.0f,  0.0f,
+        //back
+         0.0f, -1.0f,  0.0f,
+         0.0f, -1.0f,  0.0f,
+         0.0f, -1.0f,  0.0f,
+         0.0f, -1.0f,  0.0f,
+        //top
+         0.0f,  0.0f, -1.0f,
+         0.0f,  0.0f, -1.0f,
+         0.0f,  0.0f, -1.0f,
+         0.0f,  0.0f, -1.0f,
+        //bottom
+         0.0f,  0.0f,  1.0f,
+         0.0f,  0.0f,  1.0f,
+         0.0f,  0.0f,  1.0f,
+         0.0f,  0.0f,  1.0f,
     };
 
     const GLuint elemIndices[] = {
-        //top
-        4, 6, 5,
-        5, 6, 7,
-        //left
-        2, 6, 0,
-        0, 6, 4,
+        //left 
+        0, 1, 3,
+        0, 3, 2,
         //right
-        1, 5, 3,
-        3, 5, 7,
+        4+0, 4+2, 4+3,
+        4+0, 4+3, 4+1,
         //front
-        0, 4, 1,
-        1, 4, 5,
-        //back
-        3, 7, 2,
-        2, 7, 6
+        8+0, 8+2, 8+3,
+        8+0, 8+3, 8+1,
+        //back 
+        12+0, 12+1, 12+3,
+        12+0, 12+3, 12+2,
+        //top
+        16+0, 16+2, 16+3,
+        16+0, 16+3, 16+1,
+        //bottom 
+        20+0, 20+1, 20+3,
+        20+0, 20+3, 20+2
     };
 
-    m_ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 24, "pillar", GL_STATIC_DRAW);
-    m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elemIndices, 10 * 3, "pillar indices", GL_STATIC_DRAW);
+    m_ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 72, "pillar vert", GL_STATIC_DRAW);
+    m_ogl->CreateBuffer(GL_ARRAY_BUFFER, quadNormals, 72, "pillar norm", GL_STATIC_DRAW);
+    m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elemIndices, 12 * 3, "pillar indices", GL_STATIC_DRAW);
 
-    m_ogl->BindBO(GL_ARRAY_BUFFER, *m_ogl->GetBuffer("pillar"));
+    m_ogl->BindBO(GL_ARRAY_BUFFER, *m_ogl->GetBuffer("pillar vert"));
     m_ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *m_ogl->GetBuffer("pillar indices"));
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    m_ogl->BindBO(GL_ARRAY_BUFFER, *m_ogl->GetBuffer("pillar norm"));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     pillar->Unbind();
 }
@@ -72,28 +133,35 @@ void Pillar::PrepareShader()
     m_shaderProgram->CreateShader("Pillar.frag.glsl", GL_FRAGMENT_SHADER);
 }
 
-void Pillar::SetPosition(const Types::Point<float>& p_pos)
+void Pillar::SetDefinition(const PillarDefinition& p_def)
 {
-    m_position = p_pos;
+    m_def = p_def;
 }
 
-void Pillar::SetSize(const Types::Point<float>& p_size)
+void Pillar::SetPosition(const Types::Point<float>& p_pos)
 {
-    m_size = p_size;
+    m_def.SetPosition(p_pos);
+}
+
+void Pillar::SetSize(const Rect<float>& p_size)
+{
+    m_def.SetSize(p_size);
 }
 
 void Pillar::Draw(const glm::mat4& p_model, const glm::mat4& p_proj)
 {
     glm::mat4 modelMat;
-    glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(0.5f*m_size.X, 0.5f*m_size.Y, 0.5f));
-    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3(m_position.X, m_position.Y, -0.5f));
+    glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(0.5f*m_def.Size().Width, 0.5f*m_def.Size().Height, 0.5f));
+    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3(m_def.Pos().X, m_def.Pos().Y, -0.5f));
     modelMat = p_model * trans * scale;
+    glm::mat4 modelInvTrans = glm::transpose(glm::inverse(modelMat));
 
     m_shaderProgram->Use();
     glActiveTexture(GL_TEXTURE0);
 
     m_shaderProgram->SetUniform("modelMatrix", modelMat);
     m_shaderProgram->SetUniform("projectionMatrix", p_proj);
+    m_shaderProgram->SetUniform("modelInvTrans", modelInvTrans);
 
     std::shared_ptr<Ogl::Vao> pillar = m_ogl->GetVao("pillar");
     pillar->Bind();
