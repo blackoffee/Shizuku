@@ -52,10 +52,13 @@
     <ClInclude Include="Utilities\StopwatchImpl.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="Types\Box.h">
+      <Filter>Types</Filter>
+    </ClInclude>
     <ClInclude Include="Types\Point.h">
       <Filter>Types</Filter>
     </ClInclude>
-    <ClInclude Include="Types\Box.h">
+    <ClInclude Include="Types\Point3D.h">
       <Filter>Types</Filter>
     </ClInclude>
   </ItemGroup>

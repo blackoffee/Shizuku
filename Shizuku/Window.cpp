@@ -20,11 +20,12 @@
 #include "Shizuku.Flow/Command/SetWaterDepth.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
+#include "Shizuku.Flow/Command/Parameter/ModelSpacePointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/MinMaxParameter.h"
 #include "Shizuku.Flow/Command/Parameter/DepthParameter.h"
 
-#include "Shizuku.Flow/Diagnostics.h"
+#include "Shizuku.Flow/Query.h"
 #include "Shizuku.Flow/Flow.h"
 #include "Shizuku.Flow/TimerKey.h"
 
@@ -127,9 +128,9 @@ namespace
         static float ProcessSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::ProcessSurface).DataProvider(data, i); }
     }
 
-    void CreateHistoryPlotLines(Diagnostics& m_diag, const TimerKey p_key, const char* p_label)
+    void CreateHistoryPlotLines(Query& p_query, const TimerKey p_key, const char* p_label)
     {
-        const double time = m_diag.GetTime(p_key);
+        const double time = p_query.GetTime(p_key);
         TimeHistory::Instance(p_key).Append(time);
 
         float(*provider) (void*, int) = NULL;
@@ -186,7 +187,7 @@ Window::Window() :
 void Window::SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow)
 {
     m_flow = flow;
-    m_diag = std::make_shared<Diagnostics>(*flow);
+    m_query = std::make_shared<Query>(*flow);
 }
 
 void Window::RegisterCommands()
@@ -206,7 +207,10 @@ void Window::RegisterCommands()
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
     m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
+}
 
+void Window::ApplyInitialFlowSettings()
+{
     m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
@@ -255,7 +259,8 @@ void Window::MouseButton(const int button, const int state, const int mod)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    const ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
+    const Types::Point<int> screenPos(x, m_size.Height - 1 - y);
+    const ScreenPointParameter param(screenPos);
 
     if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
         && mod == GLFW_MOD_CONTROL)
@@ -269,7 +274,7 @@ void Window::MouseButton(const int button, const int state, const int mod)
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
-        m_addObstruction->Start(param);
+        m_addObstruction->Start(ModelSpacePointParameter(m_query->ProbeModelSpaceCoord(screenPos)));
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
     {
@@ -335,7 +340,7 @@ void Window::Draw3D()
 
     m_fpsTracker.Tock();
 
-    UpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
+    UpdateWindowTitle(m_fpsTracker.GetFps(), m_query->SimulationDomain(), m_timesteps);
 }
 
 void Window::InitializeGlfw(const bool p_debug)
@@ -372,6 +377,9 @@ void Window::DrawUI()
     {
         ImGui::SetNextWindowSize(ImVec2(350,240));
         ImGui::SetNextWindowPos(ImVec2(m_size.Width-20-350,20));
+        //! HACK - Adding obst has to happen after lbm dimensions are set. Need to split up Flow initilization sequence
+        m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.2f, 0.2f)));
+        m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.1f, -0.3f)));
     }
 
     ImGui::Begin("Settings");
@@ -493,11 +501,11 @@ void Window::DrawUI()
 
         ImGui::Begin("Diagnostics");
         {
-            CreateHistoryPlotLines(*m_diag, TimerKey::SolveFluid, "Solve Fluid");
-            CreateHistoryPlotLines(*m_diag, TimerKey::PrepareSurface, "Prepare Surface");
-            CreateHistoryPlotLines(*m_diag, TimerKey::PrepareFloor, "Prepare Floor");
-            //CreateHistoryPlotLines(*m_diag, TimerKey::ProcessSurface, "Process Surface");
-            //CreateHistoryPlotLines(*m_diag, TimerKey::ProcessFloor, "Process Floor");
+            CreateHistoryPlotLines(*m_query, TimerKey::SolveFluid, "Solve Fluid");
+            CreateHistoryPlotLines(*m_query, TimerKey::PrepareSurface, "Prepare Surface");
+            CreateHistoryPlotLines(*m_query, TimerKey::PrepareFloor, "Prepare Floor");
+            //CreateHistoryPlotLines(*m_query, TimerKey::ProcessSurface, "Process Surface");
+            //CreateHistoryPlotLines(*m_query, TimerKey::ProcessFloor, "Process Floor");
         }
         ImGui::End();
     }

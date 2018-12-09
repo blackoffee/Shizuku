@@ -27,13 +27,14 @@ int main(int argc, char **argv)
     Window::Instance().Resize(windowSize);
     Window::Instance().InitializeGlfw(debug);
     Window::Instance().InitializeImGui();
+    flow->Initialize();
     Window::Instance().RegisterCommands();
+    Window::Instance().ApplyInitialFlowSettings();
     Window::Instance().RegisterGlfwInputs();
 
     if (diag)
         Window::Instance().EnableDiagnostics();
 
-    flow->Initialize();
 
     Window::Instance().Display();
 

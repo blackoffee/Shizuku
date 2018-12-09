@@ -73,7 +73,6 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp" />
-    <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
@@ -101,6 +100,10 @@
     <ClCompile Include="Graphics\PillarDefinition.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Command\Parameter\ModelSpacePointParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Query.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -183,7 +186,6 @@
     <ClInclude Include="Command\Parameter\VelocityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
-    <ClInclude Include="Diagnostics.h" />
     <ClInclude Include="Command\Parameter\ScreenPointParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
@@ -212,6 +214,10 @@
     <ClInclude Include="Graphics\PillarDefinition.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Command\Parameter\ModelSpacePointParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Query.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

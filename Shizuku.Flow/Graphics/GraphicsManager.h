@@ -117,9 +117,10 @@ namespace Shizuku{ namespace Flow{
         void SetRayTracingPausedState(const bool state);
         bool IsRayTracingPaused();
        
-        void GetSimCoordFromMouseRay(int &xOut, int &yOut, const Point<int>& p_pos,
-            boost::optional<const float> planeZ = boost::none);
-        void AddObstruction(const int simX, const int simY);
+        Point<float> GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::none);
+        Point<int> GetSimCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::none);
+        void AddObstruction(const Point<int>& p_simPos);
+        void AddObstruction(const Point<float>& p_modelSpacePos);
         void RemoveObstruction(const int simX, const int simY);
         void RemoveSpecifiedObstruction(const int obstId);
         int PickObstruction(const Point<int>& p_pos);
@@ -140,5 +141,7 @@ namespace Shizuku{ namespace Flow{
         int FindUnusedObstructionId();
         int FindClosestObstructionId(const int simX, const int simY);
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
+
+        Point<int> SimPosFromModelSpacePos(const Point<float>& p_modelPos);
     };
 } }

@@ -248,6 +248,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
     <ClCompile Include="Command\Pan.cpp" />
+    <ClCompile Include="Command\Parameter\ModelSpacePointParameter.cpp" />
     <ClCompile Include="Command\Parameter\MinMaxParameter.cpp" />
     <ClCompile Include="Command\Parameter\ScaleParameter.cpp" />
     <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp" />
@@ -267,7 +268,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
-    <ClCompile Include="Diagnostics.cpp" />
+    <ClCompile Include="Query.cpp" />
     <ClCompile Include="Flow.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
@@ -286,6 +287,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Command\MoveObstruction.h" />
     <ClInclude Include="Command\Pan.h" />
+    <ClInclude Include="Command\Parameter\ModelSpacePointParameter.h" />
     <ClInclude Include="Command\Parameter\MinMaxParameter.h" />
     <ClInclude Include="Command\Parameter\ScaleParameter.h" />
     <ClInclude Include="Command\Parameter\ScreenPointParameter.h" />
@@ -306,7 +308,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
-    <ClInclude Include="Diagnostics.h" />
+    <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />

@@ -10,7 +10,7 @@ struct GLFWwindow;
 namespace Shizuku{
     namespace Flow{
         class Flow;
-        class Diagnostics;
+        class Query;
         namespace Command{
             class Zoom;
             class Pan;
@@ -57,7 +57,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
         std::shared_ptr<SetWaterDepth> m_setDepth;
         FpsTracker m_fpsTracker;
-        std::shared_ptr<Shizuku::Flow::Diagnostics> m_diag;
+        std::shared_ptr<Shizuku::Flow::Query> m_query;
         GLFWwindow* m_window;
         Rect<int> m_size;
 
@@ -87,6 +87,7 @@ namespace Shizuku{ namespace Presentation{
         void Display();
         void InitializeGlfw(const bool p_debug);
         void InitializeImGui();
+        void ApplyInitialFlowSettings();
         void EnableDiagnostics();
 
         void Resize(GLFWwindow* window, int width, int height);

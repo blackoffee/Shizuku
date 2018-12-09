@@ -48,6 +48,7 @@ GraphicsManager::GraphicsManager()
     m_surfaceShadingMode = RayTracing;
     m_waterDepth = 0.2f;
     m_currentObstShape = Shape::SQUARE;
+    m_currentObstSize = 25.f;
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -549,27 +550,53 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     return returnVal;
 }
 
-void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
-    const Point<int>& p_pos, boost::optional<const float> planeZ)
+Point<float> GraphicsManager::GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos)
 {
     glm::vec3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, p_pos);
+    GetMouseRay(rayOrigin, rayDir, p_screenPos);
 
-    float z;
-    if (planeZ.is_initialized())
-        z = planeZ.value();
+    float t;
+    if (p_modelSpaceZPos.is_initialized())
+    {
+        const float z = p_modelSpaceZPos.value();
+        t = (z - rayOrigin.z)/rayDir.z;
+        const float xf = rayOrigin.x + t*rayDir.x;
+        const float yf = rayOrigin.y + t*rayDir.y;
+
+        return Point<float>(xf, yf);
+    }
     else
-        z = m_currentZ;
+    {
+        const float t1 = (-1.f - rayOrigin.z)/rayDir.z;
+        const float t2 = (-1.f + m_waterDepth - rayOrigin.z) / rayDir.z;
+        t = std::min(t1, t2);
+        float xf = rayOrigin.x + t*rayDir.x;
+        float yf = rayOrigin.y + t*rayDir.y;
 
-    //glm::vec4 cameraPos = GetCameraPosition();
-    //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
-    const float t = (z - rayOrigin.z)/rayDir.z;
-    const float xf = rayOrigin.x + t*rayDir.x;
-    const float yf = rayOrigin.y + t*rayDir.y;
+        if (xf <= 1.f && yf <= 1.f && xf >= -1.f && yf >= -1.f)
+        {
+            return Point<float>(xf, yf);
+        }
+        else
+        {
+            t = std::max(t1, t2);
+            xf = rayOrigin.x + t*rayDir.x;
+            yf = rayOrigin.y + t*rayDir.y;
+            return Point<float>(xf, yf);
+        }
+    }
+}
 
+Point<int> GraphicsManager::GetSimCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos)
+{
+    Point<float> modelPos = GetModelSpaceCoordFromScreenPos(p_screenPos, p_modelSpaceZPos);
+    return SimPosFromModelSpacePos(modelPos);
+}
+
+Point<int> GraphicsManager::SimPosFromModelSpacePos(const Point<float>& p_modelPos)
+{
     const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    xOut = (xf + 1.f)*0.5f*xDimVisible;
-    yOut = (yf + 1.f)*0.5f*xDimVisible;
+    return Point<int>((p_modelPos.X + 1.f)*0.5f*xDimVisible, (p_modelPos.Y + 1.f)*0.5f*xDimVisible);
 }
 
 void GraphicsManager::Pan(const Point<int>& p_posDiff)
@@ -598,18 +625,16 @@ int GraphicsManager::PickObstruction(const Point<int>& p_pos)
     return -1;
 }
 
-
 void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff)
 {
-    int simX1, simY1, simX2, simY2;
-    GetSimCoordFromMouseRay(simX1, simY1, p_pos-p_diff);
-    GetSimCoordFromMouseRay(simX2, simY2, p_pos);
+    Point<int> simCoord1 = GetSimCoordFromScreenPos(p_pos-p_diff, m_currentZ);
+    Point<int> simCoord2 = GetSimCoordFromScreenPos(p_pos, m_currentZ);
     Obstruction obst = m_obstructions[obstId];
-    obst.x = simX2*m_scaleFactor;
-    obst.y = simY2*m_scaleFactor;
+    obst.x = simCoord2.X*m_scaleFactor;
+    obst.y = simCoord2.Y*m_scaleFactor;
     const int stepsPerFrame = GetCudaLbm()->GetTimeStepsPerFrame();
-    const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / stepsPerFrame));
-    const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / stepsPerFrame));
+    const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.X-simCoord1.X) / stepsPerFrame));
+    const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.Y-simCoord1.Y) / stepsPerFrame));
     obst.u = u;
     obst.v = v;
     obst.state = State::ACTIVE;
@@ -651,10 +676,20 @@ void GraphicsManager::Zoom(const int dir, const float mag)
     }   
 }
 
-void GraphicsManager::AddObstruction(const int simX, const int simY)
+void GraphicsManager::AddObstruction(const Point<float>& p_modelSpacePos)
 {
-    Obstruction obst = { m_currentObstShape, simX*m_scaleFactor, simY*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::NEW  };
-    int obstId = FindUnusedObstructionId();
+    AddObstruction(SimPosFromModelSpacePos(p_modelSpacePos));
+}
+
+void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
+{
+    if (p_simPos.X > MAX_XDIM - 1 || p_simPos.Y > MAX_YDIM - 1 || p_simPos.X < 0 || p_simPos.Y < 0)
+    {
+        return;
+    }
+
+    Obstruction obst = { m_currentObstShape, p_simPos.X*m_scaleFactor, p_simPos.Y*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::NEW  };
+    const int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     if (m_useCuda)
@@ -753,7 +788,6 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
 void GraphicsManager::UpdateGraphicsInputs()
 {
     glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
-    m_currentObstSize = 25;
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }

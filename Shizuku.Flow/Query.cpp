@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Diagnostics.h"
+#include "Query.h"
 #include "Flow.h"
 #include "TimerKey.h"
 #include "Graphics/GraphicsManager.h"
@@ -16,22 +16,27 @@
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
 
-Diagnostics::Diagnostics()
+Query::Query()
 {
 }
 
-Diagnostics::Diagnostics(Flow& p_flow)
+Query::Query(Flow& p_flow)
 {
     m_flow = &p_flow;
 }
 
-Rect<int> Diagnostics::SimulationDomain()
+Rect<int> Query::SimulationDomain()
 {
     return m_flow->Graphics()->GetCudaLbm()->GetDomainSize();
 }
 
-double Diagnostics::GetTime(TimerKey p_key)
+double Query::GetTime(TimerKey p_key)
 {
     std::map<TimerKey, Stopwatch> timers = m_flow->Graphics()->GetTimers();
     return timers[p_key].GetAverage();
+}
+
+Types::Point<float> Query::ProbeModelSpaceCoord(const Types::Point<int>& p_screenPoint)
+{
+    return m_flow->Graphics()->GetModelSpaceCoordFromScreenPos(p_screenPoint);
 }
