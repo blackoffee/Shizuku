@@ -18,6 +18,7 @@
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 #include "Shizuku.Flow/Command/SetWaterDepth.h"
+#include "Shizuku.Flow/Command/RestartSimulation.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ModelSpacePointParameter.h"
@@ -200,6 +201,7 @@ void Window::RegisterCommands()
     m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
     m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
+    m_restartSimulation = std::make_shared<RestartSimulation>(*m_flow);
     m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_flow);
     m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_flow);
     m_setVelocity = std::make_shared<SetInletVelocity>(*m_flow);
@@ -248,6 +250,11 @@ void Window::Resize(const Rect<int>& size)
 {
     m_size = size;
     m_flow->Resize(size);
+}
+
+void Window::EnableDebug()
+{
+    m_debug = true;
 }
 
 void Window::EnableDiagnostics()
@@ -343,7 +350,7 @@ void Window::Draw3D()
     UpdateWindowTitle(m_fpsTracker.GetFps(), m_query->SimulationDomain(), m_timesteps);
 }
 
-void Window::InitializeGlfw(const bool p_debug)
+void Window::InitializeGlfw()
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -358,7 +365,7 @@ void Window::InitializeGlfw(const bool p_debug)
     glewExperimental = GL_TRUE;
     glewInit();
 
-    if (p_debug)
+    if (m_debug)
     {
         glEnable              ( GL_DEBUG_OUTPUT );
         glDebugMessageCallback(MessageCallback, 0);
@@ -375,8 +382,8 @@ void Window::DrawUI()
 
     if (m_firstUIDraw)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,240));
-        ImGui::SetNextWindowPos(ImVec2(m_size.Width-20-350,20));
+        ImGui::SetNextWindowSize(ImVec2(350,270));
+        ImGui::SetNextWindowPos(ImVec2(5,5));
         //! HACK - Adding obst has to happen after lbm dimensions are set. Need to split up Flow initilization sequence
         m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.2f, 0.2f)));
         m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.1f, -0.3f)));
@@ -457,7 +464,34 @@ void Window::DrawUI()
         if (oldDepth != m_depth)
             m_setDepth->Start(boost::any(DepthParameter(m_depth)));
 
+        if (m_debug)
+        {
+            const SurfaceShadingMode shadingMode = m_shadingMode;
+            const char* currentShadingItem = MakeReadableString(shadingMode);
+            if (ImGui::BeginCombo("Shading Mode", currentShadingItem)) 
+            {
+                for (int i = 0; i < static_cast<int>(SurfaceShadingMode::NUMB_SHADING_MODE); ++i)
+                {
+                    const SurfaceShadingMode shadingItem = static_cast<SurfaceShadingMode>(i);
+                    bool isSelected = (shadingItem == shadingMode);
+                    if (ImGui::Selectable(MakeReadableString(shadingItem), isSelected))
+                    {
+                        currentShadingItem = MakeReadableString(shadingItem);
+                        m_shadingMode = shadingItem;
+                    }
+                    if (isSelected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            if (shadingMode != m_shadingMode)
+                m_setSurfaceShadingMode->Start(m_shadingMode);
+        }
+
         ImGui::Spacing();
+
+        if (ImGui::Button("Restart Simulation"))
+            m_restartSimulation->Start();
 
         const bool oldPaused = m_paused;
         if (ImGui::Checkbox("Pause Simulation", &m_paused) && m_paused != oldPaused)
@@ -466,27 +500,6 @@ void Window::DrawUI()
         const bool oldRayTracingPaused = m_rayTracingPaused;
         if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
             m_pauseRayTracing->Start(boost::any(bool(m_rayTracingPaused)));
-
-        const SurfaceShadingMode shadingMode = m_shadingMode;
-        const char* currentShadingItem = MakeReadableString(shadingMode);
-        if (ImGui::BeginCombo("Shading Mode", currentShadingItem)) 
-        {
-            for (int i = 0; i < static_cast<int>(SurfaceShadingMode::NUMB_SHADING_MODE); ++i)
-            {
-                const SurfaceShadingMode shadingItem = static_cast<SurfaceShadingMode>(i);
-                bool isSelected = (shadingItem == shadingMode);
-                if (ImGui::Selectable(MakeReadableString(shadingItem), isSelected))
-                {
-                    currentShadingItem = MakeReadableString(shadingItem);
-                    m_shadingMode = shadingItem;
-                }
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        if (shadingMode != m_shadingMode)
-            m_setSurfaceShadingMode->Start(m_shadingMode);
     }
     ImGui::End();
 
@@ -496,7 +509,7 @@ void Window::DrawUI()
         if (m_firstUIDraw)
         {
             ImGui::SetNextWindowSize(ImVec2(370,250));
-            ImGui::SetNextWindowPos(ImVec2(20,20));
+            ImGui::SetNextWindowPos(ImVec2(m_size.Width-370-5,5));
         }
 
         ImGui::Begin("Diagnostics");

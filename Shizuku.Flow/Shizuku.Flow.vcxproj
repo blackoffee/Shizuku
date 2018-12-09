@@ -102,9 +102,9 @@
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
-
-copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
+mkdir "$(OutDir)\Assets"
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -175,9 +175,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
-
-copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
+mkdir "$(OutDir)\Assets"
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -258,6 +258,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
+    <ClCompile Include="Command\RestartSimulation.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SetContourMinMax.cpp" />
     <ClCompile Include="Command\SetContourMode.cpp" />
@@ -297,6 +298,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
+    <ClInclude Include="Command\RestartSimulation.h" />
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SetContourMinMax.h" />
     <ClInclude Include="Command\SetContourMode.h" />

@@ -20,12 +20,12 @@ int main(int argc, char **argv)
 
     std::shared_ptr<Flow> flow = std::make_shared<Flow>();
 
-    Rect<int> windowSize = Rect<int>(1000, 700);
+    Rect<int> windowSize = Rect<int>(1200, 700);
 
     Window::Instance().SetGraphics(flow);
 
     Window::Instance().Resize(windowSize);
-    Window::Instance().InitializeGlfw(debug);
+    Window::Instance().InitializeGlfw();
     Window::Instance().InitializeImGui();
     flow->Initialize();
     Window::Instance().RegisterCommands();
@@ -35,6 +35,8 @@ int main(int argc, char **argv)
     if (diag)
         Window::Instance().EnableDiagnostics();
 
+    if (debug)
+        Window::Instance().EnableDebug();
 
     Window::Instance().Display();
 

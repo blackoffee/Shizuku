@@ -20,6 +20,7 @@ namespace Shizuku{
             class MoveObstruction;
             class PauseSimulation; 
             class PauseRayTracing;
+            class RestartSimulation;
             class SetSimulationScale;
             class SetTimestepsPerFrame;
             class SetContourMode;
@@ -49,6 +50,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<MoveObstruction> m_moveObstruction;
         std::shared_ptr<PauseSimulation> m_pauseSimulation;
         std::shared_ptr<PauseRayTracing> m_pauseRayTracing;
+        std::shared_ptr<RestartSimulation> m_restartSimulation;
         std::shared_ptr<SetSimulationScale> m_setSimulationScale;
         std::shared_ptr<SetTimestepsPerFrame> m_timestepsPerFrame;
         std::shared_ptr<SetInletVelocity> m_setVelocity;
@@ -72,6 +74,7 @@ namespace Shizuku{ namespace Presentation{
         SurfaceShadingMode m_shadingMode;
         bool m_rayTracingPaused;
         bool m_diagEnabled;
+        bool m_debug;
 
         TimeHistory m_history;
 
@@ -85,9 +88,10 @@ namespace Shizuku{ namespace Presentation{
         void RegisterGlfwInputs();
         void Resize(const Rect<int>& size);
         void Display();
-        void InitializeGlfw(const bool p_debug);
+        void InitializeGlfw();
         void InitializeImGui();
         void ApplyInitialFlowSettings();
+        void EnableDebug();
         void EnableDiagnostics();
 
         void Resize(GLFWwindow* window, int width, int height);

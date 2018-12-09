@@ -34,7 +34,7 @@ namespace
 
     float PillarHeightFromDepth(const float p_depth)
     {
-        return p_depth + 0.15f;
+        return p_depth + 0.3f;
     }
 }
 
@@ -823,7 +823,7 @@ void GraphicsManager::UpdateObstructionScales()
 
 void GraphicsManager::UpdateLbmInputs()
 {
-    float omega = 1.9f;
+    float omega = 1.97f;
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetOmega(omega);
     const float u = cudaLbm->GetInletVelocity();

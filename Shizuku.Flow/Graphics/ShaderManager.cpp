@@ -148,21 +148,21 @@ std::shared_ptr<ShaderProgram> ShaderManager::GetCausticsProgram()
 void ShaderManager::CompileShaders()
 {
     GetShaderProgram()->Initialize("Surface");
-    GetShaderProgram()->CreateShader("SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
-    GetShaderProgram()->CreateShader("SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
+    GetShaderProgram()->CreateShader("Assets/SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
+    GetShaderProgram()->CreateShader("Assets/SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
     GetLightingProgram()->Initialize("Lighting");
-    GetLightingProgram()->CreateShader("SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
+    GetLightingProgram()->CreateShader("Assets/SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
     GetObstProgram()->Initialize("Obstructions");
-    GetObstProgram()->CreateShader("Obstructions.comp.glsl", GL_COMPUTE_SHADER);
+    GetObstProgram()->CreateShader("Assets/Obstructions.comp.glsl", GL_COMPUTE_SHADER);
     GetCausticsProgram()->Initialize("Caustics");
-    GetCausticsProgram()->CreateShader("Caustics.vert.glsl", GL_VERTEX_SHADER);
-    GetCausticsProgram()->CreateShader("Caustics.frag.glsl", GL_FRAGMENT_SHADER);
+    GetCausticsProgram()->CreateShader("Assets/Caustics.vert.glsl", GL_VERTEX_SHADER);
+    GetCausticsProgram()->CreateShader("Assets/Caustics.frag.glsl", GL_FRAGMENT_SHADER);
     m_outputProgram->Initialize("Output");
-    m_outputProgram->CreateShader("Output.vert.glsl", GL_VERTEX_SHADER);
-    m_outputProgram->CreateShader("Output.frag.glsl", GL_FRAGMENT_SHADER);
+    m_outputProgram->CreateShader("Assets/Output.vert.glsl", GL_VERTEX_SHADER);
+    m_outputProgram->CreateShader("Assets/Output.frag.glsl", GL_FRAGMENT_SHADER);
     m_floorProgram->Initialize("Floor");
-    m_floorProgram->CreateShader("Floor.vert.glsl", GL_VERTEX_SHADER);
-    m_floorProgram->CreateShader("Floor.frag.glsl", GL_FRAGMENT_SHADER);
+    m_floorProgram->CreateShader("Assets/Floor.vert.glsl", GL_VERTEX_SHADER);
+    m_floorProgram->CreateShader("Assets/Floor.frag.glsl", GL_FRAGMENT_SHADER);
 
 }
 
@@ -179,7 +179,7 @@ void ShaderManager::AllocateStorageBuffers()
 void ShaderManager::SetUpFloorTexture()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("Floor.png", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("Assets/Floor.png", &width, &height, 0, SOIL_LOAD_RGB);
     std::cout << SOIL_last_result() << std::endl;
     assert(image != NULL);
     float* tex = new float[4 * width*height];
@@ -212,7 +212,7 @@ void ShaderManager::SetUpFloorTexture()
 void ShaderManager::SetUpEnvironmentTexture()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("Environment.png", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("Assets/Environment.png", &width, &height, 0, SOIL_LOAD_RGB);
     assert(image != NULL);
     float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
@@ -725,10 +725,6 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     surface->Unbind();
 
     shader->Unset();   
-
-    //m_pillar->SetPosition(Types::Point<float>(0.5, 0));
-    //m_pillar->SetSize(Rect<float>(0.11, 0.11));
-    //m_pillar->Draw(modelMatrix, projectionMatrix);
 
     for (const auto pillar : m_pillars)
     {
