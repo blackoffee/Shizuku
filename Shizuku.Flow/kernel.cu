@@ -493,7 +493,7 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 }
 
 __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, Domain simDomain)
+    Obstruction* obstructions, Domain simDomain, const float obstHeight)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -517,20 +517,16 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     {
         if (obstID >= 0)
         {
-            float fullObstHeight = -1.f+OBST_HEIGHT;
-            if (obstructions[obstID].state == State::NEW)
+            float fullObstHeight = -1.f+obstHeight;
+            if (obstructions[obstID].state == State::ACTIVE)
             {
-                zcoord = dmin(fullObstHeight, zcoord + 0.15f);
+                zcoord = fullObstHeight;
             }
-            else if (obstructions[obstID].state == State::REMOVED)
+            else if (obstructions[obstID].state == State::INACTIVE)
             {
                 obstructions[obstID].u = 0.0f;
                 obstructions[obstID].v = 0.0f;
                 zcoord = dmax(-1.f, zcoord - 0.15f);
-            }
-            else if (obstructions[obstID].state == State::ACTIVE)
-            {
-                zcoord = fullObstHeight;
             }
             else
             {
@@ -568,30 +564,6 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     vbo[j].w = color;
 }
 
-__global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstructions)
-{
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-    int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float zcoord = vbo[j].z;
-
-    int obstID = FindOverlappingObstruction(x, y, obstructions);
-    if (obstID > -1)
-    {
-        if (obstID >= 0)
-        {
-            if (zcoord > -1.f+OBST_HEIGHT-0.1f)
-            {
-                obstructions[obstID].state = State::ACTIVE;
-            }
-            if (zcoord < -1.f+0.1f)
-            {
-                obstructions[obstID].state = State::INACTIVE;
-            }
-        }
-    }
-}
-
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
     float3 rayDir, Obstruction* obstructions, Domain simDomain)
 {
@@ -605,7 +577,8 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
 
     if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
     {
-        if (IsInsideObstruction(x, y, obstructions, 1.f))
+        const int obstId = FindOverlappingObstruction(x, y, obstructions, 1.f);
+        if (obstId > -1)
         {
             float3 nw{ vbo[j+MAX_XDIM].x, vbo[j+MAX_XDIM].y, vbo[j+MAX_XDIM].z };
             float3 ne{ vbo[j+MAX_XDIM+1].x, vbo[j+MAX_XDIM+1].y, vbo[j+MAX_XDIM+1].z };
@@ -779,7 +752,7 @@ texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
 __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
-    float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth)
+    float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth, const float obstHeight)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -898,7 +871,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         else
         {
             unsigned char refractedColor[4];
-            if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, obstHeight*xDimVisible))
             {
                 std::memcpy(refractedColor, &(vbo[(int)(refractionIntersect.x+0.5f) + (int)(refractionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
                     sizeof(refractedColor));
@@ -913,7 +886,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
             unsigned char reflectedColor[4];
             float3 reflectedRayDest = elementPosition + xDimVisible*reflectedRay;
-            if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, obstHeight*xDimVisible))
             {
                 std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
                     sizeof(reflectedColor));
@@ -953,7 +926,7 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
     for (int i = 0; i < MAXOBSTS; i++)
     {
         if ((abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f) &&
-            obst_h[i].state != State::REMOVED && obst_h[i].state != State::INACTIVE)
+            obst_h[i].state != State::INACTIVE)
         {
             Obstruction obst = obst_h[i];
             obst.x /= scaleFactor;
@@ -1044,7 +1017,7 @@ void InitializeFloor(float4* vis, Domain &simDomain)
 }
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
-    const float3 cameraPosition, Domain &simDomain, const float waterDepth)
+    const float3 cameraPosition, Domain &simDomain, const float waterDepth, const float obstHeight)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1056,8 +1029,8 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
         (vis, floor_d, obst_d, simDomain);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain);
-    UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain, obstHeight);
+    //UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
     PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
@@ -1096,7 +1069,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
 }
 
 void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
-    Domain &simDomain, const float waterDepth, const bool simplified)
+    Domain &simDomain, const float waterDepth, const float obstHeight, const bool simplified)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1105,6 +1078,6 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
     gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified, waterDepth);
+    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified, waterDepth, obstHeight);
 }
 

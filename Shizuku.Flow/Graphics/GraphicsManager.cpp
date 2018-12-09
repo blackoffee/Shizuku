@@ -144,7 +144,7 @@ void GraphicsManager::SetWaterDepth(const float p_depth)
 
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             UpdatePillar(i, m_obstructions[i]);
         }
@@ -326,7 +326,9 @@ void GraphicsManager::RunCuda()
 
     m_timers[TimerKey::PrepareFloor].Tick();
 
-    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode, m_waterDepth);
+
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
+        m_viewMode, m_waterDepth);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
@@ -339,7 +341,8 @@ void GraphicsManager::RunCuda()
         }
     }
 
-    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth);
+    const float obstHeight = PillarHeightFromDepth(m_waterDepth);
+    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth, obstHeight);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);
@@ -396,7 +399,8 @@ void GraphicsManager::RunSurfaceRefraction()
             cameraPos = m_cameraPosition;
         }
 
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth,
+        const float obstHeight = PillarHeightFromDepth(m_waterDepth);
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
             m_surfaceShadingMode == SimplifiedRayTracing);
 
         // unmap buffer object
@@ -688,7 +692,7 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
         return;
     }
 
-    Obstruction obst = { m_currentObstShape, p_simPos.X*m_scaleFactor, p_simPos.Y*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::NEW  };
+    Obstruction obst = { m_currentObstShape, p_simPos.X*m_scaleFactor, p_simPos.Y*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
     const int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
@@ -709,7 +713,7 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
 {
     if (obstId >= 0)
     {
-        m_obstructions[obstId].state = State::REMOVED;
+        m_obstructions[obstId].state = State::INACTIVE;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         if (m_useCuda)
             UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], m_scaleFactor);
@@ -733,8 +737,7 @@ int GraphicsManager::FindUnusedObstructionId()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state == State::REMOVED || 
-            m_obstructions[i].state == State::INACTIVE)
+        if (m_obstructions[i].state == State::INACTIVE)
         {
             return i;
         }
@@ -750,7 +753,7 @@ int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor, m_obstructions[i].y/m_scaleFactor);
             if (newDist < dist)
@@ -770,7 +773,7 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor,
                 m_obstructions[i].y/m_scaleFactor);
@@ -803,7 +806,7 @@ void GraphicsManager::UpdateObstructionScales()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             if (m_useCuda)
             {

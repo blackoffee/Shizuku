@@ -13,8 +13,6 @@ namespace Shizuku { namespace Flow{
     {
         ACTIVE = 0,
         INACTIVE = 1,
-        NEW = 2,
-        REMOVED = 3
     };
 
     struct Obstruction
