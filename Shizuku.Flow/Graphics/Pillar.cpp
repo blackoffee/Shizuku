@@ -129,8 +129,8 @@ void Pillar::PrepareShader()
 {
     m_shaderProgram = std::make_shared<ShaderProgram>();
     m_shaderProgram->Initialize("Pillar");
-    m_shaderProgram->CreateShader("Pillar.vert.glsl", GL_VERTEX_SHADER);
-    m_shaderProgram->CreateShader("Pillar.frag.glsl", GL_FRAGMENT_SHADER);
+    m_shaderProgram->CreateShader("Assets/Pillar.vert.glsl", GL_VERTEX_SHADER);
+    m_shaderProgram->CreateShader("Assets/Pillar.frag.glsl", GL_FRAGMENT_SHADER);
 }
 
 void Pillar::SetDefinition(const PillarDefinition& p_def)
