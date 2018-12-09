@@ -1,4 +1,3 @@
-#define WATER_DEPTH_NORMALIZED 0.5f
 #define OBST_HEIGHT 0.8f
 #define WATER_REFRACTIVE_INDEX 1.33f
 
@@ -25,39 +24,6 @@ __global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumb
     obstructions[obstNumber].u = newObst.u;
     obstructions[obstNumber].v = newObst.v;
     obstructions[obstNumber].state = newObst.state;
-}
-
-inline __device__ bool IsInsideObstruction(const float x, const float y,
-    Obstruction* obstructions, const float tolerance = 0.f)
-{
-    for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
-        {
-            float r1 = obstructions[i].r1;
-            if (obstructions[i].shape == Shape::SQUARE){
-                if (abs(x - obstructions[i].x)<r1 + tolerance &&
-                    abs(y - obstructions[i].y)<r1 + tolerance)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::CIRCLE){//shift by 0.5 cells for better looks
-                float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
-                    + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
-                if (distFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::HORIZONTAL_LINE){
-                if (abs(x - obstructions[i].x)<r1*2+tolerance &&
-                    abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::VERTICAL_LINE){
-                if (abs(y - obstructions[i].y)<r1*2+tolerance &&
-                    abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;
-            }
-        }
-    }
-    return false;
 }
 
 inline __device__ int FindOverlappingObstruction(const float x, const float y,
@@ -236,8 +202,8 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     {
         float rho, u, v;
         rho = 1.0f;
-        u = obstructions[FindOverlappingObstruction(x, y, obstructions)].u;
-        v = obstructions[FindOverlappingObstruction(x, y, obstructions)].v;
+        u = obstructions[obstId].u;
+        v = obstructions[obstId].v;
         lbm.MovingWall(rho, u, v);
     }
     else{
@@ -492,16 +458,8 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
     
     if (x < xDimVisible && y < yDimVisible)
     {
-        float2 lightPositionOnFloor;
-        if (IsInsideObstruction(x, y, obstructions,1.f))
-        {
-            lightPositionOnFloor = make_float2(x, y);
-        }
-        else
-        {
-            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
-                x, y, simDomain, waterDepth);
-        }
+        float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
+            x, y, simDomain, waterDepth);
 
         vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
         vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
@@ -554,9 +512,9 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     unsigned char B = 255.0f;
     unsigned char A = 255.f;
 
-    if (IsInsideObstruction(x, y, obstructions, 0.99f))
+    int obstID = FindOverlappingObstruction(x, y, obstructions,0.99f);
+    if (obstID > -1)
     {
-        int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
         if (obstID >= 0)
         {
             float fullObstHeight = -1.f+OBST_HEIGHT;
@@ -617,9 +575,9 @@ __global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstr
     int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     float zcoord = vbo[j].z;
 
-    if (IsInsideObstruction(x, y, obstructions, 1.f))
+    int obstID = FindOverlappingObstruction(x, y, obstructions);
+    if (obstID > -1)
     {
-        int obstID = FindOverlappingObstruction(x, y, obstructions);
         if (obstID >= 0)
         {
             if (zcoord > -1.f+OBST_HEIGHT-0.1f)
