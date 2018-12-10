@@ -91,7 +91,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;WIN64;SHIZUK_FLOW_EXPORTS;_DEBUG;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;SHIZUK_FLOW_EXPORTS;_DEBUG;_CONSOLE;NDEBUG;REDUCED_RESOLUTION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -101,10 +101,10 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-
-copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
+      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
+mkdir "$(OutDir)\Assets"
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -174,10 +174,10 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
-
-copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
+      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
+mkdir "$(OutDir)\Assets"
+copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -248,11 +248,17 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
     <ClCompile Include="Command\Pan.cpp" />
+    <ClCompile Include="Command\Parameter\ModelSpacePointParameter.cpp" />
+    <ClCompile Include="Command\Parameter\MinMaxParameter.cpp" />
+    <ClCompile Include="Command\Parameter\ScaleParameter.cpp" />
     <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp" />
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp" />
+    <ClCompile Include="Command\Parameter\ViscosityParameter.cpp" />
+    <ClCompile Include="Command\Parameter\DepthParameter.cpp" />
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
+    <ClCompile Include="Command\RestartSimulation.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SetContourMinMax.cpp" />
     <ClCompile Include="Command\SetContourMode.cpp" />
@@ -261,11 +267,14 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
+    <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
-    <ClCompile Include="Diagnostics.cpp" />
+    <ClCompile Include="Query.cpp" />
     <ClCompile Include="Flow.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
+    <ClCompile Include="Graphics\Pillar.cpp" />
+    <ClCompile Include="Graphics\PillarDefinition.cpp" />
     <ClCompile Include="Graphics\ShaderManager.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>CppCode</FileType>
@@ -279,13 +288,17 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Command\MoveObstruction.h" />
     <ClInclude Include="Command\Pan.h" />
+    <ClInclude Include="Command\Parameter\ModelSpacePointParameter.h" />
     <ClInclude Include="Command\Parameter\MinMaxParameter.h" />
     <ClInclude Include="Command\Parameter\ScaleParameter.h" />
     <ClInclude Include="Command\Parameter\ScreenPointParameter.h" />
     <ClInclude Include="Command\Parameter\VelocityParameter.h" />
+    <ClInclude Include="Command\Parameter\ViscosityParameter.h" />
+    <ClInclude Include="Command\Parameter\DepthParameter.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
+    <ClInclude Include="Command\RestartSimulation.h" />
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SetContourMinMax.h" />
     <ClInclude Include="Command\SetContourMode.h" />
@@ -294,26 +307,35 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
     <ClInclude Include="Command\SetViscosity.h" />
+    <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
-    <ClInclude Include="Diagnostics.h" />
+    <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
+    <ClInclude Include="Graphics\Obstruction.h" />
+    <ClInclude Include="Graphics\Pillar.h" />
+    <ClInclude Include="Graphics\PillarDefinition.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />
     <ClInclude Include="Graphics\ShadingMode.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="LbmNode.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="TimerKey.h" />
     <ClInclude Include="VectorUtils.h" />
     <ClInclude Include="Domain.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\Floor.frag.glsl" />
+    <None Include="Shaders\Floor.vert.glsl" />
     <None Include="Shaders\Output.frag.glsl" />
     <None Include="Shaders\Output.vert.glsl" />
+    <None Include="Shaders\Pillar.frag.glsl" />
+    <None Include="Shaders\Pillar.vert.glsl" />
     <None Include="Shaders\SurfaceShader.comp.glsl" />
-    <None Include="Shaders\FloorShader.frag.glsl" />
-    <None Include="Shaders\FloorShader.vert.glsl" />
+    <None Include="Shaders\Caustics.frag.glsl" />
+    <None Include="Shaders\Caustics.vert.glsl" />
     <None Include="Shaders\SurfaceShader.frag.glsl" />
     <None Include="Shaders\Obstructions.comp.glsl" />
     <None Include="Shaders\SurfaceShader.vert.glsl" />

@@ -4,8 +4,12 @@
 #include "kernel.h"
 #include "Domain.h"
 #include "CudaCheck.h"
+#include "TimerKey.h"
+#include "Obstruction.h"
+#include "PillarDefinition.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 
 #include <GLEW/glew.h>
@@ -18,23 +22,19 @@
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
 
-namespace{
-    float intCoordToFloatCoord(const int x, const int xDim)
-    {
-        return (static_cast<float> (x) / xDim)*2.f - 1.f;
-    }
-
-    int floatCoordToIntCoord(const float x, const int xDim)
-    {
-        return static_cast<int> ((x+1.f)/2.f*xDim);
-    }
-
+namespace
+{
     float GetDistanceBetweenTwoPoints(const float x1, const float y1,
         const float x2, const float y2)
     {
         float dx = x2 - x1;
         float dy = y2 - y1;
         return sqrt(dx*dx + dy*dy);
+    }
+
+    float PillarHeightFromDepth(const float p_depth)
+    {
+        return p_depth + 0.3f;
     }
 }
 
@@ -43,17 +43,24 @@ GraphicsManager::GraphicsManager()
     m_graphics = new ShaderManager;
     m_graphics->CreateCudaLbm();
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
-    m_rotate = { 60.f, 0.f, 45.f };
-    m_translate = { 0.f, 0.f, 0.0f };
+    m_rotate = { 55.f, 60.f, 30.f };
+    m_translate = { 0.f, 0.6f, 0.f };
     m_surfaceShadingMode = RayTracing;
+    m_waterDepth = 0.2f;
+    m_currentObstShape = Shape::SQUARE;
+    m_currentObstSize = 25.f;
+
     const int framesForAverage = 20;
-    m_stopwatch = Stopwatch(framesForAverage);
+    m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::PrepareFloor] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::PrepareSurface] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::ProcessFloor] = Stopwatch(framesForAverage);
+    m_timers[TimerKey::ProcessSurface] = Stopwatch(framesForAverage);
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
 {
     m_viewSize = size;
-    glViewport(0, 0, size.Width, size.Height);
 }
 
 Rect<int>& GraphicsManager::GetViewport()
@@ -121,9 +128,27 @@ Shape GraphicsManager::GetCurrentObstShape()
     return m_currentObstShape;
 }
 
-void GraphicsManager::SetObstructionsPointer(Obstruction* obst)
+float GraphicsManager::GetFloorZ()
 {
-    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
+    return -1.f;
+}
+
+float GraphicsManager::GetWaterHeight()
+{
+    return GetFloorZ() + m_waterDepth;
+}
+
+void GraphicsManager::SetWaterDepth(const float p_depth)
+{
+    m_waterDepth = p_depth;
+
+    for (int i = 0; i < MAXOBSTS; i++)
+    {
+        if (m_obstructions[i].state != State::INACTIVE)
+        {
+            UpdatePillar(i, m_obstructions[i]);
+        }
+    }
 }
 
 float GraphicsManager::GetScaleFactor()
@@ -176,18 +201,14 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-;
-    SetProjectionMatrix(glm::perspective(45.0f, static_cast<float>(xDimVisible) / yDimVisible, 0.1f, 10.0f));
+    m_projection = glm::perspective(glm::radians(60.f), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
     //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
     glm::mat4 modelMat;
-    modelMat = glm::translate(modelMat, glm::vec3{ 0.0, 0.3, -2.0 });
-    modelMat = glm::translate(modelMat, glm::vec3{ m_translate.x, m_translate.y, 0.f });
-    modelMat = glm::scale(modelMat, glm::vec3{ 0.7f+0.1f*m_translate.z });
-    modelMat = glm::rotate(modelMat, -m_rotate.x*(float)PI/180.0f, glm::vec3{ 1, 0, 0 });
-    modelMat = glm::rotate(modelMat, m_rotate.z*(float)PI/180.0f, glm::vec3{ 0, 0, 1 });
-    SetModelMatrix(modelMat);
+    glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
+    rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
+    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
+    modelMat = trans*rot;
+    m_modelView = modelMat;
 }
 
 void GraphicsManager::SetUpGLInterop()
@@ -207,9 +228,14 @@ void GraphicsManager::SetUpShaders()
     UpdateLbmInputs();
     graphics->InitializeComputeShaderData();
 
-    graphics->SetUpTextures(m_viewSize);
+    graphics->SetUpEnvironmentTexture();
+    graphics->SetUpCausticsTexture();
+    graphics->SetUpFloorTexture();
+    graphics->SetUpOutputTexture(m_viewSize);
     graphics->SetUpSurfaceVao();
+    graphics->SetUpFloorVao();
     graphics->SetUpOutputVao();
+
 }
 
 void GraphicsManager::SetUpCuda()
@@ -223,6 +249,17 @@ void GraphicsManager::SetUpCuda()
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();
 
+    DoInitializeFlow();
+}
+
+void GraphicsManager::InitializeFlow()
+{
+    DoInitializeFlow();
+}
+
+void GraphicsManager::DoInitializeFlow()
+{
+    CudaLbm* cudaLbm = GetCudaLbm();
     const float u = cudaLbm->GetInletVelocity();
 
     float* fA_d = cudaLbm->GetFA();
@@ -242,15 +279,21 @@ void GraphicsManager::SetUpCuda()
     InitializeDomain(dptr, fA_d, im_d, u, *domain);
     InitializeDomain(dptr, fB_d, im_d, u, *domain);
 
-    InitializeFloor(dptr, floor_d, *domain);
+    InitializeSurface(dptr, *domain);
+    InitializeFloor(dptr, *domain);
 
     cudaGraphicsUnmapResources(1, &cudaSolutionField, 0);
 }
 
-
 void GraphicsManager::RunCuda()
 {
-    m_stopwatch.Tick();
+    m_timers[TimerKey::SolveFluid].Tick();
+
+    if (m_scaleFactor != m_oldScaleFactor)
+    {
+        DoInitializeFlow();
+        m_oldScaleFactor = m_scaleFactor;
+    }
 
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
@@ -269,8 +312,6 @@ void GraphicsManager::RunCuda()
     cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
 
     UpdateLbmInputs();
-    float u = cudaLbm->GetInletVelocity();
-    float omega = cudaLbm->GetOmega();
 
     float* floorTemp_d = cudaLbm->GetFloorTemp();
     Obstruction* obst_d = cudaLbm->GetDeviceObst();
@@ -280,7 +321,14 @@ void GraphicsManager::RunCuda()
     if (!cudaLbm->IsPaused())
         MarchSolution(cudaLbm);
 
-    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max, m_viewMode);
+    cudaThreadSynchronize();
+    m_timers[TimerKey::SolveFluid].Tock();
+
+    m_timers[TimerKey::PrepareFloor].Tick();
+
+
+    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
+        m_viewMode, m_waterDepth);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
@@ -293,20 +341,21 @@ void GraphicsManager::RunCuda()
         }
     }
 
-    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain);
-    CleanUpDeviceVBO(dptr, *domain);
+    const float obstHeight = PillarHeightFromDepth(m_waterDepth);
+    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth, obstHeight);
 
     // unmap buffer object
     cudaGraphicsUnmapResources(1, &vbo_resource, 0);
     cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
 
     cudaThreadSynchronize();
-    const double time = m_stopwatch.Tock();
-    //std::cout << "Time: " << time << "  Average: " << m_stopwatch.GetAverage() << std::endl;
+    m_timers[TimerKey::PrepareFloor].Tock();
 }
 
 void GraphicsManager::RunSurfaceRefraction()
 {
+    m_timers[TimerKey::PrepareSurface].Tick();
+
     if (ShouldRefractSurface())
     {
         // map OpenGL buffer object for writing from CUDA
@@ -332,7 +381,7 @@ void GraphicsManager::RunSurfaceRefraction()
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
         Domain* domain = cudaLbm->GetDomain();
-        glm::mat4 modelMatrixInv = glm::inverse(GetProjectionMatrix()*GetModelMatrix());
+        glm::mat4 modelMatrixInv = glm::inverse(m_projection*m_modelView);
         glm::vec4 origin = { 0, 0, 0, 1 };
 
 
@@ -350,7 +399,8 @@ void GraphicsManager::RunSurfaceRefraction()
             cameraPos = m_cameraPosition;
         }
 
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain,
+        const float obstHeight = PillarHeightFromDepth(m_waterDepth);
+        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
             m_surfaceShadingMode == SimplifiedRayTracing);
 
         // unmap buffer object
@@ -358,6 +408,9 @@ void GraphicsManager::RunSurfaceRefraction()
         gpuErrchk(cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0));
         gpuErrchk(cudaGraphicsUnmapResources(1, &envTextureResource, 0));
     }
+
+    cudaThreadSynchronize();
+    m_timers[TimerKey::PrepareSurface].Tock();
 }
 
 void GraphicsManager::RunComputeShader()
@@ -377,17 +430,17 @@ void GraphicsManager::RunSimulation()
     }
 }
 
-void GraphicsManager::RenderFloorToTexture()
+void GraphicsManager::RenderCausticsToTexture()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderFloorToTexture(*cudaLbm->GetDomain(), m_viewSize);
+    GetGraphics()->RenderCausticsToTexture(*cudaLbm->GetDomain(), m_viewSize);
 }
 
-void GraphicsManager::RenderVbo()
+void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderSurface(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        GetModelMatrix(), GetProjectionMatrix());
+    GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
+        m_modelView, m_projection);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -402,10 +455,10 @@ bool GraphicsManager::ShouldRefractSurface()
 
 void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos)
 {
-    glm::mat4 mvp = glm::make_mat4(m_projectionMatrix)*glm::make_mat4(m_modelMatrix);
+    glm::mat4 mvp = m_projection*m_modelView;
     glm::mat4 mvpInv = glm::inverse(mvp);
-    glm::vec4 v1 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
-    glm::vec4 v2 = { (float)p_pos.X/(m_viewport[2]-m_viewport[0])*2.f-1.f, (float)p_pos.Y/(m_viewport[3]-m_viewport[1])*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
+    glm::vec4 v1 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 0.0f*2.f-1.f, 1.0f };
+    glm::vec4 v2 = { (float)p_pos.X/(m_viewSize.Width)*2.f-1.f, (float)p_pos.Y/(m_viewSize.Height)*2.f-1.f, 1.0f*2.f-1.f, 1.0f };
     glm::vec4 r1 = mvpInv*v1;
     glm::vec4 r2 = mvpInv*v2;
     rayOrigin.x = r1.x/r1.w;
@@ -427,19 +480,14 @@ void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const
 
 glm::vec4 GraphicsManager::GetCameraDirection()
 {
-    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
-    glm::mat4 model = glm::make_mat4(m_modelMatrix);
     glm::vec4 v = { 0.f, 0.f, 1.f, 1.f };
-    //return glm::vec4 { 0.f, 2.f, -1.f, 1.f };
-    return glm::inverse(proj*model)*v;
+    return glm::inverse(m_projection*m_modelView)*v;
 }
 
 
 glm::vec4 GraphicsManager::GetCameraPosition()
 {
-    glm::mat4 proj = glm::make_mat4(m_projectionMatrix);
-    glm::mat4 model = glm::make_mat4(m_modelMatrix);
-    return glm::inverse(proj*model)*glm::vec4(0, 0, 0, 1);
+    return glm::inverse(m_projection*m_modelView)*glm::vec4(0, 0, 0, 1);
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos)
@@ -506,27 +554,53 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
     return returnVal;
 }
 
-void GraphicsManager::GetSimCoordFromMouseRay(int &xOut, int &yOut, 
-    const Point<int>& p_pos, boost::optional<const float> planeZ)
+Point<float> GraphicsManager::GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos)
 {
     glm::vec3 rayOrigin, rayDir;
-    GetMouseRay(rayOrigin, rayDir, p_pos);
+    GetMouseRay(rayOrigin, rayDir, p_screenPos);
 
-    float z;
-    if (planeZ.is_initialized())
-        z = planeZ.value();
+    float t;
+    if (p_modelSpaceZPos.is_initialized())
+    {
+        const float z = p_modelSpaceZPos.value();
+        t = (z - rayOrigin.z)/rayDir.z;
+        const float xf = rayOrigin.x + t*rayDir.x;
+        const float yf = rayOrigin.y + t*rayDir.y;
+
+        return Point<float>(xf, yf);
+    }
     else
-        z = m_currentZ;
+    {
+        const float t1 = (-1.f - rayOrigin.z)/rayDir.z;
+        const float t2 = (-1.f + m_waterDepth - rayOrigin.z) / rayDir.z;
+        t = std::min(t1, t2);
+        float xf = rayOrigin.x + t*rayDir.x;
+        float yf = rayOrigin.y + t*rayDir.y;
 
-    //glm::vec4 cameraPos = GetCameraPosition();
-    //printf("Origin: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
-    const float t = (z - rayOrigin.z)/rayDir.z;
-    const float xf = rayOrigin.x + t*rayDir.x;
-    const float yf = rayOrigin.y + t*rayDir.y;
+        if (xf <= 1.f && yf <= 1.f && xf >= -1.f && yf >= -1.f)
+        {
+            return Point<float>(xf, yf);
+        }
+        else
+        {
+            t = std::max(t1, t2);
+            xf = rayOrigin.x + t*rayDir.x;
+            yf = rayOrigin.y + t*rayDir.y;
+            return Point<float>(xf, yf);
+        }
+    }
+}
 
+Point<int> GraphicsManager::GetSimCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos)
+{
+    Point<float> modelPos = GetModelSpaceCoordFromScreenPos(p_screenPos, p_modelSpaceZPos);
+    return SimPosFromModelSpacePos(modelPos);
+}
+
+Point<int> GraphicsManager::SimPosFromModelSpacePos(const Point<float>& p_modelPos)
+{
     const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    xOut = (xf + 1.f)*0.5f*xDimVisible;
-    yOut = (yf + 1.f)*0.5f*xDimVisible;
+    return Point<int>((p_modelPos.X + 1.f)*0.5f*xDimVisible, (p_modelPos.Y + 1.f)*0.5f*xDimVisible);
 }
 
 void GraphicsManager::Pan(const Point<int>& p_posDiff)
@@ -555,18 +629,16 @@ int GraphicsManager::PickObstruction(const Point<int>& p_pos)
     return -1;
 }
 
-
 void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff)
 {
-    int simX1, simY1, simX2, simY2;
-    GetSimCoordFromMouseRay(simX1, simY1, p_pos-p_diff);
-    GetSimCoordFromMouseRay(simX2, simY2, p_pos);
+    Point<int> simCoord1 = GetSimCoordFromScreenPos(p_pos-p_diff, m_currentZ);
+    Point<int> simCoord2 = GetSimCoordFromScreenPos(p_pos, m_currentZ);
     Obstruction obst = m_obstructions[obstId];
-    obst.x = simX2*m_scaleFactor;
-    obst.y = simY2*m_scaleFactor;
+    obst.x = simCoord2.X*m_scaleFactor;
+    obst.y = simCoord2.Y*m_scaleFactor;
     const int stepsPerFrame = GetCudaLbm()->GetTimeStepsPerFrame();
-    const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simX2-simX1) / stepsPerFrame));
-    const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simY2-simY1) / stepsPerFrame));
+    const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.X-simCoord1.X) / stepsPerFrame));
+    const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.Y-simCoord1.Y) / stepsPerFrame));
     obst.u = u;
     obst.v = v;
     obst.state = State::ACTIVE;
@@ -580,8 +652,22 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     {
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
+    
+    UpdatePillar(obstId, obst);
 }
 
+void GraphicsManager::UpdatePillar(const int p_obstId, const Obstruction& p_obst)
+{
+    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    const int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
+    const float scaleX = m_scaleFactor*xDimVisible*0.5f;
+    const float scaleY = m_scaleFactor*yDimVisible*0.5f;
+    const Point<float> pillarPos(static_cast<float>(p_obst.x)/scaleX-1.f,
+        static_cast<float>(p_obst.y)/scaleY-1.f);
+    const Box<float> pillarSize(static_cast<float>(2.f*p_obst.r1/scaleX),
+        static_cast<float>(2.f*p_obst.r1/scaleY), PillarHeightFromDepth(m_waterDepth));
+    m_graphics->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
+}
 
 void GraphicsManager::Zoom(const int dir, const float mag)
 {
@@ -594,16 +680,27 @@ void GraphicsManager::Zoom(const int dir, const float mag)
     }   
 }
 
-void GraphicsManager::AddObstruction(const int simX, const int simY)
+void GraphicsManager::AddObstruction(const Point<float>& p_modelSpacePos)
 {
-    Obstruction obst = { m_currentObstShape, simX*m_scaleFactor, simY*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::NEW  };
-    int obstId = FindUnusedObstructionId();
+    AddObstruction(SimPosFromModelSpacePos(p_modelSpacePos));
+}
+
+void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
+{
+    if (p_simPos.X > MAX_XDIM - 1 || p_simPos.Y > MAX_YDIM - 1 || p_simPos.X < 0 || p_simPos.Y < 0)
+    {
+        return;
+    }
+
+    Obstruction obst = { m_currentObstShape, p_simPos.X*m_scaleFactor, p_simPos.Y*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
+    const int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     if (m_useCuda)
         UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
+    UpdatePillar(obstId, obst);
 }
 
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
@@ -616,12 +713,13 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
 {
     if (obstId >= 0)
     {
-        m_obstructions[obstId].state = State::REMOVED;
+        m_obstructions[obstId].state = State::INACTIVE;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         if (m_useCuda)
             UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], m_scaleFactor);
         else
             GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
+        GetGraphics()->RemovePillar(obstId);
     }
 }
 
@@ -639,8 +737,7 @@ int GraphicsManager::FindUnusedObstructionId()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state == State::REMOVED || 
-            m_obstructions[i].state == State::INACTIVE)
+        if (m_obstructions[i].state == State::INACTIVE)
         {
             return i;
         }
@@ -656,7 +753,7 @@ int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor, m_obstructions[i].y/m_scaleFactor);
             if (newDist < dist)
@@ -676,7 +773,7 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     int closestObstId = -1;
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor,
                 m_obstructions[i].y/m_scaleFactor);
@@ -691,19 +788,9 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
     return closestObstId;
 }
 
-void GraphicsManager::UpdateViewTransformations()
-{
-    glGetIntegerv(GL_VIEWPORT, m_viewport);
-    //glGetDoublev(GL_MODELVIEW_MATRIX, m_modelMatrix);
-    //glGetDoublev(GL_PROJECTION_MATRIX, m_projectionMatrix);
-}
-
 void GraphicsManager::UpdateGraphicsInputs()
 {
-    //m_contourMinValue = 0.f;// Layout::GetCurrentContourSliderValue(*rootPanel, 1);
-    //m_contourMaxValue = 0.2f;// Layout::GetCurrentContourSliderValue(*rootPanel, 2);
-    m_currentObstSize = 15;// 4-30  Layout::GetCurrentSliderValue(*rootPanel, "Slider_Size");
-    //m_scaleFactor = 2.5f;// Layout::GetCurrentSliderValue(*rootPanel, "Slider_Resolution");
+    glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
     UpdateDomainDimensions();
     UpdateObstructionScales();
 }
@@ -719,7 +806,7 @@ void GraphicsManager::UpdateObstructionScales()
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
-        if (m_obstructions[i].state != State::REMOVED)
+        if (m_obstructions[i].state != State::INACTIVE)
         {
             if (m_useCuda)
             {
@@ -734,10 +821,9 @@ void GraphicsManager::UpdateObstructionScales()
     }
 }
 
-
 void GraphicsManager::UpdateLbmInputs()
 {
-    float omega = 1.9f;
+    float omega = 1.97f;
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetOmega(omega);
     const float u = cudaLbm->GetInletVelocity();
@@ -745,38 +831,7 @@ void GraphicsManager::UpdateLbmInputs()
     graphics->UpdateLbmInputs(u, omega);
 }
 
-
-glm::vec4 GraphicsManager::GetViewportMatrix()
+std::map<TimerKey, Stopwatch>& GraphicsManager::GetTimers()
 {
-    return glm::make_vec4(m_viewport);
+    return m_timers;
 }
-
-glm::mat4 GraphicsManager::GetModelMatrix()
-{
-    return glm::transpose(glm::make_mat4(m_modelMatrix));
-}
-
-glm::mat4 GraphicsManager::GetProjectionMatrix()
-{
-    return glm::transpose(glm::make_mat4(m_projectionMatrix));
-}
-
-void GraphicsManager::SetModelMatrix(glm::mat4 modelMatrix)
-{
-    const float *source = (const float*)glm::value_ptr(modelMatrix);
-    for (int i = 0; i < 16; ++i)
-    {
-        m_modelMatrix[i] = source[i];
-    }
-}
-
-void GraphicsManager::SetProjectionMatrix(glm::mat4 projMatrix)
-{
-    const float *source = (const float*)glm::value_ptr(projMatrix);
-    for (int i = 0; i < 16; ++i)
-    {
-        m_projectionMatrix[i] = source[i];
-    }
-}
-
-

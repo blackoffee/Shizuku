@@ -9,9 +9,9 @@
 namespace Shizuku{ namespace Flow{ namespace Command{
     struct FLOW_API VelocityParameter
     {
-        float velocity;
+        float Velocity;
         VelocityParameter();
-        VelocityParameter(const float p_velocity);
+        VelocityParameter(const float p_viscosity);
     };
 } } }
 

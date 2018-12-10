@@ -9,13 +9,11 @@
 namespace Shizuku{ namespace Flow{ namespace Command{
     struct FLOW_API ScaleParameter
     {
-        float scale;
+        float Scale;
 
-        ScaleParameter()
-        {}
+        ScaleParameter();
 
-        ScaleParameter(const float p_scale) : scale(p_scale)
-        {}
+        ScaleParameter(const float p_scale);
     };
 } } }
 

@@ -17,7 +17,7 @@ void RemoveObstruction::Start(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        m_currentObst = graphicsManager->PickObstruction(pos.position);
+        m_currentObst = graphicsManager->PickObstruction(pos.Position);
 
         if (m_currentObst >= 0)
         {
@@ -42,7 +42,7 @@ void RemoveObstruction::End(boost::any const p_param)
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
         if (m_state == ACTIVE)
         {
-            if (m_currentObst == graphicsManager->PickObstruction(pos.position))
+            if (m_currentObst == graphicsManager->PickObstruction(pos.Position))
             {
                 graphicsManager->RemoveSpecifiedObstruction(m_currentObst); 
             }

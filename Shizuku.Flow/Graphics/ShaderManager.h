@@ -1,8 +1,11 @@
 #pragma once
 #include "common.h"
 #include "ShadingMode.h"
+#include "Pillar.h"
+#include "PillarDefinition.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
+#include "Shizuku.Core/Types/Point.h"
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -10,14 +13,9 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
-#ifdef SHIZUKU_FLOW_EXPORTS  
-#define FLOW_API __declspec(dllexport)   
-#else  
-#define FLOW_API __declspec(dllimport)   
-#endif  
 
 class CudaLbm;
 class Domain;
@@ -27,12 +25,16 @@ namespace Core{
     class Ogl;
     class ShaderProgram;
 }
+namespace Flow
+{
+    class Obstruction;
+}
 }
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
 
-class FLOW_API ShaderManager
+class ShaderManager
 {
 private:
     class Ssbo
@@ -47,6 +49,7 @@ private:
     cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_floorLightTexture;
     GLuint m_envTexture;
+    GLuint m_poolFloorTexture;
     GLuint m_floorFbo;
     GLuint m_outputFbo;
     GLuint m_outputTexture;
@@ -54,12 +57,20 @@ private:
     std::shared_ptr<ShaderProgram> m_shaderProgram;
     std::shared_ptr<ShaderProgram> m_lightingProgram;
     std::shared_ptr<ShaderProgram> m_obstProgram;
-    std::shared_ptr<ShaderProgram> m_floorProgram;
+    std::shared_ptr<ShaderProgram> m_causticsProgram;
     std::shared_ptr<ShaderProgram> m_outputProgram;
+    std::shared_ptr<ShaderProgram> m_floorProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
     void CreateElementArrayBuffer();
+
+    void RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+    void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+
+    //std::shared_ptr<Pillar> m_pillar;
+    std::map<const int, std::shared_ptr<Pillar>> m_pillars;
 
 public:
     ShaderManager();
@@ -78,12 +89,17 @@ public:
     std::shared_ptr<ShaderProgram> GetShaderProgram();
     std::shared_ptr<ShaderProgram> GetLightingProgram();
     std::shared_ptr<ShaderProgram> GetObstProgram();
-    std::shared_ptr<ShaderProgram> GetFloorProgram();
+    std::shared_ptr<ShaderProgram> GetCausticsProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
-    void SetUpTextures(const Rect<int>& p_viewSize);
+    void SetUpEnvironmentTexture();
+    void SetUpFloorTexture();
+    void SetUpCausticsTexture();
+    void SetUpOutputTexture(const Rect<int>& p_viewSize);
     void SetUpSurfaceVao();
     void SetUpOutputVao();
+    void SetUpWallVao();
+    void SetUpFloorVao();
     void InitializeObstSsbo();
     void InitializeComputeShaderData();
 
@@ -98,10 +114,14 @@ public:
     void UpdateLbmInputs(const float u, const float omega);
 
     void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const Types::MinMax<float>& p_minMax);
-    void UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor);
+    void UpdateObstructionsUsingComputeShader(const int obstId, Shizuku::Flow::Obstruction &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
-    void RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void RenderSurface(const ShadingMode p_shadingMode , Domain &domain,
+
+    void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
+    void Render(const ShadingMode p_shadingMode , Domain &domain,
         const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
+
+    void UpdatePillar(const int obstId, const PillarDefinition& p_def);
+    void RemovePillar(const int obstId);
 };

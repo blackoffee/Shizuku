@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shizuku.Core/Rect.h"
+#include "Shizuku.Core/Types/Point.h"
 
 #ifdef SHIZUKU_FLOW_EXPORTS  
 #define FLOW_API __declspec(dllexport)   
@@ -12,13 +13,16 @@ using namespace Shizuku::Core;
 
 namespace Shizuku { namespace Flow{
     class Flow;
-    struct FLOW_API Diagnostics
+    enum TimerKey;
+    struct FLOW_API Query
     {
     private:
         Flow* m_flow;
     public:
-        Diagnostics();
-        Diagnostics(Flow& p_flow);
+        Query();
+        Query(Flow& p_flow);
         Rect<int> SimulationDomain();
+        double GetTime(TimerKey p_key);
+        Types::Point<float> ProbeModelSpaceCoord(const Types::Point<int>& p_screenPoint);
     };
 } }

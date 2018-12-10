@@ -6,6 +6,6 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
     public:
         SetViscosity(Flow& p_flow);
-        void Start(const float p_viscosity);
+        void Start(boost::any const p_param);
     };
 } } }

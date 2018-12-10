@@ -1,13 +1,7 @@
 #pragma once
 #include "cuda_runtime.h"
 
-#ifdef SHIZUKU_FLOW_EXPORTS  
-#define FLOW_API __declspec(dllexport)   
-#else  
-#define FLOW_API __declspec(dllimport)   
-#endif  
-
-class FLOW_API Domain
+class Domain
 {
     int m_xDim;
     int m_yDim;

@@ -6,6 +6,6 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
     public:
         SetSimulationScale(Flow& p_flow);
-        void Start(const float p_scale);
+        void Start(boost::any const p_param);
     };
 } } }

@@ -1,5 +1,6 @@
 #include "ShaderManager.h"
 #include "GraphicsManager.h"
+#include "Obstruction.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
@@ -10,6 +11,7 @@
 #include <GLEW/glew.h>
 #include <string>
 #include <cstring>
+#include <iostream>
 #include <assert.h>
 
 using namespace Shizuku::Core;
@@ -21,10 +23,13 @@ ShaderManager::ShaderManager()
     m_shaderProgram = std::make_shared<ShaderProgram>();
     m_lightingProgram = std::make_shared<ShaderProgram>();
     m_obstProgram = std::make_shared<ShaderProgram>();
-    m_floorProgram = std::make_shared<ShaderProgram>();
+    m_causticsProgram = std::make_shared<ShaderProgram>();
     m_outputProgram = std::make_shared<ShaderProgram>();
+    m_floorProgram = std::make_shared<ShaderProgram>();
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
+
+    m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -135,26 +140,30 @@ std::shared_ptr<ShaderProgram> ShaderManager::GetObstProgram()
     return m_obstProgram;
 }
 
-std::shared_ptr<ShaderProgram> ShaderManager::GetFloorProgram()
+std::shared_ptr<ShaderProgram> ShaderManager::GetCausticsProgram()
 {
-    return m_floorProgram;
+    return m_causticsProgram;
 }
 
 void ShaderManager::CompileShaders()
 {
     GetShaderProgram()->Initialize("Surface");
-    GetShaderProgram()->CreateShader("SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
-    GetShaderProgram()->CreateShader("SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
+    GetShaderProgram()->CreateShader("Assets/SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
+    GetShaderProgram()->CreateShader("Assets/SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
     GetLightingProgram()->Initialize("Lighting");
-    GetLightingProgram()->CreateShader("SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
+    GetLightingProgram()->CreateShader("Assets/SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
     GetObstProgram()->Initialize("Obstructions");
-    GetObstProgram()->CreateShader("Obstructions.comp.glsl", GL_COMPUTE_SHADER);
-    GetFloorProgram()->Initialize("Floor");
-    GetFloorProgram()->CreateShader("FloorShader.vert.glsl", GL_VERTEX_SHADER);
-    GetFloorProgram()->CreateShader("FloorShader.frag.glsl", GL_FRAGMENT_SHADER);
+    GetObstProgram()->CreateShader("Assets/Obstructions.comp.glsl", GL_COMPUTE_SHADER);
+    GetCausticsProgram()->Initialize("Caustics");
+    GetCausticsProgram()->CreateShader("Assets/Caustics.vert.glsl", GL_VERTEX_SHADER);
+    GetCausticsProgram()->CreateShader("Assets/Caustics.frag.glsl", GL_FRAGMENT_SHADER);
     m_outputProgram->Initialize("Output");
-    m_outputProgram->CreateShader("Output.vert.glsl", GL_VERTEX_SHADER);
-    m_outputProgram->CreateShader("Output.frag.glsl", GL_FRAGMENT_SHADER);
+    m_outputProgram->CreateShader("Assets/Output.vert.glsl", GL_VERTEX_SHADER);
+    m_outputProgram->CreateShader("Assets/Output.frag.glsl", GL_FRAGMENT_SHADER);
+    m_floorProgram->Initialize("Floor");
+    m_floorProgram->CreateShader("Assets/Floor.vert.glsl", GL_VERTEX_SHADER);
+    m_floorProgram->CreateShader("Assets/Floor.frag.glsl", GL_FRAGMENT_SHADER);
+
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -167,17 +176,50 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
-void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
+void ShaderManager::SetUpFloorTexture()
 {
     int width, height;
-    unsigned char* image = SOIL_load_image("BlueSky.png", &width, &height, 0, SOIL_LOAD_RGB);
+    unsigned char* image = SOIL_load_image("Assets/Floor.png", &width, &height, 0, SOIL_LOAD_RGB);
+    std::cout << SOIL_last_result() << std::endl;
     assert(image != NULL);
-    float* tex = new float[4*width*height];
+    float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
     {
-        tex[4*i] = image[3*i];
-        tex[4*i+1] = image[3*i + 1];
-        tex[4*i+2] = image[3*i + 2];
+        tex[4 * i] = image[3 * i]/255.f;
+        tex[4 * i + 1] = image[3 * i + 1]/255.f;
+        tex[4 * i + 2] = image[3 * i + 2]/255.f;
+        tex[4 * i + 3] = 1.f;// color[3];
+    }
+
+    glGenTextures(1, &m_poolFloorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
+
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, tex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    SOIL_free_image_data(image);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void ShaderManager::SetUpEnvironmentTexture()
+{
+    int width, height;
+    unsigned char* image = SOIL_load_image("Assets/Environment.png", &width, &height, 0, SOIL_LOAD_RGB);
+    assert(image != NULL);
+    float* tex = new float[4 * width*height];
+    for (int i = 0; i < width*height; ++i)
+    {
+        tex[4 * i] = image[3 * i];
+        tex[4 * i + 1] = image[3 * i + 1];
+        tex[4 * i + 2] = image[3 * i + 2];
         tex[4 * i + 3] = unsigned char(255);// color[3];
     }
 
@@ -197,8 +239,10 @@ void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
     SOIL_free_image_data(image);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+}
 
-
+void ShaderManager::SetUpCausticsTexture()
+{
     // set up FBO and texture to render to 
     glGenFramebuffers(1, &m_floorFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
@@ -227,8 +271,10 @@ void ShaderManager::SetUpTextures(const Rect<int>& p_viewSize)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
-
+void ShaderManager::SetUpOutputTexture(const Rect<int>& p_viewSize)
+{
     //! Output Fbo
     glGenTextures(1, &m_outputTexture);
     glBindTexture(GL_TEXTURE_2D, m_outputTexture);
@@ -341,6 +387,30 @@ void ShaderManager::SetUpSurfaceVao()
     surface->Unbind();
 }
 
+void ShaderManager::SetUpFloorVao()
+{
+    std::shared_ptr<Ogl::Vao> floor = Ogl->CreateVao("floor");
+    floor->Bind();
+
+    const GLfloat quadVertices[] = {
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+    };
+
+    Ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 18, "floor", GL_STATIC_DRAW);
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("floor"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    floor->Unbind();
+}
+
 void ShaderManager::SetUpOutputVao()
 {
     std::shared_ptr<Ogl::Vao> output = Ogl->CreateVao("output");
@@ -365,20 +435,44 @@ void ShaderManager::SetUpOutputVao()
     output->Unbind();
 }
 
-void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_viewSize)
+void ShaderManager::SetUpWallVao()
+{
+    std::shared_ptr<Ogl::Vao> wall = Ogl->CreateVao("wall");
+    wall->Bind();
+
+    const GLfloat quadVertices[] = {
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+    };
+
+    Ogl->CreateBuffer(GL_ARRAY_BUFFER, quadVertices, 18, "wall", GL_STATIC_DRAW);
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("wall"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    wall->Unbind();
+}
+
+void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
 {
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
-    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+    glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
+    //glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    std::shared_ptr<ShaderProgram> floorShader = GetFloorProgram();
-    floorShader->Use();
+    std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
+    causticsShader->Use();
 
-    floorShader->SetUniform("xDimVisible", domain.GetXDimVisible());
-    floorShader->SetUniform("yDimVisible", domain.GetYDimVisible());
+    causticsShader->SetUniform("texCoordScale", 3.f);
     glViewport(0, 0, 1024, 1024);
 
     int yDimVisible = domain.GetYDimVisible();
@@ -386,7 +480,7 @@ void ShaderManager::RenderFloorToTexture(Domain &domain, const Rect<int>& p_view
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
         BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
 
-    floorShader->Unset();
+    causticsShader->Unset();
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -547,26 +641,78 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
+void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
+{
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    //! Disabling for now. Need to recreate correct size textures on window resize
+    const bool offscreenRender = false;
+
+    if (offscreenRender)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+    RenderFloor(p_modelMatrix, p_projectionMatrix);
+
+    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix);
+
+    if (offscreenRender)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //Draw quad
+        std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
+        outputVao->Bind();
+
+        m_outputProgram->Use();
+        glBindTexture(GL_TEXTURE_2D, m_outputTexture);
+
+        glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        m_outputProgram->Unset();
+
+        outputVao->Unbind();
+    }
+}
+
+void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
+{
+    std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
+    floorShader->Use();
+    glActiveTexture(GL_TEXTURE0);
+    floorShader->SetUniform("modelMatrix", p_modelMatrix);
+    floorShader->SetUniform("projectionMatrix", p_projectionMatrix);
+
+    std::shared_ptr<Ogl::Vao> floor = Ogl->GetVao("floor");
+    floor->Bind();
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0 , 6);
+
+    floor->Unbind();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    floorShader->Unset();
+
+//    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
+//        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+}
+
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
     const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_outputFbo);
-    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
-
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
-    shader->SetUniform("modelMatrix", glm::transpose(modelMatrix));
-    shader->SetUniform("projectionMatrix", glm::transpose(projectionMatrix));
+    shader->SetUniform("modelMatrix", modelMatrix);
+    shader->SetUniform("projectionMatrix", projectionMatrix);
 
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
-    int yDimVisible = domain.GetYDimVisible();
-     //Draw floor
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
 
     if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
     {
@@ -574,27 +720,35 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    //Draw water surface
+    const int yDimVisible = domain.GetYDimVisible();
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
     surface->Unbind();
 
-    shader->Unset();
+    shader->Unset();   
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    for (const auto pillar : m_pillars)
+    {
+        pillar.second->Draw(modelMatrix, projectionMatrix);
+    }
+}
 
+void ShaderManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
+{
+    const auto mapIt = m_pillars.lower_bound(obstId);
+    if (mapIt != m_pillars.end() && !m_pillars.key_comp()(obstId, mapIt->first))
+    {
+        m_pillars[obstId]->SetDefinition(p_def);
+    }
+    else
+    {
+        std::shared_ptr<Pillar> pillar = std::make_shared<Pillar>(Ogl);
+        pillar->Initialize();
+        pillar->SetDefinition(p_def);
+        m_pillars.insert(mapIt, std::map<const int, std::shared_ptr<Pillar>>::value_type(obstId, pillar));
+    }
+}
 
-    //Draw quad
-    std::shared_ptr<Ogl::Vao> outputVao = Ogl->GetVao("output");
-    outputVao->Bind();
-
-    m_outputProgram->Use();
-    glBindTexture(GL_TEXTURE_2D, m_outputTexture);
-
-    glDrawArrays(GL_TRIANGLES, 0 , 6);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    m_outputProgram->Unset();
-
-    outputVao->Unbind();
+void ShaderManager::RemovePillar(const int obstId)
+{
+    m_pillars.erase(obstId);
 }

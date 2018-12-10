@@ -21,6 +21,7 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="TimeHistory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h" />
@@ -48,6 +49,7 @@
     <ClInclude Include="..\imgui\imstb_truetype.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="TimeHistory.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ImGui">

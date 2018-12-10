@@ -73,12 +73,39 @@
       <Filter>Command</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp" />
-    <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp">
       <Filter>Command\Parameter</Filter>
     </ClCompile>
     <ClCompile Include="Command\Parameter\ScreenPointParameter.cpp">
       <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\ScaleParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\MinMaxParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\ViscosityParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetWaterDepth.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\DepthParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Pillar.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PillarDefinition.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\Parameter\ModelSpacePointParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Query.cpp" />
+    <ClCompile Include="Command\RestartSimulation.cpp">
+      <Filter>Command</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -162,7 +189,6 @@
     <ClInclude Include="Command\Parameter\VelocityParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
-    <ClInclude Include="Diagnostics.h" />
     <ClInclude Include="Command\Parameter\ScreenPointParameter.h">
       <Filter>Command\Parameter</Filter>
     </ClInclude>
@@ -171,6 +197,32 @@
     </ClInclude>
     <ClInclude Include="Command\Parameter\ScaleParameter.h">
       <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\ViscosityParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerKey.h" />
+    <ClInclude Include="Command\SetWaterDepth.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\DepthParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Pillar.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Obstruction.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\PillarDefinition.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\ModelSpacePointParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Query.h" />
+    <ClInclude Include="Command\RestartSimulation.h">
+      <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -186,16 +238,28 @@
     <None Include="Shaders\SurfaceShader.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\FloorShader.frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\FloorShader.vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\Output.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Output.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Caustics.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Caustics.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Floor.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Floor.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Pillar.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Pillar.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -1,16 +1,13 @@
 #pragma once
 #include "../common.h"
+#include "Obstruction.h"
 #include "Shizuku.Core/Rect.h"
 
-#ifdef SHIZUKU_FLOW_EXPORTS  
-#define FLOW_API __declspec(dllexport)   
-#else  
-#define FLOW_API __declspec(dllimport)   
-#endif  
+using namespace Shizuku::Flow;
 
 class Domain;
 
-class FLOW_API CudaLbm
+class CudaLbm
 {
 private:
     int m_maxX;

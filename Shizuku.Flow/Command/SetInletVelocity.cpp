@@ -15,7 +15,7 @@ void SetInletVelocity::Start(boost::any const p_param)
     try
     {
         const VelocityParameter& vel = boost::any_cast<VelocityParameter>(p_param);
-        graphicsManager->SetVelocity(vel.velocity);
+        graphicsManager->SetVelocity(vel.Velocity);
     }
     catch (boost::bad_any_cast &e)
     {

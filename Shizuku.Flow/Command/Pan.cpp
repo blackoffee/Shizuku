@@ -16,7 +16,7 @@ void Pan::Start(boost::any const p_param)
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
         m_state = ACTIVE;
-        m_initialPos = pos.position;
+        m_initialPos = pos.Position;
     }
     catch (boost::bad_any_cast &e)
     {
@@ -31,11 +31,11 @@ void Pan::Track(boost::any const p_param)
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
         if (m_state == ACTIVE)
         {
-            Point<int> posDiff = pos.position - m_initialPos;
+            Point<int> posDiff = pos.Position - m_initialPos;
             m_flow->Graphics()->Pan(posDiff);
         }
 
-        m_initialPos = pos.position;
+        m_initialPos = pos.Position;
     }
     catch (boost::bad_any_cast &e)
     {

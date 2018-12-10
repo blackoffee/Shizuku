@@ -1,4 +1,5 @@
 #pragma once
+#include "TimeHistory.h"
 #include "Shizuku.Core/Utilities/FpsTracker.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
@@ -9,7 +10,7 @@ struct GLFWwindow;
 namespace Shizuku{
     namespace Flow{
         class Flow;
-        class Diagnostics;
+        class Query;
         namespace Command{
             class Zoom;
             class Pan;
@@ -19,12 +20,14 @@ namespace Shizuku{
             class MoveObstruction;
             class PauseSimulation; 
             class PauseRayTracing;
+            class RestartSimulation;
             class SetSimulationScale;
             class SetTimestepsPerFrame;
             class SetContourMode;
             class SetContourMinMax;
             class SetSurfaceShadingMode;
             class SetInletVelocity;
+            class SetWaterDepth;
             enum ContourMode;
             enum SurfaceShadingMode;
         }
@@ -47,26 +50,33 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<MoveObstruction> m_moveObstruction;
         std::shared_ptr<PauseSimulation> m_pauseSimulation;
         std::shared_ptr<PauseRayTracing> m_pauseRayTracing;
+        std::shared_ptr<RestartSimulation> m_restartSimulation;
         std::shared_ptr<SetSimulationScale> m_setSimulationScale;
         std::shared_ptr<SetTimestepsPerFrame> m_timestepsPerFrame;
         std::shared_ptr<SetInletVelocity> m_setVelocity;
         std::shared_ptr<SetContourMode> m_setContourMode;
         std::shared_ptr<SetContourMinMax> m_setContourMinMax;
         std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
+        std::shared_ptr<SetWaterDepth> m_setDepth;
         FpsTracker m_fpsTracker;
-        std::shared_ptr<Shizuku::Flow::Diagnostics> m_diag;
+        std::shared_ptr<Shizuku::Flow::Query> m_query;
         GLFWwindow* m_window;
         Rect<int> m_size;
 
-        float m_simulationScale;
+        float m_resolution;
         int m_timesteps;
         float m_velocity;
         float m_viscosity;
+        float m_depth;
         ContourMode m_contourMode;
         MinMax<float> m_contourMinMax;
         bool m_paused;
         SurfaceShadingMode m_shadingMode;
         bool m_rayTracingPaused;
+        bool m_diagEnabled;
+        bool m_debug;
+
+        TimeHistory m_history;
 
         bool m_firstUIDraw;
 
@@ -80,6 +90,9 @@ namespace Shizuku{ namespace Presentation{
         void Display();
         void InitializeGlfw();
         void InitializeImGui();
+        void ApplyInitialFlowSettings();
+        void EnableDebug();
+        void EnableDiagnostics();
 
         void Resize(GLFWwindow* window, int width, int height);
         void MouseButton(const int button, const int state, const int mod);
@@ -93,6 +106,7 @@ namespace Shizuku{ namespace Presentation{
             static Window s_window = Window();
             return s_window;
         }
+
 
     private:
         void Draw3D();

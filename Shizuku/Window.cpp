@@ -17,11 +17,18 @@
 #include "Shizuku.Flow/Command/SetContourMode.h"
 #include "Shizuku.Flow/Command/SetContourMinMax.h"
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
+#include "Shizuku.Flow/Command/SetWaterDepth.h"
+#include "Shizuku.Flow/Command/RestartSimulation.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
+#include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
+#include "Shizuku.Flow/Command/Parameter/ModelSpacePointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
+#include "Shizuku.Flow/Command/Parameter/MinMaxParameter.h"
+#include "Shizuku.Flow/Command/Parameter/DepthParameter.h"
 
-#include "Shizuku.Flow/Diagnostics.h"
+#include "Shizuku.Flow/Query.h"
 #include "Shizuku.Flow/Flow.h"
+#include "Shizuku.Flow/TimerKey.h"
 
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
@@ -31,6 +38,7 @@
 #include <boost/any.hpp>
 #include <boost/none.hpp>
 
+#include <iostream>
 #include <typeinfo>
 #include <memory>
 
@@ -112,16 +120,67 @@ namespace
             throw "Unexpected contour mode";
         }
     }
+
+    namespace TimeHistoryProviders{
+        static float SolveFluid(void* data, int i) { return TimeHistory::Instance(TimerKey::SolveFluid).DataProvider(data, i); }
+        static float PrepareFloor(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareFloor).DataProvider(data, i); }
+        static float PrepareSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::PrepareSurface).DataProvider(data, i); }
+        static float ProcessFloor(void* data, int i) { return TimeHistory::Instance(TimerKey::ProcessFloor).DataProvider(data, i); }
+        static float ProcessSurf(void* data, int i) { return TimeHistory::Instance(TimerKey::ProcessSurface).DataProvider(data, i); }
+    }
+
+    void CreateHistoryPlotLines(Query& p_query, const TimerKey p_key, const char* p_label)
+    {
+        const double time = p_query.GetTime(p_key);
+        TimeHistory::Instance(p_key).Append(time);
+
+        float(*provider) (void*, int) = NULL;
+        switch (p_key)
+        {
+            case TimerKey::SolveFluid:
+                provider = TimeHistoryProviders::SolveFluid;
+                break;
+            case TimerKey::PrepareSurface:
+                provider = TimeHistoryProviders::PrepareSurf;
+                break;
+            case TimerKey::PrepareFloor:
+                provider = TimeHistoryProviders::PrepareFloor;
+                break;
+            case TimerKey::ProcessSurface:
+                provider = TimeHistoryProviders::ProcessSurf;
+                break;
+            case TimerKey::ProcessFloor:
+                provider = TimeHistoryProviders::ProcessFloor;
+                break;
+            default:
+                throw "Unexpected TimerKey";
+        }
+
+        const MinMax<double> minMax = TimeHistory::Instance(p_key).MinMax();
+        char timeStr[64];
+        sprintf_s(timeStr, "%f", time);
+        const int chartHeight = 64;
+        ImGui::PlotLines(p_label, provider, NULL, (TimeHistory::Instance(p_key).Size()), 0, timeStr,
+            minMax.Min, minMax.Max, ImVec2(0, chartHeight));
+    }
+
+    float ScaleFromResolution(const float p_res)
+    {
+        return -p_res + 2.f;
+    }
 }
 
 Window::Window() : 
-    m_simulationScale(2.5f),
+    m_resolution(0.5f),
     m_velocity(0.05f),
     m_timesteps(6),
     m_contourMode(ContourMode::Water),
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
+    m_depth(0.5f),
     m_paused(false),
+    m_diagEnabled(false),
+    //m_history(20),
     m_shadingMode(SurfaceShadingMode::RayTracing)
 {
 }
@@ -129,7 +188,7 @@ Window::Window() :
 void Window::SetGraphics(std::shared_ptr<Shizuku::Flow::Flow> flow)
 {
     m_flow = flow;
-    m_diag = std::make_shared<Diagnostics>(*flow);
+    m_query = std::make_shared<Query>(*flow);
 }
 
 void Window::RegisterCommands()
@@ -142,18 +201,24 @@ void Window::RegisterCommands()
     m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
     m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
+    m_restartSimulation = std::make_shared<RestartSimulation>(*m_flow);
     m_setSimulationScale = std::make_shared<SetSimulationScale>(*m_flow);
     m_timestepsPerFrame = std::make_shared<SetTimestepsPerFrame>(*m_flow);
     m_setVelocity = std::make_shared<SetInletVelocity>(*m_flow);
     m_setContourMode = std::make_shared<SetContourMode>(*m_flow);
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
+    m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
+}
 
-    m_setSimulationScale->Start(m_simulationScale);
+void Window::ApplyInitialFlowSettings()
+{
+    m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
     m_timestepsPerFrame->Start(m_timesteps);
     m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
     m_setContourMode->Start(m_contourMode);
     m_setSurfaceShadingMode->Start(m_shadingMode);
+    m_setDepth->Start(boost::any(DepthParameter(m_depth)));
 }
 
 void Window::InitializeImGui()
@@ -187,11 +252,22 @@ void Window::Resize(const Rect<int>& size)
     m_flow->Resize(size);
 }
 
+void Window::EnableDebug()
+{
+    m_debug = true;
+}
+
+void Window::EnableDiagnostics()
+{
+    m_diagEnabled = true;
+}
+
 void Window::MouseButton(const int button, const int state, const int mod)
 {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    const ScreenPointParameter param(Types::Point<int>(x, m_size.Height - 1 - y));
+    const Types::Point<int> screenPos(x, m_size.Height - 1 - y);
+    const ScreenPointParameter param(screenPos);
 
     if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS
         && mod == GLFW_MOD_CONTROL)
@@ -205,7 +281,7 @@ void Window::MouseButton(const int button, const int state, const int mod)
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
-        m_addObstruction->Start(param);
+        m_addObstruction->Start(ModelSpacePointParameter(m_query->ProbeModelSpaceCoord(screenPos)));
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
     {
@@ -253,8 +329,8 @@ void Window::TogglePaused()
 void Window::UpdateWindowTitle(const float fps, const Rect<int> &domainSize, const int tSteps)
 {
     char fpsReport[256];
-    int xDim = domainSize.Width;
-    int yDim = domainSize.Height;
+    const int xDim = domainSize.Width;
+    const int yDim = domainSize.Height;
     sprintf_s(fpsReport, 
         "Shizuku Flow running at: %i timesteps/frame at %3.1f fps = %3.1f timesteps/second on %ix%i mesh",
         tSteps, fps, m_timesteps*fps, xDim, yDim);
@@ -271,7 +347,7 @@ void Window::Draw3D()
 
     m_fpsTracker.Tock();
 
-    UpdateWindowTitle(m_fpsTracker.GetFps(), m_diag->SimulationDomain(), m_timesteps);
+    UpdateWindowTitle(m_fpsTracker.GetFps(), m_query->SimulationDomain(), m_timesteps);
 }
 
 void Window::InitializeGlfw()
@@ -289,8 +365,11 @@ void Window::InitializeGlfw()
     glewExperimental = GL_TRUE;
     glewInit();
 
-    glEnable              ( GL_DEBUG_OUTPUT );
-    glDebugMessageCallback(MessageCallback, 0);
+    if (m_debug)
+    {
+        glEnable              ( GL_DEBUG_OUTPUT );
+        glDebugMessageCallback(MessageCallback, 0);
+    }
 }
 
 void Window::DrawUI()
@@ -303,8 +382,11 @@ void Window::DrawUI()
 
     if (m_firstUIDraw)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,200));
-        ImGui::SetNextWindowPos(ImVec2(430,20));
+        ImGui::SetNextWindowSize(ImVec2(350,270));
+        ImGui::SetNextWindowPos(ImVec2(5,5));
+        //! HACK - Adding obst has to happen after lbm dimensions are set. Need to split up Flow initilization sequence
+        m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.2f, 0.2f)));
+        m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.1f, -0.3f)));
     }
 
     ImGui::Begin("Settings");
@@ -336,17 +418,19 @@ void Window::DrawUI()
             const char* format = "%.3f";
             switch (m_contourMode){
             case VelocityMagnitude:
+                maxRange = MinMax<float>(0.f, 4.f*m_velocity);
+                break;
             case VelocityU:
-                maxRange = MinMax<float>(0.f, 2.5f*m_velocity);
+                maxRange = MinMax<float>(-1.5f*m_velocity, 4.f*m_velocity);
                 break;
             case VelocityV:
-                maxRange = MinMax<float>(-m_velocity, m_velocity);
+                maxRange = MinMax<float>(-2.f*m_velocity, 2.f*m_velocity);
                 break;
             case Pressure:
-                maxRange = MinMax<float>(0.99f, 1.01f);
+                maxRange = MinMax<float>(0.98f, 1.02f);
                 break;
             case StrainRate:
-                maxRange = MinMax<float>(0.f, m_velocity*m_velocity);
+                maxRange = MinMax<float>(0.f, 2.f*m_velocity*m_velocity);
                 format = "%.5f";
                 break;
             }
@@ -357,13 +441,13 @@ void Window::DrawUI()
             ImGui::SliderFloat2("Contour Range", minMax, maxRange.Min, maxRange.Max, format);
             m_contourMinMax = MinMax<float>(minMax[0], minMax[1]);
             if (m_contourMinMax != oldMinMax)
-                m_setContourMinMax->Start(m_contourMinMax);
+                m_setContourMinMax->Start(boost::any(MinMaxParameter(m_contourMinMax)));
         }
 
-        const float oldScale = m_simulationScale;
-        ImGui::SliderFloat("Scale", &m_simulationScale, 4.0f, 1.0f, "%.3f");
-        if (oldScale != m_simulationScale)
-            m_setSimulationScale->Start(m_simulationScale);
+        const float oldRes = m_resolution;
+        ImGui::SliderFloat("Resolution", &m_resolution, 0.0f, 1.0f, "%.2f");
+        if (oldRes != m_resolution)
+            m_setSimulationScale->Start(boost::any(ScaleParameter(ScaleFromResolution(m_resolution))));
 
         const float oldTimesteps = m_timesteps;
         ImGui::SliderInt("Timesteps/Frame", &m_timesteps, 2, 30);
@@ -375,7 +459,39 @@ void Window::DrawUI()
         if (oldVel != m_velocity)
             m_setVelocity->Start(boost::any(VelocityParameter(m_velocity)));
 
+        const float oldDepth = m_depth;
+        ImGui::SliderFloat("Depth", &m_depth, 0.0f, 5.f, "%.2f");
+        if (oldDepth != m_depth)
+            m_setDepth->Start(boost::any(DepthParameter(m_depth)));
+
+        if (m_debug)
+        {
+            const SurfaceShadingMode shadingMode = m_shadingMode;
+            const char* currentShadingItem = MakeReadableString(shadingMode);
+            if (ImGui::BeginCombo("Shading Mode", currentShadingItem)) 
+            {
+                for (int i = 0; i < static_cast<int>(SurfaceShadingMode::NUMB_SHADING_MODE); ++i)
+                {
+                    const SurfaceShadingMode shadingItem = static_cast<SurfaceShadingMode>(i);
+                    bool isSelected = (shadingItem == shadingMode);
+                    if (ImGui::Selectable(MakeReadableString(shadingItem), isSelected))
+                    {
+                        currentShadingItem = MakeReadableString(shadingItem);
+                        m_shadingMode = shadingItem;
+                    }
+                    if (isSelected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            if (shadingMode != m_shadingMode)
+                m_setSurfaceShadingMode->Start(m_shadingMode);
+        }
+
         ImGui::Spacing();
+
+        if (ImGui::Button("Restart Simulation"))
+            m_restartSimulation->Start();
 
         const bool oldPaused = m_paused;
         if (ImGui::Checkbox("Pause Simulation", &m_paused) && m_paused != oldPaused)
@@ -384,29 +500,28 @@ void Window::DrawUI()
         const bool oldRayTracingPaused = m_rayTracingPaused;
         if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
             m_pauseRayTracing->Start(boost::any(bool(m_rayTracingPaused)));
-
-        const SurfaceShadingMode shadingMode = m_shadingMode;
-        const char* currentShadingItem = MakeReadableString(shadingMode);
-        if (ImGui::BeginCombo("Shading Mode", currentShadingItem)) 
-        {
-            for (int i = 0; i < static_cast<int>(SurfaceShadingMode::NUMB_SHADING_MODE); ++i)
-            {
-                const SurfaceShadingMode shadingItem = static_cast<SurfaceShadingMode>(i);
-                bool isSelected = (shadingItem == shadingMode);
-                if (ImGui::Selectable(MakeReadableString(shadingItem), isSelected))
-                {
-                    currentShadingItem = MakeReadableString(shadingItem);
-                    m_shadingMode = shadingItem;
-                }
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        if (shadingMode != m_shadingMode)
-            m_setSurfaceShadingMode->Start(m_shadingMode);
     }
     ImGui::End();
+
+
+    if (m_diagEnabled)
+    {
+        if (m_firstUIDraw)
+        {
+            ImGui::SetNextWindowSize(ImVec2(370,250));
+            ImGui::SetNextWindowPos(ImVec2(m_size.Width-370-5,5));
+        }
+
+        ImGui::Begin("Diagnostics");
+        {
+            CreateHistoryPlotLines(*m_query, TimerKey::SolveFluid, "Solve Fluid");
+            CreateHistoryPlotLines(*m_query, TimerKey::PrepareSurface, "Prepare Surface");
+            CreateHistoryPlotLines(*m_query, TimerKey::PrepareFloor, "Prepare Floor");
+            //CreateHistoryPlotLines(*m_query, TimerKey::ProcessSurface, "Process Surface");
+            //CreateHistoryPlotLines(*m_query, TimerKey::ProcessFloor, "Process Floor");
+        }
+        ImGui::End();
+    }
 
     ImGui::Render();
 
@@ -417,6 +532,7 @@ void Window::DrawUI()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     m_firstUIDraw = false;
+
 }
 
 void Window::Display()

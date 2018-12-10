@@ -3,9 +3,9 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in float color;
 
 out vec4 fColor;
+out vec2 texCoord;
 
-uniform int xDimVisible;
-uniform int yDimVisible;
+uniform float texCoordScale;
 
 vec4 unpackColor(float f)
 {
@@ -21,19 +21,19 @@ vec4 unpackColor(float f)
     float bf = float(b);
     float af = float(a);
     vec4 color;
-    color.x = rf/256.0;
-    color.y = gf/256.0;
-    color.z = bf/256.0;
-    color.w = af/256.0;
+    color.x = rf/255.f;
+    color.y = gf/255.f;
+    color.z = bf/255.f;
+    color.w = af/255.f;
 
     return color;
 }
-
-
 
 void main()
 {
     fColor = unpackColor(color);
 
     gl_Position = vec4(position,1.0f);
+
+    texCoord = texCoordScale * vec2(0.5f*(position.x+1.0f), 0.5f*(position.y+1.0f));
 }

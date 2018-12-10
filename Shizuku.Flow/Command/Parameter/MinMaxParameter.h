@@ -12,11 +12,9 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
         Shizuku::Core::Types::MinMax<float> MinMax;
 
-        MinMaxParameter()
-        {}
+        MinMaxParameter();
 
-        MinMaxParameter(const Shizuku::Core::Types::MinMax<float>& p_minMax) : MinMax(p_minMax)
-        {}
+        MinMaxParameter(const Shizuku::Core::Types::MinMax<float>& p_minMax);
     };
 } } }
 

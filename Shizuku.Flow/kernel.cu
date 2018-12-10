@@ -1,4 +1,3 @@
-#define WATER_DEPTH_NORMALIZED 0.5f
 #define OBST_HEIGHT 0.8f
 #define WATER_REFRACTIVE_INDEX 1.33f
 
@@ -7,6 +6,9 @@
 #include "CudaCheck.h"
 #include "VectorUtils.h"
 #include "Graphics/CudaLbm.h"
+#include "Graphics/Obstruction.h"
+
+using namespace Shizuku::Flow;
 
 /*----------------------------------------------------------------------------------------
  *	Device functions
@@ -22,39 +24,6 @@ __global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumb
     obstructions[obstNumber].u = newObst.u;
     obstructions[obstNumber].v = newObst.v;
     obstructions[obstNumber].state = newObst.state;
-}
-
-inline __device__ bool IsInsideObstruction(const float x, const float y,
-    Obstruction* obstructions, const float tolerance = 0.f)
-{
-    for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
-        {
-            float r1 = obstructions[i].r1;
-            if (obstructions[i].shape == Shape::SQUARE){
-                if (abs(x - obstructions[i].x)<r1 + tolerance &&
-                    abs(y - obstructions[i].y)<r1 + tolerance)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::CIRCLE){//shift by 0.5 cells for better looks
-                float distFromCenter = (x + 0.5f - obstructions[i].x)*(x + 0.5f - obstructions[i].x)
-                    + (y + 0.5f - obstructions[i].y)*(y + 0.5f - obstructions[i].y);
-                if (distFromCenter<(r1+tolerance)*(r1+tolerance)+0.1f)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::HORIZONTAL_LINE){
-                if (abs(x - obstructions[i].x)<r1*2+tolerance &&
-                    abs(y - obstructions[i].y)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;
-            }
-            else if (obstructions[i].shape == Shape::VERTICAL_LINE){
-                if (abs(y - obstructions[i].y)<r1*2+tolerance &&
-                    abs(x - obstructions[i].x)<LINE_OBST_WIDTH*0.501f+tolerance)
-                    return true;
-            }
-        }
-    }
-    return false;
 }
 
 inline __device__ int FindOverlappingObstruction(const float x, const float y,
@@ -95,7 +64,7 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     float3 rayDir = rayDest - rayOrigin;
     bool hit = false;
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
+        if (obstructions[i].state == State::ACTIVE)
         {
             float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, 0.f };
             float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };
@@ -173,25 +142,13 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     return hit;
 }
 
-
-__device__	void ChangeCoordinatesToNDC(float &xcoord,float &ycoord,
-    const int xDimVisible, const int yDimVisible)
-{
-    xcoord = threadIdx.x + blockDim.x*blockIdx.x;
-    ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-    xcoord /= xDimVisible *0.5f;
-    ycoord /= yDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
-    xcoord -= 1.0;// xdim / maxDim;
-    ycoord -= 1.0;// ydim / maxDim;
-}
-
 __device__	void ChangeCoordinatesToScaledFloat(float &xcoord,float &ycoord,
     const int xDimVisible, const int yDimVisible)
 {
     xcoord = threadIdx.x + blockDim.x*blockIdx.x;
     ycoord = threadIdx.y + blockDim.y*blockIdx.y;
-    xcoord /= xDimVisible *0.5f;
-    ycoord /= xDimVisible *0.5f;//(float)(blockDim.y*gridDim.y);
+    xcoord /= (xDimVisible-1) *0.5f;
+    ycoord /= (xDimVisible-1) *0.5f;//(float)(blockDim.y*gridDim.y);
     xcoord -= 1.0;// xdim / maxDim;
     ycoord -= 1.0;// ydim / maxDim;
 }
@@ -206,18 +163,6 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     LbmNode lbm;
     lbm.Initialize(f, 1.f, uMax, 0.f);
     lbm.WriteDistributions(f, x, y);
-
-    float xcoord, ycoord, zcoord;
-    int xDimVisible = simDomain.GetXDimVisible();
-    int yDimVisible = simDomain.GetYDimVisible();
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-    zcoord = 0.f;
-    unsigned char R(255), G(255), B(255), A(255);
-    unsigned char b[] = { R, G, B, A };
-    float color;
-    std::memcpy(&color, &b, sizeof(color));
-    int j = x + y*MAX_XDIM;
-    vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
 }
 
 // main LBM function including streaming and colliding
@@ -257,8 +202,8 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     {
         float rho, u, v;
         rho = 1.0f;
-        u = obstructions[FindOverlappingObstruction(x, y, obstructions)].u;
-        v = obstructions[FindOverlappingObstruction(x, y, obstructions)].v;
+        u = obstructions[obstId].u;
+        v = obstructions[obstId].v;
         lbm.MovingWall(rho, u, v);
     }
     else{
@@ -271,7 +216,7 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
 // main LBM function including streaming and colliding
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int contourVar, const float contMin, const float contMax,
-    const int viewMode, const float uMax, Domain simDomain)
+    const int viewMode, const float uMax, Domain simDomain, const float waterDepth)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -296,7 +241,8 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
 
     if (im == 1) rho = 1.0;
-    zcoord =  (-1.f+WATER_DEPTH_NORMALIZED) + 1.5f*(rho - 1.0f);
+    zcoord = -1.f + waterDepth + 1.5f*(rho - 1.0f);
+    //zcoord =  (-1.f+waterDepth) + 1.5f*(rho - 1.0f);
 
     //for color, need to convert 4 bytes (RGBA) to float
     float variableValue = 0.f;
@@ -334,18 +280,9 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     unsigned char B = 255;
     unsigned char A = 255;
 
-    if (contourVar == ContourVariable::WATER_RENDERING)
-    {
-        R = 100; G = 150; B = 255;
-        A = 100;
-    }
     if (im == 1 || im == 20){
         R = 204; G = 204; B = 204;
     }
-//    else if (im != 0 || x == xDimVisible-1)
-//    {
-//        zcoord = -1.f;
-//    }
 
     float color;
     unsigned char b[] = { R, G, B, A };
@@ -353,33 +290,6 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
 
     //vbo aray to be displayed
     vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
-}
-
-__global__ void CleanUpVBO(float4* vbo, Domain simDomain)
-{
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-    int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float xcoord, ycoord;
-    int xDimVisible = simDomain.GetXDimVisible();
-    int yDimVisible = simDomain.GetYDimVisible();
-    ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
-    if (x >= xDimVisible || y >= yDimVisible)
-    {
-        float zcoord = -1.f;
-        if (x == xDimVisible)
-        {
-            zcoord = vbo[(x - 1) + y*MAX_XDIM].z;
-        }
-
-        unsigned char b[] = { 0,0,0,0 };
-        float color;
-        std::memcpy(&color, &b, sizeof(color));
-        //clean up surface mesh
-        vbo[j] = make_float4(xcoord, ycoord, zcoord, color);
-        //clean up floor mesh
-        vbo[j+MAX_XDIM*MAX_YDIM] = make_float4(xcoord, ycoord, -1.f, color);
-    }
 }
 
 __global__ void PhongLighting(float4* vbo, Obstruction *obstructions, 
@@ -462,19 +372,17 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
     std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
 
-
-
-__global__ void InitializeFloorMesh(float4* vbo, float* floor_d, Domain simDomain)
+__global__ void InitializeMesh(float4* vbo, Domain simDomain)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
     float xcoord, ycoord, zcoord;
     ChangeCoordinatesToScaledFloat(xcoord, ycoord, xDimVisible, yDimVisible);
     zcoord = -1.f;
-    unsigned char R(255), G(255), B(255), A(255);
+    unsigned char R(255), G(255), B(255), A(0);
 
     unsigned char b[] = { R, G, B, A };
     float color;
@@ -495,7 +403,7 @@ __device__ float3 RefractRay(float3 incidentLight, float3 n)
 }
 
 __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
-    const int x, const int y, Domain simDomain)
+    const int x, const int y, Domain simDomain, const float waterDepth)
 {
     int xDimVisible = simDomain.GetXDimVisible();
     int yDimVisible = simDomain.GetYDimVisible();
@@ -521,10 +429,10 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLigh
 //    float r = 1.0 / WATER_REFRACTIVE_INDEX;
 //    float c = -(DotProduct(n, incidentLight));
 //    refractedLight = r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
-    const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
+    const float elemSpaceWaterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*waterDepth;
 
-    float dx = -refractedLight.x*waterDepth/refractedLight.z;
-    float dy = -refractedLight.y*waterDepth/refractedLight.z;
+    float dx = -refractedLight.x*elemSpaceWaterDepth/refractedLight.z;
+    float dy = -refractedLight.y*elemSpaceWaterDepth/refractedLight.z;
 
     return float2{ (float)x + dx, (float)y + dy };
 }
@@ -540,7 +448,7 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
 }
 
 __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
-    Obstruction* obstructions, Domain simDomain)
+    Obstruction* obstructions, Domain simDomain, const float waterDepth)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -550,16 +458,8 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
     
     if (x < xDimVisible && y < yDimVisible)
     {
-        float2 lightPositionOnFloor;
-        if (IsInsideObstruction(x, y, obstructions,1.f))
-        {
-            lightPositionOnFloor = make_float2(x, y);
-        }
-        else
-        {
-            lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
-                x, y, simDomain);
-        }
+        float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
+            x, y, simDomain, waterDepth);
 
         vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
         vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
@@ -593,7 +493,7 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 }
 
 __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, Domain simDomain)
+    Obstruction* obstructions, Domain simDomain, const float obstHeight)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -607,30 +507,26 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
     floor_d[x + y*MAX_XDIM] = 0.f;
 
-    unsigned char R = 120.0f;
-    unsigned char G = 160.0f;
-    unsigned char B = 220.0f;
+    unsigned char R = 255.0f;
+    unsigned char G = 255.0f;
+    unsigned char B = 255.0f;
     unsigned char A = 255.f;
 
-    if (IsInsideObstruction(x, y, obstructions, 0.99f))
+    int obstID = FindOverlappingObstruction(x, y, obstructions,0.99f);
+    if (obstID > -1)
     {
-        int obstID = FindOverlappingObstruction(x, y, obstructions,0.f);
         if (obstID >= 0)
         {
-            float fullObstHeight = -1.f+OBST_HEIGHT;
-            if (obstructions[obstID].state == State::NEW)
+            float fullObstHeight = -1.f+obstHeight;
+            if (obstructions[obstID].state == State::ACTIVE)
             {
-                zcoord = dmin(fullObstHeight, zcoord + 0.15f);
+                zcoord = fullObstHeight;
             }
-            else if (obstructions[obstID].state == State::REMOVED)
+            else if (obstructions[obstID].state == State::INACTIVE)
             {
                 obstructions[obstID].u = 0.0f;
                 obstructions[obstID].v = 0.0f;
                 zcoord = dmax(-1.f, zcoord - 0.15f);
-            }
-            else if (obstructions[obstID].state == State::ACTIVE)
-            {
-                zcoord = fullObstHeight;
             }
             else
             {
@@ -668,30 +564,6 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     vbo[j].w = color;
 }
 
-__global__ void UpdateObstructionTransientStates(float4* vbo, Obstruction* obstructions)
-{
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-    int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = MAX_XDIM*MAX_YDIM + x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    float zcoord = vbo[j].z;
-
-    if (IsInsideObstruction(x, y, obstructions, 1.f))
-    {
-        int obstID = FindOverlappingObstruction(x, y, obstructions);
-        if (obstID >= 0)
-        {
-            if (zcoord > -1.f+OBST_HEIGHT-0.1f)
-            {
-                obstructions[obstID].state = State::ACTIVE;
-            }
-            if (zcoord < -1.f+0.1f)
-            {
-                obstructions[obstID].state = State::INACTIVE;
-            }
-        }
-    }
-}
-
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
     float3 rayDir, Obstruction* obstructions, Domain simDomain)
 {
@@ -705,7 +577,8 @@ __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
 
     if (x > 1 && y > 1 && x < xDimVisible - 1 && y < yDimVisible - 1)
     {
-        if (IsInsideObstruction(x, y, obstructions, 1.f))
+        const int obstId = FindOverlappingObstruction(x, y, obstructions, 1.f);
+        if (obstId > -1)
         {
             float3 nw{ vbo[j+MAX_XDIM].x, vbo[j+MAX_XDIM].y, vbo[j+MAX_XDIM].z };
             float3 ne{ vbo[j+MAX_XDIM+1].x, vbo[j+MAX_XDIM+1].y, vbo[j+MAX_XDIM+1].z };
@@ -879,7 +752,7 @@ texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
 __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
-    float3 cameraPosition, Domain simDomain, const bool simplified)
+    float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth, const float obstHeight)
 {
     int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -925,8 +798,8 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         color[3] = 255;
     }
     Normalize(n);
-    const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
-    float3 elementPosition = {(float)x,(float)y,waterDepth }; //non-normalized
+    const float elemSpaceWaterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*waterDepth; //non-normalized
+    float3 elementPosition = {(float)x,(float)y,elemSpaceWaterDepth }; //non-normalized
     //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
     float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
     //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
@@ -941,9 +814,9 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
     float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
     
-    //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED;
-    float dx = -refractedRay.x*waterDepth/refractedRay.z;
-    float dy = -refractedRay.y*waterDepth/refractedRay.z;
+    //const float waterDepth = (vbo[(x)+(y)*MAX_XDIM].z + 1.f)/2.f*xDimVisible*waterDepth;
+    float dx = -refractedRay.x*elemSpaceWaterDepth/refractedRay.z;
+    float dy = -refractedRay.y*elemSpaceWaterDepth/refractedRay.z;
 
     float xf = (float)x + dx;
     float yf = (float)y + dy;
@@ -990,15 +863,15 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
             reflectedColor[2] = skyColor.z;
             reflectedColor[3] = 255;
 
-            color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
-            color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
-            color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
-            color[3] = 120;
+            color[0] = (1.f - reflectedRayIntensity)*(float)refractedColor[0] + reflectedRayIntensity*(float)reflectedColor[0];
+            color[1] = (1.f - reflectedRayIntensity)*(float)refractedColor[1] + reflectedRayIntensity*(float)reflectedColor[1];
+            color[2] = (1.f - reflectedRayIntensity)*(float)refractedColor[2] + reflectedRayIntensity*(float)reflectedColor[2];
+            color[3] = 255;
         }
         else
         {
             unsigned char refractedColor[4];
-            if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            if (GetCoordFromRayHitOnObst(refractionIntersect, elementPosition, refractedRayDest, obstructions, obstHeight*xDimVisible))
             {
                 std::memcpy(refractedColor, &(vbo[(int)(refractionIntersect.x+0.5f) + (int)(refractionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
                     sizeof(refractedColor));
@@ -1013,7 +886,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
             unsigned char reflectedColor[4];
             float3 reflectedRayDest = elementPosition + xDimVisible*reflectedRay;
-            if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, OBST_HEIGHT / 2.f*xDimVisible))
+            if (GetCoordFromRayHitOnObst(reflectionIntersect, elementPosition, reflectedRayDest, obstructions, obstHeight*xDimVisible))
             {
                 std::memcpy(reflectedColor, &(vbo[(int)(reflectionIntersect.x+0.5f) + (int)(reflectionIntersect.y+0.5f)*MAX_XDIM + MAX_XDIM * MAX_YDIM].w),
                     sizeof(reflectedColor));
@@ -1035,102 +908,10 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     std::memcpy(&(vbo[j].w), color, sizeof(color));
 }
 
-__global__ void SimplifiedRefraction(float4* vbo, Obstruction *obstructions,
-    float3 cameraPosition, Domain simDomain)
-{
-    int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
-    int y = threadIdx.y + blockIdx.y*blockDim.y;
-    int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-
-    int xDimVisible = simDomain.GetXDimVisible();
-    int yDimVisible = simDomain.GetYDimVisible();
-
-    unsigned char color[4];
-    std::memcpy(color, &(vbo[j].w), sizeof(color));
-
-    color[3] = 50;
-
-    float3 n = { 0, 0, 1 };
-    float slope_x = 0.f;
-    float slope_y = 0.f;
-    float cellSize = 2.f / xDimVisible;
-    if (x == 0)
-    {
-        n.x = 0.f;
-    }
-    else if (y == 0)
-    {
-        n.y = 0.f;
-    }
-    else if (x >= xDimVisible - 1)
-    {
-        n.x = 0.f;
-    }
-    else if (y >= yDimVisible - 1)
-    {
-        n.y = 0.f;
-    }
-    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
-    {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
-            (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
-            (2.f*cellSize);
-        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-        n.z = 2.f*cellSize*2.f*cellSize;
-        color[3] = 255;
-    }
-    Normalize(n);
-    const float waterDepth = (vbo[j].z + 1.f)/2.f*xDimVisible*WATER_DEPTH_NORMALIZED; //non-normalized
-    float3 elementPosition = {(float)x,(float)y,waterDepth }; //non-normalized
-    //float3 eyeDirection = xDimVisible*cameraPosition;  //normalized, for ort
-    float3 viewingRay = elementPosition/xDimVisible - cameraPosition;  //normalized
-    //printf("%f,%f,%f\n", cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-    Normalize(viewingRay);
-    float cosTheta = dmax(0.f,dmin(1.f,DotProduct(viewingRay, -1.f*n)));
-    //if (threadIdx.x == 10) printf("view: %f, %f, %f\n", viewingRay.x, viewingRay.y, viewingRay.z);
-    //if (threadIdx.x == 10) printf("n: %f, %f, %f\n", n.x, n.y, n.z);
-    float nu = 1.f / WATER_REFRACTIVE_INDEX;
-    float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
-    float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
-
-    if (x > xDimVisible - 1 || y > yDimVisible - 1)
-    {
-        color[0] = 0;
-        color[1] = 0; 
-        color[2] = 0; 
-        color[3] = 0; 
-    }
-    else
-    {
-        unsigned char refractedColor[4];
-        refractedColor[0] = 120;
-        refractedColor[1] = 160;
-        refractedColor[2] = 220;
-        refractedColor[3] = 255;
-
-        unsigned char reflectedColor[4];
-        reflectedColor[0] = 255;
-        reflectedColor[1] = 255;
-        reflectedColor[2] = 255;
-        reflectedColor[3] = 255;
-
-        color[0] = (1.f-reflectedRayIntensity)*(float)refractedColor[0]+reflectedRayIntensity*(float)reflectedColor[0];
-        color[1] = (1.f-reflectedRayIntensity)*(float)refractedColor[1]+reflectedRayIntensity*(float)reflectedColor[1];
-        color[2] = (1.f-reflectedRayIntensity)*(float)refractedColor[2]+reflectedRayIntensity*(float)reflectedColor[2];
-        color[3] = 120;
-    }
-    std::memcpy(&(vbo[j].w), color, sizeof(color));
-}
-
-
 
 /*----------------------------------------------------------------------------------------
  * End of device functions
  */
-
 
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     Domain &simDomain)
@@ -1145,7 +926,7 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
     for (int i = 0; i < MAXOBSTS; i++)
     {
         if ((abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f) &&
-            obst_h[i].state != State::REMOVED && obst_h[i].state != State::INACTIVE)
+            obst_h[i].state != State::INACTIVE)
         {
             Obstruction obst = obst_h[i];
             obst.x /= scaleFactor;
@@ -1182,7 +963,7 @@ void MarchSolution(CudaLbm* cudaLbm)
 }
 
 void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable contVar,
-    const float contMin, const float contMax, const ViewMode viewMode)
+    const float contMin, const float contMax, const ViewMode viewMode, const float waterDepth)
 {
     Domain* simDomain = cudaLbm->GetDomain();
     int xDim = simDomain->GetXDim();
@@ -1194,7 +975,7 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable cont
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
-        viewMode, u, *simDomain);
+        viewMode, u, *simDomain, waterDepth);
 }
 
 // ! In order to maintain the same relative positions/sizes of obstructions when the simulation resolution
@@ -1211,13 +992,6 @@ void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,obst);
 }
 
-void CleanUpDeviceVBO(float4* vis, Domain &simDomain)
-{
-    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-    dim3 grid(MAX_XDIM / BLOCKSIZEX, MAX_YDIM / BLOCKSIZEY);
-    CleanUpVBO << <grid, threads>> >(vis, simDomain);
-}
-
 void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
     Domain &simDomain)
 {
@@ -1228,17 +1002,22 @@ void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraP
     PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, simDomain);
 }
 
-void InitializeFloor(float4* vis, float* floor_d, Domain &simDomain)
+void InitializeSurface(float4* vis, Domain &simDomain)
 {
-    int xDim = simDomain.GetXDim();
-    int yDim = simDomain.GetYDim();
     dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    InitializeFloorMesh << <grid, threads >> >(vis, floor_d, simDomain);
+    dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
+    InitializeMesh << <grid, threads >> >(vis, simDomain);
+}
+
+void InitializeFloor(float4* vis, Domain &simDomain)
+{
+    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
+    dim3 grid(ceil(static_cast<float>(MAX_XDIM) / BLOCKSIZEX), MAX_YDIM / BLOCKSIZEY);
+    InitializeMesh << <grid, threads >> >(&vis[MAX_XDIM*MAX_YDIM], simDomain);
 }
 
 void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
-    const float3 cameraPosition, Domain &simDomain)
+    const float3 cameraPosition, Domain &simDomain, const float waterDepth, const float obstHeight)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1246,12 +1025,12 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     float3 incidentLight1 = { -0.25f, -0.25f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, incidentLight1, obst_d, simDomain);
+        (vis, incidentLight1, obst_d, simDomain, waterDepth);
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
         (vis, floor_d, obst_d, simDomain);
 
-    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain);
-    UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
+    ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain, obstHeight);
+    //UpdateObstructionTransientStates <<<grid,threads>>> (vis, obst_d);
 
     //phong lighting on floor mesh to shade obstructions
     PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
@@ -1289,21 +1068,8 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     }
 }
 
-void RefractSurfaceSimplified(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
-    Domain &simDomain)
-{
-    int xDim = simDomain.GetXDim();
-    int yDim = simDomain.GetYDim();
-    dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
-    dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
-    gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
-    float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SimplifiedRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain);
-}
-
 void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
-    Domain &simDomain, const bool simplified)
+    Domain &simDomain, const float waterDepth, const float obstHeight, const bool simplified)
 {
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
@@ -1312,6 +1078,6 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
     gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified);
+    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified, waterDepth, obstHeight);
 }
 
