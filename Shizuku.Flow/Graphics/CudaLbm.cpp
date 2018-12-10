@@ -1,6 +1,34 @@
 #include "CudaLbm.h"
 #include "Domain.h"
+
+#include "Shizuku.Core/Types/Point.h"
+
 #include <algorithm>
+
+using namespace Shizuku::Core::Types;
+
+namespace {
+    int GetObstImage(const Point<float> modelCoord,
+        Obstruction* obstructions, const float tolerance = 0.f)
+    {
+        for (int i = 0; i < MAXOBSTS; i++){
+            if (obstructions[i].state != State::INACTIVE)
+            {
+                float r1 = obstructions[i].r1 + tolerance;
+                if (obstructions[i].shape == Shape::SQUARE){
+                    if (abs(modelCoord.X - obstructions[i].x) < r1 && abs(modelCoord.Y - obstructions[i].y) < r1)
+                        return 1;
+                }
+            }
+        }
+        return 0;
+    }
+
+    Point<float> ModelSpacePosFromSimPos(const Point<int>& p_simPos, const int p_xDimVisible)
+    {
+        return Point<float>(static_cast<float>(p_simPos.X) / p_xDimVisible*2.f - 1.f, static_cast<float>(p_simPos.Y) / p_xDimVisible*2.f - 1.f);
+    }
+}
 
 CudaLbm::CudaLbm()
 {
@@ -115,7 +143,7 @@ void CudaLbm::AllocateDeviceMemory()
     float* fA_h = new float[domainSize * 9];
     float* fB_h = new float[domainSize * 9];
     float* floor_h = new float[domainSize];
-    int* im_h = new int[domainSize];
+    m_Im_h = new int[domainSize];
 
     cudaMalloc((void **)&m_fA_d, memsize_lbm);
     cudaMalloc((void **)&m_fB_d, memsize_lbm);
@@ -131,6 +159,9 @@ void CudaLbm::DeallocateDeviceMemory()
     cudaFree(m_Im_d);
     cudaFree(m_FloorTemp_d);
     cudaFree(m_obst_d);
+
+    //TODO - separate method for host memory
+    delete[] m_Im_h;
 }
 
 void CudaLbm::InitializeDeviceMemory()
@@ -170,19 +201,35 @@ void CudaLbm::InitializeDeviceMemory()
     cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice);
 }
 
-void CudaLbm::UpdateDeviceImage()
+void CudaLbm::InitializeDeviceImage()
 {
     int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
-    int* im_h = new int[domainSize];
     for (int i = 0; i < domainSize; i++)
     {
         int x = i%MAX_XDIM;
         int y = i/MAX_XDIM;
-        im_h[i] = ImageFcn(x, y);
+        m_Im_h[i] = ImageFcn(x, y);
     }
     size_t memsize_int = domainSize*sizeof(int);
-    cudaMemcpy(m_Im_d, im_h, memsize_int, cudaMemcpyHostToDevice);
-    delete[] im_h;
+    cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice);
+}
+
+void CudaLbm::UpdateDeviceImage()
+{
+    int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
+    for (int i = 0; i < domainSize; i++)
+    {
+        int x = i%MAX_XDIM;
+        int y = i/MAX_XDIM;
+        m_Im_h[i] = ImageFcn(x, y);
+        const int xDimVisible = GetDomain()->GetXDimVisible();
+        const Point<float> modelCoord = ModelSpacePosFromSimPos(Point<int>(x, y), xDimVisible);
+        const int obst = GetObstImage(modelCoord, m_obst_h);
+        if (obst == 1)
+            m_Im_h[i] = obst;
+    }
+    size_t memsize_int = domainSize*sizeof(int);
+    cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice);
 }
 
 int CudaLbm::ImageFcn(const int x, const int y){

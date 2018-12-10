@@ -143,5 +143,6 @@ namespace Shizuku{ namespace Flow{
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);
 
         Point<int> SimPosFromModelSpacePos(const Point<float>& p_modelPos);
+        Point<float> ModelSpacePosFromSimPos(const Point<int>& p_simPos);
     };
 } }

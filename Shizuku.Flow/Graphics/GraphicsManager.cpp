@@ -48,7 +48,7 @@ GraphicsManager::GraphicsManager()
     m_surfaceShadingMode = RayTracing;
     m_waterDepth = 0.2f;
     m_currentObstShape = Shape::SQUARE;
-    m_currentObstSize = 25.f;
+    m_currentObstSize = 0.05f;
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -330,7 +330,7 @@ void GraphicsManager::RunCuda()
     UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
         m_viewMode, m_waterDepth);
  
-    SetObstructionVelocitiesToZero(obst_h, obst_d, m_scaleFactor);
+    SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
     if ( !ShouldRefractSurface())
@@ -603,6 +603,12 @@ Point<int> GraphicsManager::SimPosFromModelSpacePos(const Point<float>& p_modelP
     return Point<int>((p_modelPos.X + 1.f)*0.5f*xDimVisible, (p_modelPos.Y + 1.f)*0.5f*xDimVisible);
 }
 
+Point<float> GraphicsManager::ModelSpacePosFromSimPos(const Point<int>& p_simPos)
+{
+    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
+    return Point<float>(static_cast<float>(p_simPos.X) / xDimVisible*2.f - 1.f, static_cast<float>(p_simPos.Y) / xDimVisible*2.f - 1.f);
+}
+
 void GraphicsManager::Pan(const Point<int>& p_posDiff)
 {
     const float dx = ((float)p_posDiff.X / m_viewSize.Width)*2.f;
@@ -634,8 +640,10 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     Point<int> simCoord1 = GetSimCoordFromScreenPos(p_pos-p_diff, m_currentZ);
     Point<int> simCoord2 = GetSimCoordFromScreenPos(p_pos, m_currentZ);
     Obstruction obst = m_obstructions[obstId];
-    obst.x = simCoord2.X*m_scaleFactor;
-    obst.y = simCoord2.Y*m_scaleFactor;
+    Point<float> modelCoord1 = ModelSpacePosFromSimPos(simCoord1);
+    Point<float> modelCoord2 = ModelSpacePosFromSimPos(simCoord2);
+    obst.x = modelCoord2.X;
+    obst.y = modelCoord2.Y;
     const int stepsPerFrame = GetCudaLbm()->GetTimeStepsPerFrame();
     const float u = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.X-simCoord1.X) / stepsPerFrame));
     const float v = std::max(-0.1f,std::min(0.1f,static_cast<float>(simCoord2.Y-simCoord1.Y) / stepsPerFrame));
@@ -646,7 +654,7 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     if (m_useCuda)
     {
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);  
+        UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());  
     }
     else
     {
@@ -658,14 +666,8 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
 
 void GraphicsManager::UpdatePillar(const int p_obstId, const Obstruction& p_obst)
 {
-    const int xDimVisible = GetCudaLbm()->GetDomain()->GetXDimVisible();
-    const int yDimVisible = GetCudaLbm()->GetDomain()->GetYDimVisible();
-    const float scaleX = m_scaleFactor*xDimVisible*0.5f;
-    const float scaleY = m_scaleFactor*yDimVisible*0.5f;
-    const Point<float> pillarPos(static_cast<float>(p_obst.x)/scaleX-1.f,
-        static_cast<float>(p_obst.y)/scaleY-1.f);
-    const Box<float> pillarSize(static_cast<float>(2.f*p_obst.r1/scaleX),
-        static_cast<float>(2.f*p_obst.r1/scaleY), PillarHeightFromDepth(m_waterDepth));
+    const Point<float> pillarPos(p_obst.x, p_obst.y);
+    const Box<float> pillarSize(2.f*p_obst.r1, 2.f*p_obst.r1, PillarHeightFromDepth(m_waterDepth));
     m_graphics->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
 }
 
@@ -692,12 +694,14 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
         return;
     }
 
-    Obstruction obst = { m_currentObstShape, p_simPos.X*m_scaleFactor, p_simPos.Y*m_scaleFactor, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
+    const Point<float> modelCoord = ModelSpacePosFromSimPos(p_simPos);
+
+    Obstruction obst = { m_currentObstShape, modelCoord.X, modelCoord.Y, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
     const int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     if (m_useCuda)
-        UpdateDeviceObstructions(obst_d, obstId, obst, m_scaleFactor);
+        UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     UpdatePillar(obstId, obst);
@@ -716,7 +720,7 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
         m_obstructions[obstId].state = State::INACTIVE;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         if (m_useCuda)
-            UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], m_scaleFactor);
+            UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], *GetCudaLbm()->GetDomain());
         else
             GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
         GetGraphics()->RemovePillar(obstId);
@@ -751,11 +755,12 @@ int GraphicsManager::FindClosestObstructionId(const int simX, const int simY)
 {
     float dist = 999999999999.f;
     int closestObstId = -1;
+    const Point<float> modelCoord = ModelSpacePosFromSimPos(Point<int>(simX, simY));
     for (int i = 0; i < MAXOBSTS; i++)
     {
         if (m_obstructions[i].state != State::INACTIVE)
         {
-            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor, m_obstructions[i].y/m_scaleFactor);
+            float newDist = GetDistanceBetweenTwoPoints(modelCoord.X, modelCoord.Y, m_obstructions[i].x, m_obstructions[i].y);
             if (newDist < dist)
             {
                 dist = newDist;
@@ -771,13 +776,14 @@ int GraphicsManager::FindObstructionPointIsInside(const int simX, const int simY
 {
     float dist = 999999999999.f;
     int closestObstId = -1;
+    const Point<float> modelCoord = ModelSpacePosFromSimPos(Point<int>(simX, simY));
     for (int i = 0; i < MAXOBSTS; i++)
     {
         if (m_obstructions[i].state != State::INACTIVE)
         {
-            float newDist = GetDistanceBetweenTwoPoints(simX, simY, m_obstructions[i].x/m_scaleFactor,
-                m_obstructions[i].y/m_scaleFactor);
-            if (newDist < dist && newDist < m_obstructions[i].r1/m_scaleFactor+tolerance)
+            float newDist = GetDistanceBetweenTwoPoints(modelCoord.X, modelCoord.Y, m_obstructions[i].x,
+                m_obstructions[i].y);
+            if (newDist < dist && newDist < m_obstructions[i].r1+tolerance)
             {
                 dist = newDist;
                 closestObstId = i;
@@ -811,7 +817,7 @@ void GraphicsManager::UpdateObstructionScales()
             if (m_useCuda)
             {
                 Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-                UpdateDeviceObstructions(obst_d, i, m_obstructions[i], m_scaleFactor);  
+                UpdateDeviceObstructions(obst_d, i, m_obstructions[i], *GetCudaLbm()->GetDomain());  
             }
             else
             {

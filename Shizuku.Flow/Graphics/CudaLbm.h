@@ -16,6 +16,7 @@ private:
     float* m_fA_d;
     float* m_fB_d;
     int* m_Im_d;
+    int* m_Im_h;
     float* m_FloorTemp_d;
     Obstruction* m_obst_d;
     Obstruction m_obst_h[MAXOBSTS];
@@ -47,6 +48,7 @@ public:
     void AllocateDeviceMemory();
     void InitializeDeviceMemory();
     void DeallocateDeviceMemory();
+    void InitializeDeviceImage();
     void UpdateDeviceImage();
     int ImageFcn(const int x, const int y);
 

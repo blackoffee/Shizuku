@@ -10,7 +10,7 @@ class CudaLbm;
 void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     Domain &simDomain);
 
-void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, const float scaleFactor);
+void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, Domain &simDomain);
 
 void MarchSolution(CudaLbm* cudaLbm);
 
@@ -19,7 +19,7 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm,
     const ViewMode viewMode, const float waterDepth);
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
-    const Obstruction &newObst, const float scaleFactor);
+    const Obstruction &newObst, Domain &simDomain);
 
 void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition, 
     Domain &simDomain);

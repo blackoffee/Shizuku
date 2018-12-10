@@ -173,20 +173,20 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     int y = threadIdx.y + blockIdx.y*blockDim.y;
     int j = x + y*MAX_XDIM;
     int im = Im[j];
-    int obstId = FindOverlappingObstruction(x, y, obstructions);
-    if (obstId >= 0)
-    {
-        if (obstructions[obstId].u < 1e-2f && obstructions[obstId].v < 1e-2f)
-        {
-            im = 1; //bounce back
-            Im[j] = im;
-        }
-        else
-        {
-            im = 20; //moving wall
-            Im[j] = im;
-        }
-    }
+//    int obstId = FindOverlappingObstruction(x, y, obstructions);
+//    if (obstId >= 0)
+//    {
+//        if (obstructions[obstId].u < 1e-2f && obstructions[obstId].v < 1e-2f)
+//        {
+//            im = 1; //bounce back
+//            Im[j] = im;
+//        }
+//        else
+//        {
+//            im = 20; //moving wall
+//            Im[j] = im;
+//        }
+//    }
     int xDim = simDomain.GetXDim();
     int yDim = simDomain.GetYDim();
 
@@ -198,15 +198,16 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     if (im == 1 || im == 10){//bounce-back condition
         lbm.BounceBackWall();
     }
-    else if (im == 20)
+//    else if (im == 20)
+//    {
+//        float rho, u, v;
+//        rho = 1.0f;
+//        u = obstructions[obstId].u;
+//        v = obstructions[obstId].v;
+//        lbm.MovingWall(rho, u, v);
+//    }
+    else
     {
-        float rho, u, v;
-        rho = 1.0f;
-        u = obstructions[obstId].u;
-        v = obstructions[obstId].v;
-        lbm.MovingWall(rho, u, v);
-    }
-    else{
         lbm.ApplyBCs(y, im, xDim, yDim, uMax);
         lbm.Collide(omega);
     }
@@ -921,7 +922,7 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, simDomain);
 }
 
-void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, const float scaleFactor)
+void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, Domain& simDomain)
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
@@ -929,10 +930,10 @@ void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, co
             obst_h[i].state != State::INACTIVE)
         {
             Obstruction obst = obst_h[i];
-            obst.x /= scaleFactor;
-            obst.y /= scaleFactor;
-            obst.r1 /= scaleFactor;
-            obst.r2 /= scaleFactor;
+            obst.x = 0.5f*(obst.x + 1.f)*simDomain.GetXDimVisible();
+            obst.y = 0.5f*(obst.y + 1.f)*simDomain.GetXDimVisible();
+            obst.r1 = 0.5f*(obst.r1)*simDomain.GetXDimVisible();
+            obst.r2 = 0.5f*(obst.r2)*simDomain.GetXDimVisible();
             obst.u = 0.f;
             obst.v = 0.f;
             UpdateObstructions << <1, 1 >> >(obst_d,i,obst);
@@ -982,14 +983,14 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable cont
 // ! is changed, host obstruction data is stored relative to the max resolution. When host data is passed
 // ! to GPU, the positions and sizes are scaled down based on the current resolution's scaling factor.
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
-    const Obstruction &newObst, const float scaleFactor)
+    const Obstruction &newObst, Domain& simDomain)
 {
     Obstruction obst = newObst;
-    obst.x /= scaleFactor;
-    obst.y /= scaleFactor;
-    obst.r1 /= scaleFactor;
-    obst.r2 /= scaleFactor;
-    UpdateObstructions << <1, 1 >> >(obst_d,targetObstID,obst);
+    obst.x = 0.5f*(obst.x + 1.f)*simDomain.GetXDimVisible();
+    obst.y = 0.5f*(obst.y + 1.f)*simDomain.GetXDimVisible();
+    obst.r1 = 0.5f*(obst.r1)*simDomain.GetXDimVisible();
+    obst.r2 = 0.5f*(obst.r2)*simDomain.GetXDimVisible();
+    UpdateObstructions << <1, 1 >> >(obst_d, targetObstID, obst);
 }
 
 void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
