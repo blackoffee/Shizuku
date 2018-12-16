@@ -72,6 +72,8 @@ private:
     //std::shared_ptr<Pillar> m_pillar;
     std::map<const int, std::shared_ptr<Pillar>> m_pillars;
 
+    std::shared_ptr<Pillar> m_cameraDatum;
+
 public:
     ShaderManager();
 
@@ -124,4 +126,6 @@ public:
 
     void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     void RemovePillar(const int obstId);
+
+    void UpdateCameraDatum(const PillarDefinition& p_def);
 };

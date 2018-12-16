@@ -11,6 +11,8 @@
 #define MAX_YDIM 768
 #endif
 
+#define CAUSTICS_TEX_SIZE 1024
+
 #define INITIAL_UMAX 0.125f
 #define BLOCKSIZEX 64
 #define BLOCKSIZEY 1

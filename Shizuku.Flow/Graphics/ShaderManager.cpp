@@ -30,6 +30,7 @@ ShaderManager::ShaderManager()
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
 
     m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
+    m_cameraDatum = std::make_shared<Pillar>(Ogl);
 }
 
 void ShaderManager::CreateCudaLbm()
@@ -95,8 +96,31 @@ void ShaderManager::CreateElementArrayBuffer()
         }
     }
 
+    GLuint* elemEdgeIndices = new GLuint[numberOfElements * 12];
+
+    for (int j = 0; j < MAX_YDIM-1; j++){
+        for (int i = 0; i < MAX_XDIM-1; i++){
+            //going clockwise, since y orientation will be flipped when rendered
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+0] = numberOfNodes+(i)+(j)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+1] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+2] = numberOfNodes+(i+1)+(j)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+3] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+4] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+5] = numberOfNodes+(i)+(j)*MAX_XDIM;
+
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+6] = numberOfNodes+(i)+(j)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+7] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+8] = numberOfNodes+(i+1)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+9] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+10] = numberOfNodes+(i)+(j+1)*MAX_XDIM;
+            elemEdgeIndices[j*(MAX_XDIM-1)*12+i*12+11] = numberOfNodes+(i)+(j)*MAX_XDIM;
+        }
+    }
+
     Ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "surface_indices", GL_DYNAMIC_DRAW);
     free(elementIndices);
+    Ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elemEdgeIndices, numberOfElements * 6 * 2, "surfaceMesh_indices", GL_DYNAMIC_DRAW);
+    free(elemEdgeIndices);
 }
 
 template <typename T>
@@ -250,9 +274,7 @@ void ShaderManager::SetUpCausticsTexture()
     glGenTextures(1, &m_floorLightTexture);
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    const GLuint textureWidth = 1024;
-    const GLuint textureHeight = 1024;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, CAUSTICS_TEX_SIZE, CAUSTICS_TEX_SIZE, 0, GL_RGBA, GL_FLOAT, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -385,6 +407,19 @@ void ShaderManager::SetUpSurfaceVao()
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
 
     surface->Unbind();
+
+    std::shared_ptr<Ogl::Vao> surfaceMesh = Ogl->CreateVao("surfaceMesh");
+    surfaceMesh->Bind();
+
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface"));
+    Ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *Ogl->GetBuffer("surfaceMesh_indices"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
+
+    surfaceMesh->Unbind();
 }
 
 void ShaderManager::SetUpFloorVao()
@@ -473,7 +508,7 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
     causticsShader->Use();
 
     causticsShader->SetUniform("texCoordScale", 3.f);
-    glViewport(0, 0, 1024, 1024);
+    glViewport(0, 0, CAUSTICS_TEX_SIZE, CAUSTICS_TEX_SIZE);
 
     int yDimVisible = domain.GetYDimVisible();
     //Draw floor
@@ -696,10 +731,18 @@ void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 
 
     floor->Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
-    floorShader->Unset();
 
-//    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-//        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+#ifdef DRAW_FLOOR_MESH
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surfaceMesh");
+    surface->Bind();
+
+    glDrawElements(GL_LINES, (MAX_XDIM - 1)*(MAX_YDIM - 1)*12*2, GL_UNSIGNED_INT, 
+        BUFFER_OFFSET(0));
+
+    surface->Unbind();
+#endif
+
+    floorShader->Unset();
 }
 
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
@@ -730,6 +773,13 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     {
         pillar.second->Draw(modelMatrix, projectionMatrix);
     }
+
+#ifdef DRAW_CAMERA
+    if (m_cameraDatum->IsInitialized())
+    {
+        m_cameraDatum->Draw(modelMatrix, projectionMatrix);
+    }
+#endif
 }
 
 void ShaderManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
@@ -751,4 +801,14 @@ void ShaderManager::UpdatePillar(const int obstId, const PillarDefinition& p_def
 void ShaderManager::RemovePillar(const int obstId)
 {
     m_pillars.erase(obstId);
+}
+
+void ShaderManager::UpdateCameraDatum(const PillarDefinition& p_def)
+{
+    if (!m_cameraDatum->IsInitialized())
+    {
+        m_cameraDatum->Initialize();
+    }
+
+    m_cameraDatum->SetDefinition(p_def);
 }

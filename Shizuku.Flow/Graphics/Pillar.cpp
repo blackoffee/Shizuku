@@ -8,12 +8,19 @@ using namespace Shizuku::Flow;
 Pillar::Pillar(std::shared_ptr<Ogl> p_ogl)
 {
     m_ogl = p_ogl;
+    m_initialized = false;
 }
 
 void Pillar::Initialize()
 {
     PrepareBuffers();
     PrepareShader();
+    m_initialized = true;
+}
+
+bool Pillar::IsInitialized()
+{
+    return m_initialized;
 }
 
 void Pillar::PrepareBuffers()

@@ -24,10 +24,12 @@ namespace Shizuku { namespace Flow{
         std::shared_ptr<ShaderProgram> m_shaderProgram;
         void PrepareBuffers();
         void PrepareShader();
+        bool m_initialized;
     public:
         Pillar(std::shared_ptr<Ogl> p_ogl);
 
         void Initialize();
+        bool IsInitialized();
         void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);

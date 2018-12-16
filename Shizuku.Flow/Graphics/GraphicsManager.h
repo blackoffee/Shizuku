@@ -134,7 +134,6 @@ namespace Shizuku{ namespace Flow{
 
         void GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const Point<int>& p_pos);
         int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos);
-        glm::vec4 GetCameraDirection();
         glm::vec4 GetCameraPosition();
 
         void UpdatePillar(const int p_obstId, const Obstruction& p_obst);

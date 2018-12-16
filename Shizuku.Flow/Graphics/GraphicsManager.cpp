@@ -378,17 +378,7 @@ void GraphicsManager::RunSurfaceRefraction()
         cudaGraphicsMapResources(1, &envTextureResource, 0);
         cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0);
 
-        Obstruction* obst_d = cudaLbm->GetDeviceObst();
-
-        Domain* domain = cudaLbm->GetDomain();
-        glm::mat4 modelMatrixInv = glm::inverse(m_projection*m_modelView);
-        glm::vec4 origin = { 0, 0, 0, 1 };
-
-
         glm::vec4 cameraPos;
-        glm::vec4 cameraDir = GetCameraDirection();
-        //std::cout << "CameraDir: " << cameraDir.x << "," << cameraDir.y << "," << cameraDir.z << std::endl;
-
         if (!m_rayTracingPaused)
         {
             cameraPos = GetCameraPosition();
@@ -399,6 +389,12 @@ void GraphicsManager::RunSurfaceRefraction()
             cameraPos = m_cameraPosition;
         }
 
+        const Point<float> cameraDatumPos(cameraPos.x, cameraPos.y);
+        const Box<float> cameraDatumSize(0.05f, 0.05f, cameraPos.z);
+        m_graphics->UpdateCameraDatum(PillarDefinition(cameraDatumPos, cameraDatumSize));
+
+        Obstruction* obst_d = cudaLbm->GetDeviceObst();
+        Domain* domain = cudaLbm->GetDomain();
         const float obstHeight = PillarHeightFromDepth(m_waterDepth);
         RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
             m_surfaceShadingMode == SimplifiedRayTracing);
@@ -473,21 +469,12 @@ void GraphicsManager::GetMouseRay(glm::vec3 &rayOrigin, glm::vec3 &rayDir, const
     rayDir.x /= mag;
     rayDir.y /= mag;
     rayDir.z /= mag;
-
-
-}
-
-
-glm::vec4 GraphicsManager::GetCameraDirection()
-{
-    glm::vec4 v = { 0.f, 0.f, 1.f, 1.f };
-    return glm::inverse(m_projection*m_modelView)*v;
 }
 
 
 glm::vec4 GraphicsManager::GetCameraPosition()
 {
-    return glm::inverse(m_projection*m_modelView)*glm::vec4(0, 0, 0, 1);
+    return glm::inverse(m_modelView)*glm::vec4(0, 0, 0, 1);
 }
 
 int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos)
@@ -522,8 +509,9 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
         {
             m_currentZ = selectedCoordF.z;
 
-            xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
-            yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
+            const Types::Point<int> simPos = SimPosFromModelSpacePos(Types::Point<float>(selectedCoordF.x, selectedCoordF.y));
+            xOut = simPos.X;
+            yOut = simPos.Y;
         }
         else
         {
@@ -542,8 +530,8 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
         {
             m_currentZ = selectedCoordF.z;
 
-            xOut = (selectedCoordF.x + 1.f)*0.5f*xDimVisible;
-            yOut = (selectedCoordF.y + 1.f)*0.5f*xDimVisible;
+            xOut = selectedCoordF.x;
+            yOut = selectedCoordF.y;
         }
         else
         {
