@@ -49,6 +49,7 @@ GraphicsManager::GraphicsManager()
     m_waterDepth = 0.2f;
     m_currentObstShape = Shape::SQUARE;
     m_currentObstSize = 0.05f;
+    m_drawFloorWireframe = false;
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -177,6 +178,11 @@ void GraphicsManager::SetTimestepsPerFrame(const int p_steps)
 {
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetTimeStepsPerFrame(p_steps);
+}
+
+void GraphicsManager::SetFloorWireframeVisibility(const bool p_visible)
+{
+    m_drawFloorWireframe = p_visible;
 }
 
 CudaLbm* GraphicsManager::GetCudaLbm()
@@ -436,7 +442,7 @@ void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        m_modelView, m_projection);
+        m_modelView, m_projection, m_drawFloorWireframe);
 }
 
 bool GraphicsManager::ShouldRefractSurface()

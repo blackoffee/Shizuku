@@ -9,4 +9,5 @@ uniform sampler2D renderedTexture;
 void main()
 {
     color = texture(renderedTexture, texCoord) * vec4(fColor).rgba;
+    //color = vec4(fColor).rgba;
 }

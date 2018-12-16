@@ -255,6 +255,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Parameter\VelocityParameter.cpp" />
     <ClCompile Include="Command\Parameter\ViscosityParameter.cpp" />
     <ClCompile Include="Command\Parameter\DepthParameter.cpp" />
+    <ClCompile Include="Command\Parameter\VisibilityParameter.cpp" />
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
@@ -262,6 +263,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SetContourMinMax.cpp" />
     <ClCompile Include="Command\SetContourMode.cpp" />
+    <ClCompile Include="Command\SetFloorWireframeVisibility.cpp" />
     <ClCompile Include="Command\SetInletVelocity.cpp" />
     <ClCompile Include="Command\SetSimulationScale.cpp" />
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
@@ -295,6 +297,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Parameter\VelocityParameter.h" />
     <ClInclude Include="Command\Parameter\ViscosityParameter.h" />
     <ClInclude Include="Command\Parameter\DepthParameter.h" />
+    <ClInclude Include="Command\Parameter\VisibilityParameter.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
@@ -302,6 +305,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SetContourMinMax.h" />
     <ClInclude Include="Command\SetContourMode.h" />
+    <ClInclude Include="Command\SetFloorWireframeVisibility.h" />
     <ClInclude Include="Command\SetInletVelocity.h" />
     <ClInclude Include="Command\SetSimulationScale.h" />
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />

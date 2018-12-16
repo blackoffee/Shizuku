@@ -483,7 +483,8 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 
         const float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
         const float cellSize = ScaledLength(1, xDimVisible);
-        const float lightIntensity = (cellSize*cellSize) / areaOfLightMeshOnFloor;
+        const float incidentLightIntensity = 0.4f;
+        const float lightIntensity = incidentLightIntensity*(cellSize*cellSize) / areaOfLightMeshOnFloor;
         atomicAdd(&floor_d[x   + (y  )*MAX_XDIM], lightIntensity*0.25f);
         atomicAdd(&floor_d[x+1 + (y  )*MAX_XDIM], lightIntensity*0.25f);
         atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
@@ -514,6 +515,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
 
+    //! NOTE: Mesh deformation is disabled for rendering to avoid mesh folding
+    float2 coords = ScaledCoords(x, y, xDimVisible);
     float zcoord = vbo[j].z;
 
     const int obstID = FindOverlappingObstruction(ScaledCoord(x, xDimVisible), ScaledCoord(y, xDimVisible), obstructions, ObstructionPickingTol(xDimVisible));
@@ -540,6 +543,8 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
         R = 255.f;
         G = 255.f;
         B = 255.f;
+        vbo[j].x = coords.x;
+        vbo[j].y = coords.y;
     }
     else
     {
@@ -553,11 +558,6 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float color;
     std::memcpy(&color, &b, sizeof(color));
 
-    //! NOTE: Mesh deformation is disabled for rendering to avoid mesh folding
-    const float2 coords = ScaledCoords(x, y, xDimVisible);
-
-    vbo[j].x = coords.x;
-    vbo[j].y = coords.y;
     vbo[j].z = zcoord;
     vbo[j].w = color;
 }

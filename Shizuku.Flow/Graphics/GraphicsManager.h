@@ -51,6 +51,7 @@ namespace Shizuku{ namespace Flow{
         float4* m_rayCastIntersect_d;
         ShadingMode m_surfaceShadingMode;
         float m_waterDepth;
+        bool m_drawFloorWireframe;
 
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
@@ -86,6 +87,7 @@ namespace Shizuku{ namespace Flow{
         void SetVelocity(const float p_velocity);
         void SetViscosity(const float p_viscosity);
         void SetTimestepsPerFrame(const int p_steps);
+        void SetFloorWireframeVisibility(const bool p_visible);
 
         CudaLbm* GetCudaLbm();
         ShaderManager* GetGraphics();

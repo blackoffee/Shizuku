@@ -19,12 +19,14 @@
 #include "Shizuku.Flow/Command/SetSurfaceShadingMode.h"
 #include "Shizuku.Flow/Command/SetWaterDepth.h"
 #include "Shizuku.Flow/Command/RestartSimulation.h"
+#include "Shizuku.Flow/Command/SetFloorWireframeVisibility.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ModelSpacePointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScreenPointParameter.h"
 #include "Shizuku.Flow/Command/Parameter/MinMaxParameter.h"
 #include "Shizuku.Flow/Command/Parameter/DepthParameter.h"
+#include "Shizuku.Flow/Command/Parameter/VisibilityParameter.h"
 
 #include "Shizuku.Flow/Query.h"
 #include "Shizuku.Flow/Flow.h"
@@ -209,6 +211,7 @@ void Window::RegisterCommands()
     m_setContourMinMax = std::make_shared<SetContourMinMax>(*m_flow);
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
     m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
+    m_setFloorWireframeVisibility = std::make_shared<SetFloorWireframeVisibility>(*m_flow);
 }
 
 void Window::ApplyInitialFlowSettings()
@@ -500,6 +503,10 @@ void Window::DrawUI()
         const bool oldRayTracingPaused = m_rayTracingPaused;
         if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
             m_pauseRayTracing->Start(boost::any(bool(m_rayTracingPaused)));
+
+        const bool oldFloorWireframe = m_floorWireframeVisible;
+        if (ImGui::Checkbox("Show caustics mesh", &m_floorWireframeVisible) && m_floorWireframeVisible != oldFloorWireframe)
+            m_setFloorWireframeVisibility->Start(boost::any(VisibilityParameter(m_floorWireframeVisible)));
     }
     ImGui::End();
 

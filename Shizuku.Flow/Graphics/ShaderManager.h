@@ -65,7 +65,7 @@ private:
     float m_inletVelocity;
     void CreateElementArrayBuffer();
 
-    void RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawWireframe);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
     const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
 
@@ -122,7 +122,7 @@ public:
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void Render(const ShadingMode p_shadingMode , Domain &domain,
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix);
+        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe);
 
     void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     void RemovePillar(const int obstId);

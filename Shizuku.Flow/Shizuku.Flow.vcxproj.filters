@@ -107,6 +107,12 @@
     <ClCompile Include="Command\RestartSimulation.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Command\Parameter\VisibilityParameter.cpp">
+      <Filter>Command\Parameter</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetFloorWireframeVisibility.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -222,6 +228,12 @@
     </ClInclude>
     <ClInclude Include="Query.h" />
     <ClInclude Include="Command\RestartSimulation.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\Parameter\VisibilityParameter.h">
+      <Filter>Command\Parameter</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetFloorWireframeVisibility.h">
       <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>

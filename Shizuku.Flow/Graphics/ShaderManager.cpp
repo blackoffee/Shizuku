@@ -499,26 +499,40 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
     //glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
     causticsShader->Use();
 
     causticsShader->SetUniform("texCoordScale", 3.f);
     glViewport(0, 0, CAUSTICS_TEX_SIZE, CAUSTICS_TEX_SIZE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glBlendEquation(GL_FUNC_ADD);
 
-    int yDimVisible = domain.GetYDimVisible();
     //Draw floor
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2, GL_UNSIGNED_INT, 
-        BUFFER_OFFSET(sizeof(GLuint)*3*2*(MAX_XDIM - 1)*(MAX_YDIM - 1)));
+    const int xDimVisible = domain.GetXDimVisible();
+    const int yDimVisible = domain.GetYDimVisible();
+    const int offsetToFloorIndices = 3 * 2 * (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    for (int i = 0; i < yDimVisible - 1; ++i)
+    {
+        for (int j = 0; j < 2*(xDimVisible - 1); ++j)
+        {
+
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT,
+                BUFFER_OFFSET(sizeof(GLuint)*(offsetToFloorIndices + 3 * (2 * i*(MAX_XDIM - 1) + j))));
+        }
+    }
 
     causticsShader->Unset();
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glDisable(GL_BLEND);
 
     surface->Unbind();
     glViewport(0, 0, p_viewSize.Width, p_viewSize.Height);
@@ -677,7 +691,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 }
 
 void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawFloorWireframe)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -691,7 +705,7 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    RenderFloor(p_modelMatrix, p_projectionMatrix);
+    RenderFloor(p_domain, p_modelMatrix, p_projectionMatrix, p_drawFloorWireframe);
 
     RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix);
 
@@ -715,7 +729,8 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
     }
 }
 
-void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix)
+void ShaderManager::RenderFloor(Domain &p_domain, const glm::mat4 &p_modelMatrix,
+    const glm::mat4 &p_projectionMatrix, const bool p_drawWireframe)
 {
     std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
     floorShader->Use();
@@ -732,15 +747,21 @@ void ShaderManager::RenderFloor(const glm::mat4 &p_modelMatrix, const glm::mat4 
     floor->Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
 
-#ifdef DRAW_FLOOR_MESH
-    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surfaceMesh");
-    surface->Bind();
+    if (p_drawWireframe)
+    {
+        std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surfaceMesh");
+        surface->Bind();
 
-    glDrawElements(GL_LINES, (MAX_XDIM - 1)*(MAX_YDIM - 1)*12*2, GL_UNSIGNED_INT, 
-        BUFFER_OFFSET(0));
+        const int xDimVisible = p_domain.GetXDimVisible();
+        const int yDimVisible = p_domain.GetYDimVisible();
+        for (int i = 0; i < yDimVisible - 1; ++i)
+        {
+            glDrawElements(GL_LINES, (xDimVisible - 1) * 12, GL_UNSIGNED_INT,
+                BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM - 1)*i * 12));
+        }
 
-    surface->Unbind();
-#endif
+        surface->Unbind();
+    }
 
     floorShader->Unset();
 }
