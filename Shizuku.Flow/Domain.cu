@@ -59,7 +59,7 @@ __host__ void Domain::SetYDimVisible(const int yDimVisible)
 __device__ int dmin(const int a, const int b)
 {
     if (a<b) return a;
-    else return b - 1;
+    else return b;
 }
 __device__ int dmax(const int a)
 {

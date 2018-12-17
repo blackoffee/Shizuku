@@ -507,10 +507,10 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float lightFactor = dmin(1.f,floor_d[x + y*MAX_XDIM]);
     floor_d[x + y*MAX_XDIM] = 0.f;
 
-    unsigned char R = 255.0f;
-    unsigned char G = 255.0f;
-    unsigned char B = 255.0f;
-    unsigned char A = 255.f;
+    unsigned char R = 255;
+    unsigned char G = 255;
+    unsigned char B = 255;
+    unsigned char A = 255;
 
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
@@ -540,9 +540,6 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
             zcoord = -1.f;
         }
         lightFactor = 0.8f;
-        R = 255.f;
-        G = 255.f;
-        B = 255.f;
         vbo[j].x = coords.x;
         vbo[j].y = coords.y;
     }
@@ -553,6 +550,10 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     R *= lightFactor;
     G *= lightFactor;
     B *= lightFactor;
+
+    R = dmin(255, R);
+    G = dmin(255, G);
+    B = dmin(255, B);
 
     unsigned char b[] = { R, G, B, A };
     float color;
@@ -841,9 +842,9 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
         if (simplified)
         {
             unsigned char refractedColor[4];
-            refractedColor[0] = textureColor.x*255.f;
-            refractedColor[1] = textureColor.y*255.f;
-            refractedColor[2] = textureColor.z*255.f;
+            refractedColor[0] = dmin((int)(textureColor.x*255.f), 255);
+            refractedColor[1] = dmin((int)(textureColor.y*255.f), 255);
+            refractedColor[2] = dmin((int)(textureColor.z*255.f), 255);
             refractedColor[3] = 255;
 
             unsigned char reflectedColor[4];
@@ -851,6 +852,9 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
             reflectedColor[1] = skyColor.y;
             reflectedColor[2] = skyColor.z;
             reflectedColor[3] = 255;
+
+            if (textureColor.x > 1.f || textureColor.y > 1.f || textureColor.z > 1.f)
+                printf("%f, %f, %f \n", textureColor.x, textureColor.y, textureColor.z);
 
             color[0] = (1.f - reflectedRayIntensity)*(float)refractedColor[0] + reflectedRayIntensity*(float)reflectedColor[0];
             color[1] = (1.f - reflectedRayIntensity)*(float)refractedColor[1] + reflectedRayIntensity*(float)reflectedColor[1];
@@ -869,9 +873,9 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
             }
             else
             {
-                refractedColor[0] = textureColor.x*255.f;
-                refractedColor[1] = textureColor.y*255.f;
-                refractedColor[2] = textureColor.z*255.f;
+                refractedColor[0] = dmin((int)(textureColor.x*255.f), 255);
+                refractedColor[1] = dmin((int)(textureColor.y*255.f), 255);
+                refractedColor[2] = dmin((int)(textureColor.z*255.f), 255);
                 refractedColor[3] = 255;
             }
 
