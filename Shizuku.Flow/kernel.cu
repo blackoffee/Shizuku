@@ -164,6 +164,11 @@ __device__	float2 ScaledCoords(int p_x, int p_y, const int p_maxDim)
         ScaledCoord(p_y, p_maxDim));
 }
 
+__device__ float ObstructionPickingTol(const int p_xDimVisible)
+{
+    return 1.5f*2.f / p_xDimVisible;
+}
+
 // Initialize domain using constant velocity
 __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
     Domain simDomain)
@@ -475,27 +480,27 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
-        const int offset = MAX_XDIM*MAX_YDIM;
-        const float2 nw = make_float2(vbo[(x  )+(y+1)*MAX_XDIM+offset].x, vbo[(x  )+(y+1)*MAX_XDIM+offset].y);
-        const float2 ne = make_float2(vbo[(x+1)+(y+1)*MAX_XDIM+offset].x, vbo[(x+1)+(y+1)*MAX_XDIM+offset].y);
-        const float2 sw = make_float2(vbo[(x  )+(y  )*MAX_XDIM+offset].x, vbo[(x  )+(y  )*MAX_XDIM+offset].y);
-        const float2 se = make_float2(vbo[(x+1)+(y  )*MAX_XDIM+offset].x, vbo[(x+1)+(y  )*MAX_XDIM+offset].y);
+        const int obstID = FindOverlappingObstruction(ScaledCoord(x, xDimVisible), ScaledCoord(y, xDimVisible), obstructions, ObstructionPickingTol(xDimVisible));
+        if (obstID < 0)
+        {
+            const int offset = MAX_XDIM*MAX_YDIM;
+            const float2 nw = make_float2(vbo[(x)+(y + 1)*MAX_XDIM + offset].x, vbo[(x)+(y + 1)*MAX_XDIM + offset].y);
+            const float2 ne = make_float2(vbo[(x + 1) + (y + 1)*MAX_XDIM + offset].x, vbo[(x + 1) + (y + 1)*MAX_XDIM + offset].y);
+            const float2 sw = make_float2(vbo[(x)+(y)*MAX_XDIM + offset].x, vbo[(x)+(y)*MAX_XDIM + offset].y);
+            const float2 se = make_float2(vbo[(x + 1) + (y)*MAX_XDIM + offset].x, vbo[(x + 1) + (y)*MAX_XDIM + offset].y);
 
-        const float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
-        const float cellSize = ScaledLength(1, xDimVisible);
-        const float incidentLightIntensity = 0.4f;
-        const float lightIntensity = incidentLightIntensity*(cellSize*cellSize) / areaOfLightMeshOnFloor;
-        atomicAdd(&floor_d[x   + (y  )*MAX_XDIM], lightIntensity*0.25f);
-        atomicAdd(&floor_d[x+1 + (y  )*MAX_XDIM], lightIntensity*0.25f);
-        atomicAdd(&floor_d[x+1 + (y+1)*MAX_XDIM], lightIntensity*0.25f);
-        atomicAdd(&floor_d[x   + (y+1)*MAX_XDIM], lightIntensity*0.25f);
+            const float areaOfLightMeshOnFloor = ComputeAreaFrom4Points(nw, ne, sw, se);
+            const float cellSize = ScaledLength(1, xDimVisible);
+            const float incidentLightIntensity = 0.4f;
+            const float lightIntensity = incidentLightIntensity*(cellSize*cellSize) / areaOfLightMeshOnFloor;
+            atomicAdd(&floor_d[x + (y)*MAX_XDIM], lightIntensity*0.25f);
+            atomicAdd(&floor_d[x + 1 + (y)*MAX_XDIM], lightIntensity*0.25f);
+            atomicAdd(&floor_d[x + 1 + (y + 1)*MAX_XDIM], lightIntensity*0.25f);
+            atomicAdd(&floor_d[x + (y + 1)*MAX_XDIM], lightIntensity*0.25f);
+        }
     }
 }
 
-__device__ float ObstructionPickingTol(const int p_xDimVisible)
-{
-    return 1.5f*2.f / p_xDimVisible;
-}
 
 __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
     Obstruction* obstructions, Domain simDomain, const float obstHeight)
