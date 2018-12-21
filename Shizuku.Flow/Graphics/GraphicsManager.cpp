@@ -219,10 +219,8 @@ void GraphicsManager::UpdateViewMatrices()
 
 void GraphicsManager::SetUpGLInterop()
 {
-    unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
-    unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     ShaderManager* graphics = GetGraphics();
-    graphics->CreateVboForCudaInterop(solutionMemorySize+floorSize);
+    graphics->CreateVboForCudaInterop();
 }
 
 void GraphicsManager::SetUpShaders()
@@ -275,7 +273,7 @@ void GraphicsManager::DoInitializeFlow()
     Obstruction* obst_d = cudaLbm->GetDeviceObst();
 
     ShaderManager* graphics = GetGraphics();
-    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaSolutionGraphicsResource();
+    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaPosColorResource();
     float4 *dptr;
     cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
@@ -304,18 +302,22 @@ void GraphicsManager::RunCuda()
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
     ShaderManager* graphics = GetGraphics();
-    cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
+    cudaGraphicsResource* vbo_resource = graphics->GetCudaPosColorResource();
+    cudaGraphicsResource* normalResource = graphics->GetCudaNormalResource();
     cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorLightTextureResource();
 
-    float4 *dptr;
+    float4* dptr;
+    float4* dptrNormal;
     cudaArray *floorTexture;
 
-    cudaGraphicsMapResources(1, &vbo_resource, 0);
     size_t num_bytes;
+    cudaGraphicsResource* resources[3] = { vbo_resource, normalResource, floorTextureResource };
+    cudaGraphicsMapResources(3, resources, 0);
     cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-
-    cudaGraphicsMapResources(1, &floorTextureResource, 0);
+    cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard);
     cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
+    cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
+    cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard);
 
     UpdateLbmInputs();
 
@@ -332,8 +334,7 @@ void GraphicsManager::RunCuda()
 
     m_timers[TimerKey::PrepareFloor].Tick();
 
-
-    UpdateSolutionVbo(dptr, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
+    UpdateSolutionVbo(dptr, dptrNormal, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
         m_viewMode, m_waterDepth);
  
     SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
@@ -343,16 +344,14 @@ void GraphicsManager::RunCuda()
     {
         if (m_surfaceShadingMode == Phong)
         {
-            SurfacePhongLighting(dptr, obst_d, cameraPosition, *domain);
+            SurfacePhongLighting(dptr, dptrNormal, obst_d, cameraPosition, *domain);
         }
     }
 
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-    LightFloor(dptr, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth, obstHeight);
+    LightFloor(dptr, dptrNormal, floorTemp_d, obst_d, cameraPosition, *domain, m_waterDepth, obstHeight);
 
-    // unmap buffer object
-    cudaGraphicsUnmapResources(1, &vbo_resource, 0);
-    cudaGraphicsUnmapResources(1, &floorTextureResource, 0);
+    cudaGraphicsUnmapResources(3, resources, 0);
 
     cudaThreadSynchronize();
     m_timers[TimerKey::PrepareFloor].Tock();
@@ -364,25 +363,27 @@ void GraphicsManager::RunSurfaceRefraction()
 
     if (ShouldRefractSurface())
     {
-        // map OpenGL buffer object for writing from CUDA
         CudaLbm* cudaLbm = GetCudaLbm();
         ShaderManager* graphics = GetGraphics();
-        cudaGraphicsResource* vbo_resource = graphics->GetCudaSolutionGraphicsResource();
+        cudaGraphicsResource* vbo_resource = graphics->GetCudaPosColorResource();
         cudaGraphicsResource* floorLightTextureResource = graphics->GetCudaFloorLightTextureResource();
         cudaGraphicsResource* envTextureResource = graphics->GetCudaEnvTextureResource();
+        cudaGraphicsResource* normalResource = graphics->GetCudaNormalResource();
 
-        float4 *dptr;
-        cudaArray *floorLightTexture;
-        cudaArray *envTexture;
+        float4* dptr;
+        float4* dptrNormal;
+        cudaArray* floorLightTexture;
+        cudaArray* envTexture;
 
-        cudaGraphicsMapResources(1, &vbo_resource, 0);
         size_t num_bytes;
-        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
 
-        cudaGraphicsMapResources(1, &floorLightTextureResource, 0);
+        cudaGraphicsResource* resources[4] = { vbo_resource, floorLightTextureResource, envTextureResource, normalResource };
+        cudaGraphicsMapResources(4, resources, 0);
+        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
         cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0);
-        cudaGraphicsMapResources(1, &envTextureResource, 0);
         cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0);
+        cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
+        cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly);
 
         glm::vec4 cameraPos;
         if (!m_rayTracingPaused)
@@ -402,13 +403,10 @@ void GraphicsManager::RunSurfaceRefraction()
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
         Domain* domain = cudaLbm->GetDomain();
         const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-        RefractSurface(dptr, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
+        RefractSurface(dptr, dptrNormal, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
             m_surfaceShadingMode == SimplifiedRayTracing);
 
-        // unmap buffer object
-        gpuErrchk(cudaGraphicsUnmapResources(1, &vbo_resource, 0));
-        gpuErrchk(cudaGraphicsUnmapResources(1, &floorLightTextureResource, 0));
-        gpuErrchk(cudaGraphicsUnmapResources(1, &envTextureResource, 0));
+        gpuErrchk(cudaGraphicsUnmapResources(4, resources, 0));
     }
 
     cudaThreadSynchronize();
@@ -498,7 +496,7 @@ int GraphicsManager::GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yO
         float3 selectedCoordF;
 
         // map OpenGL buffer object for writing from CUDA
-        cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaSolutionGraphicsResource();
+        cudaGraphicsResource* cudaSolutionField = m_graphics->GetCudaPosColorResource();
         float4 *dptr;
         cudaGraphicsMapResources(1, &cudaSolutionField, 0);
         size_t num_bytes;

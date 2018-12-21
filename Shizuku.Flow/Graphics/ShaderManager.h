@@ -44,7 +44,8 @@ private:
         std::string m_name;
     };
     std::shared_ptr<CudaLbm> m_cudaLbm;
-    cudaGraphicsResource* m_cudaGraphicsResource;
+    cudaGraphicsResource* m_cudaPosColorResource;
+    cudaGraphicsResource* m_cudaNormalResource;
     cudaGraphicsResource* m_cudaFloorLightTextureResource;
     cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_floorLightTexture;
@@ -81,13 +82,14 @@ public:
 
     void CreateCudaLbm();
     std::shared_ptr<CudaLbm> GetCudaLbm();
-    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    cudaGraphicsResource* GetCudaPosColorResource();
+    cudaGraphicsResource* GetCudaNormalResource();
     cudaGraphicsResource* GetCudaFloorLightTextureResource();
     cudaGraphicsResource* GetCudaEnvTextureResource();
     template <typename T> void CreateShaderStorageBuffer(T defaultValue,
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
-    void CreateVboForCudaInterop(unsigned int size);
+    void CreateVboForCudaInterop();
     std::shared_ptr<ShaderProgram> GetShaderProgram();
     std::shared_ptr<ShaderProgram> GetLightingProgram();
     std::shared_ptr<ShaderProgram> GetObstProgram();

@@ -216,7 +216,6 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
     lbm.WriteDistributions(fB, x, y);
 }
 
-// main LBM function including streaming and colliding
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int contourVar, const float contMin, const float contMax,
     const int viewMode, const float uMax, Domain simDomain, const float waterDepth)
@@ -230,7 +229,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int yDim = simDomain.GetYDim();
     LbmNode lbm;
     lbm.ReadDistributions(fA, x, y);
-    const float rho = (im == 1)? 1.0 : lbm.ComputeRho();
+    const float rho = (im == 1) ? 1.0 : lbm.ComputeRho();
     const float u = lbm.ComputeU();
     const float v = lbm.ComputeV();
 
@@ -242,65 +241,68 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const float2 coords = ScaledCoords(x, y, xDimVisible);
 
     float zcoord = -1.f + waterDepth + 1.5f*(rho - 1.0f);
-
-    //for color, need to convert 4 bytes (RGBA) to float
-    float variableValue = 0.f;
-
-
-    //change min/max contour values based on contour variable
-    if (contourVar == ContourVariable::VEL_MAG)
-    {
-        variableValue = sqrt(u*u+v*v);
-    }	
-    else if (contourVar == ContourVariable::VEL_U)
-    {
-        variableValue = u;
-    }	
-    else if (contourVar == ContourVariable::VEL_V)
-    {
-        variableValue = v;
-    }	
-    else if (contourVar == ContourVariable::PRESSURE)
-    {
-        variableValue = rho;
-    }
-    else if (contourVar == ContourVariable::STRAIN_RATE)
-    {
-        variableValue = lbm.ComputeStrainRateMagnitude();
-    }
-
-    ////Blue to white color scheme
-    unsigned char R = dmin(255.f,dmax(255 * ((variableValue - contMin) /
-        (contMax - contMin))));
-    unsigned char G = dmin(255.f,dmax(255 * ((variableValue - contMin) /
-        (contMax - contMin))));
-    unsigned char B = 255;
-    unsigned char A = 255;
-
-    if (im == 1 || im == 20){
-        R = 204; G = 204; B = 204;
-    }
-
     float color;
-    unsigned char b[] = { R, G, B, A };
-    std::memcpy(&color, &b, sizeof(color));
+
+    if (contourVar != ContourVariable::WATER_RENDERING)
+    {
+        //for color, need to convert 4 bytes (RGBA) to float
+        float variableValue = 0.f;
+
+        //change min/max contour values based on contour variable
+        if (contourVar == ContourVariable::VEL_MAG)
+        {
+            variableValue = sqrt(u*u + v*v);
+        }
+        else if (contourVar == ContourVariable::VEL_U)
+        {
+            variableValue = u;
+        }
+        else if (contourVar == ContourVariable::VEL_V)
+        {
+            variableValue = v;
+        }
+        else if (contourVar == ContourVariable::PRESSURE)
+        {
+            variableValue = rho;
+        }
+        else if (contourVar == ContourVariable::STRAIN_RATE)
+        {
+            variableValue = lbm.ComputeStrainRateMagnitude();
+        }
+
+        ////Blue to white color scheme
+        unsigned char R = dmin(255.f, dmax(255 * ((variableValue - contMin) /
+            (contMax - contMin))));
+        unsigned char G = dmin(255.f, dmax(255 * ((variableValue - contMin) /
+            (contMax - contMin))));
+        unsigned char B = 255;
+        unsigned char A = 255;
+
+        if (im == 1 || im == 20){
+            R = 204; G = 204; B = 204;
+        }
+
+        unsigned char b[] = { R, G, B, A };
+        std::memcpy(&color, &b, sizeof(color));
+    }
+    else
+    {
+        unsigned char b[] = { 0, 255, 0, 255 };
+        std::memcpy(&color, &b, sizeof(color));
+    }
 
     //vbo aray to be displayed
     vbo[j] = make_float4(coords.x, coords.y, zcoord, color);
 }
 
-__global__ void PhongLighting(float4* vbo, Obstruction *obstructions, 
-    float3 cameraPosition, Domain simDomain)
+__global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simDomain)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
-    const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    unsigned char color[4];
-    std::memcpy(color, &(vbo[j].w), sizeof(color));
-    unsigned char A = color[3];
-
+    const int j = x + y*MAX_XDIM;
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
+
     float3 n = { 0, 0, 0 };
     float slope_x = 0.f;
     float slope_y = 0.f;
@@ -332,6 +334,21 @@ __global__ void PhongLighting(float4* vbo, Obstruction *obstructions,
         n.z = 2.f*cellSize*2.f*cellSize;
     }
     Normalize(n);
+    p_normals[j] = make_float4(n.x, n.y, n.z, 0.f);
+}
+
+__global__ void PhongLighting(float4* vbo, float4* p_normals, Obstruction *obstructions, 
+    float3 cameraPosition, Domain simDomain)
+{
+    const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
+    const int y = threadIdx.y + blockIdx.y*blockDim.y;
+    const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+    unsigned char color[4];
+    std::memcpy(color, &(vbo[j].w), sizeof(color));
+    unsigned char A = color[3];
+
+    float3 n = make_float3(p_normals[j].x, p_normals[j].y, p_normals[j].z);
+
     const float3 elementPosition = {vbo[j].x,vbo[j].y,vbo[j].z };
     const float3 diffuseLightDirection1 = {0.577367, 0.577367, -0.577367 };
     const float3 diffuseLightDirection2 = { -0.577367, 0.577367, -0.577367 };
@@ -758,7 +775,7 @@ __device__ float2 GetUVCoordsForSkyMap(const float3 &rayOrigin, const float3 &ra
 texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
-__global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
+__global__ void SurfaceRefraction(float4* vbo, float4* p_normals, Obstruction *obstructions,
     float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth, const float obstHeight)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
@@ -766,52 +783,15 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
     const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
 
     const int xDimVisible = simDomain.GetXDimVisible();
-    const int yDimVisible = simDomain.GetYDimVisible();
 
-    unsigned char color[4];
-    std::memcpy(color, &(vbo[j].w), sizeof(color));
+    const float3 n = make_float3(p_normals[j].x, p_normals[j].y, p_normals[j].z);
 
-    color[3] = 50;
-
-    float3 n = { 0, 0, 1 };
-    float slope_x = 0.f;
-    float slope_y = 0.f;
-    const float cellSize = 2.f / xDimVisible;
-    if (x == 0)
-    {
-        n.x = 0.f;
-    }
-    else if (y == 0)
-    {
-        n.y = 0.f;
-    }
-    else if (x >= xDimVisible - 1)
-    {
-        n.x = 0.f;
-    }
-    else if (y >= yDimVisible - 1)
-    {
-        n.y = 0.f;
-    }
-    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
-    {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
-            (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
-            (2.f*cellSize);
-        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-        n.z = 2.f*cellSize*2.f*cellSize;
-        color[3] = 255;
-    }
-    Normalize(n);
     const float waterDepthNormalized = (vbo[j].z + 1.f);
     const float xcoord = vbo[j].x;
     const float ycoord = vbo[j].y;
     const float3 elemPosNormalized = { xcoord, ycoord, vbo[j].z };
     const float3 viewingRay = elemPosNormalized - cameraPosition;  //normalized
 
-    //Normalize(viewingRay);
     const float3 refractedRay = RefractRay(viewingRay, n);
     const float3 reflectedRay = ReflectRay(viewingRay, n);
     const float cosTheta = dmax(0.f,dmin(1.f,DotProduct(viewingRay, -1.f*n)));
@@ -833,6 +813,7 @@ __global__ void SurfaceRefraction(float4* vbo, Obstruction *obstructions,
 
     const float3 refractedRayDest = { xf, yf, -1.f };
 
+    unsigned char color[4];
     float3 refractionIntersect = { 99999, 99999, 99999 };
     float3 reflectionIntersect = { 99999, 99999, 99999 };
     if (xf > 1 || xf < -1 || yf > 1 || yf < -1)
@@ -958,7 +939,7 @@ void MarchSolution(CudaLbm* cudaLbm)
     }
 }
 
-void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable contVar,
+void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, const ContourVariable contVar,
     const float contMin, const float contMax, const ViewMode viewMode, const float waterDepth)
 {
     Domain* simDomain = cudaLbm->GetDomain();
@@ -972,6 +953,7 @@ void UpdateSolutionVbo(float4* vis, CudaLbm* cudaLbm, const ContourVariable cont
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
         viewMode, u, *simDomain, waterDepth);
+    UpdateSurfaceNormals << <grid, threads >> > (vis, p_normals, *simDomain);
 }
 
 void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
@@ -980,14 +962,14 @@ void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
     UpdateObstructions << <1, 1 >> >(obst_d, targetObstID, newObst);
 }
 
-void SurfacePhongLighting(float4* vis, Obstruction* obst_d, const float3 cameraPosition,
+void SurfacePhongLighting(float4* vis, float4* p_normals, Obstruction* obst_d, const float3 cameraPosition,
     Domain &simDomain)
 {
     const int xDim = simDomain.GetXDim();
     const int yDim = simDomain.GetYDim();
     const dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
-    PhongLighting << <grid, threads>> >(vis, obst_d, cameraPosition, simDomain);
+    PhongLighting << <grid, threads>> >(vis, p_normals, obst_d, cameraPosition, simDomain);
 }
 
 void InitializeSurface(float4* vis, Domain &simDomain)
@@ -1004,7 +986,7 @@ void InitializeFloor(float4* vis, Domain &simDomain)
     InitializeMesh << <grid, threads >> >(&vis[MAX_XDIM*MAX_YDIM], simDomain);
 }
 
-void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
+void LightFloor(float4* vis, float4* p_normals, float* floor_d, Obstruction* obst_d,
     const float3 cameraPosition, Domain &simDomain, const float waterDepth, const float obstHeight)
 {
     const int xDim = simDomain.GetXDim();
@@ -1020,7 +1002,7 @@ void LightFloor(float4* vis, float* floor_d, Obstruction* obst_d,
     ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain, obstHeight);
 
     //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], obst_d, cameraPosition,
+    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], p_normals, obst_d, cameraPosition,
         simDomain);
 }
 
@@ -1055,7 +1037,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     }
 }
 
-void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain, const float waterDepth, const float obstHeight, const bool simplified)
 {
     const int xDim = simDomain.GetXDim();
@@ -1065,6 +1047,6 @@ void RefractSurface(float4* vis, cudaArray* floorLightTexture, cudaArray* envTex
     gpuErrchk(cudaBindTextureToArray(floorTex, floorLightTexture));
     gpuErrchk(cudaBindTextureToArray(envTex, envTexture));
     const float3 f3CameraPos = make_float3(cameraPos.x, cameraPos.y, cameraPos.z);
-    SurfaceRefraction << <grid, threads>> >(vis, obst_d, f3CameraPos, simDomain, simplified, waterDepth, obstHeight);
+    SurfaceRefraction << <grid, threads>> >(vis, p_normals, obst_d, f3CameraPos, simDomain, simplified, waterDepth, obstHeight);
 }
 
