@@ -129,10 +129,22 @@ namespace Shizuku{
             glUniform1i(targetLocation, varValue);
         }
 
+        void ShaderProgram::SetUniform(const GLchar* varName, const glm::vec2& varValue)
+        {
+            const GLint targetLocation = glGetUniformLocation(ProgramID, varName);
+            glUniform2f(targetLocation, varValue.x, varValue.y);
+        }
+
         void ShaderProgram::SetUniform(const GLchar* varName, const glm::vec3& varValue)
         {
             const GLint targetLocation = glGetUniformLocation(ProgramID, varName);
             glUniform3f(targetLocation, varValue.x, varValue.y, varValue.z);
+        }
+
+        void ShaderProgram::SetUniform(const GLchar* varName, const glm::vec4& varValue)
+        {
+            const GLint targetLocation = glGetUniformLocation(ProgramID, varName);
+            glUniform4f(targetLocation, varValue.x, varValue.y, varValue.z, varValue.w);
         }
 
         void ShaderProgram::SetUniform(const GLchar* varName, const glm::mat4& varValue)

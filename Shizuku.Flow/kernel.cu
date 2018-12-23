@@ -303,7 +303,7 @@ __global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simD
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
 
-    float3 n = { 0, 0, 0 };
+    float3 n = { 0, 0, 1 };
     float slope_x = 0.f;
     float slope_y = 0.f;
     const float cellSize = 2.f / xDimVisible;

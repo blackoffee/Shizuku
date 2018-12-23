@@ -285,11 +285,12 @@ void ShaderManager::SetUpCausticsTexture()
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, CAUSTICS_TEX_SIZE, CAUSTICS_TEX_SIZE, 0, GL_RGBA, GL_FLOAT, 0);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    const GLfloat color[4] = { 0, 0, 0, 0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
 
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_floorLightTexture, 0);
 
@@ -416,6 +417,10 @@ void ShaderManager::SetUpSurfaceVao()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
 
+    Ogl->BindBO(GL_ARRAY_BUFFER, *Ogl->GetBuffer("surface_normals"));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 16, 0);
+
     surface->Unbind();
 
     std::shared_ptr<Ogl::Vao> surfaceMesh = Ogl->CreateVao("surfaceMesh");
@@ -511,7 +516,6 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
-    //glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
@@ -701,7 +705,8 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 }
 
 void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawFloorWireframe)
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawFloorWireframe,
+    const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -717,7 +722,7 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
 
     RenderFloor(p_domain, p_modelMatrix, p_projectionMatrix, p_drawFloorWireframe);
 
-    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix);
+    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix, p_cameraPos, p_viewSize);
 
     if (offscreenRender)
     {
@@ -777,16 +782,19 @@ void ShaderManager::RenderFloor(Domain &p_domain, const glm::mat4 &p_modelMatrix
 }
 
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix)
+    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize)
 {
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
     shader->SetUniform("modelMatrix", modelMatrix);
     shader->SetUniform("projectionMatrix", projectionMatrix);
+    shader->SetUniform("cameraPos", p_cameraPos);
+    shader->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
 
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
+    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
     if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
     {
@@ -798,6 +806,7 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
     surface->Unbind();
 
+    glBindTexture(GL_TEXTURE_2D, 0);
     shader->Unset();   
 
     for (const auto pillar : m_pillars)

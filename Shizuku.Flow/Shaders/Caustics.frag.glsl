@@ -10,4 +10,5 @@ void main()
 {
     //! NOTE - When writing to a floating format image, output colors are not clamped to [0,1];
     color = texture(renderedTexture, texCoord) * vec4(fColor).rgba;
+    color = clamp(color,0,1);
 }

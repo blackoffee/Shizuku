@@ -385,25 +385,15 @@ void GraphicsManager::RunSurfaceRefraction()
         cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
         cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly);
 
-        glm::vec4 cameraPos;
-        if (!m_rayTracingPaused)
-        {
-            cameraPos = GetCameraPosition();
-            m_cameraPosition = cameraPos;
-        }
-        else
-        {
-            cameraPos = m_cameraPosition;
-        }
 
-        const Point<float> cameraDatumPos(cameraPos.x, cameraPos.y);
-        const Box<float> cameraDatumSize(0.05f, 0.05f, cameraPos.z);
+        const Point<float> cameraDatumPos(m_cameraPosition.x, m_cameraPosition.y);
+        const Box<float> cameraDatumSize(0.05f, 0.05f, m_cameraPosition.z);
         m_graphics->UpdateCameraDatum(PillarDefinition(cameraDatumPos, cameraDatumSize));
 
         Obstruction* obst_d = cudaLbm->GetDeviceObst();
         Domain* domain = cudaLbm->GetDomain();
         const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-        RefractSurface(dptr, dptrNormal, floorLightTexture, envTexture, obst_d, cameraPos, *domain, m_waterDepth, obstHeight,
+        RefractSurface(dptr, dptrNormal, floorLightTexture, envTexture, obst_d, m_cameraPosition, *domain, m_waterDepth, obstHeight,
             m_surfaceShadingMode == SimplifiedRayTracing);
 
         gpuErrchk(cudaGraphicsUnmapResources(4, resources, 0));
@@ -440,7 +430,7 @@ void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        m_modelView, m_projection, m_drawFloorWireframe);
+        m_modelView, m_projection, m_drawFloorWireframe, m_cameraPosition, m_viewSize);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -791,6 +781,10 @@ void GraphicsManager::UpdateGraphicsInputs()
     glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
     UpdateDomainDimensions();
     UpdateObstructionScales();
+    if (!m_rayTracingPaused)
+    {
+        m_cameraPosition = GetCameraPosition();
+    }
 }
 
 void GraphicsManager::UpdateDomainDimensions()
