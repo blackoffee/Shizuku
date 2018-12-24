@@ -2,6 +2,24 @@
 
 #define WATER_REFRACTIVE_INDEX 1.33f
 #define CAUSTICS_TEX_SIZE 1024.f
+#define MAX_OBST 20
+
+struct Obstruction
+{
+    int shape; // {SQUARE,CIRCLE,HORIZONTAL_LINE,VERTICAL_LINE};
+    float x;
+    float y;
+    float r1;
+    float r2;
+    float u;
+    float v;
+    int state; // {ACTIVE,INACTIVE,NEW,REMOVED};
+};
+
+layout(binding = 0) buffer ssbo_obsts
+{
+    Obstruction obsts[];
+};
 
 in vec3 fNormal;
 in vec4 posInModel;
@@ -11,6 +29,7 @@ out vec4 color;
 
 uniform vec3 cameraPos;
 uniform vec2 viewSize;
+uniform float obstHeight;
 
 uniform sampler2D causticsTex;
 
@@ -24,6 +43,62 @@ vec3 RefractRay(vec3 inRay, vec3 n)
 vec3 ReflectRay(vec3 inRay, vec3 n)
 {
     return 2.f*dot(inRay, -1.f*n)*n + inRay;
+}
+
+void Swap(inout float a, inout float b)
+{
+    const float temp = a;
+    a = b;
+    b = temp;
+}
+
+bool RayIntersectsWithBox(vec3 rayOrigin, vec3 rayDir, Obstruction obst, float boxHeight)
+{
+    const vec3 boxMin = vec3(obst.x-obst.r1, obst.y-obst.r1, -1.f);
+    const vec3 boxMax = vec3(obst.x+obst.r1, obst.y+obst.r1, boxHeight-1.f);
+
+    const vec3 t0 = (boxMin-rayOrigin)/rayDir;
+    const vec3 t1 = (boxMax-rayOrigin)/rayDir;
+
+    const vec3 tMin = min(t0,t1);
+    const vec3 tMax = max(t0,t1);
+
+    if (tMax.x < 0 || tMax.y < 0 || tMax.z < 0)
+        return false;
+
+    if (tMin.x > tMax.y || tMin.x > tMax.z || tMin.y > tMax.x || tMin.y > tMax.z || tMin.z > tMax.x || tMin.z > tMax.y)
+        return false;
+
+    return true;
+}
+
+vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
+{
+    vec3 diffuseLightDirection1 = vec3(0.577367, 0.577367, -0.577367 );
+    vec3 diffuseLightDirection2 = vec3( -0.577367, 0.577367, -0.577367 );
+    vec3 diffuseLightColor1 = vec3(0.5f, 0.5f, 0.5f);
+    vec3 diffuseLightColor2 = vec3(0.5f, 0.5f, 0.5f);
+    vec3 specularLightColor1 = vec3(0.5f, 0.5f, 0.5f);
+
+    float cosTheta1 = -dot(n,diffuseLightDirection1);
+    cosTheta1 = cosTheta1 < 0 ? 0 : cosTheta1;
+    float cosTheta2 = -dot(n, diffuseLightDirection2);
+    cosTheta2 = cosTheta2 < 0 ? 0 : cosTheta2;
+
+    vec3 specularLightPosition1 = vec3(-1.5f, -1.5f, 1.5f);
+    vec3 specularLight1 = posInModel - specularLightPosition1;
+    vec3 specularRefection1 = normalize(specularLight1 - 2.f*(dot(specularLight1, n)*n));
+    float cosAlpha = -dot(eyeDir, specularRefection1);
+    cosAlpha = cosAlpha < 0 ? 0 : cosAlpha;
+    cosAlpha = pow(cosAlpha, 5.f);
+
+    float lightAmbient = 0.3f;
+    
+    vec3 diffuse1  = 0.1f*cosTheta1*diffuseLightColor1;
+    vec3 diffuse2  = 0.1f*cosTheta2*diffuseLightColor2;
+    vec3 specular1 = cosAlpha*specularLightColor1;
+    
+    return min(vec3(1.f), (diffuse1.xyz + diffuse2.xyz + specular1.xyz + lightAmbient));
 }
 
 void main()
@@ -50,6 +125,19 @@ void main()
     color = texture(causticsTex, 0.5f*(floorPos+vec2(1.f)));
     const vec3 envColor = vec3(1);
     color.xyz = mix(color.xyz, envColor, reflectedRayIntensity);
+
+    for (int i = 0; i < MAX_OBST; ++i)
+    {
+        if (obsts[i].state == 0)
+        {
+            if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight))
+            {
+                //FIXME: Use obst's normal instead of fragment
+                vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), fNormal);
+                color.xyz = lightFactor*vec3(0.8f);
+            }
+        }
+    }
 
     if (color.a == 0.f)
         discard;

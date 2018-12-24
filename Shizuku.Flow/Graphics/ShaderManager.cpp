@@ -706,7 +706,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 
 void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
     const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawFloorWireframe,
-    const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize)
+    const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -722,7 +722,7 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
 
     RenderFloor(p_domain, p_modelMatrix, p_projectionMatrix, p_drawFloorWireframe);
 
-    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix, p_cameraPos, p_viewSize);
+    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
 
     if (offscreenRender)
     {
@@ -782,7 +782,8 @@ void ShaderManager::RenderFloor(Domain &p_domain, const glm::mat4 &p_modelMatrix
 }
 
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize)
+    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos,
+    const Rect<int>& p_viewSize, const float obstHeight)
 {
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
     shader->Use();
@@ -790,11 +791,15 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     shader->SetUniform("modelMatrix", modelMatrix);
     shader->SetUniform("projectionMatrix", projectionMatrix);
     shader->SetUniform("cameraPos", p_cameraPos);
+    shader->SetUniform("obstHeight", obstHeight);
     shader->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
 
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+
+    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("Obstructions");
+    Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
 
     if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
     {
@@ -807,6 +812,7 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     surface->Unbind();
 
     glBindTexture(GL_TEXTURE_2D, 0);
+    Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
     shader->Unset();   
 
     for (const auto pillar : m_pillars)

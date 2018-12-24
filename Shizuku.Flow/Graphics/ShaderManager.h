@@ -66,9 +66,11 @@ private:
     float m_inletVelocity;
     void CreateElementArrayBuffer();
 
-    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawWireframe);
+    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix,
+        const bool p_drawWireframe);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize);
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos,
+        const Rect<int>& p_viewSize, const float obstHeight);
 
     //std::shared_ptr<Pillar> m_pillar;
     std::map<const int, std::shared_ptr<Pillar>> m_pillars;
@@ -124,7 +126,8 @@ public:
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void Render(const ShadingMode p_shadingMode , Domain &domain,
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe, const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize);
+        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe,
+        const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight);
 
     void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     void RemovePillar(const int obstId);

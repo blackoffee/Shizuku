@@ -429,8 +429,9 @@ void GraphicsManager::RenderCausticsToTexture()
 void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
+    const float obstHeight = PillarHeightFromDepth(m_waterDepth);
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        m_modelView, m_projection, m_drawFloorWireframe, m_cameraPosition, m_viewSize);
+        m_modelView, m_projection, m_drawFloorWireframe, m_cameraPosition, m_viewSize, obstHeight);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -637,6 +638,7 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     {
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());  
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
     else
     {
@@ -683,7 +685,10 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     if (m_useCuda)
+    {
         UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
+        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
+    }
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     UpdatePillar(obstId, obst);
@@ -702,7 +707,10 @@ void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
         m_obstructions[obstId].state = State::INACTIVE;
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
         if (m_useCuda)
+        {
             UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], *GetCudaLbm()->GetDomain());
+            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
+        }
         else
             GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
         GetGraphics()->RemovePillar(obstId);
@@ -804,6 +812,7 @@ void GraphicsManager::UpdateObstructionScales()
             {
                 Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
                 UpdateDeviceObstructions(obst_d, i, m_obstructions[i], *GetCudaLbm()->GetDomain());  
+                GetGraphics()->UpdateObstructionsUsingComputeShader(i, m_obstructions[i], m_scaleFactor);
             }
             else
             {
