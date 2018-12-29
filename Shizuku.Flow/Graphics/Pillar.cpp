@@ -155,22 +155,23 @@ void Pillar::SetSize(const Types::Box<float>& p_size)
     m_def.SetSize(p_size);
 }
 
-void Pillar::Draw(const glm::mat4& p_model, const glm::mat4& p_proj)
+void Pillar::Draw(const glm::mat4& p_view, const glm::mat4& p_proj, const glm::vec3 p_cameraPos)
 {
-    glm::mat4 modelMat;
     glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(m_def.Size().Width, m_def.Size().Height, m_def.Size().Depth));
     glm::mat4 trans = glm::translate(
         glm::mat4(1),
         glm::vec3(m_def.Pos().X-0.5f*m_def.Size().Width, m_def.Pos().Y-0.5f*m_def.Size().Height, -1.0f));
-    modelMat = p_model * trans * scale;
+    glm::mat4 modelMat = trans * scale;
     glm::mat4 modelInvTrans = glm::transpose(glm::inverse(modelMat));
 
     m_shaderProgram->Use();
     glActiveTexture(GL_TEXTURE0);
 
     m_shaderProgram->SetUniform("modelMatrix", modelMat);
+    m_shaderProgram->SetUniform("viewMatrix", p_view);
     m_shaderProgram->SetUniform("projectionMatrix", p_proj);
     m_shaderProgram->SetUniform("modelInvTrans", modelInvTrans);
+    m_shaderProgram->SetUniform("cameraPos", p_cameraPos);
 
     std::shared_ptr<Ogl::Vao> pillar = m_ogl->GetVao("pillar");
     pillar->Bind();

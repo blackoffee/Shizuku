@@ -214,7 +214,7 @@ void ShaderManager::SetUpFloorTexture()
 {
     int width, height;
     unsigned char* image = SOIL_load_image("Assets/Floor.png", &width, &height, 0, SOIL_LOAD_RGB);
-    std::cout << SOIL_last_result() << std::endl;
+    //std::cout << SOIL_last_result() << std::endl;
     assert(image != NULL);
     float* tex = new float[4 * width*height];
     for (int i = 0; i < width*height; ++i)
@@ -817,7 +817,7 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 
     for (const auto pillar : m_pillars)
     {
-        pillar.second->Draw(modelMatrix, projectionMatrix);
+        pillar.second->Draw(modelMatrix, projectionMatrix, p_cameraPos);
     }
 
 #ifdef DRAW_CAMERA

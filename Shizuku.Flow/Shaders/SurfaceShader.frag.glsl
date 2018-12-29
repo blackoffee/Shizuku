@@ -3,6 +3,7 @@
 #define WATER_REFRACTIVE_INDEX 1.33f
 #define CAUSTICS_TEX_SIZE 1024.f
 #define MAX_OBST 20
+#define OBST_ALBEDO vec3(0.8f)
 
 struct Obstruction
 {
@@ -52,7 +53,7 @@ void Swap(inout float a, inout float b)
     b = temp;
 }
 
-bool RayIntersectsWithBox(vec3 rayOrigin, vec3 rayDir, Obstruction obst, float boxHeight)
+bool RayIntersectsWithBox(vec3 rayOrigin, vec3 rayDir, Obstruction obst, float boxHeight, out vec3 normal)
 {
     const vec3 boxMin = vec3(obst.x-obst.r1, obst.y-obst.r1, -1.f);
     const vec3 boxMax = vec3(obst.x+obst.r1, obst.y+obst.r1, boxHeight-1.f);
@@ -60,14 +61,43 @@ bool RayIntersectsWithBox(vec3 rayOrigin, vec3 rayDir, Obstruction obst, float b
     const vec3 t0 = (boxMin-rayOrigin)/rayDir;
     const vec3 t1 = (boxMax-rayOrigin)/rayDir;
 
-    const vec3 tMin = min(t0,t1);
-    const vec3 tMax = max(t0,t1);
+    vec3 tMin = t0;
+    vec3 tMax = t1;
+
+    bool xFlag = false;
+    bool yFlag = false;
+    
+    if (t0.x > t1.x)
+    {
+        Swap(tMin.x, tMax.x);
+        xFlag = true;
+    }
+    if (t0.y > t1.y)
+    {
+        Swap(tMin.y, tMax.y);
+        yFlag = true;
+    }
+    if (t0.z > t1.z)
+    {
+        Swap(tMin.z, tMax.z);
+    }
 
     if (tMax.x < 0 || tMax.y < 0 || tMax.z < 0)
         return false;
 
     if (tMin.x > tMax.y || tMin.x > tMax.z || tMin.y > tMax.x || tMin.y > tMax.z || tMin.z > tMax.x || tMin.z > tMax.y)
         return false;
+
+    if (tMin.x < tMin.y)
+    {
+        float xComp = xFlag? 1.f : -1.f;
+        normal = vec3(xComp,0,0);
+    }
+    else
+    {
+        float yComp = yFlag? 1.f : -1.f;
+        normal = vec3(0,yComp,0);
+    }
 
     return true;
 }
@@ -106,9 +136,6 @@ void main()
     if (posInModel.x > 1.f)
         discard;
 
-    //vec3 screenPos = float(gl_FragCoord.xyz)/vec3(viewSize.xy,1.f);
-    //color = vec4(float(gl_FragCoord.x)/viewSize.x, float(gl_FragCoord.y)/viewSize.y, 0,1);
-
     vec3 eyeRayInModel = posInModel.xyz - cameraPos;
 
     const vec3 refractedRay = RefractRay(eyeRayInModel, fNormal);
@@ -130,10 +157,10 @@ void main()
     {
         if (obsts[i].state == 0)
         {
-            if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight))
+            vec3 n;
+            if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight, n))
             {
-                //FIXME: Use obst's normal instead of fragment
-                vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), fNormal);
+                vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), n);
                 color.xyz = lightFactor*vec3(0.8f);
             }
         }

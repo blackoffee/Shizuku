@@ -1,29 +1,32 @@
 #version 430 core
-in vec4 fColor;
-in vec4 fPositionEyeSpace;
-in vec4 fNormalEyeSpace;
-in vec4 eyeDirectionEyeSpace;
+
+#define OBST_ALBEDO vec3(0.8f)
+
+in vec4 fPositionInModel;
+in vec4 fNormalInModel;
 
 out vec4 color;
 
-void main()
-{
-    vec3 n = normalize(fNormalEyeSpace.xyz);
+uniform vec3 cameraPosition;
 
-    vec3 diffuseLightDirection1 = vec3(0.577367f, 0.577367f, -0.577367f );
-    vec3 diffuseLightDirection2 = vec3( -0.577367f, 0.577367f, -0.577367f );
-    vec3 eyeDirection = vec3(0) - fPositionEyeSpace.xyz;
+vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
+{
+    vec3 diffuseLightDirection1 = vec3(0.577367, 0.577367, -0.577367 );
+    vec3 diffuseLightDirection2 = vec3( -0.577367, 0.577367, -0.577367 );
     vec3 diffuseLightColor1 = vec3(0.5f, 0.5f, 0.5f);
     vec3 diffuseLightColor2 = vec3(0.5f, 0.5f, 0.5f);
     vec3 specularLightColor1 = vec3(0.5f, 0.5f, 0.5f);
 
-    float cosTheta1 = clamp(dot(n,diffuseLightDirection1),0,1);
-    float cosTheta2 = clamp(dot(n,diffuseLightDirection2),0,1);
+    float cosTheta1 = -dot(n,diffuseLightDirection1);
+    cosTheta1 = cosTheta1 < 0 ? 0 : cosTheta1;
+    float cosTheta2 = -dot(n, diffuseLightDirection2);
+    cosTheta2 = cosTheta2 < 0 ? 0 : cosTheta2;
 
     vec3 specularLightPosition1 = vec3(-1.5f, -1.5f, 1.5f);
-    vec3 specularLight1 = fPositionEyeSpace.xyz - specularLightPosition1;
-    vec3 specularRefection1 = specularLight1 - 2.f*(dot(specularLight1, n)*n);
-    float cosAlpha = clamp(dot(normalize(eyeDirection), normalize(specularRefection1)),0,1);
+    vec3 specularLight1 = posInModel - specularLightPosition1;
+    vec3 specularRefection1 = normalize(specularLight1 - 2.f*(dot(specularLight1, n)*n));
+    float cosAlpha = -dot(eyeDir, specularRefection1);
+    cosAlpha = cosAlpha < 0 ? 0 : cosAlpha;
     cosAlpha = pow(cosAlpha, 5.f);
 
     float lightAmbient = 0.3f;
@@ -32,10 +35,13 @@ void main()
     vec3 diffuse2  = 0.1f*cosTheta2*diffuseLightColor2;
     vec3 specular1 = cosAlpha*specularLightColor1;
     
-    vec4 lightFactor;
-    lightFactor.xyz = min(vec3(1.f,1.f,1.f), (diffuse1.xyz + diffuse2.xyz + specular1.xyz + lightAmbient));
-    lightFactor.w = 1.f;
+    return min(vec3(1.f), (diffuse1.xyz + diffuse2.xyz + specular1.xyz + lightAmbient));
+}
 
-    color = lightFactor * fColor;
-
+void main()
+{
+    vec3 n = normalize(fNormalInModel.xyz);
+    vec3 eyeRayInModel = fPositionInModel.xyz - cameraPosition;
+    vec3 lightFactor = PhongLighting(fPositionInModel.xyz, normalize(eyeRayInModel), n);
+    color.xyz = lightFactor * OBST_ALBEDO;
 }
