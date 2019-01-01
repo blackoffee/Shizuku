@@ -1,6 +1,7 @@
 #pragma once
 #include "../common.h"
 #include "ShadingMode.h"
+#include "TimerKey.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "Shizuku.Core/Types/Point.h"
@@ -9,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <boost/optional.hpp>
 #include <boost/none.hpp>
+#include <memory>
 #include <vector>
 #include <string>
 #include <map>
@@ -22,8 +24,8 @@ class CudaLbm;
 struct float4;
 
 namespace Shizuku{ namespace Flow{
-    enum TimerKey;
-    class Obstruction;
+    struct Obstruction;
+    class ObstManager;
     enum Shape;
 
     class GraphicsManager
@@ -119,8 +121,8 @@ namespace Shizuku{ namespace Flow{
         void SetRayTracingPausedState(const bool state);
         bool IsRayTracingPaused();
        
-        Point<float> GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::none);
-        Point<int> GetSimCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::none);
+        Point<float> GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::optional<const float>());
+        Point<int> GetSimCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos = boost::optional<const float>());
         void AddObstruction(const Point<int>& p_simPos);
         void AddObstruction(const Point<float>& p_modelSpacePos);
         void RemoveObstruction(const int simX, const int simY);

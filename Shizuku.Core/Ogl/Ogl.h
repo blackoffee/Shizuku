@@ -52,7 +52,12 @@ namespace Shizuku{ namespace Core
     public:
         Ogl();
 
-        template <typename T> std::shared_ptr<Buffer> CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements,
+        template <typename T>
+        std::shared_ptr<Buffer> CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements,
+            const std::string name, const GLuint drawMode, const GLuint base = -1);
+
+        template <typename T>
+        void UpdateBufferData(const GLenum target, T* data, const unsigned int numberOfElements,
             const std::string name, const GLuint drawMode, const GLuint base = -1);
 
         std::shared_ptr<Vao> CreateVao(const std::string name);
@@ -79,6 +84,15 @@ namespace Shizuku{ namespace Core
         std::shared_ptr<Ogl::Buffer> buffer = std::make_shared<Ogl::Buffer>(temp, name);
         m_buffers.push_back(buffer);
         return buffer;
+    }
+
+    template <typename T>
+    void Ogl::UpdateBufferData(const GLenum target, T* data, const unsigned int numberOfElements, const std::string name, const GLuint drawMode, const GLuint base)
+    {
+        const GLuint id = GetBuffer(name)->GetId();
+        glBindBuffer(target, id);
+        glBufferData(target, numberOfElements*sizeof(T), data, drawMode);
+        glBindBuffer(target, 0);
     }
 }}
 
