@@ -15,7 +15,7 @@ namespace Shizuku { namespace Flow{
         INACTIVE = 1,
     };
 
-    struct Obstruction
+    struct ObstDefinition
     {
         int shape;
         float x;

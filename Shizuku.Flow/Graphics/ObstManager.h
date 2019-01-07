@@ -23,8 +23,8 @@ namespace Shizuku { namespace Flow{
     {
     private:
         std::shared_ptr<Core::Ogl> m_ogl;
-        std::shared_ptr<std::list<std::shared_ptr<Obstruction>>> m_obsts;
-        Obstruction* m_obstData;
+        std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
+        ObstDefinition* m_obstData;
 
         std::shared_ptr<Core::ShaderProgram> m_shaderProgram;
 
@@ -33,10 +33,10 @@ namespace Shizuku { namespace Flow{
     public:
         ObstManager(std::shared_ptr<Core::Ogl> p_ogl);
 
-        void AddObst(const Obstruction& p_obst);
-        Obstruction& PickObstruction(const Point<int>& p_pos);
-        void UpdateObst(const Obstruction& p_obst);
-        void RemoveObst(Obstruction& p_obst);
+        void AddObst(const ObstDefinition& p_obst);
+        ObstDefinition& PickObstruction(const Point<int>& p_pos);
+        void UpdateObst(const ObstDefinition& p_obst);
+        void RemoveObst(ObstDefinition& p_obst);
 
         void AddObstruction(const Point<int>& p_simPos);
         void AddObstruction(const Point<float>& p_modelSpacePos);
@@ -45,10 +45,12 @@ namespace Shizuku { namespace Flow{
         //int PickObstruction(const Point<int>& p_pos);
         void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
 
-        std::weak_ptr<std::list<std::shared_ptr<Obstruction>>> Obsts();
+        std::weak_ptr<std::list<std::shared_ptr<ObstDefinition>>> Obsts();
 
 		void UpdatePillar(const int obstId, const PillarDefinition& p_def);
 		void RenderPillars(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos);
+
+		bool IsInsideObstruction(const Point<float>& p_modelCoord);
 
         void Initialize();
     };

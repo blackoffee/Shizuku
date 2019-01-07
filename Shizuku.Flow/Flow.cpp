@@ -42,7 +42,6 @@ void Flow::Initialize()
 void Flow::Update()
 {
     m_impl->Graphics()->UpdateGraphicsInputs();
-    m_impl->Graphics()->GetCudaLbm()->UpdateDeviceImage();
 
     m_impl->Graphics()->RunSimulation();
 

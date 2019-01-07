@@ -24,7 +24,7 @@ class CudaLbm;
 struct float4;
 
 namespace Shizuku{ namespace Flow{
-    struct Obstruction;
+    struct ObstDefinition;
     class ObstManager;
     enum Shape;
 
@@ -41,7 +41,7 @@ namespace Shizuku{ namespace Flow{
         ViewMode m_viewMode;
         bool m_rayTracingPaused = false;
         glm::vec4 m_cameraPosition;
-        Obstruction* m_obstructions;
+        ObstDefinition* m_obstructions;
         float m_scaleFactor = 1.f;
         float m_oldScaleFactor = 1.f;
         glm::mat4 m_modelView;
@@ -143,7 +143,7 @@ namespace Shizuku{ namespace Flow{
         int GetSimCoordFrom3DMouseClickOnObstruction(int &xOut, int &yOut, const Point<int>& p_pos);
         glm::vec4 GetCameraPosition();
 
-        void UpdatePillar(const int p_obstId, const Obstruction& p_obst);
+        void UpdatePillar(const int p_obstId, const ObstDefinition& p_obst);
         int FindUnusedObstructionId();
         int FindClosestObstructionId(const int simX, const int simY);
         int FindObstructionPointIsInside(const int x, const int y, const float tolerance=0.f);

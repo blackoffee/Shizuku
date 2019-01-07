@@ -14,8 +14,8 @@ using namespace Shizuku::Flow;
  *	Device functions
  */
 
-__global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumber,
-    const Obstruction newObst)
+__global__ void UpdateObstructions(ObstDefinition* obstructions, const int obstNumber,
+    const ObstDefinition newObst)
 {
     obstructions[obstNumber].shape = newObst.shape;
     obstructions[obstNumber].r1 = newObst.r1;
@@ -27,7 +27,7 @@ __global__ void UpdateObstructions(Obstruction* obstructions, const int obstNumb
 }
 
 inline __device__ int FindOverlappingObstruction(const float x, const float y,
-    Obstruction* obstructions, const float tolerance = 0.f)
+    ObstDefinition* obstructions, const float tolerance = 0.f)
 {
     for (int i = 0; i < MAXOBSTS; i++){
         if (obstructions[i].state != State::INACTIVE)
@@ -59,7 +59,7 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
 }
 
 __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
-    Obstruction* obstructions, float obstHeight, const float tolerance = 0.f)
+    ObstDefinition* obstructions, float obstHeight, const float tolerance = 0.f)
 {
     float3 rayDir = rayDest - rayOrigin;
     bool hit = false;
@@ -183,7 +183,7 @@ __global__ void InitializeLBM(float4* vbo, float *f, int *Im, float uMax,
 
 // main LBM function including streaming and colliding
 __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
-    Obstruction *obstructions, const float uMax, Domain simDomain)
+    ObstDefinition *obstructions, const float uMax, Domain simDomain)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -337,7 +337,7 @@ __global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simD
     p_normals[j] = make_float4(n.x, n.y, n.z, 0.f);
 }
 
-__global__ void PhongLighting(float4* vbo, float4* p_normals, Obstruction *obstructions, 
+__global__ void PhongLighting(float4* vbo, float4* p_normals, ObstDefinition *obstructions, 
     float3 cameraPosition, Domain simDomain)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
@@ -468,7 +468,7 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
 }
 
 __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
-    Obstruction* obstructions, Domain simDomain, const float waterDepth)
+    ObstDefinition* obstructions, Domain simDomain, const float waterDepth)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -487,7 +487,7 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
 }
 
 __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, Domain simDomain)
+    ObstDefinition* obstructions, Domain simDomain)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -520,7 +520,7 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
 
 
 __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d, 
-    Obstruction* obstructions, Domain simDomain, const float obstHeight)
+    ObstDefinition* obstructions, Domain simDomain, const float obstHeight)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -586,7 +586,7 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
 }
 
 __global__ void RayCast(float4* vbo, float4* rayCastIntersect, float3 rayOrigin,
-    float3 rayDir, Obstruction* obstructions, Domain simDomain)
+    float3 rayDir, ObstDefinition* obstructions, Domain simDomain)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -775,7 +775,7 @@ __device__ float2 GetUVCoordsForSkyMap(const float3 &rayOrigin, const float3 &ra
 texture<float4, 2, cudaReadModeElementType> floorTex;
 texture<float4, 2, cudaReadModeElementType> envTex;
 
-__global__ void SurfaceRefraction(float4* vbo, float4* p_normals, Obstruction *obstructions,
+__global__ void SurfaceRefraction(float4* vbo, float4* p_normals, ObstDefinition *obstructions,
     float3 cameraPosition, Domain simDomain, const bool simplified, const float waterDepth, const float obstHeight)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
@@ -905,7 +905,7 @@ void InitializeDomain(float4* vis, float* f_d, int* im_d, const float uMax,
     InitializeLBM << <grid, threads >> >(vis, f_d, im_d, uMax, simDomain);
 }
 
-void SetObstructionVelocitiesToZero(Obstruction* obst_h, Obstruction* obst_d, Domain& simDomain)
+void SetObstructionVelocitiesToZero(ObstDefinition* obst_h, ObstDefinition* obst_d, Domain& simDomain)
 {
     for (int i = 0; i < MAXOBSTS; i++)
     {
@@ -926,7 +926,7 @@ void MarchSolution(CudaLbm* cudaLbm)
     float* fA_d = cudaLbm->GetFA();
     float* fB_d = cudaLbm->GetFB();
     int* im_d = cudaLbm->GetImage();
-    Obstruction* obst_d = cudaLbm->GetDeviceObst();
+    ObstDefinition* obst_d = cudaLbm->GetDeviceObst();
     const float u = cudaLbm->GetInletVelocity();
     const float omega = cudaLbm->GetOmega();
 
@@ -956,13 +956,13 @@ void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, const C
     UpdateSurfaceNormals << <grid, threads >> > (vis, p_normals, *simDomain);
 }
 
-void UpdateDeviceObstructions(Obstruction* obst_d, const int targetObstID,
-    const Obstruction &newObst, Domain& simDomain)
+void UpdateDeviceObstructions(ObstDefinition* obst_d, const int targetObstID,
+    const ObstDefinition &newObst, Domain& simDomain)
 {
     UpdateObstructions << <1, 1 >> >(obst_d, targetObstID, newObst);
 }
 
-void SurfacePhongLighting(float4* vis, float4* p_normals, Obstruction* obst_d, const float3 cameraPosition,
+void SurfacePhongLighting(float4* vis, float4* p_normals, ObstDefinition* obst_d, const float3 cameraPosition,
     Domain &simDomain)
 {
     const int xDim = simDomain.GetXDim();
@@ -986,7 +986,7 @@ void InitializeFloor(float4* vis, Domain &simDomain)
     InitializeMesh << <grid, threads >> >(&vis[MAX_XDIM*MAX_YDIM], simDomain);
 }
 
-void LightFloor(float4* vis, float4* p_normals, float* floor_d, Obstruction* obst_d,
+void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d,
     const float3 cameraPosition, Domain &simDomain, const float waterDepth, const float obstHeight)
 {
     const int xDim = simDomain.GetXDim();
@@ -1007,7 +1007,7 @@ void LightFloor(float4* vis, float4* p_normals, float* floor_d, Obstruction* obs
 }
 
 int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCastIntersect_d, 
-    const float3 &rayOrigin, const float3 &rayDir, Obstruction* obst_d, Domain &simDomain)
+    const float3 &rayOrigin, const float3 &rayDir, ObstDefinition* obst_d, Domain &simDomain)
 {
     const int xDim = simDomain.GetXDim();
     const int yDim = simDomain.GetYDim();
@@ -1037,7 +1037,7 @@ int RayCastMouseClick(float3 &rayCastIntersectCoord, float4* vis, float4* rayCas
     }
 }
 
-void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorLightTexture, cudaArray* envTexture, Obstruction* obst_d, const glm::vec4 cameraPos,
+void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorLightTexture, cudaArray* envTexture, ObstDefinition* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain, const float waterDepth, const float obstHeight, const bool simplified)
 {
     const int xDim = simDomain.GetXDim();

@@ -206,7 +206,7 @@ void ShaderManager::AllocateStorageBuffers()
     CreateShaderStorageBuffer(GLfloat(0), MAX_XDIM*MAX_YDIM*9, "LbmA");
     CreateShaderStorageBuffer(GLfloat(0), MAX_XDIM*MAX_YDIM*9, "LbmB");
     CreateShaderStorageBuffer(GLint(0), MAX_XDIM*MAX_YDIM, "Floor");
-    CreateShaderStorageBuffer(Obstruction{}, MAXOBSTS, "Obstructions");
+    CreateShaderStorageBuffer(ObstDefinition{}, MAXOBSTS, "Obstructions");
     CreateShaderStorageBuffer(float4{0,0,0,1e6}, 1, "RayIntersection");
 }
 
@@ -345,11 +345,11 @@ void ShaderManager::SetUpOutputTexture(const Rect<int>& p_viewSize)
 void ShaderManager::InitializeObstSsbo()
 {
     std::shared_ptr<CudaLbm> cudaLbm = GetCudaLbm();
-    Obstruction* obst_h = cudaLbm->GetHostObst();
+    ObstDefinition* obst_h = cudaLbm->GetHostObst();
 
     std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(Obstruction), obst_h, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, MAXOBSTS*sizeof(ObstDefinition), obst_h, GL_STATIC_DRAW);
     Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
 }
 
@@ -611,7 +611,7 @@ void ShaderManager::RunComputeShader(const glm::vec3 p_cameraPosition, const Con
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, Obstruction &newObst, const float scaleFactor)
+void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, ObstDefinition &newObst, const float scaleFactor)
 {
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(0, *ssbo_obsts);
