@@ -113,6 +113,9 @@
     <ClCompile Include="Command\SetFloorWireframeVisibility.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\ObstManager.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -235,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="Command\SetFloorWireframeVisibility.h">
       <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ObstManager.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

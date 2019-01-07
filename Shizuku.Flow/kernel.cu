@@ -541,34 +541,34 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
     float2 coords = ScaledCoords(x, y, xDimVisible);
     float zcoord = vbo[j].z;
 
-    const int obstID = FindOverlappingObstruction(ScaledCoord(x, xDimVisible), ScaledCoord(y, xDimVisible), obstructions, ObstructionPickingTol(xDimVisible));
-    if (obstID > -1)
-    {
-        const float fullObstHeight = -1.f+obstHeight;
-        if (obstructions[obstID].state == State::ACTIVE)
-        {
-            zcoord = fullObstHeight;
-        }
-        else if (obstructions[obstID].state == State::INACTIVE)
-        {
-            obstructions[obstID].u = 0.0f;
-            obstructions[obstID].v = 0.0f;
-            zcoord = dmax(-1.f, zcoord - 0.15f);
-        }
-        else
-        {
-            obstructions[obstID].u = 0.0f;
-            obstructions[obstID].v = 0.0f;
-            zcoord = -1.f;
-        }
-        lightFactor = 0.8f;
-        vbo[j].x = coords.x;
-        vbo[j].y = coords.y;
-    }
-    else
-    {
-        zcoord = -1.f;
-    }
+//    const int obstID = FindOverlappingObstruction(ScaledCoord(x, xDimVisible), ScaledCoord(y, xDimVisible), obstructions, ObstructionPickingTol(xDimVisible));
+//    if (obstID > -1)
+//    {
+//        const float fullObstHeight = -1.f+obstHeight;
+//        if (obstructions[obstID].state == State::ACTIVE)
+//        {
+//            zcoord = fullObstHeight;
+//        }
+//        else if (obstructions[obstID].state == State::INACTIVE)
+//        {
+//            obstructions[obstID].u = 0.0f;
+//            obstructions[obstID].v = 0.0f;
+//            zcoord = dmax(-1.f, zcoord - 0.15f);
+//        }
+//        else
+//        {
+//            obstructions[obstID].u = 0.0f;
+//            obstructions[obstID].v = 0.0f;
+//            zcoord = -1.f;
+//        }
+//        lightFactor = 0.8f;
+//        vbo[j].x = coords.x;
+//        vbo[j].y = coords.y;
+//    }
+//    else
+//    {
+//        zcoord = -1.f;
+//    }
     R *= lightFactor;
     G *= lightFactor;
     B *= lightFactor;

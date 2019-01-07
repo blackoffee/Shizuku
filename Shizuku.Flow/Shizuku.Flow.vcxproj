@@ -273,6 +273,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
+    <ClCompile Include="Graphics\ObstManager.cpp" />
     <ClCompile Include="Query.cpp" />
     <ClCompile Include="Flow.cpp" />
     <ClCompile Include="Graphics\CudaLbm.cpp" />
@@ -316,6 +317,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
+    <ClInclude Include="Graphics\ObstManager.h" />
     <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />

@@ -57,9 +57,12 @@ namespace Shizuku{ namespace Flow{
 
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
+        std::shared_ptr<ObstManager> m_obstMgr;
 
     public:
         GraphicsManager();
+
+		void Initialize();
 
         void SetViewport(const Rect<int>& size);
         Rect<int>& GetViewport();

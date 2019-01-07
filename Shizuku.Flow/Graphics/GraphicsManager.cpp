@@ -1,5 +1,6 @@
 #include "GraphicsManager.h"
 #include "ShaderManager.h"
+#include "ObstManager.h"
 #include "CudaLbm.h"
 #include "kernel.h"
 #include "Domain.h"
@@ -42,6 +43,7 @@ GraphicsManager::GraphicsManager()
 {
     m_graphics = new ShaderManager;
     m_graphics->CreateCudaLbm();
+	m_obstMgr = std::make_shared<ObstManager>(m_graphics->Ogl);
     m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
     m_rotate = { 55.f, 60.f, 30.f };
     m_translate = { 0.f, 0.6f, 0.f };
@@ -57,6 +59,15 @@ GraphicsManager::GraphicsManager()
     m_timers[TimerKey::PrepareSurface] = Stopwatch(framesForAverage);
     m_timers[TimerKey::ProcessFloor] = Stopwatch(framesForAverage);
     m_timers[TimerKey::ProcessSurface] = Stopwatch(framesForAverage);
+}
+
+void GraphicsManager::Initialize()
+{
+    SetUpGLInterop();
+    SetUpCuda();
+    SetUpShaders();
+
+	m_obstMgr->Initialize();
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
@@ -432,6 +443,7 @@ void GraphicsManager::Render()
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
         m_modelView, m_projection, m_drawFloorWireframe, m_cameraPosition, m_viewSize, obstHeight);
+	m_obstMgr->RenderPillars(m_modelView, m_projection, m_cameraPosition);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -610,11 +622,13 @@ void GraphicsManager::Rotate(const Point<int>& p_posDiff)
 
 int GraphicsManager::PickObstruction(const Point<int>& p_pos)
 {
-    int simX, simY;
-    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, p_pos) == 0)
-    {
-        return FindClosestObstructionId(simX, simY);
-    }
+	std::shared_ptr<Obstruction> obst = m_obstMgr->Obsts().lock()->front();
+	m_obstMgr->RemoveObst(*obst);
+//    int simX, simY;
+//    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, p_pos) == 0)
+//    {
+//        return FindClosestObstructionId(simX, simY);
+//    }
     return -1;
 }
 
@@ -637,7 +651,7 @@ void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const
     if (m_useCuda)
     {
         Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());  
+        //UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());  
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
     }
     else
@@ -652,7 +666,7 @@ void GraphicsManager::UpdatePillar(const int p_obstId, const Obstruction& p_obst
 {
     const Point<float> pillarPos(p_obst.x, p_obst.y);
     const Box<float> pillarSize(2.f*p_obst.r1, 2.f*p_obst.r1, PillarHeightFromDepth(m_waterDepth));
-    m_graphics->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
+    m_obstMgr->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
 }
 
 void GraphicsManager::Zoom(const int dir, const float mag)
@@ -681,13 +695,18 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
     const Point<float> modelCoord = ModelSpacePosFromSimPos(p_simPos);
 
     Obstruction obst = { m_currentObstShape, modelCoord.X, modelCoord.Y, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
-    const int obstId = FindUnusedObstructionId();
+
+	//m_obstMgr->Obsts().lock()->push_front(obst);
+	const int obstId = m_obstMgr->Obsts().lock()->size()+1;
+
+    //const int obstId = FindUnusedObstructionId();
     m_obstructions[obstId] = obst;
     Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
     if (m_useCuda)
     {
-        UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
+        //UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
+		m_obstMgr->AddObst(obst);
     }
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
@@ -697,24 +716,26 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
 void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 {
     int obstId = FindObstructionPointIsInside(simX,simY,1.f);
-    RemoveSpecifiedObstruction(obstId);
+    //RemoveSpecifiedObstruction(obstId);
+	std::shared_ptr<Obstruction> obst = m_obstMgr->Obsts().lock()->front();
+	m_obstMgr->RemoveObst(*obst);
 }
 
 void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)
 {
-    if (obstId >= 0)
-    {
-        m_obstructions[obstId].state = State::INACTIVE;
-        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-        if (m_useCuda)
-        {
-            UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], *GetCudaLbm()->GetDomain());
-            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
-        }
-        else
-            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
-        GetGraphics()->RemovePillar(obstId);
-    }
+//    if (obstId >= 0)
+//    {
+//        m_obstructions[obstId].state = State::INACTIVE;
+//        Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
+//        if (m_useCuda)
+//        {
+//            //UpdateDeviceObstructions(obst_d, obstId, m_obstructions[obstId], *GetCudaLbm()->GetDomain());
+//            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
+//        }
+//        else
+//            GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, m_obstructions[obstId], m_scaleFactor);
+//        GetGraphics()->RemovePillar(obstId);
+//    }
 }
 
 void GraphicsManager::SetRayTracingPausedState(const bool state)
@@ -811,7 +832,7 @@ void GraphicsManager::UpdateObstructionScales()
             if (m_useCuda)
             {
                 Obstruction* obst_d = GetCudaLbm()->GetDeviceObst();
-                UpdateDeviceObstructions(obst_d, i, m_obstructions[i], *GetCudaLbm()->GetDomain());  
+                //UpdateDeviceObstructions(obst_d, i, m_obstructions[i], *GetCudaLbm()->GetDomain());  
                 GetGraphics()->UpdateObstructionsUsingComputeShader(i, m_obstructions[i], m_scaleFactor);
             }
             else

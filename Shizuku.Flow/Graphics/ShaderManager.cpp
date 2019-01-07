@@ -29,7 +29,7 @@ ShaderManager::ShaderManager()
 
     Ogl = std::make_shared < Shizuku::Core::Ogl >();
 
-    m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
+    //m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
     m_cameraDatum = std::make_shared<Pillar>(Ogl);
 }
 
@@ -798,7 +798,7 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     surface->Bind();
     glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
 
-    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("Obstructions");
+    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("managed_obsts");
     Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
 
     if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
@@ -815,40 +815,19 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
     shader->Unset();   
 
-    for (const auto pillar : m_pillars)
-    {
-        pillar.second->Draw(modelMatrix, projectionMatrix, p_cameraPos);
-    }
-
 #ifdef DRAW_CAMERA
-    if (m_cameraDatum->IsInitialized())
-    {
-        m_cameraDatum->Draw(modelMatrix, projectionMatrix);
-    }
+	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
 #endif
 }
 
-void ShaderManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
+
+void ShaderManager::RenderCameraPos(const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos)
 {
-    const auto mapIt = m_pillars.lower_bound(obstId);
-    if (mapIt != m_pillars.end() && !m_pillars.key_comp()(obstId, mapIt->first))
+    if (m_cameraDatum->IsInitialized())
     {
-        m_pillars[obstId]->SetDefinition(p_def);
-    }
-    else
-    {
-        std::shared_ptr<Pillar> pillar = std::make_shared<Pillar>(Ogl);
-        pillar->Initialize();
-        pillar->SetDefinition(p_def);
-        m_pillars.insert(mapIt, std::map<const int, std::shared_ptr<Pillar>>::value_type(obstId, pillar));
+        m_cameraDatum->Draw(modelMatrix, projectionMatrix, p_cameraPos);
     }
 }
-
-void ShaderManager::RemovePillar(const int obstId)
-{
-    m_pillars.erase(obstId);
-}
-
 void ShaderManager::UpdateCameraDatum(const PillarDefinition& p_def)
 {
     if (!m_cameraDatum->IsInitialized())

@@ -36,9 +36,7 @@ Flow::~Flow()
 
 void Flow::Initialize()
 {
-    m_impl->Graphics()->SetUpGLInterop();
-    m_impl->Graphics()->SetUpCuda();
-    m_impl->Graphics()->SetUpShaders();
+    m_impl->Graphics()->Initialize();
 }
 
 void Flow::Update()
