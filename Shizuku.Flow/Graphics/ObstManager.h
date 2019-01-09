@@ -2,9 +2,11 @@
 
 #include "Pillar.h"
 #include "PillarDefinition.h"
+#include "HitParams.h"
 #include "Shizuku.Core/Types/Point.h"
 #include "Obstruction.h"
 #include <memory>
+#include <vector>
 #include <map>
 #include <list>
 
@@ -24,6 +26,7 @@ namespace Shizuku { namespace Flow{
     private:
         std::shared_ptr<Core::Ogl> m_ogl;
         std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
+		std::vector<std::shared_ptr<ObstDefinition>> m_selection;
         ObstDefinition* m_obstData;
 
         std::shared_ptr<Core::ShaderProgram> m_shaderProgram;
@@ -33,8 +36,14 @@ namespace Shizuku { namespace Flow{
     public:
         ObstManager(std::shared_ptr<Core::Ogl> p_ogl);
 
-        void AddObst(const ObstDefinition& p_obst);
-        ObstDefinition& PickObstruction(const Point<int>& p_pos);
+        void AddObstructionToSelection(const HitParams& p_params);
+        void RemoveObstructionFromSelection(const Point<int>& p_screenPos);
+		void ClearSelection();
+
+        void CreateObst(const ObstDefinition& p_obst);
+		void DeleteSelectedObst();
+		void MoveSelectedObst(const Point<int>& p_pos, const Point<int>& p_diff);
+
         void UpdateObst(const ObstDefinition& p_obst);
         void RemoveObst(ObstDefinition& p_obst);
 

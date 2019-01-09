@@ -30,6 +30,7 @@ ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
     m_obsts = std::make_shared<std::list<std::shared_ptr<ObstDefinition>>>();
     m_obstData = new ObstDefinition[MAXOBSTS];
     m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
+	m_selection = std::vector<std::shared_ptr<ObstDefinition>>();
 }
 
 void ObstManager::Initialize()
@@ -42,7 +43,7 @@ void ObstManager::Initialize()
     m_ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 }
 
-void ObstManager::AddObst(const ObstDefinition& p_obst)
+void ObstManager::CreateObst(const ObstDefinition& p_obst)
 {
     m_obsts->push_front(std::make_shared<ObstDefinition>(p_obst));
 
@@ -57,6 +58,22 @@ void ObstManager::AddObst(const ObstDefinition& p_obst)
 
     m_ogl->UpdateBufferData(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 }
+
+void ObstManager::AddObstructionToSelection(const HitParams& p_params)
+{
+	float closest = std::numeric_limits<float>::max();
+    for (const auto pillar : m_pillars)
+    {
+		float dist = std::numeric_limits<float>::max();
+		if (pillar.second->Hit(dist, p_params))
+		{
+			if (dist < closest)
+				closest = dist;
+		}
+    }
+}
+
+
 
 void ObstManager::RemoveObst(ObstDefinition& p_obst)
 {

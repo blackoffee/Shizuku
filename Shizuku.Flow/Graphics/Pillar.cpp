@@ -1,9 +1,34 @@
 #include "Pillar.h"
+#include "Algorithms/Intersection.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
+#include "Shizuku.Core/Types/Point3D.h"
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
+
+namespace
+{
+	void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
+	{
+		glm::mat4 mvp = p_params.Projection*p_params.Modelview;
+		glm::mat4 mvpInv = glm::inverse(mvp);
+		glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
+		glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
+		glm::vec4 r1 = mvpInv * v1;
+		glm::vec4 r2 = mvpInv * v2;
+		p_rayOrigin.x = r1.x / r1.w;
+		p_rayOrigin.y = r1.y / r1.w;
+		p_rayOrigin.z = r1.z / r1.w;
+		p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
+		p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
+		p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
+		float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
+		p_rayDir.x /= mag;
+		p_rayDir.y /= mag;
+		p_rayDir.z /= mag;
+	}
+}
 
 Pillar::Pillar(std::shared_ptr<Ogl> p_ogl)
 {
@@ -153,6 +178,17 @@ void Pillar::SetPosition(const Types::Point<float>& p_pos)
 void Pillar::SetSize(const Types::Box<float>& p_size)
 {
     m_def.SetSize(p_size);
+}
+
+bool Pillar::Hit(float& p_dist, const HitParams& p_params)
+{
+	const Types::Box<float> bounds = Types::Box<float>(m_def.Size());
+	const Types::Point3D<float> center = Types::Point3D<float>(m_def.Pos().X, m_def.Pos().Y, -1.f + 0.5f*m_def.Size().Depth);
+
+	glm::vec3 rayOrigin, rayDir;
+	GetMouseRay(rayOrigin, rayDir, p_params);
+
+	return Algorithms::Intersection::IntersectAABBWithRay(p_dist, rayOrigin, rayDir, center, bounds);
 }
 
 void Pillar::Draw(const glm::mat4& p_view, const glm::mat4& p_proj, const glm::vec3 p_cameraPos)

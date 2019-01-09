@@ -246,6 +246,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Algorithms\Intersection.cpp" />
     <ClCompile Include="Command\AddObstruction.cpp" />
     <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
@@ -289,6 +290,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Algorithms\Intersection.h" />
     <ClInclude Include="Command\AddObstruction.h" />
     <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Command\MoveObstruction.h" />
@@ -317,6 +319,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
+    <ClInclude Include="Graphics\HitParams.h" />
     <ClInclude Include="Graphics\ObstManager.h" />
     <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />

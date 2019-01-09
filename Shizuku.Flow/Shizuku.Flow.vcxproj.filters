@@ -116,6 +116,9 @@
     <ClCompile Include="Graphics\ObstManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Algorithms\Intersection.cpp">
+      <Filter>Algorithms</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -242,6 +245,12 @@
     <ClInclude Include="Graphics\ObstManager.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\HitParams.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithms\Intersection.h">
+      <Filter>Algorithms</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
@@ -296,6 +305,9 @@
     </Filter>
     <Filter Include="Command\Parameter">
       <UniqueIdentifier>{1aeac10c-fda6-4ebd-b3ff-668def3ec6b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Algorithms">
+      <UniqueIdentifier>{4fae29c0-76c8-4daa-85d6-12d074b5a4a9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

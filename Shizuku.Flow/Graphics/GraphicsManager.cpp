@@ -706,7 +706,7 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
     {
         //UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
-		m_obstMgr->AddObst(obst);
+		m_obstMgr->CreateObst(obst);
     }
     else
         GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
