@@ -6,7 +6,7 @@
 #include "Domain.h"
 #include "CudaCheck.h"
 #include "TimerKey.h"
-#include "Obstruction.h"
+#include "ObstDefinition.h"
 #include "PillarDefinition.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"

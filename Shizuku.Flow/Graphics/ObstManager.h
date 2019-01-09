@@ -4,7 +4,7 @@
 #include "PillarDefinition.h"
 #include "HitParams.h"
 #include "Shizuku.Core/Types/Point.h"
-#include "Obstruction.h"
+#include "ObstDefinition.h"
 #include <memory>
 #include <vector>
 #include <map>
@@ -21,6 +21,8 @@ using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;
 
 namespace Shizuku { namespace Flow{
+	struct Obst;
+
     class ObstManager
     {
     private:
@@ -28,6 +30,7 @@ namespace Shizuku { namespace Flow{
         std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
 		std::vector<std::shared_ptr<ObstDefinition>> m_selection;
         ObstDefinition* m_obstData;
+
 
         std::shared_ptr<Core::ShaderProgram> m_shaderProgram;
 

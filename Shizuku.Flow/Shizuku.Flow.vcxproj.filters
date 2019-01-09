@@ -223,9 +223,6 @@
     <ClInclude Include="Graphics\Pillar.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Obstruction.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\PillarDefinition.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -250,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="Algorithms\Intersection.h">
       <Filter>Algorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ObstDefinition.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

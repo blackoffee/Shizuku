@@ -6,7 +6,7 @@
 #include "CudaCheck.h"
 #include "VectorUtils.h"
 #include "Graphics/CudaLbm.h"
-#include "Graphics/Obstruction.h"
+#include "Graphics/ObstDefinition.h"
 
 using namespace Shizuku::Flow;
 

@@ -1,6 +1,6 @@
 #include "ShaderManager.h"
 #include "GraphicsManager.h"
-#include "Obstruction.h"
+#include "ObstDefinition.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"

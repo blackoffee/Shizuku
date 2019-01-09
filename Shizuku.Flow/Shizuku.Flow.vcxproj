@@ -325,7 +325,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
-    <ClInclude Include="Graphics\Obstruction.h" />
+    <ClInclude Include="Graphics\ObstDefinition.h" />
     <ClInclude Include="Graphics\Pillar.h" />
     <ClInclude Include="Graphics\PillarDefinition.h" />
     <ClInclude Include="Graphics\ShaderManager.h" />

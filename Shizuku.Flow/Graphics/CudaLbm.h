@@ -1,6 +1,6 @@
 #pragma once
 #include "../common.h"
-#include "Obstruction.h"
+#include "ObstDefinition.h"
 #include "Shizuku.Core/Rect.h"
 
 using namespace Shizuku::Flow;
