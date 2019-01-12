@@ -8,6 +8,8 @@
 #include "TimerKey.h"
 #include "ObstDefinition.h"
 #include "PillarDefinition.h"
+#include "RenderParams.h"
+#include "HitParams.h"
 
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Types/Box.h"
@@ -153,14 +155,7 @@ float GraphicsManager::GetWaterHeight()
 void GraphicsManager::SetWaterDepth(const float p_depth)
 {
     m_waterDepth = p_depth;
-
-    for (int i = 0; i < MAXOBSTS; i++)
-    {
-        if (m_obstructions[i].state != State::INACTIVE)
-        {
-            UpdatePillar(i, m_obstructions[i]);
-        }
-    }
+	m_obstMgr->SetWaterHeight(p_depth);
 }
 
 float GraphicsManager::GetScaleFactor()
@@ -441,9 +436,10 @@ void GraphicsManager::Render()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
+	const RenderParams& params{ m_modelView, m_projection, glm::vec3(m_cameraPosition) };
     GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
-        m_modelView, m_projection, m_drawFloorWireframe, m_cameraPosition, m_viewSize, obstHeight);
-	m_obstMgr->RenderPillars(m_modelView, m_projection, m_cameraPosition);
+        params, m_drawFloorWireframe, m_viewSize, obstHeight);
+	m_obstMgr->Render(params);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -622,8 +618,8 @@ void GraphicsManager::Rotate(const Point<int>& p_posDiff)
 
 int GraphicsManager::PickObstruction(const Point<int>& p_pos)
 {
-	std::shared_ptr<ObstDefinition> obst = m_obstMgr->Obsts().lock()->front();
-	m_obstMgr->RemoveObst(*obst);
+//	std::shared_ptr<ObstDefinition> obst = m_obstMgr->Obsts().lock()->front();
+//	m_obstMgr->RemoveObst(*obst);
 //    int simX, simY;
 //    if (GetSimCoordFrom3DMouseClickOnObstruction(simX, simY, p_pos) == 0)
 //    {
@@ -682,9 +678,11 @@ void GraphicsManager::Zoom(const int dir, const float mag)
 
 void GraphicsManager::AddObstruction(const Point<float>& p_modelSpacePos)
 {
-    AddObstruction(SimPosFromModelSpacePos(p_modelSpacePos));
+    const ObstDefinition obst = { m_currentObstShape, p_modelSpacePos.X, p_modelSpacePos.Y, m_currentObstSize, 0, 0, 0, State::ACTIVE  };
+	m_obstMgr->CreateObst(obst);
 }
 
+// TODO: Remove this
 void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
 {
     if (p_simPos.X > MAX_XDIM - 1 || p_simPos.Y > MAX_YDIM - 1 || p_simPos.X < 0 || p_simPos.Y < 0)
@@ -705,7 +703,7 @@ void GraphicsManager::AddObstruction(const Point<int>& p_simPos)
     if (m_useCuda)
     {
         //UpdateDeviceObstructions(obst_d, obstId, obst, *GetCudaLbm()->GetDomain());
-        GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
+        //GetGraphics()->UpdateObstructionsUsingComputeShader(obstId, obst, m_scaleFactor);
 		m_obstMgr->CreateObst(obst);
     }
     else
@@ -717,8 +715,8 @@ void GraphicsManager::RemoveObstruction(const int simX, const int simY)
 {
     int obstId = FindObstructionPointIsInside(simX,simY,1.f);
     //RemoveSpecifiedObstruction(obstId);
-	std::shared_ptr<ObstDefinition> obst = m_obstMgr->Obsts().lock()->front();
-	m_obstMgr->RemoveObst(*obst);
+	std::shared_ptr<Obst> obst = m_obstMgr->Obsts().lock()->front();
+	//m_obstMgr->RemoveObst(*obst);
 }
 
 void GraphicsManager::RemoveSpecifiedObstruction(const int obstId)

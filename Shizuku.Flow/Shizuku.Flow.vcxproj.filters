@@ -119,6 +119,9 @@
     <ClCompile Include="Algorithms\Intersection.cpp">
       <Filter>Algorithms</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Obst.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -249,6 +252,12 @@
       <Filter>Algorithms</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\ObstDefinition.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Obst.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderParams.h">
       <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>

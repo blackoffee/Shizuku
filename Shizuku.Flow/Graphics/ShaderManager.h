@@ -3,9 +3,12 @@
 #include "ShadingMode.h"
 #include "Pillar.h"
 #include "PillarDefinition.h"
+#include "RenderParams.h"
+
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "Shizuku.Core/Types/Point.h"
+
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -66,12 +69,10 @@ private:
     float m_inletVelocity;
     void CreateElementArrayBuffer();
 
-    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix,
-        const bool p_drawWireframe);
+    void RenderFloor(Domain &domain, const RenderParams& p_params, const bool p_drawWireframe);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-		const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos,
-        const Rect<int>& p_viewSize, const float obstHeight);
-	void RenderCameraPos(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos);
+		const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight);
+	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
 
@@ -123,9 +124,8 @@ public:
         const glm::vec3 rayDir);
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void Render(const ShadingMode p_shadingMode , Domain &domain,
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe,
-        const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight);
+    void Render(const ShadingMode p_shadingMode , Domain &domain, const RenderParams& p_params,
+        const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight);
 
     //void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     //void RemovePillar(const int obstId);

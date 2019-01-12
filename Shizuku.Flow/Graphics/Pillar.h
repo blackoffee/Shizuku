@@ -2,6 +2,7 @@
 
 #include "PillarDefinition.h"
 #include "HitParams.h"
+#include "RenderParams.h"
 #include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 #include "Shizuku.Core/Rect.h"
@@ -30,14 +31,16 @@ namespace Shizuku { namespace Flow{
     public:
         Pillar(std::shared_ptr<Ogl> p_ogl);
 
+		const PillarDefinition& Def();
+
         void Initialize();
         bool IsInitialized();
         void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);
 
-		bool Hit(float& p_dist, const HitParams& p_params);
+		HitResult Hit(const HitParams& p_params);
 
-        void Draw(const glm::mat4& p_view, const glm::mat4& p_proj, const glm::vec3 p_cameraPos);
+        void Render(const RenderParams& p_params);
     };
 } }

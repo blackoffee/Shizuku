@@ -704,9 +704,9 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
     SetOmega(omega);
 }
 
-void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawFloorWireframe,
-    const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight)
+
+void ShaderManager::Render(const ShadingMode p_shadingMode , Domain &p_domain, const RenderParams& p_params,
+        const bool p_drawFloorWireframe, const Rect<int>& p_viewSize, const float p_obstHeight)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -720,9 +720,9 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    RenderFloor(p_domain, p_modelMatrix, p_projectionMatrix, p_drawFloorWireframe);
+    RenderFloor(p_domain, p_params, p_drawFloorWireframe);
 
-    RenderSurface(p_shadingMode, p_domain, p_modelMatrix, p_projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
+    RenderSurface(p_shadingMode, p_domain, p_params, p_viewSize, p_obstHeight);
 
     if (offscreenRender)
     {
@@ -744,14 +744,13 @@ void ShaderManager::Render(const ShadingMode p_shadingMode, Domain &p_domain,
     }
 }
 
-void ShaderManager::RenderFloor(Domain &p_domain, const glm::mat4 &p_modelMatrix,
-    const glm::mat4 &p_projectionMatrix, const bool p_drawWireframe)
+void ShaderManager::RenderFloor(Domain &p_domain, const RenderParams& p_params, const bool p_drawWireframe)
 {
     std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
     floorShader->Use();
     glActiveTexture(GL_TEXTURE0);
-    floorShader->SetUniform("modelMatrix", p_modelMatrix);
-    floorShader->SetUniform("projectionMatrix", p_projectionMatrix);
+    floorShader->SetUniform("modelMatrix", p_params.ModelView);
+    floorShader->SetUniform("projectionMatrix", p_params.Projection);
 
     std::shared_ptr<Ogl::Vao> floor = Ogl->GetVao("floor");
     floor->Bind();
@@ -782,15 +781,14 @@ void ShaderManager::RenderFloor(Domain &p_domain, const glm::mat4 &p_modelMatrix
 }
 
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos,
-    const Rect<int>& p_viewSize, const float obstHeight)
+    const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight)
 {
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
     shader->Use();
     glActiveTexture(GL_TEXTURE0);
-    shader->SetUniform("modelMatrix", modelMatrix);
-    shader->SetUniform("projectionMatrix", projectionMatrix);
-    shader->SetUniform("cameraPos", p_cameraPos);
+    shader->SetUniform("modelMatrix", p_params.ModelView);
+    shader->SetUniform("projectionMatrix", p_params.Projection);
+    shader->SetUniform("cameraPos", p_params.Camera);
     shader->SetUniform("obstHeight", obstHeight);
     shader->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
 
@@ -821,11 +819,11 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 }
 
 
-void ShaderManager::RenderCameraPos(const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos)
+void ShaderManager::RenderCameraPos(const RenderParams& p_params)
 {
     if (m_cameraDatum->IsInitialized())
     {
-        m_cameraDatum->Draw(modelMatrix, projectionMatrix, p_cameraPos);
+        m_cameraDatum->Render(p_params);
     }
 }
 void ShaderManager::UpdateCameraDatum(const PillarDefinition& p_def)

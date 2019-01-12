@@ -3,8 +3,11 @@
 #include "Pillar.h"
 #include "PillarDefinition.h"
 #include "HitParams.h"
-#include "Shizuku.Core/Types/Point.h"
+#include "RenderParams.h"
 #include "ObstDefinition.h"
+
+#include "Shizuku.Core/Types/Point.h"
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -21,13 +24,17 @@ using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;
 
 namespace Shizuku { namespace Flow{
-	struct Obst;
+	class Obst;
 
     class ObstManager
     {
     private:
         std::shared_ptr<Core::Ogl> m_ogl;
-        std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
+		float m_waterHeight;
+
+		// make this Obst. Should Obst hold Pillar? or just ptr to it?
+        //std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
+        std::shared_ptr<std::list<std::shared_ptr<Obst>>> m_obsts;
 		std::vector<std::shared_ptr<ObstDefinition>> m_selection;
         ObstDefinition* m_obstData;
 
@@ -38,6 +45,8 @@ namespace Shizuku { namespace Flow{
     	void RemovePillar(const int obstId);
     public:
         ObstManager(std::shared_ptr<Core::Ogl> p_ogl);
+
+		void SetWaterHeight(const float p_height);
 
         void AddObstructionToSelection(const HitParams& p_params);
         void RemoveObstructionFromSelection(const Point<int>& p_screenPos);
@@ -57,10 +66,10 @@ namespace Shizuku { namespace Flow{
         //int PickObstruction(const Point<int>& p_pos);
         void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
 
-        std::weak_ptr<std::list<std::shared_ptr<ObstDefinition>>> Obsts();
+        std::weak_ptr<std::list<std::shared_ptr<Obst>>> Obsts();
 
 		void UpdatePillar(const int obstId, const PillarDefinition& p_def);
-		void RenderPillars(const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos);
+		void Render(const RenderParams& p_params);
 
 		bool IsInsideObstruction(const Point<float>& p_modelCoord);
 

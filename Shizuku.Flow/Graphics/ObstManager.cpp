@@ -1,4 +1,5 @@
 #include "ObstManager.h"
+#include "Obst.h"
 #include "common.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include <GLEW/glew.h>
@@ -22,12 +23,17 @@ namespace {
         }
         return 0;
     }
+
+    float PillarHeightFromDepth(const float p_depth)
+    {
+        return p_depth + 0.3f;
+    }
 }
 
 ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
 {
     m_ogl = p_ogl;
-    m_obsts = std::make_shared<std::list<std::shared_ptr<ObstDefinition>>>();
+    m_obsts = std::make_shared<std::list<std::shared_ptr<Obst>>>();
     m_obstData = new ObstDefinition[MAXOBSTS];
     m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
 	m_selection = std::vector<std::shared_ptr<ObstDefinition>>();
@@ -43,14 +49,24 @@ void ObstManager::Initialize()
     m_ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 }
 
+void ObstManager::SetWaterHeight(const float p_height)
+{
+	m_waterHeight = p_height;
+	const float pillarHeight = PillarHeightFromDepth(p_height);
+	for (auto& obst : *m_obsts)
+	{
+		obst->SetHeight(pillarHeight);
+	}
+}
+
 void ObstManager::CreateObst(const ObstDefinition& p_obst)
 {
-    m_obsts->push_front(std::make_shared<ObstDefinition>(p_obst));
+    m_obsts->push_front(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
 
     int i = 0;
     for (auto& obst : *m_obsts)
     {
-        m_obstData[i] = *obst;
+        m_obstData[i] = obst->Def();
         ++i;
         if (i >= MAXOBSTS)
             break;
@@ -62,54 +78,54 @@ void ObstManager::CreateObst(const ObstDefinition& p_obst)
 void ObstManager::AddObstructionToSelection(const HitParams& p_params)
 {
 	float closest = std::numeric_limits<float>::max();
-    for (const auto pillar : m_pillars)
+    for (const auto& obst : *m_obsts)
     {
-		float dist = std::numeric_limits<float>::max();
-		if (pillar.second->Hit(dist, p_params))
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
 		{
-			if (dist < closest)
-				closest = dist;
+			assert(result.Dist.is_initialized());
+			if (result.Dist < closest)
+				closest = result.Dist.value();
 		}
     }
 }
 
 
-
 void ObstManager::RemoveObst(ObstDefinition& p_obst)
 {
-	m_obsts->remove_if(
-		[&](std::shared_ptr<ObstDefinition> obst)->bool {
-		return &p_obst == obst.get();
-	}
-	);
-
-	auto obst = m_obsts->begin();
-	for (int i = 0; i < MAXOBSTS; ++i)
-	{
-		if (obst != m_obsts->end())
-		{
-			m_obstData[i] = **obst;
-			++obst;
-		}
-		else
-		{
-			m_obstData[i] = ObstDefinition();
-		}
-	}
-
-    m_ogl->UpdateBufferData(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
+//	m_obsts->remove_if(
+//		[&](std::shared_ptr<ObstDefinition> obst)->bool {
+//		return &p_obst == obst.get();
+//	}
+//	);
+//
+//	auto obst = m_obsts->begin();
+//	for (int i = 0; i < MAXOBSTS; ++i)
+//	{
+//		if (obst != m_obsts->end())
+//		{
+//			m_obstData[i] = **obst;
+//			++obst;
+//		}
+//		else
+//		{
+//			m_obstData[i] = ObstDefinition();
+//		}
+//	}
+//
+//    m_ogl->UpdateBufferData(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 }
 
-std::weak_ptr<std::list<std::shared_ptr<ObstDefinition>>> ObstManager::Obsts()
+std::weak_ptr<std::list<std::shared_ptr<Obst>>> ObstManager::Obsts()
 {
 	return m_obsts;
 }
 
-void ObstManager::RenderPillars(const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const glm::vec3& p_cameraPos)
+void ObstManager::Render(const RenderParams& p_params)
 {
-    for (const auto pillar : m_pillars)
+    for (const auto& obst : *m_obsts)
     {
-        pillar.second->Draw(modelMatrix, projectionMatrix, p_cameraPos);
+		obst->Render(p_params);
     }
 }
 
@@ -139,12 +155,7 @@ bool ObstManager::IsInsideObstruction(const Point<float>& p_modelCoord)
 	const float tolerance = 0.f;
 	for (const auto obst : *m_obsts)
 	{
-		if (obst->state != State::INACTIVE)
-		{
-            const float r1 = obst->r1 + tolerance;
-			if (abs(p_modelCoord.X - obst->x) < r1 && abs(p_modelCoord.Y - obst->y) < r1)
-				return true;
-		}
+		return obst->Hit(p_modelCoord).Hit;
 	}
 
 	return false;
