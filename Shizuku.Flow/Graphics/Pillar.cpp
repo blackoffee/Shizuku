@@ -34,6 +34,7 @@ Pillar::Pillar(std::shared_ptr<Ogl> p_ogl)
 {
     m_ogl = p_ogl;
     m_initialized = false;
+	m_highlighted = false;
 }
 
 void Pillar::Initialize()
@@ -185,6 +186,11 @@ void Pillar::SetSize(const Types::Box<float>& p_size)
     m_def.SetSize(p_size);
 }
 
+void Pillar::Highlight(const bool p_highlight)
+{
+	m_highlighted = p_highlight;
+}
+
 HitResult Pillar::Hit(const HitParams& p_params)
 {
 	const Types::Box<float> bounds = Types::Box<float>(m_def.Size());
@@ -217,7 +223,8 @@ void Pillar::Render(const RenderParams& p_params)
     m_shaderProgram->SetUniform("projectionMatrix", p_params.Projection);
     m_shaderProgram->SetUniform("modelInvTrans", modelInvTrans);
     m_shaderProgram->SetUniform("cameraPos", p_params.Camera);
-
+	const glm::vec4 col = m_highlighted? p_params.Schema.ObstHighlight.Value() : p_params.Schema.Obst.Value();
+    m_shaderProgram->SetUniform("obstAlbedo", col);
     std::shared_ptr<Ogl::Vao> pillar = m_ogl->GetVao("pillar");
     pillar->Bind();
 

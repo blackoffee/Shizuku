@@ -11,8 +11,8 @@ namespace Shizuku { namespace Flow{
 
     enum State
     {
-        ACTIVE = 0,
-        INACTIVE = 1,
+        NORMAL = 0,
+        SELECTED = 1,
     };
 
     struct ObstDefinition

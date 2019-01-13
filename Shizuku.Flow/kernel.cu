@@ -30,7 +30,7 @@ inline __device__ int FindOverlappingObstruction(const float x, const float y,
     ObstDefinition* obstructions, const float tolerance = 0.f)
 {
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state != State::INACTIVE)
+        if (obstructions[i].state != State::SELECTED)
         {
             const float r1 = obstructions[i].r1 + tolerance;
             if (obstructions[i].shape == Shape::SQUARE){
@@ -64,7 +64,7 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     float3 rayDir = rayDest - rayOrigin;
     bool hit = false;
     for (int i = 0; i < MAXOBSTS; i++){
-        if (obstructions[i].state == State::ACTIVE)
+        if (obstructions[i].state == State::NORMAL)
         {
             const float3 obstLineP1 = { obstructions[i].x, obstructions[i].y, -1.f };
             const float3 obstLineP2 = { obstructions[i].x, obstructions[i].y, obstHeight };
@@ -545,11 +545,11 @@ __global__ void ApplyCausticLightingToFloor(float4* vbo, float* floor_d,
 //    if (obstID > -1)
 //    {
 //        const float fullObstHeight = -1.f+obstHeight;
-//        if (obstructions[obstID].state == State::ACTIVE)
+//        if (obstructions[obstID].state == State::NORMAL)
 //        {
 //            zcoord = fullObstHeight;
 //        }
-//        else if (obstructions[obstID].state == State::INACTIVE)
+//        else if (obstructions[obstID].state == State::SELECTED)
 //        {
 //            obstructions[obstID].u = 0.0f;
 //            obstructions[obstID].v = 0.0f;
@@ -910,7 +910,7 @@ void SetObstructionVelocitiesToZero(ObstDefinition* obst_h, ObstDefinition* obst
     for (int i = 0; i < MAXOBSTS; i++)
     {
         if ((abs(obst_h[i].u) > 0.f || abs(obst_h[i].v) > 0.f) &&
-            obst_h[i].state != State::INACTIVE)
+            obst_h[i].state != State::SELECTED)
         {
             UpdateObstructions << <1, 1 >> >(obst_d,i,obst_h[i]);
         }

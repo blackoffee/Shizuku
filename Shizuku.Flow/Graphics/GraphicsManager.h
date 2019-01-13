@@ -2,6 +2,7 @@
 #include "../common.h"
 #include "ShadingMode.h"
 #include "TimerKey.h"
+#include "Schema.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "Shizuku.Core/Types/Point.h"
@@ -58,11 +59,14 @@ namespace Shizuku{ namespace Flow{
         Rect<int> m_viewSize;
         std::map<TimerKey, Stopwatch> m_timers;
         std::shared_ptr<ObstManager> m_obstMgr;
+		Schema m_schema;
 
     public:
         GraphicsManager();
 
 		void Initialize();
+
+		void SetUpFrame();
 
         void SetViewport(const Rect<int>& size);
         Rect<int>& GetViewport();
@@ -131,7 +135,13 @@ namespace Shizuku{ namespace Flow{
         void RemoveObstruction(const int simX, const int simY);
         void RemoveSpecifiedObstruction(const int obstId);
         int PickObstruction(const Point<int>& p_pos);
+		void SelectObstruction(const Point<int>& p_screenPos);
         void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
+
+		void PreSelectObstruction(const Point<int>& p_screenPos);
+		void AddPreSelectionToSelection();
+		void RemovePreSelectionFromSelection();
+		void DeleteSelectedObstructions();
      
         std::map<TimerKey, Stopwatch>& GetTimers();
 

@@ -22,6 +22,8 @@ namespace Shizuku { namespace Flow{
 
         void Update();
 
+		void SetUpFrame();
+
         void Draw3D();
 
         void Resize(const Rect<int>& p_size);

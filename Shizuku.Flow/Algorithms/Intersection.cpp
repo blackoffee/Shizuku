@@ -7,8 +7,8 @@ using namespace Shizuku::Flow::Algorithms;
 bool Intersection::IntersectAABBWithRay(float& p_dist, const glm::vec3& p_rayOrigin,
 	const glm::vec3& p_rayDir, const Types::Point3D<float>& p_boxPos, const Types::Box<float>& p_box)
 {
-	const glm::vec3 boxMin = glm::vec3(p_boxPos.X - p_box.Width, p_boxPos.Y - p_box.Height, p_boxPos.Z - p_box.Depth);
-	const glm::vec3 boxMax = glm::vec3(p_boxPos.X + p_box.Width, p_boxPos.Y + p_box.Height, p_boxPos.Z + p_box.Depth);
+	const glm::vec3 boxMin = glm::vec3(p_boxPos.X - 0.5*p_box.Width, p_boxPos.Y - 0.5*p_box.Height, p_boxPos.Z - 0.5*p_box.Depth);
+	const glm::vec3 boxMax = glm::vec3(p_boxPos.X + 0.5*p_box.Width, p_boxPos.Y + 0.5*p_box.Height, p_boxPos.Z + 0.5*p_box.Depth);
 
 	const glm::vec3 t0 = (boxMin - p_rayOrigin) / p_rayDir;
 	const glm::vec3 t1 = (boxMax - p_rayOrigin) / p_rayDir;

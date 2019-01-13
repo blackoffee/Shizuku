@@ -41,6 +41,12 @@ void Obst::SetHeight(const float p_height)
 	m_vis.SetDefinition(def);
 }
 
+void Obst::SetHighlight(const bool p_highlight)
+{
+	m_vis.Highlight(p_highlight);
+	m_def.state = p_highlight? 1: 0;
+}
+
 void Obst::Render(const RenderParams& p_params)
 {
 	m_vis.Render(p_params);

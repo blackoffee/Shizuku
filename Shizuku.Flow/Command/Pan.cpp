@@ -7,7 +7,7 @@ using namespace Shizuku::Flow::Command;
 
 Pan::Pan(Flow& p_flow) : Command(p_flow)
 {
-    m_state = INACTIVE;
+    m_state = Inactive;
 }
 
 void Pan::Start(boost::any const p_param)
@@ -15,7 +15,7 @@ void Pan::Start(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        m_state = ACTIVE;
+        m_state = Active;
         m_initialPos = pos.Position;
     }
     catch (boost::bad_any_cast &e)
@@ -29,7 +29,7 @@ void Pan::Track(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        if (m_state == ACTIVE)
+        if (m_state == Active)
         {
             Point<int> posDiff = pos.Position - m_initialPos;
             m_flow->Graphics()->Pan(posDiff);
@@ -45,6 +45,6 @@ void Pan::Track(boost::any const p_param)
 
 void Pan::End(boost::any const p_param)
 {
-    m_state = INACTIVE;
+    m_state = Inactive;
 }
 

@@ -17,7 +17,7 @@ namespace Shizuku{ namespace Flow{ namespace Command{
     {
     protected:
         Flow* m_flow;
-        enum State { ACTIVE, INACTIVE };
+        enum State { Active, Inactive };
         State m_state;
         Command();
         Command(Flow& p_flow);

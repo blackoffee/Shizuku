@@ -706,7 +706,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 
 
 void ShaderManager::Render(const ShadingMode p_shadingMode , Domain &p_domain, const RenderParams& p_params,
-        const bool p_drawFloorWireframe, const Rect<int>& p_viewSize, const float p_obstHeight)
+        const bool p_drawFloorWireframe, const Rect<int>& p_viewSize, const float p_obstHeight, const int obstCount)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -722,7 +722,7 @@ void ShaderManager::Render(const ShadingMode p_shadingMode , Domain &p_domain, c
 
     RenderFloor(p_domain, p_params, p_drawFloorWireframe);
 
-    RenderSurface(p_shadingMode, p_domain, p_params, p_viewSize, p_obstHeight);
+    RenderSurface(p_shadingMode, p_domain, p_params, p_viewSize, p_obstHeight, obstCount);
 
     if (offscreenRender)
     {
@@ -781,7 +781,7 @@ void ShaderManager::RenderFloor(Domain &p_domain, const RenderParams& p_params, 
 }
 
 void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight)
+    const RenderParams& p_params, const Rect<int>& p_viewSize, const float p_obstHeight, const int p_obstCount)
 {
     std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
     shader->Use();
@@ -789,8 +789,12 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
     shader->SetUniform("modelMatrix", p_params.ModelView);
     shader->SetUniform("projectionMatrix", p_params.Projection);
     shader->SetUniform("cameraPos", p_params.Camera);
-    shader->SetUniform("obstHeight", obstHeight);
+    shader->SetUniform("obstHeight", p_obstHeight);
+    shader->SetUniform("obstCount", p_obstCount);
+    shader->SetUniform("obstColor", p_params.Schema.Obst.Value());
+    shader->SetUniform("obstColorHighlight", p_params.Schema.ObstHighlight.Value());
     shader->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
+	//TODO: Get obst count from obstmgr
 
     std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
     surface->Bind();

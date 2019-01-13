@@ -61,5 +61,8 @@
     <ClInclude Include="Types\Point3D.h">
       <Filter>Types</Filter>
     </ClInclude>
+    <ClInclude Include="Types\Color.h">
+      <Filter>Types</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

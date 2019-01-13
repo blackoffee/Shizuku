@@ -8,6 +8,7 @@ in vec4 fNormalInModel;
 out vec4 color;
 
 uniform vec3 cameraPosition;
+uniform vec4 obstAlbedo;
 
 vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
 {
@@ -43,5 +44,5 @@ void main()
     vec3 n = normalize(fNormalInModel.xyz);
     vec3 eyeRayInModel = fPositionInModel.xyz - cameraPosition;
     vec3 lightFactor = PhongLighting(fPositionInModel.xyz, normalize(eyeRayInModel), n);
-    color.xyz = lightFactor * OBST_ALBEDO;
+    color.xyz = lightFactor * obstAlbedo.xyz;
 }

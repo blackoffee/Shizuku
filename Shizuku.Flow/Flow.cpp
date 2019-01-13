@@ -39,6 +39,11 @@ void Flow::Initialize()
     m_impl->Graphics()->Initialize();
 }
 
+void Flow::SetUpFrame()
+{
+	m_impl->Graphics()->SetUpFrame();
+}
+
 void Flow::Update()
 {
     m_impl->Graphics()->UpdateGraphicsInputs();

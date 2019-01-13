@@ -11,10 +11,10 @@ using namespace Shizuku::Core;
 namespace Shizuku { namespace Flow{
 	struct HitParams
 	{
-		Types::Point<int>& ScreenPos;
-		glm::mat4& Modelview;
-		glm::mat4& Projection;
-		Rect<int>& ViewSize;
+		Types::Point<int> ScreenPos;
+		glm::mat4 Modelview;
+		glm::mat4 Projection;
+		Rect<int> ViewSize;
 	};
 
 	struct HitResult

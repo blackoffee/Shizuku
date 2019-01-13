@@ -7,8 +7,10 @@
 #include "Shizuku.Flow/Command/Pan.h"
 #include "Shizuku.Flow/Command/Rotate.h"
 #include "Shizuku.Flow/Command/AddObstruction.h"
-#include "Shizuku.Flow/Command/RemoveObstruction.h"
 #include "Shizuku.Flow/Command/MoveObstruction.h"
+#include "Shizuku.Flow/Command/PreSelectObstruction.h"
+#include "Shizuku.Flow/Command/AddPreSelectionToSelection.h"
+#include "Shizuku.Flow/Command/DeleteSelectedObstructions.h"
 #include "Shizuku.Flow/Command/PauseSimulation.h"
 #include "Shizuku.Flow/Command/PauseRayTracing.h"
 #include "Shizuku.Flow/Command/SetSimulationScale.h"
@@ -199,8 +201,10 @@ void Window::RegisterCommands()
     m_pan = std::make_shared<Pan>(*m_flow);
     m_rotate = std::make_shared<Rotate>(*m_flow);
     m_addObstruction = std::make_shared<AddObstruction>(*m_flow);
-    m_removeObstruction = std::make_shared<RemoveObstruction>(*m_flow);
     m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow);
+    m_preSelectObst = std::make_shared<PreSelectObstruction>(*m_flow);
+    m_addPreSelectionToSelection = std::make_shared<AddPreSelectionToSelection>(*m_flow);
+	m_deleteSelectedObstructions = std::make_shared<DeleteSelectedObstructions>(*m_flow);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
     m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
     m_restartSimulation = std::make_shared<RestartSimulation>(*m_flow);
@@ -222,6 +226,9 @@ void Window::ApplyInitialFlowSettings()
     m_setContourMode->Start(m_contourMode);
     m_setSurfaceShadingMode->Start(m_shadingMode);
     m_setDepth->Start(boost::any(DepthParameter(m_depth)));
+
+	//TODO: need mode switching
+	m_preSelectObst->Start(boost::none);
 }
 
 void Window::InitializeImGui()
@@ -280,7 +287,6 @@ void Window::MouseButton(const int button, const int state, const int mod)
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
         m_rotate->Start(param);
-        m_removeObstruction->Start(param);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
@@ -288,14 +294,16 @@ void Window::MouseButton(const int button, const int state, const int mod)
     }
     else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
     {
-        m_moveObstruction->Start(param);
+		m_addPreSelectionToSelection->Start(boost::none);
+
+        //m_moveObstruction->Start(param);
     }
     else
     {
         m_pan->End(boost::none);
         m_rotate->End(boost::none);
         m_moveObstruction->End(boost::none);
-        m_removeObstruction->End(param);
+		m_addPreSelectionToSelection->End(boost::none);
     }
 }
 
@@ -305,6 +313,7 @@ void Window::MouseMotion(const int x, const int y)
     m_pan->Track(param);
     m_rotate->Track(param);
     m_moveObstruction->Track(param);
+	m_preSelectObst->Track(param);
 }
 
 void Window::MouseWheel(double xwheel, double ywheel)
@@ -317,10 +326,18 @@ void Window::MouseWheel(double xwheel, double ywheel)
 
 void Window::Keyboard(int key, int scancode, int action, int mode)
 {
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        TogglePaused();
-    }
+	switch (key)
+	{
+	case GLFW_KEY_SPACE:
+		if (action == GLFW_RELEASE)
+			TogglePaused();
+		break;
+	case GLFW_KEY_DELETE:
+		if (action == GLFW_PRESS)
+			m_deleteSelectedObstructions->Start(boost::none);
+		else if (action == GLFW_RELEASE)
+			m_deleteSelectedObstructions->End(boost::none);
+	}
 }
 
 void Window::TogglePaused()
@@ -345,6 +362,8 @@ void Window::Draw3D()
     m_fpsTracker.Tick();
 
     m_flow->Update();
+
+	m_flow->SetUpFrame();
 
     m_flow->Draw3D();
 
@@ -547,8 +566,6 @@ void Window::Display()
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     while (!glfwWindowShouldClose(m_window))
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glfwPollEvents();
 
         Draw3D();

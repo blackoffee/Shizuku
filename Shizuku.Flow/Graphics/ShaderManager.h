@@ -71,7 +71,7 @@ private:
 
     void RenderFloor(Domain &domain, const RenderParams& p_params, const bool p_drawWireframe);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-		const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight);
+		const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
 	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
@@ -125,7 +125,7 @@ public:
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void Render(const ShadingMode p_shadingMode , Domain &domain, const RenderParams& p_params,
-        const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight);
+        const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
 
     //void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     //void RemovePillar(const int obstId);

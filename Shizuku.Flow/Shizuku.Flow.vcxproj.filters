@@ -122,6 +122,15 @@
     <ClCompile Include="Graphics\Obst.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Command\PreSelectObstruction.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\AddPreSelectionToSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\DeleteSelectedObstructions.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -259,6 +268,18 @@
     </ClInclude>
     <ClInclude Include="Graphics\RenderParams.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Schema.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\PreSelectObstruction.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\AddPreSelectionToSelection.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\DeleteSelectedObstructions.h">
+      <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

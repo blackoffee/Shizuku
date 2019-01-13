@@ -30,6 +30,7 @@
     <ClInclude Include="Ogl\Shader.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Types\Box.h" />
+    <ClInclude Include="Types\Color.h" />
     <ClInclude Include="Types\MinMax.h" />
     <ClInclude Include="Types\Point3D.h" />
     <ClInclude Include="Types\Point.h" />

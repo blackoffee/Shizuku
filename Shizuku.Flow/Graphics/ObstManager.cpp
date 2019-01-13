@@ -12,7 +12,7 @@ namespace {
         ObstDefinition* obstructions, const float tolerance = 0.f)
     {
         for (int i = 0; i < MAXOBSTS; i++){
-            if (obstructions[i].state != State::INACTIVE)
+            if (obstructions[i].state != State::SELECTED)
             {
                 float r1 = obstructions[i].r1 + tolerance;
                 if (obstructions[i].shape == Shape::SQUARE){
@@ -36,7 +36,7 @@ ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
     m_obsts = std::make_shared<std::list<std::shared_ptr<Obst>>>();
     m_obstData = new ObstDefinition[MAXOBSTS];
     m_pillars = std::map<const int, std::shared_ptr<Pillar>>();
-	m_selection = std::vector<std::shared_ptr<ObstDefinition>>();
+	m_selection = std::list<std::shared_ptr<Obst>>();
 }
 
 void ObstManager::Initialize()
@@ -47,6 +47,11 @@ void ObstManager::Initialize()
     }
 
     m_ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
+}
+
+int ObstManager::ObstCount()
+{
+	return m_obsts->size();
 }
 
 void ObstManager::SetWaterHeight(const float p_height)
@@ -61,7 +66,190 @@ void ObstManager::SetWaterHeight(const float p_height)
 
 void ObstManager::CreateObst(const ObstDefinition& p_obst)
 {
-    m_obsts->push_front(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
+    m_obsts->push_back(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
+	RefreshObstStates();
+}
+
+void ObstManager::AddObstructionToSelection(const HitParams& p_params)
+{
+	float dist = std::numeric_limits<float>::max();
+	std::shared_ptr<Obst> closest;
+	bool hit(false);
+    for (const auto& obst : *m_obsts)
+    {
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
+		{
+			assert(result.Dist.is_initialized());
+			hit = true;
+			if (result.Dist < dist)
+			{
+				dist = result.Dist.value();
+				closest = obst;
+			}
+		}
+    }
+
+	if (hit)
+	{
+		m_selection.push_back(closest);
+		closest->SetHighlight(true);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::DoClearSelection()
+{
+	for (const auto& obst : m_selection)
+	{
+		obst->SetHighlight(false);
+	}
+
+	m_selection.clear();
+}
+
+void ObstManager::ClearSelection()
+{
+	DoClearSelection();
+
+	RefreshObstStates();
+}
+
+void ObstManager::RemoveObstructionFromSelection(const HitParams& p_params)
+{
+	float dist = std::numeric_limits<float>::max();
+	std::shared_ptr<Obst> closest;
+	bool hit(false);
+    for (const auto& obst : m_selection)
+    {
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
+		{
+			assert(result.Dist.is_initialized());
+			hit = true;
+			if (result.Dist < dist)
+			{
+				dist = result.Dist.value();
+				closest = obst;
+			}
+		}
+    }
+
+	if (hit)
+	{
+		m_selection.remove(closest);
+		closest->SetHighlight(false);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::AddObstructionToPreSelection(const HitParams& p_params)
+{
+	float dist = std::numeric_limits<float>::max();
+	std::shared_ptr<Obst> closest;
+	bool hit(false);
+    for (const auto& obst : *m_obsts)
+    {
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
+		{
+			assert(result.Dist.is_initialized());
+			hit = true;
+			if (result.Dist < dist)
+			{
+				dist = result.Dist.value();
+				closest = obst;
+			}
+		}
+    }
+
+	if (hit)
+	{
+		m_preSelection.push_back(closest);
+		closest->SetHighlight(true);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::ClearPreSelection()
+{
+	DoClearPreSelection();
+
+	RefreshObstStates();
+}
+
+void ObstManager::DoClearPreSelection()
+{
+	for (const auto& obst : m_selection)
+	{
+		obst->SetHighlight(false);
+	}
+
+	m_preSelection.clear();
+}
+
+void ObstManager::RemoveObstructionFromPreSelection(const HitParams& p_params)
+{
+	float dist = std::numeric_limits<float>::max();
+	std::shared_ptr<Obst> closest;
+	bool hit(false);
+    for (const auto& obst : m_selection)
+    {
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
+		{
+			assert(result.Dist.is_initialized());
+			hit = true;
+			if (result.Dist < dist)
+			{
+				dist = result.Dist.value();
+				closest = obst;
+			}
+		}
+    }
+
+	if (hit)
+	{
+		m_preSelection.remove(closest);
+		closest->SetHighlight(false);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::AddPreSelectionToSelection()
+{
+	for (const auto& obst : m_preSelection)
+	{
+		//TODO: check if already exists
+		m_selection.push_back(obst);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::RemovePreSelectionFromSelection()
+{
+	for (const auto& obst : m_preSelection)
+	{
+		//TODO: check if already exists
+		m_selection.remove(obst);
+	}
+
+	RefreshObstStates();
+}
+
+void ObstManager::RefreshObstStates()
+{
+	for (const auto& obst : *m_obsts)
+		obst->SetHighlight(false);
+	for (const auto& obst : m_selection)
+		obst->SetHighlight(true);
+	for (const auto& obst : m_preSelection)
+		obst->SetHighlight(true);
 
     int i = 0;
     for (auto& obst : *m_obsts)
@@ -75,45 +263,16 @@ void ObstManager::CreateObst(const ObstDefinition& p_obst)
     m_ogl->UpdateBufferData(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 }
 
-void ObstManager::AddObstructionToSelection(const HitParams& p_params)
+void ObstManager::DeleteSelectedObsts()
 {
-	float closest = std::numeric_limits<float>::max();
-    for (const auto& obst : *m_obsts)
-    {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			if (result.Dist < closest)
-				closest = result.Dist.value();
-		}
-    }
-}
+	for (const auto& obst : m_selection)
+	{
+		m_obsts->remove(obst);
+	}
 
+	DoClearSelection();
 
-void ObstManager::RemoveObst(ObstDefinition& p_obst)
-{
-//	m_obsts->remove_if(
-//		[&](std::shared_ptr<ObstDefinition> obst)->bool {
-//		return &p_obst == obst.get();
-//	}
-//	);
-//
-//	auto obst = m_obsts->begin();
-//	for (int i = 0; i < MAXOBSTS; ++i)
-//	{
-//		if (obst != m_obsts->end())
-//		{
-//			m_obstData[i] = **obst;
-//			++obst;
-//		}
-//		else
-//		{
-//			m_obstData[i] = ObstDefinition();
-//		}
-//	}
-//
-//    m_ogl->UpdateBufferData(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
+	RefreshObstStates();
 }
 
 std::weak_ptr<std::list<std::shared_ptr<Obst>>> ObstManager::Obsts()
@@ -129,6 +288,7 @@ void ObstManager::Render(const RenderParams& p_params)
     }
 }
 
+//TODO remove
 void ObstManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
 {
     const auto mapIt = m_pillars.lower_bound(obstId);
@@ -145,6 +305,7 @@ void ObstManager::UpdatePillar(const int obstId, const PillarDefinition& p_def)
     }
 }
 
+//TODO remove
 void ObstManager::RemovePillar(const int obstId)
 {
     m_pillars.erase(obstId);
@@ -155,7 +316,8 @@ bool ObstManager::IsInsideObstruction(const Point<float>& p_modelCoord)
 	const float tolerance = 0.f;
 	for (const auto obst : *m_obsts)
 	{
-		return obst->Hit(p_modelCoord).Hit;
+		if (obst->Hit(p_modelCoord).Hit)
+			return true;
 	}
 
 	return false;

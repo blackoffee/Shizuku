@@ -9,7 +9,7 @@ using namespace Shizuku::Flow::Command;
 MoveObstruction::MoveObstruction(Flow& p_flow) : Command(p_flow)
 {
     m_currentObst = -1;
-    m_state = INACTIVE;
+    m_state = Inactive;
     m_initialPos = Point<int>(0, 0);
 }
 
@@ -23,11 +23,11 @@ void MoveObstruction::Start(boost::any const p_param)
 
         if (m_currentObst >= 0)
         {
-            m_state = ACTIVE;
+            m_state = Active;
         }
         else
         {
-            m_state = INACTIVE;
+            m_state = Inactive;
         }
     }
     catch (boost::bad_any_cast &e)
@@ -41,18 +41,18 @@ void MoveObstruction::Track(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        if (m_state == ACTIVE)
+        if (m_state == Active)
         {
             const Point<int> posDiff = pos.Position - m_initialPos;
             m_flow->Graphics()->MoveObstruction(m_currentObst, pos.Position, posDiff);
 
             if (m_currentObst >= 0)
             {
-                m_state = ACTIVE;
+                m_state = Active;
             }
             else
             {
-                m_state = INACTIVE;
+                m_state = Inactive;
             }
         }
 
@@ -67,6 +67,6 @@ void MoveObstruction::Track(boost::any const p_param)
 void MoveObstruction::End(boost::any const p_param)
 {
     m_currentObst = -1;
-    m_state = INACTIVE;
+    m_state = Inactive;
 }
 

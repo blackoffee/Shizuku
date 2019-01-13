@@ -179,7 +179,7 @@ void CudaLbm::InitializeDeviceMemory()
         m_obst_h[i].r1 = 0;
         m_obst_h[i].x = 0;
         m_obst_h[i].y = -1000;
-        m_obst_h[i].state = State::INACTIVE;
+        m_obst_h[i].state = State::SELECTED;
     }	
 
     memsize_inputs = sizeof(m_obst_h);

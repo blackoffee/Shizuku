@@ -31,6 +31,9 @@ out vec4 color;
 uniform vec3 cameraPos;
 uniform vec2 viewSize;
 uniform float obstHeight;
+uniform int obstCount;
+uniform vec4 obstColor;
+uniform vec4 obstColorHighlight;
 
 uniform sampler2D causticsTex;
 
@@ -153,18 +156,19 @@ void main()
     const vec3 envColor = vec3(1);
     color.xyz = mix(color.xyz, envColor, reflectedRayIntensity);
 
-    for (int i = 0; i < MAX_OBST; ++i)
-    {
-        if (obsts[i].state == 0)
-        {
-            vec3 n;
-            if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight, n))
-            {
-                vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), n);
-                color.xyz = lightFactor*vec3(0.8f);
-            }
-        }
-    }
+	//TODO: need to choose closest
+	for (int i = 0; i < obstCount; ++i)
+	{
+		vec3 n;
+		if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight, n))
+		{
+			vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), n);
+			if (obsts[i].state == 0)
+				color.xyz = lightFactor * obstColor.xyz;
+			else if (obsts[i].state == 1)
+				color.xyz = lightFactor * obstColorHighlight.xyz;
+		}
+	}
 
     if (color.a == 0.f)
         discard;

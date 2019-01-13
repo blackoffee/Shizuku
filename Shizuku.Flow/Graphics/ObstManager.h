@@ -35,7 +35,8 @@ namespace Shizuku { namespace Flow{
 		// make this Obst. Should Obst hold Pillar? or just ptr to it?
         //std::shared_ptr<std::list<std::shared_ptr<ObstDefinition>>> m_obsts;
         std::shared_ptr<std::list<std::shared_ptr<Obst>>> m_obsts;
-		std::vector<std::shared_ptr<ObstDefinition>> m_selection;
+		std::list<std::shared_ptr<Obst>> m_selection;
+		std::list<std::shared_ptr<Obst>> m_preSelection;
         ObstDefinition* m_obstData;
 
 
@@ -43,21 +44,33 @@ namespace Shizuku { namespace Flow{
 
 		std::map<const int, std::shared_ptr<Pillar>> m_pillars;
     	void RemovePillar(const int obstId);
+		void RefreshObstStates();
+		void DoClearSelection();
+		void DoClearPreSelection();
+
     public:
         ObstManager(std::shared_ptr<Core::Ogl> p_ogl);
 
 		void SetWaterHeight(const float p_height);
+		int ObstCount();
 
+		//maybe remove this?
         void AddObstructionToSelection(const HitParams& p_params);
-        void RemoveObstructionFromSelection(const Point<int>& p_screenPos);
+        void RemoveObstructionFromSelection(const HitParams& p_params);
 		void ClearSelection();
 
+        void AddObstructionToPreSelection(const HitParams& p_params);
+        void RemoveObstructionFromPreSelection(const HitParams& p_params);
+		void ClearPreSelection();
+
+		void AddPreSelectionToSelection();
+		void RemovePreSelectionFromSelection();
+
         void CreateObst(const ObstDefinition& p_obst);
-		void DeleteSelectedObst();
+		void DeleteSelectedObsts();
 		void MoveSelectedObst(const Point<int>& p_pos, const Point<int>& p_diff);
 
         void UpdateObst(const ObstDefinition& p_obst);
-        void RemoveObst(ObstDefinition& p_obst);
 
         void AddObstruction(const Point<int>& p_simPos);
         void AddObstruction(const Point<float>& p_modelSpacePos);

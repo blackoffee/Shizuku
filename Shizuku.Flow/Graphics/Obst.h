@@ -24,6 +24,7 @@ namespace Shizuku { namespace Flow{
 		const ObstDefinition& Def();
 		void SetDef(const ObstDefinition& p_def);
 		void SetHeight(const float p_height);
+		void SetHighlight(const bool p_highlight);
 
 		void Render(const RenderParams& p_params);
 		HitResult Hit(const HitParams& p_params);

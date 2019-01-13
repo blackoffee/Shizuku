@@ -248,7 +248,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
   <ItemGroup>
     <ClCompile Include="Algorithms\Intersection.cpp" />
     <ClCompile Include="Command\AddObstruction.cpp" />
+    <ClCompile Include="Command\AddPreSelectionToSelection.cpp" />
     <ClCompile Include="Command\Command.cpp" />
+    <ClCompile Include="Command\DeleteSelectedObstructions.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
     <ClCompile Include="Command\Pan.cpp" />
     <ClCompile Include="Command\Parameter\ModelSpacePointParameter.cpp" />
@@ -261,6 +263,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\Parameter\VisibilityParameter.cpp" />
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
+    <ClCompile Include="Command\PreSelectObstruction.cpp" />
     <ClCompile Include="Command\RemoveObstruction.cpp" />
     <ClCompile Include="Command\RestartSimulation.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
@@ -293,7 +296,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
   <ItemGroup>
     <ClInclude Include="Algorithms\Intersection.h" />
     <ClInclude Include="Command\AddObstruction.h" />
+    <ClInclude Include="Command\AddPreSelectionToSelection.h" />
     <ClInclude Include="Command\Command.h" />
+    <ClInclude Include="Command\DeleteSelectedObstructions.h" />
     <ClInclude Include="Command\MoveObstruction.h" />
     <ClInclude Include="Command\Pan.h" />
     <ClInclude Include="Command\Parameter\ModelSpacePointParameter.h" />
@@ -306,6 +311,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\Parameter\VisibilityParameter.h" />
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
+    <ClInclude Include="Command\PreSelectObstruction.h" />
     <ClInclude Include="Command\RemoveObstruction.h" />
     <ClInclude Include="Command\RestartSimulation.h" />
     <ClInclude Include="Command\Rotate.h" />
@@ -324,6 +330,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\Obst.h" />
     <ClInclude Include="Graphics\ObstManager.h" />
     <ClInclude Include="Graphics\RenderParams.h" />
+    <ClInclude Include="Graphics\Schema.h" />
     <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />
