@@ -131,6 +131,9 @@
     <ClCompile Include="Command\DeleteSelectedObstructions.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Command\ClearSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -279,6 +282,9 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\DeleteSelectedObstructions.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\ClearSelection.h">
       <Filter>Command</Filter>
     </ClInclude>
   </ItemGroup>

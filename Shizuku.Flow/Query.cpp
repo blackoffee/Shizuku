@@ -40,3 +40,18 @@ Types::Point<float> Query::ProbeModelSpaceCoord(const Types::Point<int>& p_scree
 {
     return m_flow->Graphics()->GetModelSpaceCoordFromScreenPos(p_screenPoint);
 }
+
+int Query::ObstructionCount()
+{
+	return m_flow->Graphics()->ObstCount();
+}
+
+int Query::SelectedObstructionCount()
+{
+	return m_flow->Graphics()->SelectedObstCount();
+}
+
+int Query::PreSelectedObstructionCount()
+{
+	return m_flow->Graphics()->PreSelectedObstCount();
+}

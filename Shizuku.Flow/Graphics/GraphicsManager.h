@@ -136,6 +136,15 @@ namespace Shizuku{ namespace Flow{
         void RemoveSpecifiedObstruction(const int obstId);
         int PickObstruction(const Point<int>& p_pos);
 		void SelectObstruction(const Point<int>& p_screenPos);
+		bool TryStartMoveSelectedObstructions(const Point<int>& p_screenPos);
+		void MoveSelectedObstructions(const Point<int>& p_screenPos);
+		void ClearSelection();
+
+		int ObstCount();
+		int SelectedObstCount();
+		int PreSelectedObstCount();
+
+
         void MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff);
 
 		void PreSelectObstruction(const Point<int>& p_screenPos);

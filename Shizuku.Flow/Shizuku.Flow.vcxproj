@@ -249,6 +249,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Algorithms\Intersection.cpp" />
     <ClCompile Include="Command\AddObstruction.cpp" />
     <ClCompile Include="Command\AddPreSelectionToSelection.cpp" />
+    <ClCompile Include="Command\ClearSelection.cpp" />
     <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Command\DeleteSelectedObstructions.cpp" />
     <ClCompile Include="Command\MoveObstruction.cpp" />
@@ -297,6 +298,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Algorithms\Intersection.h" />
     <ClInclude Include="Command\AddObstruction.h" />
     <ClInclude Include="Command\AddPreSelectionToSelection.h" />
+    <ClInclude Include="Command\ClearSelection.h" />
     <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Command\DeleteSelectedObstructions.h" />
     <ClInclude Include="Command\MoveObstruction.h" />

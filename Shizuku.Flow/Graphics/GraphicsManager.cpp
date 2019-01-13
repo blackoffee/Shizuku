@@ -648,6 +648,16 @@ int GraphicsManager::PickObstruction(const Point<int>& p_pos)
     return 1;
 }
 
+bool GraphicsManager::TryStartMoveSelectedObstructions(const Point<int>& p_screenPos)
+{
+	return m_obstMgr->TryStartMoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+}
+
+void GraphicsManager::MoveSelectedObstructions(const Point<int>& p_screenPos)
+{
+	m_obstMgr->MoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+}
+
 void GraphicsManager::MoveObstruction(int obstId, const Point<int>& p_pos, const Point<int>& p_diff)
 {
     Point<int> simCoord1 = GetSimCoordFromScreenPos(p_pos-p_diff, m_currentZ);
@@ -682,7 +692,7 @@ void GraphicsManager::UpdatePillar(const int p_obstId, const ObstDefinition& p_o
 {
     const Point<float> pillarPos(p_obst.x, p_obst.y);
     const Box<float> pillarSize(2.f*p_obst.r1, 2.f*p_obst.r1, PillarHeightFromDepth(m_waterDepth));
-    m_obstMgr->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
+    //m_obstMgr->UpdatePillar(p_obstId, PillarDefinition(pillarPos, pillarSize));
 }
 
 void GraphicsManager::Zoom(const int dir, const float mag)
@@ -776,6 +786,26 @@ void GraphicsManager::RemovePreSelectionFromSelection()
 void GraphicsManager::DeleteSelectedObstructions()
 {
 	m_obstMgr->DeleteSelectedObsts();
+}
+
+void GraphicsManager::ClearSelection()
+{
+	m_obstMgr->ClearSelection();
+}
+
+int GraphicsManager::ObstCount()
+{
+	return m_obstMgr->ObstCount();
+}
+
+int GraphicsManager::SelectedObstCount()
+{
+	return m_obstMgr->SelectedObstCount();
+}
+
+int GraphicsManager::PreSelectedObstCount()
+{
+	return m_obstMgr->PreSelectedObstCount();
 }
 
 void GraphicsManager::SetRayTracingPausedState(const bool state)

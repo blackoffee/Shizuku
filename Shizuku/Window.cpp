@@ -11,6 +11,7 @@
 #include "Shizuku.Flow/Command/PreSelectObstruction.h"
 #include "Shizuku.Flow/Command/AddPreSelectionToSelection.h"
 #include "Shizuku.Flow/Command/DeleteSelectedObstructions.h"
+#include "Shizuku.Flow/Command/ClearSelection.h"
 #include "Shizuku.Flow/Command/PauseSimulation.h"
 #include "Shizuku.Flow/Command/PauseRayTracing.h"
 #include "Shizuku.Flow/Command/SetSimulationScale.h"
@@ -205,6 +206,7 @@ void Window::RegisterCommands()
     m_preSelectObst = std::make_shared<PreSelectObstruction>(*m_flow);
     m_addPreSelectionToSelection = std::make_shared<AddPreSelectionToSelection>(*m_flow);
 	m_deleteSelectedObstructions = std::make_shared<DeleteSelectedObstructions>(*m_flow);
+	m_clearSelection = std::make_shared<ClearSelection>(*m_flow);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
     m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
     m_restartSimulation = std::make_shared<RestartSimulation>(*m_flow);
@@ -296,7 +298,14 @@ void Window::MouseButton(const int button, const int state, const int mod)
     {
 		m_addPreSelectionToSelection->Start(boost::none);
 
-        //m_moveObstruction->Start(param);
+		if (m_query->PreSelectedObstructionCount() == 0)
+		{
+			m_clearSelection->Start(boost::none);
+		}
+		else if (m_query->SelectedObstructionCount() > 0)
+		{
+			m_moveObstruction->Start(param);
+		}
     }
     else
     {

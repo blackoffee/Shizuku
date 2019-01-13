@@ -24,5 +24,8 @@ namespace Shizuku { namespace Flow{
         Rect<int> SimulationDomain();
         double GetTime(TimerKey p_key);
         Types::Point<float> ProbeModelSpaceCoord(const Types::Point<int>& p_screenPoint);
+		int ObstructionCount();
+		int SelectedObstructionCount();
+		int PreSelectedObstructionCount();
     };
 } }
