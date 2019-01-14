@@ -52,7 +52,8 @@ namespace Shizuku{ namespace Core
     public:
         Ogl();
 
-        template <typename T> std::shared_ptr<Buffer> CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements,
+        template <typename T>
+        std::shared_ptr<Buffer> CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements,
             const std::string name, const GLuint drawMode, const GLuint base = -1);
 
         std::shared_ptr<Vao> CreateVao(const std::string name);
@@ -66,7 +67,6 @@ namespace Shizuku{ namespace Core
         std::shared_ptr<ShaderProgram> GetShaderProgram(const std::string name);
 
     };
-
 
     template <typename T>
     std::shared_ptr<Ogl::Buffer> Ogl::CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements, const std::string name, const GLuint drawMode, const GLuint base)
