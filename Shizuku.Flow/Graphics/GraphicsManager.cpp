@@ -558,7 +558,6 @@ void GraphicsManager::UpdateGraphicsInputs()
 {
     glViewport(0, 0, m_viewSize.Width, m_viewSize.Height);
     UpdateDomainDimensions();
-    UpdateObstructionScales();
     if (!m_rayTracingPaused)
     {
         m_cameraPosition = GetCameraPosition();
@@ -573,27 +572,6 @@ void GraphicsManager::UpdateDomainDimensions()
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->GetDomain()->SetXDimVisible(MAX_XDIM / m_scaleFactor);
     cudaLbm->GetDomain()->SetYDimVisible(MAX_YDIM / m_scaleFactor);
-}
-
-//TODO move to obstmgr
-void GraphicsManager::UpdateObstructionScales()
-{
-    for (int i = 0; i < MAXOBSTS; i++)
-    {
-        if (m_obstructions[i].state != State::SELECTED)
-        {
-            if (m_useCuda)
-            {
-                ObstDefinition* obst_d = GetCudaLbm()->GetDeviceObst();
-                //UpdateDeviceObstructions(obst_d, i, m_obstructions[i], *GetCudaLbm()->GetDomain());  
-                GetGraphics()->UpdateObstructionsUsingComputeShader(i, m_obstructions[i], m_scaleFactor);
-            }
-            else
-            {
-                GetGraphics()->UpdateObstructionsUsingComputeShader(i, m_obstructions[i], m_scaleFactor);
-            }
-        }
-    }
 }
 
 void GraphicsManager::UpdateLbmInputs()
