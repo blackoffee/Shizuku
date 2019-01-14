@@ -265,7 +265,6 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\PreSelectObstruction.cpp" />
-    <ClCompile Include="Command\RemoveObstruction.cpp" />
     <ClCompile Include="Command\RestartSimulation.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SetContourMinMax.cpp" />
@@ -314,7 +313,6 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\PreSelectObstruction.h" />
-    <ClInclude Include="Command\RemoveObstruction.h" />
     <ClInclude Include="Command\RestartSimulation.h" />
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SetContourMinMax.h" />

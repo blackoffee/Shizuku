@@ -29,11 +29,7 @@ void InitializeSurface(float4* vis, Domain &simDomain);
 void InitializeFloor(float4* vis, Domain &simDomain);
 
 void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d,
-    const float3 cameraPosition, Domain &simDomain, const float waterDepth, const float obstHeight);
-
-int RayCastMouseClick(float3 &selectedElementCoord, float4* vis,
-    float4* rayCastIntersect_d, const float3 &rayOrigin, const float3 &rayDir,
-    ObstDefinition* obst_d, Domain &simDomain);
+    const float3 cameraPosition, Domain &simDomain, CudaLbm& p_lbm, const float waterDepth, const float obstHeight);
 
 void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorTexture, cudaArray* envTexture, ObstDefinition* obst_d, const glm::vec4 cameraPos,
     Domain &simDomain, const float waterDepth, const float obstHeight, const bool simplified);

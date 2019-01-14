@@ -56,12 +56,12 @@ namespace {
 
 			if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
 			{
-				res;
+				return res;
 			}
 			else
 			{
 				t = std::max(t1, t2);
-				return rayOrigin.x + t * rayDir;
+				return rayOrigin + t * rayDir;
 			}
 		}
 	}
@@ -116,35 +116,6 @@ void ObstManager::CreateObst(const ObstDefinition& p_obst)
 	RefreshObstStates();
 }
 
-void ObstManager::AddObstructionToSelection(const HitParams& p_params)
-{
-	float dist = std::numeric_limits<float>::max();
-	std::shared_ptr<Obst> closest;
-	bool hit(false);
-    for (const auto& obst : *m_obsts)
-    {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-				closest = obst;
-			}
-		}
-    }
-
-	if (hit)
-	{
-		m_selection.push_back(closest);
-		closest->SetHighlight(true);
-	}
-
-	RefreshObstStates();
-}
-
 void ObstManager::DoClearSelection()
 {
 	for (const auto& obst : m_selection)
@@ -158,35 +129,6 @@ void ObstManager::DoClearSelection()
 void ObstManager::ClearSelection()
 {
 	DoClearSelection();
-
-	RefreshObstStates();
-}
-
-void ObstManager::RemoveObstructionFromSelection(const HitParams& p_params)
-{
-	float dist = std::numeric_limits<float>::max();
-	std::shared_ptr<Obst> closest;
-	bool hit(false);
-    for (const auto& obst : m_selection)
-    {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-				closest = obst;
-			}
-		}
-    }
-
-	if (hit)
-	{
-		m_selection.remove(closest);
-		closest->SetHighlight(false);
-	}
 
 	RefreshObstStates();
 }
@@ -383,6 +325,11 @@ void ObstManager::Render(const RenderParams& p_params)
     {
 		obst->Render(p_params);
     }
+}
+
+glm::vec3 ObstManager::GetSurfaceOrFloorIntersect(const HitParams& p_params)
+{
+	return GetModelSpaceCoordFromScreenPos(p_params, boost::none, m_waterHeight);
 }
 
 bool ObstManager::IsInsideObstruction(const Point<float>& p_modelCoord)

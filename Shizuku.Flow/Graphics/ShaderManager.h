@@ -127,8 +127,5 @@ public:
     void Render(const ShadingMode p_shadingMode , Domain &domain, const RenderParams& p_params,
         const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
 
-    //void UpdatePillar(const int obstId, const PillarDefinition& p_def);
-    //void RemovePillar(const int obstId);
-
     void UpdateCameraDatum(const PillarDefinition& p_def);
 };

@@ -24,9 +24,6 @@
     <ClCompile Include="Command\Pan.cpp">
       <Filter>Command</Filter>
     </ClCompile>
-    <ClCompile Include="Command\RemoveObstruction.cpp">
-      <Filter>Command</Filter>
-    </ClCompile>
     <ClCompile Include="Command\Rotate.cpp">
       <Filter>Command</Filter>
     </ClCompile>
@@ -143,9 +140,6 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\MoveObstruction.h">
-      <Filter>Command</Filter>
-    </ClInclude>
-    <ClInclude Include="Command\RemoveObstruction.h">
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\Rotate.h">

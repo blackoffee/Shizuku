@@ -8,9 +8,7 @@ using namespace Shizuku::Flow::Command;
 
 MoveObstruction::MoveObstruction(Flow& p_flow) : Command(p_flow)
 {
-    m_currentObst = -1;
     m_state = Inactive;
-    m_initialPos = Point<int>(0, 0);
 }
 
 void MoveObstruction::Start(boost::any const p_param)
@@ -49,4 +47,3 @@ void MoveObstruction::End(boost::any const p_param)
 {
     m_state = Inactive;
 }
-

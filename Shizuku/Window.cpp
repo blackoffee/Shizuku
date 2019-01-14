@@ -338,14 +338,12 @@ void Window::Keyboard(int key, int scancode, int action, int mode)
 	switch (key)
 	{
 	case GLFW_KEY_SPACE:
-		if (action == GLFW_RELEASE)
+		if (action == GLFW_PRESS)
 			TogglePaused();
 		break;
 	case GLFW_KEY_DELETE:
 		if (action == GLFW_PRESS)
 			m_deleteSelectedObstructions->Start(boost::none);
-		else if (action == GLFW_RELEASE)
-			m_deleteSelectedObstructions->End(boost::none);
 	}
 }
 

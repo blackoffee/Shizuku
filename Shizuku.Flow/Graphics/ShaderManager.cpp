@@ -822,7 +822,6 @@ void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domai
 #endif
 }
 
-
 void ShaderManager::RenderCameraPos(const RenderParams& p_params)
 {
     if (m_cameraDatum->IsInitialized())

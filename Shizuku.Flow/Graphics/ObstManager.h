@@ -56,22 +56,20 @@ namespace Shizuku { namespace Flow{
 		int PreSelectedObstCount();
 		bool IsInsideObstruction(const Point<float>& p_modelCoord);
 
-		//maybe remove this?
-        void AddObstructionToSelection(const HitParams& p_params);
-        void RemoveObstructionFromSelection(const HitParams& p_params);
-		void ClearSelection();
-
         void AddObstructionToPreSelection(const HitParams& p_params);
         void RemoveObstructionFromPreSelection(const HitParams& p_params);
 		void ClearPreSelection();
 
 		void AddPreSelectionToSelection();
 		void RemovePreSelectionFromSelection();
+		void ClearSelection();
 
         void CreateObst(const ObstDefinition& p_obst);
 		void DeleteSelectedObsts();
 		bool TryStartMoveSelectedObsts(const HitParams& p_params);
 		void MoveSelectedObsts(const HitParams& p_dest);
+
+		glm::vec3 GetSurfaceOrFloorIntersect(const HitParams& p_params);
 
         std::weak_ptr<std::list<std::shared_ptr<Obst>>> Obsts();
 
