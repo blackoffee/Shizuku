@@ -70,9 +70,9 @@ namespace {
 ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
 {
     m_ogl = p_ogl;
-    m_obsts = std::make_shared<std::list<std::shared_ptr<Obst>>>();
+    m_obsts = std::make_shared<std::set<std::shared_ptr<Obst>>>();
     m_obstData = new ObstDefinition[MAXOBSTS];
-	m_selection = std::list<std::shared_ptr<Obst>>();
+	m_selection = std::set<std::shared_ptr<Obst>>();
 }
 
 void ObstManager::Initialize()
@@ -112,7 +112,7 @@ void ObstManager::SetWaterHeight(const float p_height)
 
 void ObstManager::CreateObst(const ObstDefinition& p_obst)
 {
-    m_obsts->push_back(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
+    m_obsts->insert(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
 	RefreshObstStates();
 }
 
@@ -155,7 +155,7 @@ void ObstManager::AddObstructionToPreSelection(const HitParams& p_params)
 
 	if (hit)
 	{
-		m_preSelection.push_back(closest);
+		m_preSelection.insert(closest);
 		closest->SetHighlight(true);
 	}
 
@@ -201,7 +201,7 @@ void ObstManager::RemoveObstructionFromPreSelection(const HitParams& p_params)
 
 	if (hit)
 	{
-		m_preSelection.remove(closest);
+		m_preSelection.erase(closest);
 		closest->SetHighlight(false);
 	}
 
@@ -212,8 +212,7 @@ void ObstManager::AddPreSelectionToSelection()
 {
 	for (const auto& obst : m_preSelection)
 	{
-		//TODO: check if already exists
-		m_selection.push_back(obst);
+		m_selection.insert(obst);
 	}
 
 	RefreshObstStates();
@@ -223,8 +222,7 @@ void ObstManager::RemovePreSelectionFromSelection()
 {
 	for (const auto& obst : m_preSelection)
 	{
-		//TODO: check if already exists
-		m_selection.remove(obst);
+		m_selection.erase(obst);
 	}
 
 	RefreshObstStates();
@@ -255,7 +253,7 @@ void ObstManager::DeleteSelectedObsts()
 {
 	for (const auto& obst : m_selection)
 	{
-		m_obsts->remove(obst);
+		m_obsts->erase(obst);
 	}
 
 	DoClearSelection();
@@ -314,7 +312,7 @@ void ObstManager::MoveSelectedObsts(const HitParams& p_dest)
 	m_moveOrigin = destModelCoord;
 }
 
-std::weak_ptr<std::list<std::shared_ptr<Obst>>> ObstManager::Obsts()
+std::weak_ptr<std::set<std::shared_ptr<Obst>>> ObstManager::Obsts()
 {
 	return m_obsts;
 }

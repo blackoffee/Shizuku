@@ -7,9 +7,7 @@
 #include "Shizuku.Core/Types/Point.h"
 
 #include <memory>
-#include <vector>
-#include <map>
-#include <list>
+#include <set>
 
 namespace Shizuku{
 namespace Core{
@@ -31,10 +29,9 @@ namespace Shizuku { namespace Flow{
 		float m_waterHeight;
 		boost::optional<glm::vec3> m_moveOrigin;
 
-		//TODO make this a dict or hashset
-        std::shared_ptr<std::list<std::shared_ptr<Obst>>> m_obsts;
-		std::list<std::shared_ptr<Obst>> m_selection;
-		std::list<std::shared_ptr<Obst>> m_preSelection;
+        std::shared_ptr<std::set<std::shared_ptr<Obst>>> m_obsts;
+		std::set<std::shared_ptr<Obst>> m_selection;
+		std::set<std::shared_ptr<Obst>> m_preSelection;
         ObstDefinition* m_obstData;
 
         std::shared_ptr<Core::ShaderProgram> m_shaderProgram;
@@ -71,7 +68,7 @@ namespace Shizuku { namespace Flow{
 
 		glm::vec3 GetSurfaceOrFloorIntersect(const HitParams& p_params);
 
-        std::weak_ptr<std::list<std::shared_ptr<Obst>>> Obsts();
+        std::weak_ptr<std::set<std::shared_ptr<Obst>>> Obsts();
 
 		void Render(const RenderParams& p_params);
     };
