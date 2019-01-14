@@ -21,6 +21,7 @@ namespace Shizuku{
 			class PreSelectObstruction;
 			class AddPreSelectionToSelection;
 			class DeleteSelectedObstructions;
+			class TogglePreSelection;
 			class ClearSelection;
             class PauseSimulation; 
             class PauseRayTracing;
@@ -54,6 +55,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<MoveObstruction> m_moveObstruction;
 		std::shared_ptr<PreSelectObstruction> m_preSelectObst;
 		std::shared_ptr<AddPreSelectionToSelection> m_addPreSelectionToSelection;
+		std::shared_ptr<TogglePreSelection> m_togglePreSelection;
 		std::shared_ptr<DeleteSelectedObstructions> m_deleteSelectedObstructions;
 		std::shared_ptr<ClearSelection> m_clearSelection;
         std::shared_ptr<PauseSimulation> m_pauseSimulation;

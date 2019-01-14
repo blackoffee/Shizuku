@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Info/ObstInfo.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/Point.h"
 
@@ -10,6 +11,7 @@
 #endif  
 
 using namespace Shizuku::Core;
+using namespace Shizuku::Flow;
 
 namespace Shizuku { namespace Flow{
     class Flow;
@@ -27,5 +29,6 @@ namespace Shizuku { namespace Flow{
 		int ObstructionCount();
 		int SelectedObstructionCount();
 		int PreSelectedObstructionCount();
+		boost::optional<const Info::ObstInfo> ObstInfo(const Types::Point<int>& p_screenPoint);
     };
 } }

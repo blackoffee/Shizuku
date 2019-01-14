@@ -3,6 +3,7 @@
 #include "HitParams.h"
 #include "RenderParams.h"
 #include "ObstDefinition.h"
+#include "Info/ObstInfo.h"
 
 #include "Shizuku.Core/Types/Point.h"
 
@@ -52,6 +53,7 @@ namespace Shizuku { namespace Flow{
 		int SelectedObstCount();
 		int PreSelectedObstCount();
 		bool IsInsideObstruction(const Point<float>& p_modelCoord);
+		boost::optional<const Info::ObstInfo> ObstInfo(const HitParams& p_params);
 
         void AddObstructionToPreSelection(const HitParams& p_params);
         void RemoveObstructionFromPreSelection(const HitParams& p_params);
@@ -59,6 +61,7 @@ namespace Shizuku { namespace Flow{
 
 		void AddPreSelectionToSelection();
 		void RemovePreSelectionFromSelection();
+		void TogglePreSelectionInSelection();
 		void ClearSelection();
 
         void CreateObst(const ObstDefinition& p_obst);

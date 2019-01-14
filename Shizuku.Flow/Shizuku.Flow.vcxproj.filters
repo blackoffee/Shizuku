@@ -131,6 +131,9 @@
     <ClCompile Include="Command\ClearSelection.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Command\TogglePreSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -281,6 +284,12 @@
     <ClInclude Include="Command\ClearSelection.h">
       <Filter>Command</Filter>
     </ClInclude>
+    <ClInclude Include="Command\TogglePreSelection.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Info\ObstInfo.h">
+      <Filter>Info</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
@@ -338,6 +347,9 @@
     </Filter>
     <Filter Include="Algorithms">
       <UniqueIdentifier>{4fae29c0-76c8-4daa-85d6-12d074b5a4a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Info">
+      <UniqueIdentifier>{269a1c42-4ba0-4101-9568-63e0a739bdb5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

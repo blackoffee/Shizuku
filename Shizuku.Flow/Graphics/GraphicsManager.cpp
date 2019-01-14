@@ -519,6 +519,11 @@ void GraphicsManager::RemovePreSelectionFromSelection()
 	m_obstMgr->RemovePreSelectionFromSelection();
 }
 
+void GraphicsManager::TogglePreSelection()
+{
+	m_obstMgr->TogglePreSelectionInSelection();
+}
+
 void GraphicsManager::DeleteSelectedObstructions()
 {
 	m_obstMgr->DeleteSelectedObsts();
@@ -542,6 +547,11 @@ int GraphicsManager::SelectedObstCount()
 int GraphicsManager::PreSelectedObstCount()
 {
 	return m_obstMgr->PreSelectedObstCount();
+}
+
+boost::optional<const Info::ObstInfo> GraphicsManager::ObstInfo(const Point<int>& p_screenPos)
+{
+	return m_obstMgr->ObstInfo(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
 }
 
 void GraphicsManager::SetRayTracingPausedState(const bool state)

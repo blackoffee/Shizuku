@@ -55,3 +55,8 @@ int Query::PreSelectedObstructionCount()
 {
 	return m_flow->Graphics()->PreSelectedObstCount();
 }
+
+boost::optional<const Info::ObstInfo> Query::ObstInfo(const Types::Point<int>& p_screenPoint)
+{
+	return m_flow->Graphics()->ObstInfo(p_screenPoint);
+}

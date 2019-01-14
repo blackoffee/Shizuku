@@ -276,6 +276,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\SetWaterDepth.cpp" />
+    <ClCompile Include="Command\TogglePreSelection.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
     <ClCompile Include="Graphics\Obst.cpp" />
     <ClCompile Include="Graphics\ObstManager.cpp" />
@@ -324,6 +325,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
     <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\SetWaterDepth.h" />
+    <ClInclude Include="Command\TogglePreSelection.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
     <ClInclude Include="Graphics\HitParams.h" />
@@ -331,6 +333,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\ObstManager.h" />
     <ClInclude Include="Graphics\RenderParams.h" />
     <ClInclude Include="Graphics\Schema.h" />
+    <ClInclude Include="Info\ObstInfo.h" />
     <ClInclude Include="Query.h" />
     <ClInclude Include="Flow.h" />
     <ClInclude Include="Graphics\CudaLbm.h" />

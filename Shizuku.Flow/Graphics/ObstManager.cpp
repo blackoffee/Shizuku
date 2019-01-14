@@ -100,6 +100,39 @@ int ObstManager::PreSelectedObstCount()
 	return m_preSelection.size();
 }
 
+boost::optional<const Info::ObstInfo> ObstManager::ObstInfo(const HitParams& p_params)
+{
+	float dist = std::numeric_limits<float>::max();
+	std::shared_ptr<Obst> closest;
+	bool hit(false);
+    for (const auto& obst : *m_obsts)
+    {
+		HitResult result = obst->Hit(p_params);
+		if (result.Hit)
+		{
+			assert(result.Dist.is_initialized());
+			hit = true;
+			if (result.Dist < dist)
+			{
+				dist = result.Dist.value();
+				closest = obst;
+			}
+		}
+    }
+
+	if (hit)
+	{
+		return Info::ObstInfo{
+			m_selection.find(closest) != m_selection.end(),
+			m_preSelection.find(closest) != m_preSelection.end(),
+			Point<float>(closest->Def().x, closest->Def().y),
+			Rect<float>(closest->Def().r1, closest->Def().r2)
+		};
+	}
+
+	return boost::none;
+}
+
 void ObstManager::SetWaterHeight(const float p_height)
 {
 	m_waterHeight = p_height;
@@ -226,6 +259,21 @@ void ObstManager::RemovePreSelectionFromSelection()
 	}
 
 	RefreshObstStates();
+}
+
+void ObstManager::TogglePreSelectionInSelection()
+{
+	for (const auto& obst : m_preSelection)
+	{
+		if (m_selection.find(obst) == m_selection.end())
+		{
+			m_selection.insert(obst);
+		}
+		else
+		{
+			m_selection.erase(obst);
+		}
+	}
 }
 
 void ObstManager::RefreshObstStates()

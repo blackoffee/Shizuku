@@ -3,6 +3,7 @@
 #include "ShadingMode.h"
 #include "TimerKey.h"
 #include "Schema.h"
+#include "Info/ObstInfo.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "Shizuku.Core/Types/Point.h"
@@ -111,7 +112,6 @@ namespace Shizuku{ namespace Flow{
 		void Render();
 		void InitializeFlow();
 		void UpdateDomainDimensions();
-		void UpdateObstructionScales();
 		void UpdateLbmInputs();
 
 		void SetSurfaceShadingMode(const ShadingMode p_mode);
@@ -134,10 +134,12 @@ namespace Shizuku{ namespace Flow{
 		int ObstCount();
 		int SelectedObstCount();
 		int PreSelectedObstCount();
+		boost::optional<const Info::ObstInfo> ObstInfo(const Point<int>& p_screenPos);
 
 		void PreSelectObstruction(const Point<int>& p_screenPos);
 		void AddPreSelectionToSelection();
 		void RemovePreSelectionFromSelection();
+		void TogglePreSelection();
 		void DeleteSelectedObstructions();
 
 		std::map<TimerKey, Stopwatch>& GetTimers();
