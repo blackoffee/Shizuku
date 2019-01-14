@@ -44,7 +44,8 @@ private:
         std::string m_name;
     };
     std::shared_ptr<CudaLbm> m_cudaLbm;
-    cudaGraphicsResource* m_cudaGraphicsResource;
+    cudaGraphicsResource* m_cudaPosColorResource;
+    cudaGraphicsResource* m_cudaNormalResource;
     cudaGraphicsResource* m_cudaFloorLightTextureResource;
     cudaGraphicsResource* m_cudaEnvTextureResource;
     GLuint m_floorLightTexture;
@@ -65,9 +66,11 @@ private:
     float m_inletVelocity;
     void CreateElementArrayBuffer();
 
-    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const bool p_drawWireframe);
+    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix,
+        const bool p_drawWireframe);
     void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix);
+    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos,
+        const Rect<int>& p_viewSize, const float obstHeight);
 
     //std::shared_ptr<Pillar> m_pillar;
     std::map<const int, std::shared_ptr<Pillar>> m_pillars;
@@ -81,13 +84,14 @@ public:
 
     void CreateCudaLbm();
     std::shared_ptr<CudaLbm> GetCudaLbm();
-    cudaGraphicsResource* GetCudaSolutionGraphicsResource();
+    cudaGraphicsResource* GetCudaPosColorResource();
+    cudaGraphicsResource* GetCudaNormalResource();
     cudaGraphicsResource* GetCudaFloorLightTextureResource();
     cudaGraphicsResource* GetCudaEnvTextureResource();
     template <typename T> void CreateShaderStorageBuffer(T defaultValue,
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
-    void CreateVboForCudaInterop(unsigned int size);
+    void CreateVboForCudaInterop();
     std::shared_ptr<ShaderProgram> GetShaderProgram();
     std::shared_ptr<ShaderProgram> GetLightingProgram();
     std::shared_ptr<ShaderProgram> GetObstProgram();
@@ -122,7 +126,8 @@ public:
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
     void Render(const ShadingMode p_shadingMode , Domain &domain,
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe);
+        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe,
+        const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight);
 
     void UpdatePillar(const int obstId, const PillarDefinition& p_def);
     void RemovePillar(const int obstId);

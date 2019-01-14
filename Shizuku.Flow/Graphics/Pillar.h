@@ -34,6 +34,6 @@ namespace Shizuku { namespace Flow{
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);
 
-        void Draw(const glm::mat4& p_model, const glm::mat4& p_proj);
+        void Draw(const glm::mat4& p_view, const glm::mat4& p_proj, const glm::vec3 p_cameraPos);
     };
 } }

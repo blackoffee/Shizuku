@@ -44,7 +44,9 @@ namespace Shizuku{
             void SetUniform(const GLchar* varName, const int varValue);
             void SetUniform(const GLchar* varName, const float varValue);
             void SetUniform(const GLchar* varName, const bool varValue);
+            void SetUniform(const GLchar* varName, const glm::vec2& varValue);
             void SetUniform(const GLchar* varName, const glm::vec3& varValue);
+            void SetUniform(const GLchar* varName, const glm::vec4& varValue);
             void SetUniform(const GLchar* varName, const glm::mat4& varValue);
             void RunSubroutine(const GLchar* subroutineName,
                 const glm::ivec3& workGroupSize);
