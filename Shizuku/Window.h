@@ -92,6 +92,8 @@ namespace Shizuku{ namespace Presentation{
 
         bool m_firstUIDraw;
 
+		bool m_imguiHandlingMouseEvent;
+
         std::shared_ptr<Shizuku::Flow::Flow> m_flow;
     public:
         Window();

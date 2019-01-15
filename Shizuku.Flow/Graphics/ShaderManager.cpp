@@ -20,7 +20,8 @@ using namespace Shizuku::Flow;
 
 ShaderManager::ShaderManager()
 {
-    m_shaderProgram = std::make_shared<ShaderProgram>();
+    m_surfaceRayTrace = std::make_shared<ShaderProgram>();
+    m_surfaceContour = std::make_shared<ShaderProgram>();
     m_lightingProgram = std::make_shared<ShaderProgram>();
     m_obstProgram = std::make_shared<ShaderProgram>();
     m_causticsProgram = std::make_shared<ShaderProgram>();
@@ -159,45 +160,27 @@ GLuint ShaderManager::GetShaderStorageBuffer(const std::string name)
     return NULL;
 }
 
-std::shared_ptr<ShaderProgram> ShaderManager::GetShaderProgram()
-{
-    return m_shaderProgram;
-}
-
-std::shared_ptr<ShaderProgram> ShaderManager::GetLightingProgram()
-{
-    return m_lightingProgram;
-}
-
-std::shared_ptr<ShaderProgram> ShaderManager::GetObstProgram()
-{
-    return m_obstProgram;
-}
-
-std::shared_ptr<ShaderProgram> ShaderManager::GetCausticsProgram()
-{
-    return m_causticsProgram;
-}
-
 void ShaderManager::CompileShaders()
 {
-    GetShaderProgram()->Initialize("Surface");
-    GetShaderProgram()->CreateShader("Assets/SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
-    GetShaderProgram()->CreateShader("Assets/SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
-    GetLightingProgram()->Initialize("Lighting");
-    GetLightingProgram()->CreateShader("Assets/SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
-    GetObstProgram()->Initialize("Obstructions");
-    GetObstProgram()->CreateShader("Assets/Obstructions.comp.glsl", GL_COMPUTE_SHADER);
-    GetCausticsProgram()->Initialize("Caustics");
-    GetCausticsProgram()->CreateShader("Assets/Caustics.vert.glsl", GL_VERTEX_SHADER);
-    GetCausticsProgram()->CreateShader("Assets/Caustics.frag.glsl", GL_FRAGMENT_SHADER);
+    m_surfaceRayTrace->Initialize("SurfaceRayTrace");
+    m_surfaceRayTrace->CreateShader("Assets/SurfaceShader.vert.glsl", GL_VERTEX_SHADER);
+    m_surfaceRayTrace->CreateShader("Assets/SurfaceShader.frag.glsl", GL_FRAGMENT_SHADER);
+    m_surfaceContour->Initialize("SurfaceContour");
+    m_surfaceContour->CreateShader("Assets/SurfaceContour.vert.glsl", GL_VERTEX_SHADER);
+    m_surfaceContour->CreateShader("Assets/SurfaceContour.frag.glsl", GL_FRAGMENT_SHADER);
+    m_lightingProgram->Initialize("Lighting");
+    m_lightingProgram->CreateShader("Assets/SurfaceShader.comp.glsl", GL_COMPUTE_SHADER);
+    m_obstProgram->Initialize("Obstructions");
+    m_obstProgram->CreateShader("Assets/Obstructions.comp.glsl", GL_COMPUTE_SHADER);
+    m_causticsProgram->Initialize("Caustics");
+    m_causticsProgram->CreateShader("Assets/Caustics.vert.glsl", GL_VERTEX_SHADER);
+    m_causticsProgram->CreateShader("Assets/Caustics.frag.glsl", GL_FRAGMENT_SHADER);
     m_outputProgram->Initialize("Output");
     m_outputProgram->CreateShader("Assets/Output.vert.glsl", GL_VERTEX_SHADER);
     m_outputProgram->CreateShader("Assets/Output.frag.glsl", GL_FRAGMENT_SHADER);
     m_floorProgram->Initialize("Floor");
     m_floorProgram->CreateShader("Assets/Floor.vert.glsl", GL_VERTEX_SHADER);
     m_floorProgram->CreateShader("Assets/Floor.frag.glsl", GL_FRAGMENT_SHADER);
-
 }
 
 void ShaderManager::AllocateStorageBuffers()
@@ -364,7 +347,7 @@ int ShaderManager::RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::
     std::shared_ptr<Ogl::Buffer> rayIntSsbo = Ogl->GetBuffer("RayIntersection");
     Ogl->BindSSBO(4, *rayIntSsbo);
 
-    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = m_lightingProgram;
     shader->Use();
 
     shader->SetUniform("maxXDim", MAX_XDIM);
@@ -518,10 +501,9 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
     glBindTexture(GL_TEXTURE_2D, m_poolFloorTexture);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    std::shared_ptr<ShaderProgram> causticsShader = GetCausticsProgram();
-    causticsShader->Use();
+    m_causticsProgram->Use();
 
-    causticsShader->SetUniform("texCoordScale", 3.f);
+    m_causticsProgram->SetUniform("texCoordScale", 3.f);
     glViewport(0, 0, CAUSTICS_TEX_SIZE, CAUSTICS_TEX_SIZE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -541,7 +523,7 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
         }
     }
 
-    causticsShader->Unset();
+    m_causticsProgram->Unset();
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -566,7 +548,7 @@ void ShaderManager::RunComputeShader(const glm::vec3 p_cameraPosition, const Con
     Ogl->BindSSBO(3, *ssbo_floor);
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(5, *ssbo_obsts);
-    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = m_lightingProgram;
 
     shader->Use();
 
@@ -615,7 +597,7 @@ void ShaderManager::UpdateObstructionsUsingComputeShader(const int obstId, ObstD
 {
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(0, *ssbo_obsts);
-    std::shared_ptr<ShaderProgram> const shader = GetObstProgram();
+    std::shared_ptr<ShaderProgram> const shader = m_obstProgram;
     shader->Use();
 
     shader->SetUniform("targetObst.shape", newObst.shape);
@@ -643,7 +625,7 @@ void ShaderManager::InitializeComputeShaderData()
     std::shared_ptr<Ogl::Buffer> ssbo_obsts = Ogl->GetBuffer("Obstructions");
     Ogl->BindSSBO(5, *ssbo_obsts);
 
-    std::shared_ptr<ShaderProgram> const shader = GetLightingProgram();
+    std::shared_ptr<ShaderProgram> const shader = m_lightingProgram;
 
     shader->Use();
 
@@ -705,7 +687,7 @@ void ShaderManager::UpdateLbmInputs(const float u, const float omega)
 }
 
 
-void ShaderManager::Render(const ShadingMode p_shadingMode , Domain &p_domain, const RenderParams& p_params,
+void ShaderManager::Render(const ContourVariable p_contour , Domain &p_domain, const RenderParams& p_params,
         const bool p_drawFloorWireframe, const Rect<int>& p_viewSize, const float p_obstHeight, const int obstCount)
 {
     glEnable(GL_DEPTH_TEST);
@@ -722,7 +704,10 @@ void ShaderManager::Render(const ShadingMode p_shadingMode , Domain &p_domain, c
 
     RenderFloor(p_domain, p_params, p_drawFloorWireframe);
 
-    RenderSurface(p_shadingMode, p_domain, p_params, p_viewSize, p_obstHeight, obstCount);
+	if (p_contour == ContourVariable::WATER_RENDERING)
+		RenderSurface(p_domain, p_params, p_viewSize, p_obstHeight, obstCount);
+	else
+		RenderSurfaceContour(p_contour, p_domain, p_params);
 
     if (offscreenRender)
     {
@@ -780,42 +765,55 @@ void ShaderManager::RenderFloor(Domain &p_domain, const RenderParams& p_params, 
     floorShader->Unset();
 }
 
-void ShaderManager::RenderSurface(const ShadingMode p_shadingMode, Domain &domain,
-    const RenderParams& p_params, const Rect<int>& p_viewSize, const float p_obstHeight, const int p_obstCount)
+void ShaderManager::RenderSurface(Domain &domain, const RenderParams& p_params, const Rect<int>& p_viewSize,
+	const float p_obstHeight, const int p_obstCount)
 {
-    std::shared_ptr<ShaderProgram> shader = GetShaderProgram();
-    shader->Use();
-    glActiveTexture(GL_TEXTURE0);
-    shader->SetUniform("modelMatrix", p_params.ModelView);
-    shader->SetUniform("projectionMatrix", p_params.Projection);
-    shader->SetUniform("cameraPos", p_params.Camera);
-    shader->SetUniform("obstHeight", p_obstHeight);
-    shader->SetUniform("obstCount", p_obstCount);
-    shader->SetUniform("obstColor", p_params.Schema.Obst.Value());
-    shader->SetUniform("obstColorHighlight", p_params.Schema.ObstHighlight.Value());
-    shader->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
-	//TODO: Get obst count from obstmgr
+	glActiveTexture(GL_TEXTURE0);
+	m_surfaceRayTrace->Use();
+	m_surfaceRayTrace->SetUniform("modelMatrix", p_params.ModelView);
+	m_surfaceRayTrace->SetUniform("projectionMatrix", p_params.Projection);
+	m_surfaceRayTrace->SetUniform("cameraPos", p_params.Camera);
+	m_surfaceRayTrace->SetUniform("obstHeight", p_obstHeight);
+	m_surfaceRayTrace->SetUniform("obstCount", p_obstCount);
+	m_surfaceRayTrace->SetUniform("obstColor", p_params.Schema.Obst.Value());
+	m_surfaceRayTrace->SetUniform("obstColorHighlight", p_params.Schema.ObstHighlight.Value());
+	m_surfaceRayTrace->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
+	
+	std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+	surface->Bind();
+	glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+	
+	std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("managed_obsts");
+	Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
+	
+	const int yDimVisible = domain.GetYDimVisible();
+	glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+	surface->Unbind();
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
+	m_surfaceRayTrace->Unset();   
 
-    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
-    surface->Bind();
-    glBindTexture(GL_TEXTURE_2D, m_floorLightTexture);
+#ifdef DRAW_CAMERA
+	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
+#endif
+}
 
-    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("managed_obsts");
-    Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
-
-    if (p_shadingMode != ShadingMode::RayTracing && p_shadingMode != ShadingMode::SimplifiedRayTracing)
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    const int yDimVisible = domain.GetYDimVisible();
-    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-    surface->Unbind();
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
-    shader->Unset();   
+void ShaderManager::RenderSurfaceContour(const ContourVariable p_contour, Domain &domain, const RenderParams& p_params)
+{
+	m_surfaceContour->Use();
+	m_surfaceContour->SetUniform("modelMatrix", p_params.ModelView);
+	m_surfaceContour->SetUniform("projectionMatrix", p_params.Projection);
+	m_surfaceContour->SetUniform("cameraPos", p_params.Camera);
+	
+	std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+	surface->Bind();
+	
+	const int yDimVisible = domain.GetYDimVisible();
+	glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+	surface->Unbind();
+	
+	m_surfaceContour->Unset();   
 
 #ifdef DRAW_CAMERA
 	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);

@@ -328,6 +328,12 @@
     <None Include="Shaders\Pillar.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\SurfaceContour.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\SurfaceContour.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">

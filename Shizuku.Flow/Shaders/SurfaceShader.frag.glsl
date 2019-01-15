@@ -153,7 +153,7 @@ void main()
     const vec2 texCoord = 0.5f*(floorPos+vec2(1.f));
 
     color = texture(causticsTex, 0.5f*(floorPos+vec2(1.f)));
-    const vec3 envColor = vec3(1);
+    const vec3 envColor = vec3(0.8);
     color.xyz = mix(color.xyz, envColor, reflectedRayIntensity);
 
 	//TODO: need to choose closest

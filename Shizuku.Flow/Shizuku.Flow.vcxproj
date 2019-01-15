@@ -357,6 +357,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <None Include="Shaders\Output.vert.glsl" />
     <None Include="Shaders\Pillar.frag.glsl" />
     <None Include="Shaders\Pillar.vert.glsl" />
+    <None Include="Shaders\SurfaceContour.frag.glsl" />
+    <None Include="Shaders\SurfaceContour.vert.glsl" />
     <None Include="Shaders\SurfaceShader.comp.glsl" />
     <None Include="Shaders\Caustics.frag.glsl" />
     <None Include="Shaders\Caustics.vert.glsl" />

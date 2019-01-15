@@ -58,7 +58,8 @@ private:
     GLuint m_outputFbo;
     GLuint m_outputTexture;
     GLuint m_outputRbo;
-    std::shared_ptr<ShaderProgram> m_shaderProgram;
+    std::shared_ptr<ShaderProgram> m_surfaceRayTrace;
+    std::shared_ptr<ShaderProgram> m_surfaceContour;
     std::shared_ptr<ShaderProgram> m_lightingProgram;
     std::shared_ptr<ShaderProgram> m_obstProgram;
     std::shared_ptr<ShaderProgram> m_causticsProgram;
@@ -70,8 +71,9 @@ private:
     void CreateElementArrayBuffer();
 
     void RenderFloor(Domain &domain, const RenderParams& p_params, const bool p_drawWireframe);
-    void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-		const RenderParams& p_params, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
+    void RenderSurface(Domain &p_domain, const RenderParams& p_params, const Rect<int>& p_viewSize,
+		const float obstHeight, const int obstCount);
+    void RenderSurfaceContour(const ContourVariable p_contour, Domain &p_domain, const RenderParams& p_params);
 	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
@@ -91,10 +93,6 @@ public:
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop();
-    std::shared_ptr<ShaderProgram> GetShaderProgram();
-    std::shared_ptr<ShaderProgram> GetLightingProgram();
-    std::shared_ptr<ShaderProgram> GetObstProgram();
-    std::shared_ptr<ShaderProgram> GetCausticsProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpEnvironmentTexture();
@@ -124,7 +122,7 @@ public:
         const glm::vec3 rayDir);
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void Render(const ShadingMode p_shadingMode , Domain &domain, const RenderParams& p_params,
+    void Render(const ContourVariable p_contour , Domain &domain, const RenderParams& p_params,
         const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
 
     void UpdateCameraDatum(const PillarDefinition& p_def);

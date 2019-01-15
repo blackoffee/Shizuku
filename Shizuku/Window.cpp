@@ -278,6 +278,9 @@ void Window::EnableDiagnostics()
 
 void Window::MouseButton(const int button, const int state, const int mod)
 {
+	if (m_imguiHandlingMouseEvent)
+		return;
+
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
     const Types::Point<int> screenPos(x, m_size.Height - 1 - y);
@@ -310,13 +313,17 @@ void Window::MouseButton(const int button, const int state, const int mod)
 			}
 			else
 			{
-				if (!m_query->ObstInfo(screenPos).value().Selected)
+				const boost::optional<const Info::ObstInfo> info = m_query->ObstInfo(screenPos);
+				if (info.is_initialized())
 				{
-					m_clearSelection->Start(boost::none);
-					m_addPreSelectionToSelection->Start(boost::none);
-				}
+					if (!info.value().Selected)
+					{
+						m_clearSelection->Start(boost::none);
+						m_addPreSelectionToSelection->Start(boost::none);
+					}
 
-				m_moveObstruction->Start(param);
+					m_moveObstruction->Start(param);
+				}
 			}
 		}
 	}
@@ -420,6 +427,9 @@ void Window::DrawUI()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    ImGuiIO& io = ImGui::GetIO();
+	m_imguiHandlingMouseEvent = io.WantCaptureMouse;
 
     if (m_firstUIDraw)
     {

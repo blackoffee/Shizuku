@@ -52,12 +52,12 @@ GraphicsManager::GraphicsManager()
     m_surfaceShadingMode = RayTracing;
     m_waterDepth = 0.2f;
     m_currentObstShape = Shape::SQUARE;
-    m_currentObstSize = 0.05f;
+    m_currentObstSize = 0.04f;
     m_drawFloorWireframe = false;
 	m_schema = Schema{
-		Types::Color(glm::vec4(0.1)),
-		Types::Color(glm::vec4(0.8)),
-		Types::Color(glm::uvec4(245, 180, 60, 255))
+		Types::Color(glm::vec4(0.1)), //background
+		Types::Color(glm::vec4(0.8)), //obst
+		Types::Color(glm::uvec4(245, 220, 60, 255)) //obst highlight
 	};
 
     const int framesForAverage = 20;
@@ -433,7 +433,7 @@ void GraphicsManager::Render()
     CudaLbm* cudaLbm = GetCudaLbm();
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
 	const RenderParams& params{ m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
-    GetGraphics()->Render(m_surfaceShadingMode, *cudaLbm->GetDomain(),
+    GetGraphics()->Render(m_contourVar, *cudaLbm->GetDomain(),
         params, m_drawFloorWireframe, m_viewSize, obstHeight, m_obstMgr->ObstCount());
 	m_obstMgr->Render(params);
 }
