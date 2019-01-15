@@ -59,6 +59,8 @@ namespace Shizuku{ namespace Flow{
 		std::shared_ptr<ObstManager> m_obstMgr;
 		Schema m_schema;
 
+		bool m_obstTouched;
+
 	public:
 		GraphicsManager();
 

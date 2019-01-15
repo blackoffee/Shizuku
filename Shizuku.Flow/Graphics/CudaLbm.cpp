@@ -199,6 +199,7 @@ void CudaLbm::InitializeDeviceImage()
     cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice);
 }
 
+//! TODO: use Cuda for this
 void CudaLbm::UpdateDeviceImage(ObstManager& p_obstMgr)
 {
     int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;

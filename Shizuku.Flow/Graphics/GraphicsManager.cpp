@@ -495,12 +495,14 @@ bool GraphicsManager::TryStartMoveSelectedObstructions(const Point<int>& p_scree
 void GraphicsManager::MoveSelectedObstructions(const Point<int>& p_screenPos)
 {
 	m_obstMgr->MoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+	m_obstTouched = true;
 }
 
 void GraphicsManager::AddObstruction(const Point<float>& p_modelSpacePos)
 {
     const ObstDefinition obst = { m_currentObstShape, p_modelSpacePos.X, p_modelSpacePos.Y, m_currentObstSize, 0, 0, 0, State::NORMAL };
 	m_obstMgr->CreateObst(obst);
+	m_obstTouched = true;
 }
 
 void GraphicsManager::PreSelectObstruction(const Point<int>& p_screenPos)
@@ -527,6 +529,7 @@ void GraphicsManager::TogglePreSelection()
 void GraphicsManager::DeleteSelectedObstructions()
 {
 	m_obstMgr->DeleteSelectedObsts();
+	m_obstTouched = true;
 }
 
 void GraphicsManager::ClearSelection()
@@ -573,8 +576,11 @@ void GraphicsManager::UpdateGraphicsInputs()
         m_cameraPosition = GetCameraPosition();
     }
 
-	// TODO: don't update every loop
-	GetCudaLbm()->UpdateDeviceImage(*m_obstMgr);
+	if (!GetCudaLbm()->IsPaused() && m_obstTouched)
+	{
+		GetCudaLbm()->UpdateDeviceImage(*m_obstMgr);
+		m_obstTouched = false;
+	}
 }
 
 void GraphicsManager::UpdateDomainDimensions()

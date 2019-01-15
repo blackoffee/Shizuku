@@ -513,15 +513,9 @@ void ShaderManager::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_v
     const int xDimVisible = domain.GetXDimVisible();
     const int yDimVisible = domain.GetYDimVisible();
     const int offsetToFloorIndices = 3 * 2 * (MAX_XDIM - 1)*(MAX_YDIM - 1);
-    for (int i = 0; i < yDimVisible - 1; ++i)
-    {
-        for (int j = 0; j < 2*(xDimVisible - 1); ++j)
-        {
 
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT,
-                BUFFER_OFFSET(sizeof(GLuint)*(offsetToFloorIndices + 3 * (2 * i*(MAX_XDIM - 1) + j))));
-        }
-    }
+	glDrawElements(GL_TRIANGLES, 3 * (2 * (MAX_XDIM - 1))*(yDimVisible-1), GL_UNSIGNED_INT,
+		BUFFER_OFFSET(sizeof(GLuint)*(offsetToFloorIndices)));
 
     m_causticsProgram->Unset();
 
