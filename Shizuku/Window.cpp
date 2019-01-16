@@ -172,7 +172,7 @@ namespace
 
     float ScaleFromResolution(const float p_res)
     {
-        return -p_res + 2.f;
+        return -2.f*p_res + 3.f;
     }
 }
 

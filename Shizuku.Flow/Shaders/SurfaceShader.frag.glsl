@@ -125,7 +125,7 @@ vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
     cosAlpha = cosAlpha < 0 ? 0 : cosAlpha;
     cosAlpha = pow(cosAlpha, 5.f);
 
-    float lightAmbient = 0.3f;
+    float lightAmbient = 0.5f;
     
     vec3 diffuse1  = 0.1f*cosTheta1*diffuseLightColor1;
     vec3 diffuse2  = 0.1f*cosTheta2*diffuseLightColor2;
