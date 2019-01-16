@@ -24,9 +24,6 @@
     <ClCompile Include="Command\Pan.cpp">
       <Filter>Command</Filter>
     </ClCompile>
-    <ClCompile Include="Command\RemoveObstruction.cpp">
-      <Filter>Command</Filter>
-    </ClCompile>
     <ClCompile Include="Command\Rotate.cpp">
       <Filter>Command</Filter>
     </ClCompile>
@@ -113,6 +110,30 @@
     <ClCompile Include="Command\SetFloorWireframeVisibility.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\ObstManager.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Algorithms\Intersection.cpp">
+      <Filter>Algorithms</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Obst.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\PreSelectObstruction.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\AddPreSelectionToSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\DeleteSelectedObstructions.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\ClearSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\TogglePreSelection.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -122,9 +143,6 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\MoveObstruction.h">
-      <Filter>Command</Filter>
-    </ClInclude>
-    <ClInclude Include="Command\RemoveObstruction.h">
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Command\Rotate.h">
@@ -217,9 +235,6 @@
     <ClInclude Include="Graphics\Pillar.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Obstruction.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\PillarDefinition.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -235,6 +250,45 @@
     </ClInclude>
     <ClInclude Include="Command\SetFloorWireframeVisibility.h">
       <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ObstManager.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\HitParams.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithms\Intersection.h">
+      <Filter>Algorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ObstDefinition.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Obst.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderParams.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Schema.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\PreSelectObstruction.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\AddPreSelectionToSelection.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\DeleteSelectedObstructions.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\ClearSelection.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\TogglePreSelection.h">
+      <Filter>Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Info\ObstInfo.h">
+      <Filter>Info</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +328,12 @@
     <None Include="Shaders\Pillar.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\SurfaceContour.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\SurfaceContour.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">
@@ -290,6 +350,12 @@
     </Filter>
     <Filter Include="Command\Parameter">
       <UniqueIdentifier>{1aeac10c-fda6-4ebd-b3ff-668def3ec6b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Algorithms">
+      <UniqueIdentifier>{4fae29c0-76c8-4daa-85d6-12d074b5a4a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Info">
+      <UniqueIdentifier>{269a1c42-4ba0-4101-9568-63e0a739bdb5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

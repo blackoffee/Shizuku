@@ -1,11 +1,17 @@
 #pragma once
 #include "../common.h"
-#include "Obstruction.h"
+#include "ObstDefinition.h"
 #include "Shizuku.Core/Rect.h"
 
 using namespace Shizuku::Flow;
 
 class Domain;
+
+namespace Shizuku {
+	namespace Flow {
+		class ObstManager;
+	}
+}
 
 class CudaLbm
 {
@@ -18,8 +24,8 @@ private:
     int* m_Im_d;
     int* m_Im_h;
     float* m_FloorTemp_d;
-    Obstruction* m_obst_d;
-    Obstruction m_obst_h[MAXOBSTS];
+    ObstDefinition* m_obst_d;
+    ObstDefinition m_obst_h[MAXOBSTS];
     float m_inletVelocity;
     float m_omega;
     bool m_isPaused;
@@ -33,8 +39,8 @@ public:
     float* GetFB();
     int* GetImage();
     float* GetFloorTemp();
-    Obstruction* GetDeviceObst();
-    Obstruction* GetHostObst();
+    ObstDefinition* GetDeviceObst();
+    ObstDefinition* GetHostObst();
     float GetInletVelocity();
     float GetOmega();
     void SetInletVelocity(const float velocity);
@@ -49,7 +55,7 @@ public:
     void InitializeDeviceMemory();
     void DeallocateDeviceMemory();
     void InitializeDeviceImage();
-    void UpdateDeviceImage();
+    void UpdateDeviceImage(ObstManager& p_obstMgr);
     int ImageFcn(const int x, const int y);
 
    

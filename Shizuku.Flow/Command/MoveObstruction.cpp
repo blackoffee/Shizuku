@@ -8,9 +8,7 @@ using namespace Shizuku::Flow::Command;
 
 MoveObstruction::MoveObstruction(Flow& p_flow) : Command(p_flow)
 {
-    m_currentObst = -1;
-    m_state = INACTIVE;
-    m_initialPos = Point<int>(0, 0);
+    m_state = Inactive;
 }
 
 void MoveObstruction::Start(boost::any const p_param)
@@ -18,17 +16,10 @@ void MoveObstruction::Start(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        m_initialPos = pos.Position;
-        m_currentObst = m_flow->Graphics()->PickObstruction(pos.Position);
-
-        if (m_currentObst >= 0)
-        {
-            m_state = ACTIVE;
-        }
-        else
-        {
-            m_state = INACTIVE;
-        }
+		if (m_flow->Graphics()->TryStartMoveSelectedObstructions(pos.Position))
+			m_state = Active;
+		else
+			m_state = Inactive;
     }
     catch (boost::bad_any_cast &e)
     {
@@ -40,23 +31,11 @@ void MoveObstruction::Track(boost::any const p_param)
 {
     try
     {
-        const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-        if (m_state == ACTIVE)
+        if (m_state == Active)
         {
-            const Point<int> posDiff = pos.Position - m_initialPos;
-            m_flow->Graphics()->MoveObstruction(m_currentObst, pos.Position, posDiff);
-
-            if (m_currentObst >= 0)
-            {
-                m_state = ACTIVE;
-            }
-            else
-            {
-                m_state = INACTIVE;
-            }
+			const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+			m_flow->Graphics()->MoveSelectedObstructions(pos.Position);
         }
-
-        m_initialPos = pos.Position;
     }
     catch (boost::bad_any_cast &e)
     {
@@ -66,7 +45,5 @@ void MoveObstruction::Track(boost::any const p_param)
 
 void MoveObstruction::End(boost::any const p_param)
 {
-    m_currentObst = -1;
-    m_state = INACTIVE;
+    m_state = Inactive;
 }
-

@@ -30,3 +30,8 @@ void PillarDefinition::SetSize(const Types::Box<float>& p_size)
 {
     m_size = p_size;
 }
+
+void PillarDefinition::SetHeight(const float p_height)
+{
+	m_size.Depth = p_height;
+}

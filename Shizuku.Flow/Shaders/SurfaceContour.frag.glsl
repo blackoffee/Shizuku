@@ -1,14 +1,27 @@
 #version 430 core
 
-#define OBST_ALBEDO vec3(0.8f)
+#define WATER_REFRACTIVE_INDEX 1.33f
+#define CAUSTICS_TEX_SIZE 1024.f
 
-in vec4 fPositionInModel;
-in vec4 fNormalInModel;
+in vec3 fNormal;
+in vec4 posInModel;
+in vec4 fColor;
 
 out vec4 color;
 
-uniform vec3 cameraPosition;
-uniform vec4 obstAlbedo;
+uniform vec3 cameraPos;
+
+vec3 RefractRay(vec3 inRay, vec3 n)
+{
+    const float r = 1.0 / WATER_REFRACTIVE_INDEX;
+    const float c = -(dot(n, inRay));
+    return r*inRay + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
+}
+
+vec3 ReflectRay(vec3 inRay, vec3 n)
+{
+    return 2.f*dot(inRay, -1.f*n)*n + inRay;
+}
 
 vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
 {
@@ -41,8 +54,17 @@ vec3 PhongLighting(vec3 posInModel, vec3 eyeDir, vec3 n)
 
 void main()
 {
-    vec3 n = normalize(fNormalInModel.xyz);
-    vec3 eyeRayInModel = fPositionInModel.xyz - cameraPosition;
-    vec3 lightFactor = PhongLighting(fPositionInModel.xyz, normalize(eyeRayInModel), n);
-    color.xyz = lightFactor * obstAlbedo.xyz;
+    if (posInModel.x > 1.f)
+        discard;
+
+    vec3 eyeRayInModel = posInModel.xyz - cameraPos;
+
+    //const vec3 reflectedRay = ReflectRay(eyeRayInModel, fNormal);
+    const float cosTheta = clamp(dot(eyeRayInModel, -1.f*fNormal),0,1);
+    const float nu = 1.f / WATER_REFRACTIVE_INDEX;
+    const float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
+    const float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
+    
+	const vec3 envColor = vec3(0.8);
+    color.xyz = mix(fColor.xyz, envColor, reflectedRayIntensity);
 }

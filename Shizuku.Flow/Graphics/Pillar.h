@@ -1,8 +1,11 @@
 #pragma once
 
 #include "PillarDefinition.h"
+#include "HitParams.h"
+#include "RenderParams.h"
 #include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
+#include "Shizuku.Core/Rect.h"
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -25,15 +28,21 @@ namespace Shizuku { namespace Flow{
         void PrepareBuffers();
         void PrepareShader();
         bool m_initialized;
+		bool m_highlighted;
     public:
         Pillar(std::shared_ptr<Ogl> p_ogl);
+
+		const PillarDefinition& Def();
 
         void Initialize();
         bool IsInitialized();
         void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);
+		void Highlight(const bool p_highlight);
 
-        void Draw(const glm::mat4& p_view, const glm::mat4& p_proj, const glm::vec3 p_cameraPos);
+		HitResult Hit(const HitParams& p_params);
+
+        void Render(const RenderParams& p_params);
     };
 } }

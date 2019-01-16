@@ -3,9 +3,12 @@
 #include "ShadingMode.h"
 #include "Pillar.h"
 #include "PillarDefinition.h"
+#include "RenderParams.h"
+
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
 #include "Shizuku.Core/Types/Point.h"
+
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW
@@ -27,7 +30,7 @@ namespace Core{
 }
 namespace Flow
 {
-    class Obstruction;
+    class ObstDefinition;
 }
 }
 
@@ -55,7 +58,8 @@ private:
     GLuint m_outputFbo;
     GLuint m_outputTexture;
     GLuint m_outputRbo;
-    std::shared_ptr<ShaderProgram> m_shaderProgram;
+    std::shared_ptr<ShaderProgram> m_surfaceRayTrace;
+    std::shared_ptr<ShaderProgram> m_surfaceContour;
     std::shared_ptr<ShaderProgram> m_lightingProgram;
     std::shared_ptr<ShaderProgram> m_obstProgram;
     std::shared_ptr<ShaderProgram> m_causticsProgram;
@@ -66,14 +70,11 @@ private:
     float m_inletVelocity;
     void CreateElementArrayBuffer();
 
-    void RenderFloor(Domain &domain, const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix,
-        const bool p_drawWireframe);
-    void RenderSurface(const ShadingMode p_shadingMode, Domain &p_domain,
-    const glm::mat4 &p_modelMatrix, const glm::mat4 &p_projectionMatrix, const glm::vec3& p_cameraPos,
-        const Rect<int>& p_viewSize, const float obstHeight);
-
-    //std::shared_ptr<Pillar> m_pillar;
-    std::map<const int, std::shared_ptr<Pillar>> m_pillars;
+    void RenderFloor(Domain &domain, const RenderParams& p_params, const bool p_drawWireframe);
+    void RenderSurface(Domain &p_domain, const RenderParams& p_params, const Rect<int>& p_viewSize,
+		const float obstHeight, const int obstCount);
+    void RenderSurfaceContour(const ContourVariable p_contour, Domain &p_domain, const RenderParams& p_params);
+	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
 
@@ -92,10 +93,6 @@ public:
         const unsigned int sizeInInts, const std::string name);
     GLuint GetShaderStorageBuffer(const std::string name);
     void CreateVboForCudaInterop();
-    std::shared_ptr<ShaderProgram> GetShaderProgram();
-    std::shared_ptr<ShaderProgram> GetLightingProgram();
-    std::shared_ptr<ShaderProgram> GetObstProgram();
-    std::shared_ptr<ShaderProgram> GetCausticsProgram();
     void CompileShaders();
     void AllocateStorageBuffers();
     void SetUpEnvironmentTexture();
@@ -120,17 +117,13 @@ public:
     void UpdateLbmInputs(const float u, const float omega);
 
     void RunComputeShader(const glm::vec3 p_cameraPosition, const ContourVariable p_contVar, const Types::MinMax<float>& p_minMax);
-    void UpdateObstructionsUsingComputeShader(const int obstId, Shizuku::Flow::Obstruction &newObst, const float scaleFactor);
+    void UpdateObstructionsUsingComputeShader(const int obstId, Shizuku::Flow::ObstDefinition &newObst, const float scaleFactor);
     int RayCastMouseClick(glm::vec3 &rayCastIntersection, const glm::vec3 rayOrigin,
         const glm::vec3 rayDir);
 
     void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
-    void Render(const ShadingMode p_shadingMode , Domain &domain,
-        const glm::mat4 &modelMatrix, const glm::mat4 &projectionMatrix, const bool p_drawWireframe,
-        const glm::vec3& p_cameraPos, const Rect<int>& p_viewSize, const float obstHeight);
-
-    void UpdatePillar(const int obstId, const PillarDefinition& p_def);
-    void RemovePillar(const int obstId);
+    void Render(const ContourVariable p_contour , Domain &domain, const RenderParams& p_params,
+        const bool p_drawWireframe, const Rect<int>& p_viewSize, const float obstHeight, const int obstCount);
 
     void UpdateCameraDatum(const PillarDefinition& p_def);
 };

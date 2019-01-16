@@ -7,8 +7,8 @@
 #define MAX_XDIM 256
 #define MAX_YDIM 256
 #else
-#define MAX_XDIM 768
-#define MAX_YDIM 768
+#define MAX_XDIM 1024
+#define MAX_YDIM 1024
 #endif
 
 #define CAUSTICS_TEX_SIZE 1024

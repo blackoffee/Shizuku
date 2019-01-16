@@ -36,15 +36,17 @@ Flow::~Flow()
 
 void Flow::Initialize()
 {
-    m_impl->Graphics()->SetUpGLInterop();
-    m_impl->Graphics()->SetUpCuda();
-    m_impl->Graphics()->SetUpShaders();
+    m_impl->Graphics()->Initialize();
+}
+
+void Flow::SetUpFrame()
+{
+	m_impl->Graphics()->SetUpFrame();
 }
 
 void Flow::Update()
 {
     m_impl->Graphics()->UpdateGraphicsInputs();
-    m_impl->Graphics()->GetCudaLbm()->UpdateDeviceImage();
 
     m_impl->Graphics()->RunSimulation();
 

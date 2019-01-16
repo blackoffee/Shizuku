@@ -30,6 +30,7 @@
     <ClInclude Include="Ogl\Shader.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Types\Box.h" />
+    <ClInclude Include="Types\Color.h" />
     <ClInclude Include="Types\MinMax.h" />
     <ClInclude Include="Types\Point3D.h" />
     <ClInclude Include="Types\Point.h" />
@@ -89,14 +90,14 @@
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC);$(ProjectDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(OPENGL_LIB)\$(Platform)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(OPENGL_INC);$(ProjectDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(OPENGL_LIB)\$(Platform)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

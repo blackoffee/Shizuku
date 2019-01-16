@@ -7,7 +7,7 @@ using namespace Shizuku::Flow::Command;
 
 AddObstruction::AddObstruction(Flow& p_flow) : Command(p_flow)
 {
-    m_state = INACTIVE;
+    m_state = Inactive;
 }
 
 void AddObstruction::Start(boost::any const p_param)
