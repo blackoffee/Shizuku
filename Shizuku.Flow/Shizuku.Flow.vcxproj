@@ -102,7 +102,7 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
+      <Command>copy "$(CudaToolkitBinDir)\cudart64_100.dll" "$(OutDir)"
 mkdir "$(OutDir)\Assets"
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
 copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
@@ -113,7 +113,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CustomBuildStep>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
+      <Command>
+      </Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <Outputs>dummy;%(Outputs)</Outputs>
@@ -176,7 +177,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart64_75.dll" "$(OutDir)"
+      <Command>copy "$(CudaToolkitBinDir)\cudart64_100.dll" "$(OutDir)"
 mkdir "$(OutDir)\Assets"
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
 copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
@@ -189,7 +190,8 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
     </CudaCompile>
     <CustomBuildStep>
-      <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
+      <Command>
+      </Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <Outputs>dummy;%(Outputs)</Outputs>
