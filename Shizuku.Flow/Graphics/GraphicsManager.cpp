@@ -168,6 +168,7 @@ float GraphicsManager::GetScaleFactor()
 void GraphicsManager::SetScaleFactor(const float scaleFactor)
 {
     m_scaleFactor = scaleFactor;
+	m_obstTouched = true;
 }
 
 void GraphicsManager::SetVelocity(const float p_velocity)
