@@ -72,7 +72,6 @@ namespace Shizuku{ namespace Core
 
     };
 
-
     template <typename T>
     std::shared_ptr<Ogl::Buffer> Ogl::CreateBuffer(const GLenum target, T* data, const unsigned int numberOfElements, const std::string name, const GLuint drawMode, const GLuint base)
     {
