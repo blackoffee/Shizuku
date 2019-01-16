@@ -55,13 +55,13 @@ __device__ void LbmNode::ReadIncomingDistributions(float* f, const int x, const 
     int yDim = GetYDim();
     m_f[0] = f[j];
     m_f[1] = f[f_mem(1, dmax(x - 1), y)];
-    m_f[3] = f[f_mem(3, dmin(x + 1, xDim), y)];
+    m_f[3] = f[f_mem(3, dmin(x + 1, xDim-1), y)];
     m_f[2] = f[f_mem(2, x, y - 1)];
     m_f[5] = f[f_mem(5, dmax(x - 1), y - 1)];
-    m_f[6] = f[f_mem(6, dmin(x + 1, xDim), y - 1)];
+    m_f[6] = f[f_mem(6, dmin(x + 1, xDim-1), y - 1)];
     m_f[4] = f[f_mem(4, x, y + 1)];
-    m_f[7] = f[f_mem(7, dmin(x + 1, xDim), y + 1)];
-    m_f[8] = f[f_mem(8, dmax(x - 1), dmin(y + 1, yDim))];
+    m_f[7] = f[f_mem(7, dmin(x + 1, xDim-1), y + 1)];
+    m_f[8] = f[f_mem(8, dmax(x - 1), dmin(y + 1, yDim-1))];
 }
 
 __device__ void LbmNode::ReadDistributions(float* f, const int x, const int y)
