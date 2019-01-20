@@ -1,9 +1,9 @@
 #pragma once
-#include "common.h"
 #include "ShadingMode.h"
 #include "Pillar.h"
 #include "PillarDefinition.h"
 #include "RenderParams.h"
+#include "common.h"
 
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Types/MinMax.h"
@@ -18,7 +18,7 @@
 #include <memory>
 #include <map>
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+//#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 class CudaLbm;
 class Domain;
@@ -30,6 +30,7 @@ namespace Core{
 }
 namespace Flow
 {
+	class Floor;
     class ObstDefinition;
 }
 }
@@ -65,6 +66,7 @@ private:
     std::shared_ptr<ShaderProgram> m_causticsProgram;
     std::shared_ptr<ShaderProgram> m_outputProgram;
     std::shared_ptr<ShaderProgram> m_floorProgram;
+    std::shared_ptr<ShaderProgram> m_lightRayProgram;
     std::vector<Ssbo> m_ssbos;
     float m_omega;
     float m_inletVelocity;
@@ -77,6 +79,7 @@ private:
 	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
+    std::shared_ptr<Floor> m_floor;
 
 public:
     ShaderManager();

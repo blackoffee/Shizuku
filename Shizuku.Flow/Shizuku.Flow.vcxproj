@@ -280,6 +280,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\TogglePreSelection.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
+    <ClCompile Include="Graphics\Floor.cpp" />
     <ClCompile Include="Graphics\Obst.cpp" />
     <ClCompile Include="Graphics\ObstManager.cpp" />
     <ClCompile Include="Query.cpp" />
@@ -330,6 +331,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\TogglePreSelection.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
+    <ClInclude Include="Graphics\Floor.h" />
     <ClInclude Include="Graphics\HitParams.h" />
     <ClInclude Include="Graphics\Obst.h" />
     <ClInclude Include="Graphics\ObstManager.h" />
@@ -355,6 +357,9 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
   <ItemGroup>
     <None Include="Shaders\Floor.frag.glsl" />
     <None Include="Shaders\Floor.vert.glsl" />
+    <None Include="Shaders\LightRay.frag.glsl" />
+    <None Include="Shaders\LightRay.geom.glsl" />
+    <None Include="Shaders\LightRay.vert.glsl" />
     <None Include="Shaders\Output.frag.glsl" />
     <None Include="Shaders\Output.vert.glsl" />
     <None Include="Shaders\Pillar.frag.glsl" />
