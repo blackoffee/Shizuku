@@ -383,44 +383,27 @@ __device__ float3 RefractRay(float3 incidentLight, float3 n)
     return r*incidentLight + (r*c - sqrt(1.f - r*r*(1.f - c*c)))*n;
 }
 
-//TODO: Make this in model space coords
-__device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float3 incidentLight, 
-    const int x, const int y, Domain simDomain, const float waterDepth)
+__device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float4* p_normals, float3 incidentLight, 
+    const int x, const int y, Domain simDomain, const float waterDepth, const bool skip)
 {
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
-    float3 n = { 0, 0, 1 };
-    float slope_x = 0.f;
-    float slope_y = 0.f;
-    const float cellSize = 2.f / xDimVisible;
-    if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
-    {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
-            (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
-            (2.f*cellSize);
-        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-        n.z = 2.f*cellSize*2.f*cellSize;
-    }
-    Normalize(n);
+    const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
+
+    const float2 coords = ScaledCoords(x, y, xDimVisible);
+
+	if (skip)
+		return coords;
+
+    const float3 n = make_float3(p_normals[j].x, p_normals[j].y, p_normals[j].z);
 
     Normalize(incidentLight);
 
     const float3 refractedLight = RefractRay(incidentLight, n);
 
-    const float2 coords = ScaledCoords(x, y, xDimVisible);
-    //const float xf = (float)x / xDimVisible*2.f - 1.f;
-    //const float yf = (float)y / xDimVisible*2.f - 1.f;
-
     const float2 delta = make_float2(
         -refractedLight.x*waterDepth / refractedLight.z,
         -refractedLight.y*waterDepth / refractedLight.z);
-
-    //const float dx = -refractedLight.x*waterDepth / refractedLight.z;
-    //const float dy = -refractedLight.y*waterDepth/refractedLight.z;
-
-    //return float2{ (xf + dx), (yf + dy)};
 
     return coords + delta;
 }
@@ -435,8 +418,8 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
     return CrossProductArea(vecN, vecW) + CrossProductArea(vecE, vecS);
 }
 
-__global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight, 
-    ObstDefinition* obstructions, Domain simDomain, const float waterDepth)
+__global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float4* p_normals, float3 incidentLight, 
+    ObstDefinition* obstructions, Domain simDomain, const float waterDepth, int* p_image)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -446,11 +429,11 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float3 incidentLight
     
     if (x < xDimVisible && y < yDimVisible)
     {
-        const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, incidentLight,
-            x, y, simDomain, waterDepth);
-
-        vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
-        vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
+		const int im = p_image[x + y * MAX_XDIM];
+		const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, p_normals, incidentLight,
+			x, y, simDomain, waterDepth, im != 0);
+		vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
+		vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
     }
 }
 
@@ -462,12 +445,15 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
 
-    const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
-    const int im = p_image[j];
-
+    //const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
-		if (im != 1)
+		const int im = p_image[x + y * MAX_XDIM]
+			+ p_image[(x + 1) + y * MAX_XDIM]
+			+ p_image[(x + 1) + (y + 1)*MAX_XDIM]
+			+ p_image[x + (y + 1)*MAX_XDIM];
+
+		if (im == 0)
         {
             const int offset = MAX_XDIM*MAX_YDIM;
             const float2 nw = make_float2(vbo[(x)+(y + 1)*MAX_XDIM + offset].x, vbo[(x)+(y + 1)*MAX_XDIM + offset].y);
@@ -882,15 +868,11 @@ void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* 
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     const float3 incidentLight1 = { 0.f, 0.f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, incidentLight1, obst_d, simDomain, waterDepth);
+        (vis, p_normals, incidentLight1, obst_d, simDomain, waterDepth, p_lbm.GetImage());
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
         (vis, floor_d, obst_d, simDomain, p_lbm.GetImage());
 
     ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain, obstHeight);
-
-    //phong lighting on floor mesh to shade obstructions
-    PhongLighting << <grid, threads>> >(&vis[MAX_XDIM*MAX_YDIM], p_normals, obst_d, cameraPosition,
-        simDomain);
 }
 
 void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorLightTexture, cudaArray* envTexture, ObstDefinition* obst_d, const glm::vec4 cameraPos,
