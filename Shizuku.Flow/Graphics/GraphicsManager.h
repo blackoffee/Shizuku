@@ -96,6 +96,8 @@ namespace Shizuku{ namespace Flow{
 		void SetTimestepsPerFrame(const int p_steps);
 		void SetFloorWireframeVisibility(const bool p_visible);
 
+		void ProbeLightPaths(const Point<int>& p_screenPos);
+
 		CudaLbm* GetCudaLbm();
 		ShaderManager* GetGraphics();
 

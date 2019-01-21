@@ -119,6 +119,11 @@ GLuint Floor::CausticsTex()
 	return m_causticsTex;
 }
 
+void Floor::SetProbeRegion(const ProbeRegion& p_region)
+{
+	m_region = p_region;
+}
+
 void Floor::PrepareIndices()
 {
 	const int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
@@ -274,9 +279,8 @@ void Floor::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
     glViewport(0, 0, p_viewSize.Width, p_viewSize.Height);
 }
 
-void Floor::Render(Domain &p_domain, const RenderParams& p_params, const bool p_drawWireframe)
+void Floor::Render(Domain &p_domain, const RenderParams& p_params)
 {
-
     std::shared_ptr<ShaderProgram> floorShader = m_floorShader;
     floorShader->Use();
     glActiveTexture(GL_TEXTURE0);
@@ -292,54 +296,40 @@ void Floor::Render(Domain &p_domain, const RenderParams& p_params, const bool p_
     floor->Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
     floorShader->Unset();
+}
 
-    if (p_drawWireframe)
-    {
-		m_lightRayShader->Use();
-	    m_lightRayShader->SetUniform("modelMatrix", p_params.ModelView);
-	    m_lightRayShader->SetUniform("projectionMatrix", p_params.Projection);
-	    m_lightRayShader->SetUniform("Filter", false);
-        std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloorEdges");
-        surface->Bind();
+void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
+{
+	m_lightRayShader->Use();
+	m_lightRayShader->SetUniform("modelMatrix", p_params.ModelView);
+	m_lightRayShader->SetUniform("projectionMatrix", p_params.Projection);
+	m_lightRayShader->SetUniform("Filter", false);
+	std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloorEdges");
+	surface->Bind();
 
-        const int xDimVisible = p_domain.GetXDimVisible();
-        const int yDimVisible = p_domain.GetYDimVisible();
-        for (int i = 0; i < yDimVisible - 1; ++i)
-        {
-            glDrawElements(GL_LINES, (xDimVisible - 1) * 12, GL_UNSIGNED_INT,
-                BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM - 1)*i * 12));
-        }
+	const int xDimVisible = p_domain.GetXDimVisible();
+	const int yDimVisible = p_domain.GetYDimVisible();
+	for (int i = 0; i < yDimVisible - 1; ++i)
+	{
+		glDrawElements(GL_LINES, (xDimVisible - 1) * 12, GL_UNSIGNED_INT,
+			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM - 1)*i * 12));
+	}
 
-        surface->Unbind();
+	surface->Unbind();
 
-        std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("LightPaths");
-        paths->Bind();
+	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("LightPaths");
+	paths->Bind();
+	glDisable(GL_DEPTH_TEST);
 
-	    m_lightRayShader->SetUniform("Filter", true);
-		glDisable(GL_DEPTH_TEST);
-		for (int j = 0; j < yDimVisible; ++j)
-		{
-			glDrawElements(GL_LINES, xDimVisible * 2, GL_UNSIGNED_INT,
-				BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
-		}
+	m_lightRayShader->SetUniform("Filter", true);
+	m_lightRayShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
+	for (int j = 0; j < yDimVisible; ++j)
+	{
+		glDrawElements(GL_LINES, xDimVisible * 2, GL_UNSIGNED_INT,
+			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
+	}
 
-
-
-
-//		Rect<int> area(xDimVisible / 5.f, yDimVisible / 5.f);
-//		Types::Point<int> pos(xDimVisible / 2.f, yDimVisible / 3.f);
-//		glDisable(GL_DEPTH_TEST);
-//        for (int j = pos.Y-area.Height; j < pos.Y+area.Height; ++j)
-//        {
-//			for (int i = pos.X-area.Width; i < pos.X+area.Width; ++i)
-//			{
-//				glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT,
-//					BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*i+j) * 2));
-//			}
-//        }
-//		glEnable(GL_DEPTH_TEST);
-
-        paths->Unbind();
-		m_lightRayShader->Unset();
-    }
+	glEnable(GL_DEPTH_TEST);
+	paths->Unbind();
+	m_lightRayShader->Unset();
 }

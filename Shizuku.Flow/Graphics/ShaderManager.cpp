@@ -739,6 +739,9 @@ void ShaderManager::Render(const ContourVariable p_contour , Domain &p_domain, c
 	else
 		RenderSurfaceContour(p_contour, p_domain, p_params);
 
+	if (p_drawFloorWireframe)
+		m_floor->RenderCausticsMesh(p_domain, p_params);
+
     if (offscreenRender)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -761,7 +764,7 @@ void ShaderManager::Render(const ContourVariable p_contour , Domain &p_domain, c
 
 void ShaderManager::RenderFloor(Domain &p_domain, const RenderParams& p_params, const bool p_drawWireframe)
 {
-	m_floor->Render(p_domain, p_params, p_drawWireframe);
+	m_floor->Render(p_domain, p_params);
 
 //    std::shared_ptr<ShaderProgram> floorShader = m_floorProgram;
 //    floorShader->Use();

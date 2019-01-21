@@ -137,6 +137,7 @@
     <ClCompile Include="Graphics\Floor.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Command\ProbeLightPaths.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -296,6 +297,7 @@
     <ClInclude Include="Graphics\Floor.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Command\ProbeLightPaths.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

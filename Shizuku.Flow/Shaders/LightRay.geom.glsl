@@ -19,7 +19,7 @@ void main()
 	}
 	else
 	{
-		if (length(modelPos[1] - Target) < 0.1)
+		if (length(modelPos[1] - Target) < 0.05)
 		{
 			gl_Position = gl_in[0].gl_Position;
 			EmitVertex();

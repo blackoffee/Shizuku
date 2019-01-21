@@ -79,10 +79,11 @@ private:
 	void RenderCameraPos(const RenderParams& p_params);
 
     std::shared_ptr<Pillar> m_cameraDatum;
-    std::shared_ptr<Floor> m_floor;
 
 public:
     ShaderManager();
+
+    std::shared_ptr<Floor> m_floor;
 
     std::shared_ptr<Shizuku::Core::Ogl> Ogl;
 

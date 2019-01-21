@@ -3,7 +3,6 @@
 #include "HitParams.h"
 #include "RenderParams.h"
 #include "Domain.h"
-#include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 #include "Shizuku.Core/Rect.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
@@ -35,6 +34,15 @@ namespace Shizuku { namespace Flow{
 		void PrepareIndices();
 		void PrepareTextures();
 		void PrepareVaos();
+		
+	public:
+		struct ProbeRegion {
+			Types::Point<float> Pos;
+			Rect<float> Size;
+		};
+
+	private:
+		ProbeRegion m_region;
 
     public:
         Floor(std::shared_ptr<Ogl> p_ogl);
@@ -47,7 +55,10 @@ namespace Shizuku { namespace Flow{
 
 		HitResult Hit(const HitParams& p_params);
 
+		void SetProbeRegion(const ProbeRegion& p_region);
+
 		void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
-        void Render(Domain &p_domain, const RenderParams& p_params, const bool p_drawWireframe);
+        void Render(Domain &p_domain, const RenderParams& p_params);
+		void RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params);
     };
 } }
