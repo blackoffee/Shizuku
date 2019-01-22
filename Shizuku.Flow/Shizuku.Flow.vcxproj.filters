@@ -351,6 +351,9 @@
     <None Include="Shaders\LightRay.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\BeamPath.frag.glsl" />
+    <None Include="Shaders\BeamPath.geom.glsl" />
+    <None Include="Shaders\BeamPath.vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">

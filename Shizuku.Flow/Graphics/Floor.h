@@ -23,6 +23,7 @@ namespace Shizuku { namespace Flow{
         std::shared_ptr<Ogl> m_ogl;
         std::shared_ptr<ShaderProgram> m_floorShader;
         std::shared_ptr<ShaderProgram> m_lightRayShader;
+        std::shared_ptr<ShaderProgram> m_beamPathShader;
         std::shared_ptr<ShaderProgram> m_causticsShader;
 		std::shared_ptr<Ogl::Buffer> m_vbo;
         bool m_initialized;

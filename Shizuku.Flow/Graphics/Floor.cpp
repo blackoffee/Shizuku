@@ -18,6 +18,7 @@ Floor::Floor(std::shared_ptr<Ogl> p_ogl)
 	m_floorShader = std::make_shared<ShaderProgram>();
 	m_causticsShader = std::make_shared<ShaderProgram>();
 	m_lightRayShader = std::make_shared<ShaderProgram>();
+	m_beamPathShader = std::make_shared<ShaderProgram>();
 }
 
 void Floor::SetVbo(std::shared_ptr<Ogl::Buffer> p_vbo)
@@ -48,6 +49,10 @@ void Floor::CompileShaders()
     m_lightRayShader->CreateShader("Assets/LightRay.vert.glsl", GL_VERTEX_SHADER);
     m_lightRayShader->CreateShader("Assets/LightRay.geom.glsl", GL_GEOMETRY_SHADER);
     m_lightRayShader->CreateShader("Assets/LightRay.frag.glsl", GL_FRAGMENT_SHADER);
+    m_beamPathShader->Initialize("BeamPath");
+    m_beamPathShader->CreateShader("Assets/BeamPath.vert.glsl", GL_VERTEX_SHADER);
+    m_beamPathShader->CreateShader("Assets/BeamPath.geom.glsl", GL_GEOMETRY_SHADER);
+    m_beamPathShader->CreateShader("Assets/BeamPath.frag.glsl", GL_FRAGMENT_SHADER);
     m_causticsShader->Initialize("Caustics");
     m_causticsShader->CreateShader("Assets/Caustics.vert.glsl", GL_VERTEX_SHADER);
     m_causticsShader->CreateShader("Assets/Caustics.frag.glsl", GL_FRAGMENT_SHADER);
@@ -172,12 +177,42 @@ void Floor::PrepareIndices()
         }
     }
 
+	const int floorEdgeCount = ((MAX_XDIM)*(MAX_YDIM - 1) + (MAX_YDIM)*(MAX_XDIM - 1));
+	GLuint* beamPathIndices = new GLuint[2 * 3 * floorEdgeCount];
+	for (int j = 0; j < MAX_YDIM - 1; j++) {
+		for (int i = 0; i < MAX_XDIM; ++i)
+		{
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 0] = i + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 1] = i + (j + 1) * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 2] = i + j * MAX_XDIM + numberOfNodes;
+
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 3] = i + (j + 1) * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 4] = i + (j + 1) * MAX_XDIM + numberOfNodes;
+			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 5] = i + j * MAX_XDIM + numberOfNodes;
+		}
+	}
+
+	for (int j = 0; j < MAX_YDIM; j++) {
+		for (int i = 0; i < MAX_XDIM-1; ++i)
+		{
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 0] = i + j * MAX_XDIM;
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 1] = (i + 1) + j * MAX_XDIM;
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 2] = i + j * MAX_XDIM + numberOfNodes;
+
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 3] = (i + 1) + j * MAX_XDIM;
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 4] = (i + 1) + j * MAX_XDIM + numberOfNodes;
+			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 5] = i + j * MAX_XDIM + numberOfNodes;
+		}
+	}
+
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "DeformedFloor_indices", GL_DYNAMIC_DRAW);
     free(elementIndices);
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elemEdgeIndices, numberOfElements * 6 * 2, "DeformedFloorEdges_indices", GL_DYNAMIC_DRAW);
     free(elemEdgeIndices);
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, lightPathIndices, numberOfNodes * 2, "lightPaths_indices", GL_DYNAMIC_DRAW);
     free(lightPathIndices);
+    m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, beamPathIndices, floorEdgeCount * 3 * 2, "beamPaths_indices", GL_DYNAMIC_DRAW);
+    free(beamPathIndices);
 }
 
 void Floor::PrepareVaos()
@@ -220,6 +255,19 @@ void Floor::PrepareVaos()
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
 
     lightPaths->Unbind();
+
+    std::shared_ptr<Ogl::Vao> beamPaths = m_ogl->CreateVao("BeamPaths");
+    beamPaths->Bind();
+
+    m_ogl->BindBO(GL_ARRAY_BUFFER, *m_vbo);
+    m_ogl->BindBO(GL_ELEMENT_ARRAY_BUFFER, *m_ogl->GetBuffer("beamPaths_indices"));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 16, (GLvoid*)(3 * sizeof(GLfloat)));
+
+    beamPaths->Unbind();
 
     std::shared_ptr<Ogl::Vao> floor = m_ogl->CreateVao("Floor");
     floor->Bind();
@@ -316,20 +364,53 @@ void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
 	}
 
 	surface->Unbind();
+	m_lightRayShader->Unset();
 
-	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("LightPaths");
+	m_beamPathShader->Use();
+	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("BeamPaths");
 	paths->Bind();
 	glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	m_lightRayShader->SetUniform("Filter", true);
-	m_lightRayShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
-	for (int j = 0; j < yDimVisible; ++j)
-	{
-		glDrawElements(GL_LINES, xDimVisible * 2, GL_UNSIGNED_INT,
-			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
-	}
+	m_beamPathShader->SetUniform("modelMatrix", p_params.ModelView);
+	m_beamPathShader->SetUniform("projectionMatrix", p_params.Projection);
+	m_beamPathShader->SetUniform("Filter", true);
+	m_beamPathShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
 
+	const int floorEdgeCount = ((MAX_XDIM)*(MAX_YDIM - 1) + (MAX_YDIM)*(MAX_XDIM - 1));
+	glDrawElements(GL_TRIANGLES, 2 * 3 * floorEdgeCount, GL_UNSIGNED_INT, (GLvoid*)0);
+	//glPointSize(10);
+	//glDrawArrays(GL_POINTS, 0, 2 * 3 * floorEdgeCount);
+//	for (int j = 0; j < yDimVisible-1; ++j)
+//	{
+//		glDrawElements(GL_TRIANGLES, (xDimVisible) * 6, GL_UNSIGNED_INT,
+//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
+//	}
+//	for (int j = 0; j < xDimVisible; ++j)
+//	{
+//		glDrawElements(GL_TRIANGLES, (yDimVisible-1) * 6, GL_UNSIGNED_INT,
+//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
+//	}
+
+    glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	paths->Unbind();
-	m_lightRayShader->Unset();
+	m_beamPathShader->Unset();
+
+//	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("LightPaths");
+//	paths->Bind();
+//	glDisable(GL_DEPTH_TEST);
+//
+//	m_lightRayShader->SetUniform("Filter", true);
+//	m_lightRayShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
+//	for (int j = 0; j < yDimVisible; ++j)
+//	{
+//		glDrawElements(GL_LINES, xDimVisible * 2, GL_UNSIGNED_INT,
+//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
+//	}
+//
+//	glEnable(GL_DEPTH_TEST);
+//	paths->Unbind();
+//	m_lightRayShader->Unset();
 }
