@@ -177,31 +177,25 @@ void Floor::PrepareIndices()
         }
     }
 
-	const int floorEdgeCount = ((MAX_XDIM)*(MAX_YDIM - 1) + (MAX_YDIM)*(MAX_XDIM - 1));
-	GLuint* beamPathIndices = new GLuint[2 * 3 * floorEdgeCount];
+	GLuint* beamPathIndices = new GLuint[2 * 2 * 3 * numberOfElements];
 	for (int j = 0; j < MAX_YDIM - 1; j++) {
-		for (int i = 0; i < MAX_XDIM; ++i)
+		for (int i = 0; i < MAX_XDIM - 1; ++i)
 		{
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 0] = i + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 1] = i + (j + 1) * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 2] = i + j * MAX_XDIM + numberOfNodes;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 0] = i + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 1] = (i+1) + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 2] = i + (j+1) * MAX_XDIM;
 
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 3] = i + (j + 1) * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 4] = i + (j + 1) * MAX_XDIM + numberOfNodes;
-			beamPathIndices[j*(MAX_XDIM) * 6 + i * 6 + 5] = i + j * MAX_XDIM + numberOfNodes;
-		}
-	}
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 3] = numberOfNodes + i + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 4] = numberOfNodes + (i+1) + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 5] = numberOfNodes + i + (j+1) * MAX_XDIM;
 
-	for (int j = 0; j < MAX_YDIM; j++) {
-		for (int i = 0; i < MAX_XDIM-1; ++i)
-		{
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 0] = i + j * MAX_XDIM;
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 1] = (i + 1) + j * MAX_XDIM;
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 2] = i + j * MAX_XDIM + numberOfNodes;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 6] = (i+1) + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 7] = (i+1) + (j+1) * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 8] = i + (j+1) * MAX_XDIM;
 
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 3] = (i + 1) + j * MAX_XDIM;
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 4] = (i + 1) + j * MAX_XDIM + numberOfNodes;
-			beamPathIndices[(MAX_YDIM-1)*(MAX_XDIM)*6 + j*(MAX_XDIM-1) * 6 + i * 6 + 5] = i + j * MAX_XDIM + numberOfNodes;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 9]  = numberOfNodes + (i+1) + j * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 10] = numberOfNodes + (i+1) + (j+1) * MAX_XDIM;
+			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 11] = numberOfNodes + i + (j+1) * MAX_XDIM;
 		}
 	}
 
@@ -211,7 +205,7 @@ void Floor::PrepareIndices()
     free(elemEdgeIndices);
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, lightPathIndices, numberOfNodes * 2, "lightPaths_indices", GL_DYNAMIC_DRAW);
     free(lightPathIndices);
-    m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, beamPathIndices, floorEdgeCount * 3 * 2, "beamPaths_indices", GL_DYNAMIC_DRAW);
+	m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, beamPathIndices, 2 * 2 * 3 * numberOfElements, "beamPaths_indices", GL_DYNAMIC_DRAW);
     free(beamPathIndices);
 }
 
@@ -369,48 +363,14 @@ void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
 	m_beamPathShader->Use();
 	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("BeamPaths");
 	paths->Bind();
-	glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	m_beamPathShader->SetUniform("modelMatrix", p_params.ModelView);
 	m_beamPathShader->SetUniform("projectionMatrix", p_params.Projection);
 	m_beamPathShader->SetUniform("Filter", true);
 	m_beamPathShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
 
-	const int floorEdgeCount = ((MAX_XDIM)*(MAX_YDIM - 1) + (MAX_YDIM)*(MAX_XDIM - 1));
-	glDrawElements(GL_TRIANGLES, 2 * 3 * floorEdgeCount, GL_UNSIGNED_INT, (GLvoid*)0);
-	//glPointSize(10);
-	//glDrawArrays(GL_POINTS, 0, 2 * 3 * floorEdgeCount);
-//	for (int j = 0; j < yDimVisible-1; ++j)
-//	{
-//		glDrawElements(GL_TRIANGLES, (xDimVisible) * 6, GL_UNSIGNED_INT,
-//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
-//	}
-//	for (int j = 0; j < xDimVisible; ++j)
-//	{
-//		glDrawElements(GL_TRIANGLES, (yDimVisible-1) * 6, GL_UNSIGNED_INT,
-//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
-//	}
+	glDrawElements(GL_TRIANGLES_ADJACENCY, 2 * 2 * 3 * (MAX_XDIM - 1)*(MAX_YDIM - 1), GL_UNSIGNED_INT, (GLvoid*)0);
 
-    glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
 	paths->Unbind();
 	m_beamPathShader->Unset();
-
-//	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("LightPaths");
-//	paths->Bind();
-//	glDisable(GL_DEPTH_TEST);
-//
-//	m_lightRayShader->SetUniform("Filter", true);
-//	m_lightRayShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
-//	for (int j = 0; j < yDimVisible; ++j)
-//	{
-//		glDrawElements(GL_LINES, xDimVisible * 2, GL_UNSIGNED_INT,
-//			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM*j) * 2));
-//	}
-//
-//	glEnable(GL_DEPTH_TEST);
-//	paths->Unbind();
-//	m_lightRayShader->Unset();
 }

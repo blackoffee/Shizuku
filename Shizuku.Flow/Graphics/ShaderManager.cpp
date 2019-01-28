@@ -734,13 +734,14 @@ void ShaderManager::Render(const ContourVariable p_contour , Domain &p_domain, c
 
     RenderFloor(p_domain, p_params, p_drawFloorWireframe);
 
+	if (p_drawFloorWireframe)
+		m_floor->RenderCausticsMesh(p_domain, p_params);
+
 	if (p_contour == ContourVariable::WATER_RENDERING)
 		RenderSurface(p_domain, p_params, p_viewSize, p_obstHeight, obstCount);
 	else
 		RenderSurfaceContour(p_contour, p_domain, p_params);
 
-	if (p_drawFloorWireframe)
-		m_floor->RenderCausticsMesh(p_domain, p_params);
 
     if (offscreenRender)
     {
