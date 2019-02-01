@@ -68,6 +68,7 @@ cudaGraphicsResource* ShaderManager::GetCudaEnvTextureResource()
     return m_cudaEnvTextureResource;
 }
 
+
 void ShaderManager::CreateVboForCudaInterop()
 {
     unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);

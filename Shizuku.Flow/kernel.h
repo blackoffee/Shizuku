@@ -28,7 +28,7 @@ void InitializeSurface(float4* vis, Domain &simDomain);
 
 void InitializeFloor(float4* vis, Domain &simDomain);
 
-void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d,
+void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d, const int p_obstCount,
     const float3 cameraPosition, Domain &simDomain, CudaLbm& p_lbm, const float waterDepth, const float obstHeight);
 
 void RefractSurface(float4* vis, float4* p_normals, cudaArray* floorTexture, cudaArray* envTexture, ObstDefinition* obst_d, const glm::vec4 cameraPos,

@@ -1,6 +1,7 @@
 #include "CudaLbm.h"
 #include "Domain.h"
 #include "ObstManager.h"
+#include "CudaCheck.h"
 
 #include "Shizuku.Core/Types/Point.h"
 
@@ -58,6 +59,11 @@ float* CudaLbm::GetFloorTemp()
     return m_FloorTemp_d;
 }
 
+int* CudaLbm::GetFloorHit()
+{
+	return m_FloorHit_d;
+}
+
 ObstDefinition* CudaLbm::GetDeviceObst()
 {
     return m_obst_d;
@@ -113,8 +119,6 @@ void CudaLbm::SetTimeStepsPerFrame(const int timeSteps)
     m_timeStepsPerFrame = timeSteps;
 }
 
-
-
 void CudaLbm::AllocateDeviceMemory()
 {
     size_t memsize_lbm, memsize_int, memsize_float, memsize_inputs;
@@ -130,20 +134,22 @@ void CudaLbm::AllocateDeviceMemory()
     float* floor_h = new float[domainSize];
     m_Im_h = new int[domainSize];
 
-    cudaMalloc((void **)&m_fA_d, memsize_lbm);
-    cudaMalloc((void **)&m_fB_d, memsize_lbm);
-    cudaMalloc((void **)&m_FloorTemp_d, memsize_float);
-    cudaMalloc((void **)&m_Im_d, memsize_int);
-    cudaMalloc((void **)&m_obst_d, memsize_inputs);
+    gpuErrchk(cudaMalloc((void **)&m_fA_d, memsize_lbm));
+    gpuErrchk(cudaMalloc((void **)&m_fB_d, memsize_lbm));
+    gpuErrchk(cudaMalloc((void **)&m_FloorTemp_d, memsize_float));
+    gpuErrchk(cudaMalloc((void **)&m_FloorHit_d, memsize_int));
+    gpuErrchk(cudaMalloc((void **)&m_Im_d, memsize_int));
+    gpuErrchk(cudaMalloc((void **)&m_obst_d, memsize_inputs));
 }
 
 void CudaLbm::DeallocateDeviceMemory()
 {
-    cudaFree(m_fA_d);
-    cudaFree(m_fB_d);
-    cudaFree(m_Im_d);
-    cudaFree(m_FloorTemp_d);
-    cudaFree(m_obst_d);
+    gpuErrchk(cudaFree(m_fA_d));
+    gpuErrchk(cudaFree(m_fB_d));
+    gpuErrchk(cudaFree(m_Im_d));
+    gpuErrchk(cudaFree(m_FloorTemp_d));
+    gpuErrchk(cudaFree(m_FloorHit_d));
+    gpuErrchk(cudaFree(m_obst_d));
 
     //TODO - separate method for host memory
     delete[] m_Im_h;
@@ -152,25 +158,34 @@ void CudaLbm::DeallocateDeviceMemory()
 void CudaLbm::InitializeDeviceMemory()
 {
     int domainSize = ceil(MAX_XDIM / BLOCKSIZEX)*BLOCKSIZEX*ceil(MAX_YDIM / BLOCKSIZEY)*BLOCKSIZEY;
-    size_t memsize_lbm, memsize_float, memsize_inputs;
+    size_t memsize_lbm, memsize_float, memsize_inputs, memsize_int;
     memsize_lbm = domainSize*sizeof(float)*9;
     memsize_float = domainSize*sizeof(float);
+    memsize_int = domainSize*sizeof(int);
 
     float* f_h = new float[domainSize*9];
     for (int i = 0; i < domainSize * 9; i++)
     {
         f_h[i] = 0;
     }
-    cudaMemcpy(m_fA_d, f_h, memsize_lbm, cudaMemcpyHostToDevice);
-    cudaMemcpy(m_fB_d, f_h, memsize_lbm, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(m_fA_d, f_h, memsize_lbm, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(m_fB_d, f_h, memsize_lbm, cudaMemcpyHostToDevice));
     delete[] f_h;
     float* floor_h = new float[domainSize];
     for (int i = 0; i < domainSize; i++)
     {
         floor_h[i] = 0;
     }
-    cudaMemcpy(m_FloorTemp_d, floor_h, memsize_float, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(m_FloorTemp_d, floor_h, memsize_float, cudaMemcpyHostToDevice));
     delete[] floor_h;
+
+    int* floorHit_h = new int[domainSize];
+    for (int i = 0; i < domainSize; i++)
+    {
+        floorHit_h[i] = 0;
+    }
+    gpuErrchk(cudaMemcpy(m_FloorHit_d, floorHit_h, memsize_int, cudaMemcpyHostToDevice));
+    delete[] floorHit_h;
 
     //UpdateDeviceImage();
 
@@ -183,7 +198,7 @@ void CudaLbm::InitializeDeviceMemory()
     }	
 
     memsize_inputs = sizeof(m_obst_h);
-    cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice));
 }
 
 void CudaLbm::InitializeDeviceImage()
@@ -196,7 +211,7 @@ void CudaLbm::InitializeDeviceImage()
         m_Im_h[i] = ImageFcn(x, y);
     }
     size_t memsize_int = domainSize*sizeof(int);
-    cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice));
 }
 
 //! TODO: use Cuda for this
@@ -214,7 +229,7 @@ void CudaLbm::UpdateDeviceImage(ObstManager& p_obstMgr)
             m_Im_h[i] = 1;
     }
     size_t memsize_int = domainSize*sizeof(int);
-    cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemcpy(m_Im_d, m_Im_h, memsize_int, cudaMemcpyHostToDevice));
 }
 
 int CudaLbm::ImageFcn(const int x, const int y){

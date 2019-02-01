@@ -26,6 +26,12 @@ __global__ void UpdateObstructions(ObstDefinition* obstructions, const int obstN
     obstructions[obstNumber].state = newObst.state;
 }
 
+__device__ bool IsInsideObst(const float2& p_coord, const ObstDefinition& p_obst, const float p_tol)
+{
+	const float r1 = p_obst.r1;
+	return abs(p_coord.x - p_obst.x) < r1 + p_tol && abs(p_coord.y - p_obst.y) < r1 + p_tol;
+}
+
 __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
     ObstDefinition* obstructions, float obstHeight, const float tolerance = 0.f)
 {
@@ -201,9 +207,6 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const float u = lbm.ComputeU();
     const float v = lbm.ComputeV();
 
-    //Prepare data for visualization
-
-    //need to change x,y,z coordinates to NDC (-1 to 1)
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
     const float2 coords = ScaledCoords(x, y, xDimVisible);
@@ -263,7 +266,7 @@ __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     vbo[j] = make_float4(coords.x, coords.y, zcoord, color);
 }
 
-__global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simDomain)
+__global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simDomain, int* p_image)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -275,6 +278,7 @@ __global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simD
     float slope_x = 0.f;
     float slope_y = 0.f;
     const float cellSize = 2.f / xDimVisible;
+
     if (x == 0)
     {
         n.x = 0.f;
@@ -291,15 +295,21 @@ __global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simD
     {
         n.y = 0.f;
     }
-    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+	else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
-        slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
-            (2.f*cellSize);
-        slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
-            (2.f*cellSize);
-        n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-        n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-        n.z = 2.f*cellSize*2.f*cellSize;
+		const int im = p_image[(x + 1) + y * MAX_XDIM] + p_image[(x - 1) + y * MAX_XDIM] +
+			p_image[x + (y + 1)*MAX_XDIM] + p_image[x + (y - 1)*MAX_XDIM] + p_image[x + y * MAX_XDIM];
+
+		if (im == 0)
+		{
+			slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+        	    (2.f*cellSize);
+        	slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+        	    (2.f*cellSize);
+        	n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+        	n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+        	n.z = 2.f*cellSize*2.f*cellSize;
+		}
     }
     Normalize(n);
     p_normals[j] = make_float4(n.x, n.y, n.z, 0.f);
@@ -419,26 +429,37 @@ __device__ float ComputeAreaFrom4Points(const float2 &nw, const float2 &ne,
 }
 
 __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float4* p_normals, float3 incidentLight, 
-    ObstDefinition* obstructions, Domain simDomain, const float waterDepth, int* p_image)
+    ObstDefinition* obstructions, const int p_obstCount, Domain simDomain, const float waterDepth, int* p_image, int* p_floorHit)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
     const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
-    
+
+	ObstDefinition obst = obstructions[0];
+	
+	const float2 coords = ScaledCoords(x, y, simDomain.GetXDim());
+	const float tol = ScaledLength(1, simDomain.GetXDim());
+
     if (x < xDimVisible && y < yDimVisible)
     {
-		const int im = p_image[x + y * MAX_XDIM];
-		const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, p_normals, incidentLight,
-			x, y, simDomain, waterDepth, im != 0);
-		vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
-		vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
+		for (int i = 0; i < p_obstCount; ++i)
+		{
+			if (!IsInsideObst(coords, obstructions[i], tol))
+			{
+				const int im = p_image[x + y * MAX_XDIM];
+				const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, p_normals, incidentLight,
+					x, y, simDomain, waterDepth, im != 0);
+				vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
+				vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
+			}
+		}
     }
 }
 
 __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, float* floor_d, 
-    ObstDefinition* obstructions, Domain simDomain, int* p_image)
+    ObstDefinition* obstructions, Domain simDomain, int* p_image, int* p_floorHit)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -826,7 +847,7 @@ void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, const C
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
         viewMode, u, *simDomain, waterDepth);
-    UpdateSurfaceNormals << <grid, threads >> > (vis, p_normals, *simDomain);
+    UpdateSurfaceNormals << <grid, threads >> > (vis, p_normals, *simDomain, im_d);
 }
 
 void UpdateDeviceObstructions(ObstDefinition* obst_d, const int targetObstID,
@@ -859,7 +880,7 @@ void InitializeFloor(float4* vis, Domain &simDomain)
     InitializeMesh << <grid, threads >> >(&vis[MAX_XDIM*MAX_YDIM], simDomain);
 }
 
-void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d,
+void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* obst_d, const int p_obstCount,
     const float3 cameraPosition, Domain &simDomain, CudaLbm& p_lbm, const float waterDepth, const float obstHeight)
 {
     const int xDim = simDomain.GetXDim();
@@ -868,9 +889,9 @@ void LightFloor(float4* vis, float4* p_normals, float* floor_d, ObstDefinition* 
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     const float3 incidentLight1 = { 0.f, 0.f, -1.f };
     DeformFloorMeshUsingCausticRay << <grid, threads >> >
-        (vis, p_normals, incidentLight1, obst_d, simDomain, waterDepth, p_lbm.GetImage());
+        (vis, p_normals, incidentLight1, obst_d, p_obstCount, simDomain, waterDepth, p_lbm.GetImage(), p_lbm.GetFloorHit());
     ComputeFloorLightIntensitiesFromMeshDeformation << <grid, threads >> >
-        (vis, floor_d, obst_d, simDomain, p_lbm.GetImage());
+        (vis, floor_d, obst_d, simDomain, p_lbm.GetImage(), p_lbm.GetFloorHit());
 
     ApplyCausticLightingToFloor << <grid, threads >> >(vis, floor_d, obst_d, simDomain, obstHeight);
 }

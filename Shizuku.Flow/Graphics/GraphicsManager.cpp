@@ -362,20 +362,22 @@ void GraphicsManager::RunCuda()
     ShaderManager* graphics = GetGraphics();
     cudaGraphicsResource* vbo_resource = graphics->GetCudaPosColorResource();
     cudaGraphicsResource* normalResource = graphics->GetCudaNormalResource();
-    cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorLightTextureResource();
+    cudaGraphicsResource* obstResource = m_obstMgr->GetCudaObstsResource();
 
     float4* dptr;
     float4* dptrNormal;
-    cudaArray *floorTexture;
+	ObstDefinition* dObsts;
 
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard));
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard));
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(obstResource, cudaGraphicsRegisterFlagsReadOnly));
+
+    cudaGraphicsResource* resources[3] = { vbo_resource, normalResource, obstResource };
+    gpuErrchk(cudaGraphicsMapResources(3, resources, 0));
     size_t num_bytes;
-    cudaGraphicsResource* resources[3] = { vbo_resource, normalResource, floorTextureResource };
-    cudaGraphicsMapResources(3, resources, 0);
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-    cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard);
-    cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
-    cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
-    cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard);
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource));
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource));
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dObsts, &num_bytes, obstResource));
 
     UpdateLbmInputs();
 
@@ -395,21 +397,21 @@ void GraphicsManager::RunCuda()
     UpdateSolutionVbo(dptr, dptrNormal, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
         m_viewMode, m_waterDepth);
  
-    SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
+    //SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
     if ( !ShouldRefractSurface())
     {
         if (m_surfaceShadingMode == Phong)
         {
-            SurfacePhongLighting(dptr, dptrNormal, obst_d, cameraPosition, *domain);
+            SurfacePhongLighting(dptr, dptrNormal, dObsts, cameraPosition, *domain);
         }
     }
 
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-    LightFloor(dptr, dptrNormal, floorTemp_d, obst_d, cameraPosition, *domain, *GetCudaLbm(), m_waterDepth, obstHeight);
+    LightFloor(dptr, dptrNormal, floorTemp_d, dObsts, m_obstMgr->ObstCount(), cameraPosition, *domain, *GetCudaLbm(), m_waterDepth, obstHeight);
 
-    cudaGraphicsUnmapResources(3, resources, 0);
+    gpuErrchk(cudaGraphicsUnmapResources(3, resources, 0));
 
     cudaThreadSynchronize();
     m_timers[TimerKey::PrepareFloor].Tock();
@@ -435,14 +437,13 @@ void GraphicsManager::RunSurfaceRefraction()
 
         size_t num_bytes;
 
+        gpuErrchk(cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly));
         cudaGraphicsResource* resources[4] = { vbo_resource, floorLightTextureResource, envTextureResource, normalResource };
-        cudaGraphicsMapResources(4, resources, 0);
-        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-        cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0);
-        cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0);
-        cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
-        cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly);
-
+        gpuErrchk(cudaGraphicsMapResources(4, resources, 0));
+        gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource));
+        gpuErrchk(cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0));
+        gpuErrchk(cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0));
+        gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource));
 
         const Point<float> cameraDatumPos(m_cameraPosition.x, m_cameraPosition.y);
         const Box<float> cameraDatumSize(0.05f, 0.05f, m_cameraPosition.z);

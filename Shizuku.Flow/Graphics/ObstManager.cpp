@@ -2,7 +2,6 @@
 #include "Obst.h"
 #include "common.h"
 #include "Shizuku.Core/Ogl/Ogl.h"
-#include <GLEW/glew.h>
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
@@ -83,6 +82,14 @@ void ObstManager::Initialize()
     }
 
     m_ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
+
+	std::shared_ptr<Ogl::Buffer> obstSsbo = m_ogl->GetBuffer("managed_obsts");
+    cudaGraphicsGLRegisterBuffer(&m_cudaObstsResource, obstSsbo->GetId(), cudaGraphicsMapFlagsReadOnly);
+}
+
+cudaGraphicsResource* ObstManager::GetCudaObstsResource()
+{
+	return m_cudaObstsResource;
 }
 
 int ObstManager::ObstCount()
