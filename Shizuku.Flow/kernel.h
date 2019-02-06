@@ -16,7 +16,7 @@ void MarchSolution(CudaLbm* cudaLbm);
 
 void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, 
     const ContourVariable contVar, const float contMin, const float contMax,
-    const ViewMode viewMode, const float waterDepth);
+    const float waterDepth);
 
 void UpdateDeviceObstructions(ObstDefinition* obst_d, const int targetObstID,
     const ObstDefinition &newObst, Domain &simDomain);

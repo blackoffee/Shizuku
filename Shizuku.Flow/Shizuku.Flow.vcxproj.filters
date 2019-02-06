@@ -36,9 +36,6 @@
     <ClCompile Include="Graphics\GraphicsManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\ShaderManager.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\CudaLbm.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -138,6 +135,9 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Command\ProbeLightPaths.cpp" />
+    <ClCompile Include="Graphics\WaterSurface.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -160,9 +160,6 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\GraphicsManager.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ShaderManager.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\CudaLbm.h">
@@ -298,6 +295,9 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Command\ProbeLightPaths.h" />
+    <ClInclude Include="Graphics\WaterSurface.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

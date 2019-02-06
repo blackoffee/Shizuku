@@ -21,13 +21,14 @@ using namespace Shizuku::Core;
 using namespace Shizuku::Core::Types;
 using namespace Shizuku::Flow;
 
-class ShaderManager;
 class CudaLbm;
 
 namespace Shizuku{ namespace Flow{
     struct ObstDefinition;
     class ObstManager;
     enum Shape;
+	class Floor;
+	class WaterSurface;
 
 	class GraphicsManager
 	{
@@ -38,7 +39,6 @@ namespace Shizuku{ namespace Flow{
 		int m_currentObstId = -1;
 		float m_currentObstSize = 0.f;
 		Shape m_currentObstShape;
-		ViewMode m_viewMode;
 		bool m_rayTracingPaused = false;
 		glm::vec4 m_cameraPosition;
 		ObstDefinition* m_obstructions;
@@ -48,7 +48,8 @@ namespace Shizuku{ namespace Flow{
 		glm::mat4 m_projection;
 		MinMax<float> m_contourMinMax;
 		ContourVariable m_contourVar;
-		ShaderManager* m_graphics;
+		std::shared_ptr<WaterSurface> m_waterSurface;
+		std::shared_ptr<Floor> m_floor;
 		bool m_useCuda = true;
 		ShadingMode m_surfaceShadingMode;
 		float m_waterDepth;
@@ -69,20 +70,13 @@ namespace Shizuku{ namespace Flow{
 		void SetUpFrame();
 
 		void SetViewport(const Rect<int>& size);
-		Rect<int>& GetViewport();
 
 		void UseCuda(bool useCuda);
-
-		glm::vec3 GetRotationTransforms();
-		glm::vec3 GetTranslationTransforms();
 
 		void SetCurrentObstSize(const float size);
 
 		Shape GetCurrentObstShape();
 		void SetCurrentObstShape(const Shape shape);
-
-		ViewMode GetViewMode();
-		void SetViewMode(const ViewMode viewMode);
 
 		void SetContourMinMax(const MinMax<float>& p_minMax);
 		ContourVariable GetContourVar();
@@ -99,7 +93,6 @@ namespace Shizuku{ namespace Flow{
 		void ProbeLightPaths(const Point<int>& p_screenPos);
 
 		CudaLbm* GetCudaLbm();
-		ShaderManager* GetGraphics();
 
 		bool IsCudaCapable();
 

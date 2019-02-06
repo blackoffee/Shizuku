@@ -52,8 +52,6 @@ void Flow::Update()
 
     m_impl->Graphics()->RenderCausticsToTexture();
 
-    //m_impl->Graphics()->RunSurfaceRefraction();
-
     m_impl->Graphics()->UpdateViewMatrices();
 }
 

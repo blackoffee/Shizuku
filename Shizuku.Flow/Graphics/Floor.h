@@ -16,6 +16,8 @@ namespace Core{
 }
 }
 
+struct cudaGraphicsResource;
+
 namespace Shizuku { namespace Flow{
     class Floor
     {
@@ -30,6 +32,7 @@ namespace Shizuku { namespace Flow{
 		GLuint m_causticsTex;
 		GLuint m_floorTex;
 		GLuint m_floorFbo;
+		cudaGraphicsResource* m_cudaFloorLightTextureResource;
 
 		void CompileShaders();
 		void PrepareIndices();
@@ -53,6 +56,7 @@ namespace Shizuku { namespace Flow{
         bool IsInitialized();
 
 		GLuint CausticsTex();
+		cudaGraphicsResource* CudaFloorLightTextureResource();
 
 		HitResult Hit(const HitParams& p_params);
 

@@ -290,7 +290,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\Pillar.cpp" />
     <ClCompile Include="Graphics\PillarDefinition.cpp" />
-    <ClCompile Include="Graphics\ShaderManager.cpp" />
+    <ClCompile Include="Graphics\WaterSurface.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -347,7 +347,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\ObstDefinition.h" />
     <ClInclude Include="Graphics\Pillar.h" />
     <ClInclude Include="Graphics\PillarDefinition.h" />
-    <ClInclude Include="Graphics\ShaderManager.h" />
+    <ClInclude Include="Graphics\WaterSurface.h" />
     <ClInclude Include="Graphics\ShadingMode.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="LbmNode.h" />

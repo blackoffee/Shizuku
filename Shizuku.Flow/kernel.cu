@@ -192,7 +192,7 @@ __global__ void MarchLBM(float* fA, float* fB, const float omega, int *Im,
 
 __global__ void UpdateSurfaceVbo(float4* vbo, float* fA, int *Im,
     const int contourVar, const float contMin, const float contMax,
-    const int viewMode, const float uMax, Domain simDomain, const float waterDepth)
+    const float uMax, Domain simDomain, const float waterDepth)
 {
     const int x = threadIdx.x + blockIdx.x*blockDim.x;//coord in linear mem
     const int y = threadIdx.y + blockIdx.y*blockDim.y;
@@ -834,7 +834,7 @@ void MarchSolution(CudaLbm* cudaLbm)
 }
 
 void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, const ContourVariable contVar,
-    const float contMin, const float contMax, const ViewMode viewMode, const float waterDepth)
+    const float contMin, const float contMax, const float waterDepth)
 {
     Domain* simDomain = cudaLbm->GetDomain();
     const int xDim = simDomain->GetXDim();
@@ -846,7 +846,7 @@ void UpdateSolutionVbo(float4* vis, float4* p_normals, CudaLbm* cudaLbm, const C
     const dim3 threads(BLOCKSIZEX, BLOCKSIZEY);
     const dim3 grid(ceil(static_cast<float>(xDim) / BLOCKSIZEX), yDim / BLOCKSIZEY);
     UpdateSurfaceVbo << <grid, threads >> > (vis, f_d, im_d, contVar, contMin, contMax,
-        viewMode, u, *simDomain, waterDepth);
+        u, *simDomain, waterDepth);
     UpdateSurfaceNormals << <grid, threads >> > (vis, p_normals, *simDomain, im_d);
 }
 

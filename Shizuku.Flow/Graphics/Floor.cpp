@@ -2,8 +2,11 @@
 #include "Domain.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "common.h"
+
 #include <SOIL/SOIL.h>
+#include "cuda_runtime.h"
 #include <GLEW/glew.h>
+#include "cuda_gl_interop.h"  // needs GLEW
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -32,6 +35,7 @@ void Floor::Initialize()
 	PrepareIndices();
 	PrepareVaos();
 	PrepareTextures();
+    cudaGraphicsGLRegisterImage(&m_cudaFloorLightTextureResource, m_causticsTex, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
 	m_initialized = true;
 }
 
@@ -122,6 +126,11 @@ void Floor::PrepareTextures()
 GLuint Floor::CausticsTex()
 {
 	return m_causticsTex;
+}
+
+cudaGraphicsResource * Shizuku::Flow::Floor::CudaFloorLightTextureResource()
+{
+	return m_cudaFloorLightTextureResource;
 }
 
 void Floor::SetProbeRegion(const ProbeRegion& p_region)
