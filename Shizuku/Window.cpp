@@ -24,6 +24,8 @@
 #include "Shizuku.Flow/Command/SetWaterDepth.h"
 #include "Shizuku.Flow/Command/RestartSimulation.h"
 #include "Shizuku.Flow/Command/SetFloorWireframeVisibility.h"
+#include "Shizuku.Flow/Command/SetLightProbeVisibility.h"
+#include "Shizuku.Flow/Command/ProbeLightPaths.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ModelSpacePointParameter.h"
@@ -178,8 +180,8 @@ namespace
 
 Window::Window() : 
     m_resolution(0.5f),
-    m_velocity(0.05f),
-    m_timesteps(6),
+    m_velocity(0.06f),
+    m_timesteps(10),
     m_contourMode(ContourMode::Water),
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
@@ -220,6 +222,8 @@ void Window::RegisterCommands()
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
     m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
     m_setFloorWireframeVisibility = std::make_shared<SetFloorWireframeVisibility>(*m_flow);
+    m_setLightProbeVisibility = std::make_shared<SetLightProbeVisibility>(*m_flow);
+    m_probeLightPaths = std::make_shared<ProbeLightPaths>(*m_flow);
 }
 
 void Window::ApplyInitialFlowSettings()
@@ -290,17 +294,21 @@ void Window::MouseButton(const int button, const int state, const int mod)
         && mod == GLFW_MOD_CONTROL)
     {
         m_pan->Start(param);
+		m_probeLightPaths->End(boost::none);
     }
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
         m_rotate->Start(param);
+		m_probeLightPaths->End(boost::none);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
         m_addObstruction->Start(ModelSpacePointParameter(m_query->ProbeModelSpaceCoord(screenPos)));
+		m_probeLightPaths->End(boost::none);
     }
 	else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
 	{
+		m_probeLightPaths->End(boost::none);
 		if (mod == GLFW_MOD_CONTROL)
 		{
 			m_togglePreSelection->Start(boost::none);
@@ -332,6 +340,7 @@ void Window::MouseButton(const int button, const int state, const int mod)
         m_pan->End(boost::none);
         m_rotate->End(boost::none);
         m_moveObstruction->End(boost::none);
+		m_probeLightPaths->Start(boost::none);
     }
 }
 
@@ -342,6 +351,7 @@ void Window::MouseMotion(const int x, const int y)
     m_rotate->Track(param);
     m_moveObstruction->Track(param);
 	m_preSelectObst->Track(param);
+	m_probeLightPaths->Track(param);
 }
 
 void Window::MouseWheel(double xwheel, double ywheel)
@@ -555,6 +565,10 @@ void Window::DrawUI()
         const bool oldFloorWireframe = m_floorWireframeVisible;
         if (ImGui::Checkbox("Show caustics mesh", &m_floorWireframeVisible) && m_floorWireframeVisible != oldFloorWireframe)
             m_setFloorWireframeVisibility->Start(boost::any(VisibilityParameter(m_floorWireframeVisible)));
+
+        const bool oldLightProbe = m_lightProbeEnabled;
+        if (ImGui::Checkbox("Probe caustics beams", &m_lightProbeEnabled) && m_lightProbeEnabled != oldLightProbe)
+            m_setLightProbeVisibility->Start(boost::any(VisibilityParameter(m_lightProbeEnabled)));
     }
     ImGui::End();
 

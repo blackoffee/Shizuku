@@ -7,6 +7,10 @@
 
 #include "Shizuku.Core/Types/Point.h"
 
+#include "cuda_runtime.h"
+#include <GLEW/glew.h>
+#include "cuda_gl_interop.h"
+
 #include <memory>
 #include <set>
 
@@ -37,6 +41,8 @@ namespace Shizuku { namespace Flow{
 
         std::shared_ptr<Core::ShaderProgram> m_shaderProgram;
 
+		cudaGraphicsResource* m_cudaObstsResource;
+
 		void RefreshObstStates();
 		void DoClearSelection();
 		void DoClearPreSelection();
@@ -54,6 +60,7 @@ namespace Shizuku { namespace Flow{
 		int PreSelectedObstCount();
 		bool IsInsideObstruction(const Point<float>& p_modelCoord);
 		boost::optional<const Info::ObstInfo> ObstInfo(const HitParams& p_params);
+		cudaGraphicsResource* GetCudaObstsResource();
 
         void AddObstructionToPreSelection(const HitParams& p_params);
         void RemoveObstructionFromPreSelection(const HitParams& p_params);

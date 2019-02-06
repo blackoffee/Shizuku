@@ -36,9 +36,6 @@
     <ClCompile Include="Graphics\GraphicsManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\ShaderManager.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\CudaLbm.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -134,6 +131,14 @@
     <ClCompile Include="Command\TogglePreSelection.cpp">
       <Filter>Command</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Floor.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\ProbeLightPaths.cpp" />
+    <ClCompile Include="Graphics\WaterSurface.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Command\SetLightProbeVisibility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -156,9 +161,6 @@
       <Filter>Command</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\GraphicsManager.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ShaderManager.h">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\CudaLbm.h">
@@ -290,6 +292,14 @@
     <ClInclude Include="Info\ObstInfo.h">
       <Filter>Info</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Floor.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\ProbeLightPaths.h" />
+    <ClInclude Include="Graphics\WaterSurface.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Command\SetLightProbeVisibility.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">
@@ -334,6 +344,18 @@
     <None Include="Shaders\SurfaceContour.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\LightRay.frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\LightRay.geom.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\LightRay.vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\BeamPath.frag.glsl" />
+    <None Include="Shaders\BeamPath.geom.glsl" />
+    <None Include="Shaders\BeamPath.vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">

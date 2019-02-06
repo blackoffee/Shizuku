@@ -1,6 +1,7 @@
 #include "GraphicsManager.h"
-#include "ShaderManager.h"
+#include "WaterSurface.h"
 #include "ObstManager.h"
+#include "Floor.h"
 #include "CudaLbm.h"
 #include "kernel.h"
 #include "Domain.h"
@@ -39,14 +40,69 @@ namespace
     {
         return p_depth + 0.3f;
     }
+
+
+	//TODO this is used in many places
+	void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
+	{
+		glm::mat4 mvp = p_params.Projection*p_params.Modelview;
+		glm::mat4 mvpInv = glm::inverse(mvp);
+		glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
+		glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
+		glm::vec4 r1 = mvpInv * v1;
+		glm::vec4 r2 = mvpInv * v2;
+		p_rayOrigin.x = r1.x / r1.w;
+		p_rayOrigin.y = r1.y / r1.w;
+		p_rayOrigin.z = r1.z / r1.w;
+		p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
+		p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
+		p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
+		float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
+		p_rayDir.x /= mag;
+		p_rayDir.y /= mag;
+		p_rayDir.z /= mag;
+	}
+
+	//! Hits against water surface and floor
+	glm::vec3 GetFloorCoordFromScreenPos(const HitParams& p_params, const boost::optional<float> p_modelSpaceZPos, const float p_waterDepth)
+	{
+		glm::vec3 rayOrigin, rayDir;
+		GetMouseRay(rayOrigin, rayDir, p_params);
+
+		float t;
+		if (p_modelSpaceZPos.is_initialized())
+		{
+			const float z = p_modelSpaceZPos.value();
+			t = (z - rayOrigin.z) / rayDir.z;
+			return rayOrigin + t * rayDir;
+		}
+		else
+		{
+			const float t1 = (-1.f - rayOrigin.z) / rayDir.z;
+			const float t2 = (-1.f + p_waterDepth - rayOrigin.z) / rayDir.z;
+			t = std::min(t1, t2);
+			glm::vec3 res = rayOrigin + t * rayDir;
+
+			if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
+			{
+				return res;
+			}
+			else
+			{
+				t = std::max(t1, t2);
+				return rayOrigin + t * rayDir;
+			}
+		}
+	}
 }
 
 GraphicsManager::GraphicsManager()
 {
-    m_graphics = new ShaderManager;
-    m_graphics->CreateCudaLbm();
-	m_obstMgr = std::make_shared<ObstManager>(m_graphics->Ogl);
-    m_obstructions = m_graphics->GetCudaLbm()->GetHostObst();
+    m_waterSurface = std::make_shared<WaterSurface>();
+    m_waterSurface->CreateCudaLbm();
+	m_floor = std::make_shared<Floor>(m_waterSurface->Ogl);
+	m_obstMgr = std::make_shared<ObstManager>(m_waterSurface->Ogl);
+    m_obstructions = m_waterSurface->GetCudaLbm()->GetHostObst();
     m_rotate = { 55.f, 60.f, 30.f };
     m_translate = { 0.f, 0.6f, 0.f };
     m_surfaceShadingMode = RayTracing;
@@ -57,7 +113,7 @@ GraphicsManager::GraphicsManager()
 	m_schema = Schema{
 		Types::Color(glm::vec4(0.1)), //background
 		Types::Color(glm::vec4(0.8)), //obst
-		Types::Color(glm::uvec4(245, 220, 60, 255)) //obst highlight
+		Types::Color(glm::uvec4(255, 255, 153, 255)) //obst highlight
 	};
 
     const int framesForAverage = 20;
@@ -89,24 +145,9 @@ void GraphicsManager::SetViewport(const Rect<int>& size)
     m_viewSize = size;
 }
 
-Rect<int>& GraphicsManager::GetViewport()
-{
-    return m_viewSize;
-}
-
 void GraphicsManager::UseCuda(bool useCuda)
 {
     m_useCuda = useCuda;
-}
-
-glm::vec3 GraphicsManager::GetRotationTransforms()
-{
-    return m_rotate;
-}
-
-glm::vec3 GraphicsManager::GetTranslationTransforms()
-{
-    return m_translate;
 }
 
 void GraphicsManager::SetCurrentObstSize(const float size)
@@ -117,16 +158,6 @@ void GraphicsManager::SetCurrentObstSize(const float size)
 void GraphicsManager::SetCurrentObstShape(const Shape shape)
 {
     m_currentObstShape = shape;
-}
-
-ViewMode GraphicsManager::GetViewMode()
-{
-    return m_viewMode;
-}
-
-void GraphicsManager::SetViewMode(const ViewMode viewMode)
-{
-    m_viewMode = viewMode;
 }
 
 void GraphicsManager::SetContourMinMax(const MinMax<float>& p_minMax)
@@ -194,14 +225,14 @@ void GraphicsManager::SetFloorWireframeVisibility(const bool p_visible)
     m_drawFloorWireframe = p_visible;
 }
 
-CudaLbm* GraphicsManager::GetCudaLbm()
+void GraphicsManager::EnableLightProbe(const bool p_enable)
 {
-    return m_graphics->GetCudaLbm().get();
+	m_lightProbeEnabled = p_enable;
 }
 
-ShaderManager* GraphicsManager::GetGraphics()
+CudaLbm* GraphicsManager::GetCudaLbm()
 {
-    return m_graphics;
+    return m_waterSurface->GetCudaLbm().get();
 }
 
 bool GraphicsManager::IsCudaCapable()
@@ -228,26 +259,23 @@ void GraphicsManager::UpdateViewMatrices()
 
 void GraphicsManager::SetUpGLInterop()
 {
-    ShaderManager* graphics = GetGraphics();
-    graphics->CreateVboForCudaInterop();
+    m_waterSurface->CreateVboForCudaInterop();
+	m_floor->SetVbo(m_waterSurface->GetVbo());
 }
 
 void GraphicsManager::SetUpShaders()
 {
-    ShaderManager* graphics = GetGraphics();
-    graphics->CompileShaders();
-    graphics->AllocateStorageBuffers();
-    graphics->InitializeObstSsbo();
+    m_waterSurface->CompileShaders();
+    m_waterSurface->AllocateStorageBuffers();
+    m_waterSurface->InitializeObstSsbo();
     UpdateLbmInputs();
-    graphics->InitializeComputeShaderData();
+    m_waterSurface->InitializeComputeShaderData();
 
-    graphics->SetUpEnvironmentTexture();
-    graphics->SetUpCausticsTexture();
-    graphics->SetUpFloorTexture();
-    graphics->SetUpOutputTexture(m_viewSize);
-    graphics->SetUpSurfaceVao();
-    graphics->SetUpFloorVao();
-    graphics->SetUpOutputVao();
+    m_waterSurface->SetUpEnvironmentTexture();
+    m_floor->Initialize();
+    m_waterSurface->SetUpOutputTexture(m_viewSize);
+    m_waterSurface->SetUpSurfaceVao();
+    m_waterSurface->SetUpOutputVao();
 }
 
 void GraphicsManager::SetUpCuda()
@@ -275,8 +303,7 @@ void GraphicsManager::DoInitializeFlow()
     float* floor_d = cudaLbm->GetFloorTemp();
     ObstDefinition* obst_d = cudaLbm->GetDeviceObst();
 
-    ShaderManager* graphics = GetGraphics();
-    cudaGraphicsResource* cudaSolutionField = graphics->GetCudaPosColorResource();
+    cudaGraphicsResource* cudaSolutionField = m_waterSurface->GetCudaPosColorResource();
     float4 *dptr;
     cudaGraphicsMapResources(1, &cudaSolutionField, 0);
     size_t num_bytes,num_bytes2;
@@ -304,23 +331,24 @@ void GraphicsManager::RunCuda()
 
     // map OpenGL buffer object for writing from CUDA
     CudaLbm* cudaLbm = GetCudaLbm();
-    ShaderManager* graphics = GetGraphics();
-    cudaGraphicsResource* vbo_resource = graphics->GetCudaPosColorResource();
-    cudaGraphicsResource* normalResource = graphics->GetCudaNormalResource();
-    cudaGraphicsResource* floorTextureResource = graphics->GetCudaFloorLightTextureResource();
+    cudaGraphicsResource* vbo_resource = m_waterSurface->GetCudaPosColorResource();
+    cudaGraphicsResource* normalResource = m_waterSurface->GetCudaNormalResource();
+    cudaGraphicsResource* obstResource = m_obstMgr->GetCudaObstsResource();
 
     float4* dptr;
     float4* dptrNormal;
-    cudaArray *floorTexture;
+	ObstDefinition* dObsts;
 
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard));
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard));
+    gpuErrchk(cudaGraphicsResourceSetMapFlags(obstResource, cudaGraphicsRegisterFlagsReadOnly));
+
+    cudaGraphicsResource* resources[3] = { vbo_resource, normalResource, obstResource };
+    gpuErrchk(cudaGraphicsMapResources(3, resources, 0));
     size_t num_bytes;
-    cudaGraphicsResource* resources[3] = { vbo_resource, normalResource, floorTextureResource };
-    cudaGraphicsMapResources(3, resources, 0);
-    cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-    cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard);
-    cudaGraphicsResourceGetMappedPointer((void **)&floorTexture, &num_bytes, floorTextureResource);
-    cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
-    cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard);
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource));
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource));
+    gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dObsts, &num_bytes, obstResource));
 
     UpdateLbmInputs();
 
@@ -338,23 +366,23 @@ void GraphicsManager::RunCuda()
     m_timers[TimerKey::PrepareFloor].Tick();
 
     UpdateSolutionVbo(dptr, dptrNormal, cudaLbm, m_contourVar, m_contourMinMax.Min, m_contourMinMax.Max,
-        m_viewMode, m_waterDepth);
+        m_waterDepth);
  
-    SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
+    //SetObstructionVelocitiesToZero(obst_h, obst_d, *domain);
     float3 cameraPosition = { m_translate.x, m_translate.y, - m_translate.z };
 
     if ( !ShouldRefractSurface())
     {
         if (m_surfaceShadingMode == Phong)
         {
-            SurfacePhongLighting(dptr, dptrNormal, obst_d, cameraPosition, *domain);
+            SurfacePhongLighting(dptr, dptrNormal, dObsts, cameraPosition, *domain);
         }
     }
 
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-    LightFloor(dptr, dptrNormal, floorTemp_d, obst_d, cameraPosition, *domain, *GetCudaLbm(), m_waterDepth, obstHeight);
+    LightFloor(dptr, dptrNormal, floorTemp_d, dObsts, m_obstMgr->ObstCount(), cameraPosition, *domain, *GetCudaLbm(), m_waterDepth, obstHeight);
 
-    cudaGraphicsUnmapResources(3, resources, 0);
+    gpuErrchk(cudaGraphicsUnmapResources(3, resources, 0));
 
     cudaThreadSynchronize();
     m_timers[TimerKey::PrepareFloor].Tock();
@@ -367,11 +395,10 @@ void GraphicsManager::RunSurfaceRefraction()
     if (ShouldRefractSurface())
     {
         CudaLbm* cudaLbm = GetCudaLbm();
-        ShaderManager* graphics = GetGraphics();
-        cudaGraphicsResource* vbo_resource = graphics->GetCudaPosColorResource();
-        cudaGraphicsResource* floorLightTextureResource = graphics->GetCudaFloorLightTextureResource();
-        cudaGraphicsResource* envTextureResource = graphics->GetCudaEnvTextureResource();
-        cudaGraphicsResource* normalResource = graphics->GetCudaNormalResource();
+        cudaGraphicsResource* vbo_resource = m_waterSurface->GetCudaPosColorResource();
+        cudaGraphicsResource* floorLightTextureResource = m_floor->CudaFloorLightTextureResource();
+        cudaGraphicsResource* envTextureResource = m_waterSurface->GetCudaEnvTextureResource();
+        cudaGraphicsResource* normalResource = m_waterSurface->GetCudaNormalResource();
 
         float4* dptr;
         float4* dptrNormal;
@@ -380,18 +407,17 @@ void GraphicsManager::RunSurfaceRefraction()
 
         size_t num_bytes;
 
+        gpuErrchk(cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly));
         cudaGraphicsResource* resources[4] = { vbo_resource, floorLightTextureResource, envTextureResource, normalResource };
-        cudaGraphicsMapResources(4, resources, 0);
-        cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource);
-        cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0);
-        cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0);
-        cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource);
-        cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsReadOnly);
-
+        gpuErrchk(cudaGraphicsMapResources(4, resources, 0));
+        gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptr, &num_bytes, vbo_resource));
+        gpuErrchk(cudaGraphicsSubResourceGetMappedArray(&floorLightTexture, floorLightTextureResource, 0, 0));
+        gpuErrchk(cudaGraphicsSubResourceGetMappedArray(&envTexture, envTextureResource, 0, 0));
+        gpuErrchk(cudaGraphicsResourceGetMappedPointer((void **)&dptrNormal, &num_bytes, normalResource));
 
         const Point<float> cameraDatumPos(m_cameraPosition.x, m_cameraPosition.y);
         const Box<float> cameraDatumSize(0.05f, 0.05f, m_cameraPosition.z);
-        m_graphics->UpdateCameraDatum(PillarDefinition(cameraDatumPos, cameraDatumSize));
+        m_waterSurface->UpdateCameraDatum(PillarDefinition(cameraDatumPos, cameraDatumSize));
 
         ObstDefinition* obst_d = cudaLbm->GetDeviceObst();
         Domain* domain = cudaLbm->GetDomain();
@@ -408,7 +434,7 @@ void GraphicsManager::RunSurfaceRefraction()
 
 void GraphicsManager::RunComputeShader()
 {
-    GetGraphics()->RunComputeShader(m_translate, m_contourVar, m_contourMinMax);
+    m_waterSurface->RunComputeShader(m_translate, m_contourVar, m_contourMinMax);
 }
 
 void GraphicsManager::RunSimulation()
@@ -426,7 +452,7 @@ void GraphicsManager::RunSimulation()
 void GraphicsManager::RenderCausticsToTexture()
 {
     CudaLbm* cudaLbm = GetCudaLbm();
-    GetGraphics()->RenderCausticsToTexture(*cudaLbm->GetDomain(), m_viewSize);
+    m_floor->RenderCausticsToTexture(*cudaLbm->GetDomain(), m_viewSize);
 }
 
 void GraphicsManager::Render()
@@ -434,9 +460,18 @@ void GraphicsManager::Render()
     CudaLbm* cudaLbm = GetCudaLbm();
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
 	const RenderParams& params{ m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
-    GetGraphics()->Render(m_contourVar, *cudaLbm->GetDomain(),
-        params, m_drawFloorWireframe, m_viewSize, obstHeight, m_obstMgr->ObstCount());
 	m_obstMgr->Render(params);
+
+	m_floor->Render(*cudaLbm->GetDomain(), params);
+
+	if (m_drawFloorWireframe)
+		m_floor->RenderCausticsMesh(*cudaLbm->GetDomain(), params);
+
+    m_waterSurface->Render(m_contourVar, *cudaLbm->GetDomain(),
+        params, m_drawFloorWireframe, m_viewSize, obstHeight, m_obstMgr->ObstCount(), m_floor->CausticsTex());
+
+	if (m_lightProbeEnabled)
+		m_floor->RenderCausticsBeams(*cudaLbm->GetDomain(), params);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -593,15 +628,20 @@ void GraphicsManager::UpdateDomainDimensions()
 
 void GraphicsManager::UpdateLbmInputs()
 {
-    float omega = 1.97f;
+    float omega = 1.975f;
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetOmega(omega);
     const float u = cudaLbm->GetInletVelocity();
-    ShaderManager* graphics = GetGraphics();
-    graphics->UpdateLbmInputs(u, omega);
+    m_waterSurface->UpdateLbmInputs(u, omega);
 }
 
 std::map<TimerKey, Stopwatch>& GraphicsManager::GetTimers()
 {
     return m_timers;
+}
+
+void GraphicsManager::ProbeLightPaths(const Point<int>& p_screenPos)
+{
+	const glm::vec3 point = GetFloorCoordFromScreenPos(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize }, -1.f, m_waterDepth);
+	m_floor->SetProbeRegion(Floor::ProbeRegion{ Point<float>(point.x, point.y), Rect<float>(0.1,0.1) });
 }

@@ -36,6 +36,7 @@ void MoveObstruction::Track(boost::any const p_param)
 			const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
 			m_flow->Graphics()->MoveSelectedObstructions(pos.Position);
         }
+
     }
     catch (boost::bad_any_cast &e)
     {

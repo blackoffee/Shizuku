@@ -267,12 +267,14 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\PauseRayTracing.cpp" />
     <ClCompile Include="Command\PauseSimulation.cpp" />
     <ClCompile Include="Command\PreSelectObstruction.cpp" />
+    <ClCompile Include="Command\ProbeLightPaths.cpp" />
     <ClCompile Include="Command\RestartSimulation.cpp" />
     <ClCompile Include="Command\Rotate.cpp" />
     <ClCompile Include="Command\SetContourMinMax.cpp" />
     <ClCompile Include="Command\SetContourMode.cpp" />
     <ClCompile Include="Command\SetFloorWireframeVisibility.cpp" />
     <ClCompile Include="Command\SetInletVelocity.cpp" />
+    <ClCompile Include="Command\SetLightProbeVisibility.cpp" />
     <ClCompile Include="Command\SetSimulationScale.cpp" />
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
@@ -280,6 +282,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\TogglePreSelection.cpp" />
     <ClCompile Include="Command\Zoom.cpp" />
+    <ClCompile Include="Graphics\Floor.cpp" />
     <ClCompile Include="Graphics\Obst.cpp" />
     <ClCompile Include="Graphics\ObstManager.cpp" />
     <ClCompile Include="Query.cpp" />
@@ -288,7 +291,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="Graphics\Pillar.cpp" />
     <ClCompile Include="Graphics\PillarDefinition.cpp" />
-    <ClCompile Include="Graphics\ShaderManager.cpp" />
+    <ClCompile Include="Graphics\WaterSurface.cpp" />
     <CudaCompile Include="VectorUtils.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -316,12 +319,14 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\PauseRayTracing.h" />
     <ClInclude Include="Command\PauseSimulation.h" />
     <ClInclude Include="Command\PreSelectObstruction.h" />
+    <ClInclude Include="Command\ProbeLightPaths.h" />
     <ClInclude Include="Command\RestartSimulation.h" />
     <ClInclude Include="Command\Rotate.h" />
     <ClInclude Include="Command\SetContourMinMax.h" />
     <ClInclude Include="Command\SetContourMode.h" />
     <ClInclude Include="Command\SetFloorWireframeVisibility.h" />
     <ClInclude Include="Command\SetInletVelocity.h" />
+    <ClInclude Include="Command\SetLightProbeVisibility.h" />
     <ClInclude Include="Command\SetSimulationScale.h" />
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
@@ -330,6 +335,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\TogglePreSelection.h" />
     <ClInclude Include="Command\Zoom.h" />
     <ClInclude Include="CudaCheck.h" />
+    <ClInclude Include="Graphics\Floor.h" />
     <ClInclude Include="Graphics\HitParams.h" />
     <ClInclude Include="Graphics\Obst.h" />
     <ClInclude Include="Graphics\ObstManager.h" />
@@ -343,7 +349,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Graphics\ObstDefinition.h" />
     <ClInclude Include="Graphics\Pillar.h" />
     <ClInclude Include="Graphics\PillarDefinition.h" />
-    <ClInclude Include="Graphics\ShaderManager.h" />
+    <ClInclude Include="Graphics\WaterSurface.h" />
     <ClInclude Include="Graphics\ShadingMode.h" />
     <ClInclude Include="kernel.h" />
     <ClInclude Include="LbmNode.h" />
@@ -353,8 +359,14 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Domain.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\BeamPath.frag.glsl" />
+    <None Include="Shaders\BeamPath.geom.glsl" />
+    <None Include="Shaders\BeamPath.vert.glsl" />
     <None Include="Shaders\Floor.frag.glsl" />
     <None Include="Shaders\Floor.vert.glsl" />
+    <None Include="Shaders\LightRay.frag.glsl" />
+    <None Include="Shaders\LightRay.geom.glsl" />
+    <None Include="Shaders\LightRay.vert.glsl" />
     <None Include="Shaders\Output.frag.glsl" />
     <None Include="Shaders\Output.vert.glsl" />
     <None Include="Shaders\Pillar.frag.glsl" />

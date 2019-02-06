@@ -24,6 +24,7 @@ private:
     int* m_Im_d;
     int* m_Im_h;
     float* m_FloorTemp_d;
+    int* m_FloorHit_d;
     ObstDefinition* m_obst_d;
     ObstDefinition m_obst_h[MAXOBSTS];
     float m_inletVelocity;
@@ -39,6 +40,7 @@ public:
     float* GetFB();
     int* GetImage();
     float* GetFloorTemp();
+    int* GetFloorHit();
     ObstDefinition* GetDeviceObst();
     ObstDefinition* GetHostObst();
     float GetInletVelocity();
