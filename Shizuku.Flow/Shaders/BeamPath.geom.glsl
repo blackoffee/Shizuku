@@ -9,6 +9,10 @@ out vec4 fColor;
 uniform bool Filter = true;
 
 uniform vec2 Target = vec2(0,0);
+uniform float ProbeRadius = 0.07;
+
+uniform vec4 SideColor = vec4(0, 0.8, 0, 1);
+uniform vec4 TopColor = vec4(0, 1, 0, 1);
 
 void main()
 {
@@ -26,17 +30,10 @@ void main()
 	{
 		vec2 center = (modelPos[3] + modelPos[4] + modelPos[5]) / 3.f;
 		int i = 0;
-		if (length(center - Target) < 0.05)
+		if (length(center - Target) < ProbeRadius)
 		{
 			//sides
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
-			fColor = vec4(0, 0, 1, 1);
+			fColor = SideColor;
 			gl_Position = gl_in[0].gl_Position;
 			EmitVertex();
 			gl_Position = gl_in[2].gl_Position;
@@ -55,9 +52,7 @@ void main()
 			EmitVertex();
 			EndPrimitive();
 			//top
-			fColor = vec4(0, 1, 0, 1);
-			fColor = vec4(0, 1, 0, 1);
-			fColor = vec4(0, 1, 0, 1);
+			fColor = TopColor;
 			gl_Position = gl_in[0].gl_Position;
 			EmitVertex();
 			gl_Position = gl_in[1].gl_Position;
@@ -67,9 +62,7 @@ void main()
 			EndPrimitive();
 
 			//bottom
-			fColor = vec4(0, 1, 0, 1);
-			fColor = vec4(0, 1, 0, 1);
-			fColor = vec4(0, 1, 0, 1);
+			fColor = TopColor;
 			gl_Position = gl_in[3].gl_Position;
 			EmitVertex();
 			gl_Position = gl_in[4].gl_Position;
@@ -77,8 +70,6 @@ void main()
 			gl_Position = gl_in[5].gl_Position;
 			EmitVertex();
 			EndPrimitive();
-
-
 		}
 	}
 }

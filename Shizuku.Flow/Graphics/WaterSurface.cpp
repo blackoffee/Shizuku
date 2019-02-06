@@ -546,6 +546,7 @@ void WaterSurface::Render(const ContourVariable p_contour , Domain &p_domain, co
 void WaterSurface::RenderSurface(Domain &domain, const RenderParams& p_params, const Rect<int>& p_viewSize,
 	const float p_obstHeight, const int p_obstCount, GLuint p_causticsTex)
 {
+	glDepthMask(GL_FALSE);
 	glActiveTexture(GL_TEXTURE0);
 	m_surfaceRayTrace->Use();
 	m_surfaceRayTrace->SetUniform("modelMatrix", p_params.ModelView);
@@ -571,6 +572,7 @@ void WaterSurface::RenderSurface(Domain &domain, const RenderParams& p_params, c
 	glBindTexture(GL_TEXTURE_2D, 0);
 	Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
 	m_surfaceRayTrace->Unset();   
+	glDepthMask(GL_TRUE);
 
 #ifdef DRAW_CAMERA
 	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);

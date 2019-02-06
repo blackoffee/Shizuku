@@ -65,5 +65,6 @@ namespace Shizuku { namespace Flow{
 		void RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize);
         void Render(Domain &p_domain, const RenderParams& p_params);
 		void RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params);
+		void RenderCausticsBeams(Domain &p_domain, const RenderParams& p_params);
     };
 } }

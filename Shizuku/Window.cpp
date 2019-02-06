@@ -24,6 +24,7 @@
 #include "Shizuku.Flow/Command/SetWaterDepth.h"
 #include "Shizuku.Flow/Command/RestartSimulation.h"
 #include "Shizuku.Flow/Command/SetFloorWireframeVisibility.h"
+#include "Shizuku.Flow/Command/SetLightProbeVisibility.h"
 #include "Shizuku.Flow/Command/ProbeLightPaths.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
@@ -179,8 +180,8 @@ namespace
 
 Window::Window() : 
     m_resolution(0.5f),
-    m_velocity(0.05f),
-    m_timesteps(6),
+    m_velocity(0.06f),
+    m_timesteps(10),
     m_contourMode(ContourMode::Water),
     m_firstUIDraw(true),
     m_contourMinMax(0.0f, 1.0f),
@@ -221,6 +222,7 @@ void Window::RegisterCommands()
     m_setSurfaceShadingMode = std::make_shared<SetSurfaceShadingMode>(*m_flow);
     m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
     m_setFloorWireframeVisibility = std::make_shared<SetFloorWireframeVisibility>(*m_flow);
+    m_setLightProbeVisibility = std::make_shared<SetLightProbeVisibility>(*m_flow);
     m_probeLightPaths = std::make_shared<ProbeLightPaths>(*m_flow);
 }
 
@@ -563,6 +565,10 @@ void Window::DrawUI()
         const bool oldFloorWireframe = m_floorWireframeVisible;
         if (ImGui::Checkbox("Show caustics mesh", &m_floorWireframeVisible) && m_floorWireframeVisible != oldFloorWireframe)
             m_setFloorWireframeVisibility->Start(boost::any(VisibilityParameter(m_floorWireframeVisible)));
+
+        const bool oldLightProbe = m_lightProbeEnabled;
+        if (ImGui::Checkbox("Probe caustics beams", &m_lightProbeEnabled) && m_lightProbeEnabled != oldLightProbe)
+            m_setLightProbeVisibility->Start(boost::any(VisibilityParameter(m_lightProbeEnabled)));
     }
     ImGui::End();
 

@@ -113,7 +113,7 @@ GraphicsManager::GraphicsManager()
 	m_schema = Schema{
 		Types::Color(glm::vec4(0.1)), //background
 		Types::Color(glm::vec4(0.8)), //obst
-		Types::Color(glm::uvec4(245, 220, 60, 255)) //obst highlight
+		Types::Color(glm::uvec4(255, 255, 153, 255)) //obst highlight
 	};
 
     const int framesForAverage = 20;
@@ -223,6 +223,11 @@ void GraphicsManager::SetTimestepsPerFrame(const int p_steps)
 void GraphicsManager::SetFloorWireframeVisibility(const bool p_visible)
 {
     m_drawFloorWireframe = p_visible;
+}
+
+void GraphicsManager::EnableLightProbe(const bool p_enable)
+{
+	m_lightProbeEnabled = p_enable;
 }
 
 CudaLbm* GraphicsManager::GetCudaLbm()
@@ -464,6 +469,9 @@ void GraphicsManager::Render()
 
     m_waterSurface->Render(m_contourVar, *cudaLbm->GetDomain(),
         params, m_drawFloorWireframe, m_viewSize, obstHeight, m_obstMgr->ObstCount(), m_floor->CausticsTex());
+
+	if (m_lightProbeEnabled)
+		m_floor->RenderCausticsBeams(*cudaLbm->GetDomain(), params);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -620,7 +628,7 @@ void GraphicsManager::UpdateDomainDimensions()
 
 void GraphicsManager::UpdateLbmInputs()
 {
-    float omega = 1.97f;
+    float omega = 1.975f;
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->SetOmega(omega);
     const float u = cudaLbm->GetInletVelocity();

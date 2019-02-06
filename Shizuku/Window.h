@@ -34,6 +34,7 @@ namespace Shizuku{
             class SetInletVelocity;
             class SetWaterDepth;
             class SetFloorWireframeVisibility;
+			class SetLightProbeVisibility;
 			class ProbeLightPaths;
             enum ContourMode;
             enum SurfaceShadingMode;
@@ -70,6 +71,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<SetSurfaceShadingMode> m_setSurfaceShadingMode;
         std::shared_ptr<SetWaterDepth> m_setDepth;
         std::shared_ptr<SetFloorWireframeVisibility> m_setFloorWireframeVisibility;
+        std::shared_ptr<SetLightProbeVisibility> m_setLightProbeVisibility;
         std::shared_ptr<ProbeLightPaths> m_probeLightPaths;
         FpsTracker m_fpsTracker;
         std::shared_ptr<Shizuku::Flow::Query> m_query;
@@ -87,6 +89,7 @@ namespace Shizuku{ namespace Presentation{
         SurfaceShadingMode m_shadingMode;
         bool m_rayTracingPaused;
         bool m_floorWireframeVisible;
+        bool m_lightProbeEnabled;
         bool m_diagEnabled;
         bool m_debug;
 

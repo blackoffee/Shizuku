@@ -54,6 +54,7 @@ namespace Shizuku{ namespace Flow{
 		ShadingMode m_surfaceShadingMode;
 		float m_waterDepth;
 		bool m_drawFloorWireframe;
+		bool m_lightProbeEnabled;
 
 		Rect<int> m_viewSize;
 		std::map<TimerKey, Stopwatch> m_timers;
@@ -90,6 +91,7 @@ namespace Shizuku{ namespace Flow{
 		void SetTimestepsPerFrame(const int p_steps);
 		void SetFloorWireframeVisibility(const bool p_visible);
 
+		void EnableLightProbe(const bool enable);
 		void ProbeLightPaths(const Point<int>& p_screenPos);
 
 		CudaLbm* GetCudaLbm();

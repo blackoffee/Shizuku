@@ -368,7 +368,11 @@ void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
 
 	surface->Unbind();
 	m_lightRayShader->Unset();
+}
 
+void Floor::RenderCausticsBeams(Domain &p_domain, const RenderParams& p_params)
+{
+	//glDisable(GL_DEPTH_TEST);
 	m_beamPathShader->Use();
 	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("BeamPaths");
 	paths->Bind();
@@ -382,4 +386,6 @@ void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
 
 	paths->Unbind();
 	m_beamPathShader->Unset();
+
+	//glEnable(GL_DEPTH_TEST);
 }

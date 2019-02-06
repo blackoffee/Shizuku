@@ -274,6 +274,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetContourMode.cpp" />
     <ClCompile Include="Command\SetFloorWireframeVisibility.cpp" />
     <ClCompile Include="Command\SetInletVelocity.cpp" />
+    <ClCompile Include="Command\SetLightProbeVisibility.cpp" />
     <ClCompile Include="Command\SetSimulationScale.cpp" />
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
@@ -325,6 +326,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetContourMode.h" />
     <ClInclude Include="Command\SetFloorWireframeVisibility.h" />
     <ClInclude Include="Command\SetInletVelocity.h" />
+    <ClInclude Include="Command\SetLightProbeVisibility.h" />
     <ClInclude Include="Command\SetSimulationScale.h" />
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
