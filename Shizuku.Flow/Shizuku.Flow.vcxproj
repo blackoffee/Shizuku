@@ -72,8 +72,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CudaToolkitLibDir);$(LibraryPath)</LibraryPath>
-    <IncludePath>$(BOOST_ROOT);$(OPENGL_INC);$(CudaToolkitIncludeDir);$(SolutionDir);$(ProjectDir);$(NVCUDASAMPLES10_0_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)/ThirdParty/Libs/$(Platform);$(CudaToolkitLibDir);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SolutionDir)/ThirdParty/Include;$(CudaToolkitIncludeDir);$(SolutionDir);$(ProjectDir);$(NVCUDASAMPLES10_0_ROOT)/common/inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -81,8 +81,8 @@
     <LibraryPath>$(OPENGL_LIB)/$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(OPENGL_LIB)/$(Platform);$(CudaToolkitLibDir);$(LibraryPath)</LibraryPath>
-    <IncludePath>$(BOOST_ROOT);$(OPENGL_INC);$(CudaToolkitIncludeDir);$(SolutionDir);$(ProjectDir);$(NVCUDASAMPLES10_0_ROOT)/common/inc;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)/ThirdParty/Libs/$(Platform);$(CudaToolkitLibDir);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOST_ROOT);$(SolutionDir)/ThirdParty/Include;$(CudaToolkitIncludeDir);$(SolutionDir);$(ProjectDir);$(NVCUDASAMPLES10_0_ROOT)/common/inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(OPENGL_INC);$(CUDA_PATH_V7_5)/include;$(NVCUDASAMPLES7_5_ROOT)/common/inc;$(ProjectDir);$(IncludePath)</IncludePath>
@@ -98,14 +98,15 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>Shizuku.Core.lib;cuda.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;SOIL.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shizuku.Core.lib;cuda.lib;cudart.lib;kernel32.lib;user32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;SOIL.lib;opengl32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(CudaToolkitBinDir)\cudart64_100.dll" "$(OutDir)"
 mkdir "$(OutDir)\Assets"
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"
+copy "$(SolutionDir)\ThirdParty\Libs\$(PlatForm)\glew32.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -173,14 +174,15 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>Shizuku.Core.lib;cuda.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;SOIL.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shizuku.Core.lib;cuda.lib;cudart.lib;kernel32.lib;user32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;SOIL.lib;opengl32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(SolutionDir)\$(IntDir)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(CudaToolkitBinDir)\cudart64_100.dll" "$(OutDir)"
 mkdir "$(OutDir)\Assets"
 copy "$(ProjectDir)\Shaders\*.glsl" "$(OutDir)\Assets"
-copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"</Command>
+copy "$(ProjectDir)\Resources\*.png" "$(OutDir)\Assets"
+copy "$(SolutionDir)\ThirdParty\Libs\$(PlatForm)\glew32.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
