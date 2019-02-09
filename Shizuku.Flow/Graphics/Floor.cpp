@@ -299,6 +299,7 @@ void Floor::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
     std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloor");
     surface->Bind();
 
+	glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_floorTex);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
