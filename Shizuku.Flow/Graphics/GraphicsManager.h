@@ -55,6 +55,8 @@ namespace Shizuku{ namespace Flow{
 		float m_waterDepth;
 		bool m_drawFloorWireframe;
 		bool m_lightProbeEnabled;
+		bool m_topView;
+		float m_perspectiveViewAngle;
 
 		Rect<int> m_viewSize;
 		std::map<TimerKey, Stopwatch> m_timers;
@@ -71,6 +73,8 @@ namespace Shizuku{ namespace Flow{
 		void SetUpFrame();
 
 		void SetViewport(const Rect<int>& size);
+		void SetToTopView(bool p_ortho);
+		void SetPerspectiveViewAngle(float p_angleInDeg);
 
 		void UseCuda(bool useCuda);
 

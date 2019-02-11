@@ -28,6 +28,7 @@ in float fWaterDepth;
 
 out vec4 color;
 
+uniform bool topViewMode;
 uniform vec3 cameraPos;
 uniform vec2 viewSize;
 uniform float obstHeight;
@@ -140,7 +141,11 @@ void main()
     if (posInModel.x > 1.f)
         discard;
 
-    vec3 eyeRayInModel = posInModel.xyz - cameraPos;
+	vec3 eyeRayInModel;
+	if (topViewMode)
+		eyeRayInModel = vec3(0,0,-1);
+	else
+		eyeRayInModel = posInModel.xyz - cameraPos;
 
     const vec3 refractedRay = RefractRay(eyeRayInModel, fNormal);
     const vec3 reflectedRay = ReflectRay(eyeRayInModel, fNormal);

@@ -280,6 +280,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClCompile Include="Command\SetSimulationScale.cpp" />
     <ClCompile Include="Command\SetSurfaceShadingMode.cpp" />
     <ClCompile Include="Command\SetTimestepsPerFrame.cpp" />
+    <ClCompile Include="Command\SetToTopView.cpp" />
     <ClCompile Include="Command\SetViscosity.cpp" />
     <ClCompile Include="Command\SetWaterDepth.cpp" />
     <ClCompile Include="Command\TogglePreSelection.cpp" />
@@ -332,6 +333,7 @@ copy "$(ProjectDir)\Resources\*.png" "$(OutDir)"</Command>
     <ClInclude Include="Command\SetSimulationScale.h" />
     <ClInclude Include="Command\SetSurfaceShadingMode.h" />
     <ClInclude Include="Command\SetTimestepsPerFrame.h" />
+    <ClInclude Include="Command\SetToTopView.h" />
     <ClInclude Include="Command\SetViscosity.h" />
     <ClInclude Include="Command\SetWaterDepth.h" />
     <ClInclude Include="Command\TogglePreSelection.h" />

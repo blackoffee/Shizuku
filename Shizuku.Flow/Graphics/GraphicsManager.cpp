@@ -110,6 +110,9 @@ GraphicsManager::GraphicsManager()
     m_currentObstShape = Shape::SQUARE;
     m_currentObstSize = 0.04f;
     m_drawFloorWireframe = false;
+	m_lightProbeEnabled = false;
+	m_perspectiveViewAngle = 60.f;
+	m_topView = false;
 	m_schema = Schema{
 		Types::Color(glm::vec4(0.1)), //background
 		Types::Color(glm::vec4(0.8)), //obst
@@ -143,6 +146,16 @@ void GraphicsManager::SetUpFrame()
 void GraphicsManager::SetViewport(const Rect<int>& size)
 {
     m_viewSize = size;
+}
+
+void Shizuku::Flow::GraphicsManager::SetToTopView(bool p_ortho)
+{
+	m_topView = p_ortho;
+}
+
+void Shizuku::Flow::GraphicsManager::SetPerspectiveViewAngle(float p_angleInDeg)
+{
+	m_perspectiveViewAngle = p_angleInDeg;
 }
 
 void GraphicsManager::UseCuda(bool useCuda)
@@ -247,14 +260,25 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-    m_projection = glm::perspective(glm::radians(60.f), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
-    //SetProjectionMatrix(glm::ortho(-1,1,-1,1));
-    glm::mat4 modelMat;
-    glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
-    rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
-    glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
-    modelMat = trans*rot;
-    m_modelView = modelMat;
+	if (m_topView)
+	{
+		m_projection = glm::ortho(-1,1,-1,1);
+		glm::mat4 modelMat;
+    	glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(std::max(0.05f, 0.5f+0.1f*m_translate.z)));
+    	glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, -0.5f+m_translate.y, 0 });
+    	modelMat = trans*scale;
+    	m_modelView = modelMat;
+	}
+	else
+	{
+		m_projection = glm::perspective(glm::radians(m_perspectiveViewAngle), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
+		glm::mat4 modelMat;
+    	glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
+    	rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
+    	glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
+    	modelMat = trans*rot;
+    	m_modelView = modelMat;
+	}
 }
 
 void GraphicsManager::SetUpGLInterop()
@@ -457,11 +481,11 @@ void GraphicsManager::RenderCausticsToTexture()
 
 void GraphicsManager::Render()
 {
-    CudaLbm* cudaLbm = GetCudaLbm();
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-	const RenderParams& params{ m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
+	const RenderParams& params{ m_topView, m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
 	m_obstMgr->Render(params);
 
+    CudaLbm* cudaLbm = GetCudaLbm();
 	m_floor->Render(*cudaLbm->GetDomain(), params);
 
 	if (m_drawFloorWireframe)

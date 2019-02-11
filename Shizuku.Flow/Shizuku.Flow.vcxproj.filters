@@ -139,6 +139,7 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Command\SetLightProbeVisibility.cpp" />
+    <ClCompile Include="Command\SetToTopView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command\AddObstruction.h">
@@ -300,6 +301,7 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Command\SetLightProbeVisibility.h" />
+    <ClInclude Include="Command\SetToTopView.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SurfaceShader.vert.glsl">

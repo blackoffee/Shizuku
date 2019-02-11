@@ -6,6 +6,7 @@
 namespace Shizuku { namespace Flow{
 	struct RenderParams
 	{
+		bool TopViewMode;
 		glm::mat4 ModelView;
 		glm::mat4 Projection;
 		glm::vec3 Camera;

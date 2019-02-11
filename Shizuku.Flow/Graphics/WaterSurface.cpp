@@ -551,6 +551,7 @@ void WaterSurface::RenderSurface(Domain &domain, const RenderParams& p_params, c
 	m_surfaceRayTrace->Use();
 	m_surfaceRayTrace->SetUniform("modelMatrix", p_params.ModelView);
 	m_surfaceRayTrace->SetUniform("projectionMatrix", p_params.Projection);
+	m_surfaceRayTrace->SetUniform("topViewMode", p_params.TopViewMode);
 	m_surfaceRayTrace->SetUniform("cameraPos", p_params.Camera);
 	m_surfaceRayTrace->SetUniform("obstHeight", p_obstHeight);
 	m_surfaceRayTrace->SetUniform("obstCount", p_obstCount);

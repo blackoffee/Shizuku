@@ -35,6 +35,7 @@ namespace Shizuku{
             class SetWaterDepth;
             class SetFloorWireframeVisibility;
 			class SetLightProbeVisibility;
+			class SetToTopView;
 			class ProbeLightPaths;
             enum ContourMode;
             enum SurfaceShadingMode;
@@ -73,6 +74,7 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<SetFloorWireframeVisibility> m_setFloorWireframeVisibility;
         std::shared_ptr<SetLightProbeVisibility> m_setLightProbeVisibility;
         std::shared_ptr<ProbeLightPaths> m_probeLightPaths;
+        std::shared_ptr<SetToTopView> m_setToTopView;
         FpsTracker m_fpsTracker;
         std::shared_ptr<Shizuku::Flow::Query> m_query;
         GLFWwindow* m_window;
@@ -90,6 +92,7 @@ namespace Shizuku{ namespace Presentation{
         bool m_rayTracingPaused;
         bool m_floorWireframeVisible;
         bool m_lightProbeEnabled;
+		bool m_topViewMode;
         bool m_diagEnabled;
         bool m_debug;
 

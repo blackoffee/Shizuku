@@ -25,6 +25,7 @@
 #include "Shizuku.Flow/Command/RestartSimulation.h"
 #include "Shizuku.Flow/Command/SetFloorWireframeVisibility.h"
 #include "Shizuku.Flow/Command/SetLightProbeVisibility.h"
+#include "Shizuku.Flow/Command/SetToTopView.h"
 #include "Shizuku.Flow/Command/ProbeLightPaths.h"
 #include "Shizuku.Flow/Command/Parameter/VelocityParameter.h"
 #include "Shizuku.Flow/Command/Parameter/ScaleParameter.h"
@@ -223,6 +224,7 @@ void Window::RegisterCommands()
     m_setDepth = std::make_shared<SetWaterDepth>(*m_flow);
     m_setFloorWireframeVisibility = std::make_shared<SetFloorWireframeVisibility>(*m_flow);
     m_setLightProbeVisibility = std::make_shared<SetLightProbeVisibility>(*m_flow);
+    m_setToTopView = std::make_shared<SetToTopView>(*m_flow);
     m_probeLightPaths = std::make_shared<ProbeLightPaths>(*m_flow);
 }
 
@@ -443,7 +445,7 @@ void Window::DrawUI()
 
     if (m_firstUIDraw)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,270));
+        ImGui::SetNextWindowSize(ImVec2(350,350));
         ImGui::SetNextWindowPos(ImVec2(5,5));
         //! HACK - Adding obst has to happen after lbm dimensions are set. Need to split up Flow initilization sequence
         m_addObstruction->Start(ModelSpacePointParameter(Point<float>(-0.2f, 0.2f)));
@@ -551,15 +553,15 @@ void Window::DrawUI()
 
         ImGui::Spacing();
 
-        if (ImGui::Button("Restart Simulation"))
+        if (ImGui::Button("Restart simulation"))
             m_restartSimulation->Start();
 
         const bool oldPaused = m_paused;
-        if (ImGui::Checkbox("Pause Simulation", &m_paused) && m_paused != oldPaused)
+        if (ImGui::Checkbox("Pause simulation", &m_paused) && m_paused != oldPaused)
             m_pauseSimulation->Start(boost::any(bool(m_paused)));
 
         const bool oldRayTracingPaused = m_rayTracingPaused;
-        if (ImGui::Checkbox("Pause Ray Tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
+        if (ImGui::Checkbox("Pause ray tracing", &m_rayTracingPaused) && m_rayTracingPaused != oldRayTracingPaused)
             m_pauseRayTracing->Start(boost::any(bool(m_rayTracingPaused)));
 
         const bool oldFloorWireframe = m_floorWireframeVisible;
@@ -569,6 +571,10 @@ void Window::DrawUI()
         const bool oldLightProbe = m_lightProbeEnabled;
         if (ImGui::Checkbox("Probe caustics beams", &m_lightProbeEnabled) && m_lightProbeEnabled != oldLightProbe)
             m_setLightProbeVisibility->Start(boost::any(VisibilityParameter(m_lightProbeEnabled)));
+
+        const bool oldToTopView = m_topViewMode;
+        if (ImGui::Checkbox("Top view", &m_topViewMode) && m_topViewMode != oldToTopView)
+            m_setToTopView->Start(boost::any(m_topViewMode));
     }
     ImGui::End();
 
