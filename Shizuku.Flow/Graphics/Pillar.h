@@ -28,20 +28,20 @@ namespace Shizuku { namespace Flow{
         void PrepareBuffers();
         void PrepareShader();
         bool m_initialized;
-		bool m_highlighted;
+        bool m_highlighted;
     public:
         Pillar(std::shared_ptr<Ogl> p_ogl);
 
-		const PillarDefinition& Def();
+        const PillarDefinition& Def();
 
         void Initialize();
         bool IsInitialized();
         void SetDefinition(const PillarDefinition& p_def);
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);
-		void Highlight(const bool p_highlight);
+        void Highlight(const bool p_highlight);
 
-		HitResult Hit(const HitParams& p_params);
+        HitResult Hit(const HitParams& p_params);
 
         void Render(const RenderParams& p_params);
     };

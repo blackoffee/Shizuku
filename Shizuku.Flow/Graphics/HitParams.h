@@ -9,17 +9,17 @@
 using namespace Shizuku::Core;
 
 namespace Shizuku { namespace Flow{
-	struct HitParams
-	{
-		Types::Point<int> ScreenPos;
-		glm::mat4 Modelview;
-		glm::mat4 Projection;
-		Rect<int> ViewSize;
-	};
+    struct HitParams
+    {
+        Types::Point<int> ScreenPos;
+        glm::mat4 Modelview;
+        glm::mat4 Projection;
+        Rect<int> ViewSize;
+    };
 
-	struct HitResult
-	{
-		bool Hit;
-		boost::optional<float> Dist;
-	};
+    struct HitResult
+    {
+        bool Hit;
+        boost::optional<float> Dist;
+    };
 } }

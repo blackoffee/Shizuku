@@ -11,8 +11,8 @@ TogglePreSelection::TogglePreSelection(Flow& p_flow) : Command(p_flow)
 void TogglePreSelection::Start(boost::any const p_param)
 {
 
-	GraphicsManager* graphicsManager= m_flow->Graphics();
-	graphicsManager->TogglePreSelection();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
+    graphicsManager->TogglePreSelection();
 }
 
 void TogglePreSelection::Track(boost::any const p_param)

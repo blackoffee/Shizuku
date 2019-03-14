@@ -22,8 +22,8 @@ void PreSelectObstruction::Track(boost::any const p_param)
     {
         if (m_state == Active)
         {
-			const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-			m_flow->Graphics()->PreSelectObstruction(pos.Position);
+            const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+            m_flow->Graphics()->PreSelectObstruction(pos.Position);
         }
     }
     catch (boost::bad_any_cast &e)

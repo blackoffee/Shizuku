@@ -16,10 +16,10 @@ void MoveObstruction::Start(boost::any const p_param)
     try
     {
         const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-		if (m_flow->Graphics()->TryStartMoveSelectedObstructions(pos.Position))
-			m_state = Active;
-		else
-			m_state = Inactive;
+        if (m_flow->Graphics()->TryStartMoveSelectedObstructions(pos.Position))
+            m_state = Active;
+        else
+            m_state = Inactive;
     }
     catch (boost::bad_any_cast &e)
     {
@@ -33,8 +33,8 @@ void MoveObstruction::Track(boost::any const p_param)
     {
         if (m_state == Active)
         {
-			const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-			m_flow->Graphics()->MoveSelectedObstructions(pos.Position);
+            const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+            m_flow->Graphics()->MoveSelectedObstructions(pos.Position);
         }
 
     }

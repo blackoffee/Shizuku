@@ -8,9 +8,9 @@ using namespace Shizuku::Flow;
 class Domain;
 
 namespace Shizuku {
-	namespace Flow {
-		class ObstManager;
-	}
+    namespace Flow {
+        class ObstManager;
+    }
 }
 
 class CudaLbm

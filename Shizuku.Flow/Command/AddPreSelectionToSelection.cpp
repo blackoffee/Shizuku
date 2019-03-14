@@ -11,8 +11,8 @@ AddPreSelectionToSelection::AddPreSelectionToSelection(Flow& p_flow) : Command(p
 void AddPreSelectionToSelection::Start(boost::any const p_param)
 {
 
-	GraphicsManager* graphicsManager= m_flow->Graphics();
-	graphicsManager->AddPreSelectionToSelection();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
+    graphicsManager->AddPreSelectionToSelection();
 }
 
 void AddPreSelectionToSelection::Track(boost::any const p_param)

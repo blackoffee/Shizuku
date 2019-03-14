@@ -8,11 +8,11 @@
 using namespace Shizuku::Core;
 
 namespace Shizuku { namespace Flow{ namespace Info{
-	struct ObstInfo
-	{
-		bool Selected;
-		bool PreSelected;
-		Types::Point<float> PositionInModel;
-		Rect<float> Size;
-	};
+    struct ObstInfo
+    {
+        bool Selected;
+        bool PreSelected;
+        Types::Point<float> PositionInModel;
+        Rect<float> Size;
+    };
 } } }

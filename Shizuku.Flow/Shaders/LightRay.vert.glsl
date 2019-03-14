@@ -8,6 +8,6 @@ out vec2 modelPos;
 
 void main()
 {
-	modelPos = position.xy;
+    modelPos = position.xy;
     gl_Position = projectionMatrix*modelMatrix*vec4(position, 1.f);
 }

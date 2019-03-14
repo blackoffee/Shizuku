@@ -209,9 +209,9 @@ void Window::RegisterCommands()
     m_moveObstruction = std::make_shared<MoveObstruction>(*m_flow);
     m_preSelectObst = std::make_shared<PreSelectObstruction>(*m_flow);
     m_addPreSelectionToSelection = std::make_shared<AddPreSelectionToSelection>(*m_flow);
-	m_deleteSelectedObstructions = std::make_shared<DeleteSelectedObstructions>(*m_flow);
-	m_togglePreSelection = std::make_shared<TogglePreSelection>(*m_flow);
-	m_clearSelection = std::make_shared<ClearSelection>(*m_flow);
+    m_deleteSelectedObstructions = std::make_shared<DeleteSelectedObstructions>(*m_flow);
+    m_togglePreSelection = std::make_shared<TogglePreSelection>(*m_flow);
+    m_clearSelection = std::make_shared<ClearSelection>(*m_flow);
     m_pauseSimulation = std::make_shared<PauseSimulation>(*m_flow);
     m_pauseRayTracing = std::make_shared<PauseRayTracing>(*m_flow);
     m_restartSimulation = std::make_shared<RestartSimulation>(*m_flow);
@@ -237,8 +237,8 @@ void Window::ApplyInitialFlowSettings()
     m_setSurfaceShadingMode->Start(m_shadingMode);
     m_setDepth->Start(boost::any(DepthParameter(m_depth)));
 
-	//TODO: need mode switching
-	m_preSelectObst->Start(boost::none);
+    //TODO: need mode switching
+    m_preSelectObst->Start(boost::none);
 }
 
 void Window::InitializeImGui()
@@ -284,8 +284,8 @@ void Window::EnableDiagnostics()
 
 void Window::MouseButton(const int button, const int state, const int mod)
 {
-	if (m_imguiHandlingMouseEvent)
-		return;
+    if (m_imguiHandlingMouseEvent)
+        return;
 
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
@@ -296,53 +296,53 @@ void Window::MouseButton(const int button, const int state, const int mod)
         && mod == GLFW_MOD_CONTROL)
     {
         m_pan->Start(param);
-		m_probeLightPaths->End(boost::none);
+        m_probeLightPaths->End(boost::none);
     }
     else if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS)
     {
         m_rotate->Start(param);
-		m_probeLightPaths->End(boost::none);
+        m_probeLightPaths->End(boost::none);
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS)
     {
         m_addObstruction->Start(ModelSpacePointParameter(m_query->ProbeModelSpaceCoord(screenPos)));
-		m_probeLightPaths->End(boost::none);
+        m_probeLightPaths->End(boost::none);
     }
-	else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
-	{
-		m_probeLightPaths->End(boost::none);
-		if (mod == GLFW_MOD_CONTROL)
-		{
-			m_togglePreSelection->Start(boost::none);
-		}
-		else
-		{
-			if (m_query->PreSelectedObstructionCount() == 0)
-			{
-				m_clearSelection->Start(boost::none);
-			}
-			else
-			{
-				const boost::optional<const Info::ObstInfo> info = m_query->ObstInfo(screenPos);
-				if (info.is_initialized())
-				{
-					if (!info.value().Selected)
-					{
-						m_clearSelection->Start(boost::none);
-						m_addPreSelectionToSelection->Start(boost::none);
-					}
+    else if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS)
+    {
+        m_probeLightPaths->End(boost::none);
+        if (mod == GLFW_MOD_CONTROL)
+        {
+            m_togglePreSelection->Start(boost::none);
+        }
+        else
+        {
+            if (m_query->PreSelectedObstructionCount() == 0)
+            {
+                m_clearSelection->Start(boost::none);
+            }
+            else
+            {
+                const boost::optional<const Info::ObstInfo> info = m_query->ObstInfo(screenPos);
+                if (info.is_initialized())
+                {
+                    if (!info.value().Selected)
+                    {
+                        m_clearSelection->Start(boost::none);
+                        m_addPreSelectionToSelection->Start(boost::none);
+                    }
 
-					m_moveObstruction->Start(param);
-				}
-			}
-		}
-	}
+                    m_moveObstruction->Start(param);
+                }
+            }
+        }
+    }
     else
     {
         m_pan->End(boost::none);
         m_rotate->End(boost::none);
         m_moveObstruction->End(boost::none);
-		m_probeLightPaths->Start(boost::none);
+        m_probeLightPaths->Start(boost::none);
     }
 }
 
@@ -352,8 +352,8 @@ void Window::MouseMotion(const int x, const int y)
     m_pan->Track(param);
     m_rotate->Track(param);
     m_moveObstruction->Track(param);
-	m_preSelectObst->Track(param);
-	m_probeLightPaths->Track(param);
+    m_preSelectObst->Track(param);
+    m_probeLightPaths->Track(param);
 }
 
 void Window::MouseWheel(double xwheel, double ywheel)
@@ -366,16 +366,16 @@ void Window::MouseWheel(double xwheel, double ywheel)
 
 void Window::Keyboard(int key, int scancode, int action, int mode)
 {
-	switch (key)
-	{
-	case GLFW_KEY_SPACE:
-		if (action == GLFW_PRESS)
-			TogglePaused();
-		break;
-	case GLFW_KEY_DELETE:
-		if (action == GLFW_PRESS)
-			m_deleteSelectedObstructions->Start(boost::none);
-	}
+    switch (key)
+    {
+    case GLFW_KEY_SPACE:
+        if (action == GLFW_PRESS)
+            TogglePaused();
+        break;
+    case GLFW_KEY_DELETE:
+        if (action == GLFW_PRESS)
+            m_deleteSelectedObstructions->Start(boost::none);
+    }
 }
 
 void Window::TogglePaused()
@@ -401,7 +401,7 @@ void Window::Draw3D()
 
     m_flow->Update();
 
-	m_flow->SetUpFrame();
+    m_flow->SetUpFrame();
 
     m_flow->Draw3D();
 
@@ -441,7 +441,7 @@ void Window::DrawUI()
     ImGui::NewFrame();
 
     ImGuiIO& io = ImGui::GetIO();
-	m_imguiHandlingMouseEvent = io.WantCaptureMouse;
+    m_imguiHandlingMouseEvent = io.WantCaptureMouse;
 
     if (m_firstUIDraw)
     {

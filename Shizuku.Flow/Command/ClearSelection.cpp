@@ -10,6 +10,6 @@ ClearSelection::ClearSelection(Flow& p_flow) : Command(p_flow)
 
 void ClearSelection::Start(boost::any const p_param)
 {
-	GraphicsManager* graphicsManager= m_flow->Graphics();
-	graphicsManager->ClearSelection();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
+    graphicsManager->ClearSelection();
 }

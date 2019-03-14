@@ -44,66 +44,66 @@ namespace
     }
 
 
-	//TODO this is used in many places
-	void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
-	{
-		glm::mat4 mvp = p_params.Projection*p_params.Modelview;
-		glm::mat4 mvpInv = glm::inverse(mvp);
-		glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
-		glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
-		glm::vec4 r1 = mvpInv * v1;
-		glm::vec4 r2 = mvpInv * v2;
-		p_rayOrigin.x = r1.x / r1.w;
-		p_rayOrigin.y = r1.y / r1.w;
-		p_rayOrigin.z = r1.z / r1.w;
-		p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
-		p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
-		p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
-		float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
-		p_rayDir.x /= mag;
-		p_rayDir.y /= mag;
-		p_rayDir.z /= mag;
-	}
+    //TODO this is used in many places
+    void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
+    {
+        glm::mat4 mvp = p_params.Projection*p_params.Modelview;
+        glm::mat4 mvpInv = glm::inverse(mvp);
+        glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
+        glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
+        glm::vec4 r1 = mvpInv * v1;
+        glm::vec4 r2 = mvpInv * v2;
+        p_rayOrigin.x = r1.x / r1.w;
+        p_rayOrigin.y = r1.y / r1.w;
+        p_rayOrigin.z = r1.z / r1.w;
+        p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
+        p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
+        p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
+        float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
+        p_rayDir.x /= mag;
+        p_rayDir.y /= mag;
+        p_rayDir.z /= mag;
+    }
 
-	//! Hits against water surface and floor
-	glm::vec3 GetFloorCoordFromScreenPos(const HitParams& p_params, const boost::optional<float> p_modelSpaceZPos, const float p_waterDepth)
-	{
-		glm::vec3 rayOrigin, rayDir;
-		GetMouseRay(rayOrigin, rayDir, p_params);
+    //! Hits against water surface and floor
+    glm::vec3 GetFloorCoordFromScreenPos(const HitParams& p_params, const boost::optional<float> p_modelSpaceZPos, const float p_waterDepth)
+    {
+        glm::vec3 rayOrigin, rayDir;
+        GetMouseRay(rayOrigin, rayDir, p_params);
 
-		float t;
-		if (p_modelSpaceZPos.is_initialized())
-		{
-			const float z = p_modelSpaceZPos.value();
-			t = (z - rayOrigin.z) / rayDir.z;
-			return rayOrigin + t * rayDir;
-		}
-		else
-		{
-			const float t1 = (-1.f - rayOrigin.z) / rayDir.z;
-			const float t2 = (-1.f + p_waterDepth - rayOrigin.z) / rayDir.z;
-			t = std::min(t1, t2);
-			glm::vec3 res = rayOrigin + t * rayDir;
+        float t;
+        if (p_modelSpaceZPos.is_initialized())
+        {
+            const float z = p_modelSpaceZPos.value();
+            t = (z - rayOrigin.z) / rayDir.z;
+            return rayOrigin + t * rayDir;
+        }
+        else
+        {
+            const float t1 = (-1.f - rayOrigin.z) / rayDir.z;
+            const float t2 = (-1.f + p_waterDepth - rayOrigin.z) / rayDir.z;
+            t = std::min(t1, t2);
+            glm::vec3 res = rayOrigin + t * rayDir;
 
-			if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
-			{
-				return res;
-			}
-			else
-			{
-				t = std::max(t1, t2);
-				return rayOrigin + t * rayDir;
-			}
-		}
-	}
+            if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
+            {
+                return res;
+            }
+            else
+            {
+                t = std::max(t1, t2);
+                return rayOrigin + t * rayDir;
+            }
+        }
+    }
 }
 
 GraphicsManager::GraphicsManager()
 {
     m_waterSurface = std::make_shared<WaterSurface>();
     m_waterSurface->CreateCudaLbm();
-	m_floor = std::make_shared<Floor>(m_waterSurface->Ogl);
-	m_obstMgr = std::make_shared<ObstManager>(m_waterSurface->Ogl);
+    m_floor = std::make_shared<Floor>(m_waterSurface->Ogl);
+    m_obstMgr = std::make_shared<ObstManager>(m_waterSurface->Ogl);
     m_obstructions = m_waterSurface->GetCudaLbm()->GetHostObst();
     m_rotate = { 55.f, 60.f, 30.f };
     m_translate = { 0.f, 0.6f, 0.f };
@@ -112,14 +112,14 @@ GraphicsManager::GraphicsManager()
     m_currentObstShape = Shape::SQUARE;
     m_currentObstSize = 0.04f;
     m_drawFloorWireframe = false;
-	m_lightProbeEnabled = false;
-	m_perspectiveViewAngle = 60.f;
-	m_topView = false;
-	m_schema = Schema{
-		Types::Color(glm::vec4(0.1)), //background
-		Types::Color(glm::vec4(0.8)), //obst
-		Types::Color(glm::uvec4(255, 255, 153, 255)) //obst highlight
-	};
+    m_lightProbeEnabled = false;
+    m_perspectiveViewAngle = 60.f;
+    m_topView = false;
+    m_schema = Schema{
+        Types::Color(glm::vec4(0.1)), //background
+        Types::Color(glm::vec4(0.8)), //obst
+        Types::Color(glm::uvec4(255, 255, 153, 255)) //obst highlight
+    };
 
     const int framesForAverage = 20;
     m_timers[TimerKey::SolveFluid] = Stopwatch(framesForAverage);
@@ -135,14 +135,14 @@ void GraphicsManager::Initialize()
     SetUpCuda();
     SetUpShaders();
 
-	m_obstMgr->Initialize();
+    m_obstMgr->Initialize();
 }
 
 void GraphicsManager::SetUpFrame()
 {
-	const auto bkg = m_schema.Background.Value();
-	glClearColor(bkg.r, bkg.g, bkg.b, bkg.a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    const auto bkg = m_schema.Background.Value();
+    glClearColor(bkg.r, bkg.g, bkg.b, bkg.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void GraphicsManager::SetViewport(const Rect<int>& size)
@@ -152,12 +152,12 @@ void GraphicsManager::SetViewport(const Rect<int>& size)
 
 void Shizuku::Flow::GraphicsManager::SetToTopView(bool p_ortho)
 {
-	m_topView = p_ortho;
+    m_topView = p_ortho;
 }
 
 void Shizuku::Flow::GraphicsManager::SetPerspectiveViewAngle(float p_angleInDeg)
 {
-	m_perspectiveViewAngle = p_angleInDeg;
+    m_perspectiveViewAngle = p_angleInDeg;
 }
 
 void GraphicsManager::UseCuda(bool useCuda)
@@ -203,7 +203,7 @@ Shape GraphicsManager::GetCurrentObstShape()
 void GraphicsManager::SetWaterDepth(const float p_depth)
 {
     m_waterDepth = p_depth;
-	m_obstMgr->SetWaterHeight(p_depth);
+    m_obstMgr->SetWaterHeight(p_depth);
 }
 
 float GraphicsManager::GetScaleFactor()
@@ -214,7 +214,7 @@ float GraphicsManager::GetScaleFactor()
 void GraphicsManager::SetScaleFactor(const float scaleFactor)
 {
     m_scaleFactor = scaleFactor;
-	m_obstTouched = true;
+    m_obstTouched = true;
 }
 
 void GraphicsManager::SetVelocity(const float p_velocity)
@@ -242,7 +242,7 @@ void GraphicsManager::SetFloorWireframeVisibility(const bool p_visible)
 
 void GraphicsManager::EnableLightProbe(const bool p_enable)
 {
-	m_lightProbeEnabled = p_enable;
+    m_lightProbeEnabled = p_enable;
 }
 
 CudaLbm* GraphicsManager::GetCudaLbm()
@@ -262,31 +262,31 @@ bool GraphicsManager::IsCudaCapable()
 
 void GraphicsManager::UpdateViewMatrices()
 {
-	if (m_topView)
-	{
-		m_projection = glm::ortho(-1,1,-1,1);
-		glm::mat4 modelMat;
-    	glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(std::max(0.05f, 0.5f+0.1f*m_translate.z)));
-    	glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, -0.5f+m_translate.y, 0 });
-    	modelMat = trans*scale;
-    	m_modelView = modelMat;
-	}
-	else
-	{
-		m_projection = glm::perspective(glm::radians(m_perspectiveViewAngle), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
-		glm::mat4 modelMat;
-    	glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
-    	rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
-    	glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
-    	modelMat = trans*rot;
-    	m_modelView = modelMat;
-	}
+    if (m_topView)
+    {
+        m_projection = glm::ortho(-1,1,-1,1);
+        glm::mat4 modelMat;
+        glm::mat4 scale = glm::scale(glm::mat4(1), glm::vec3(std::max(0.05f, 0.5f+0.1f*m_translate.z)));
+        glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, -0.5f+m_translate.y, 0 });
+        modelMat = trans*scale;
+        m_modelView = modelMat;
+    }
+    else
+    {
+        m_projection = glm::perspective(glm::radians(m_perspectiveViewAngle), static_cast<float>(m_viewSize.Width)/m_viewSize.Height, 0.1f, 100.0f);
+        glm::mat4 modelMat;
+        glm::mat4 rot = glm::rotate(glm::mat4(1), -m_rotate.x*(float)PI / 180, glm::vec3(1, 0, 0));
+        rot = glm::rotate(rot, m_rotate.z*(float)PI / 180, glm::vec3(0, 0, 1));
+        glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3{ m_translate.x, m_translate.y, -2.5f+0.3f*m_translate.z });
+        modelMat = trans*rot;
+        m_modelView = modelMat;
+    }
 }
 
 void GraphicsManager::SetUpGLInterop()
 {
     m_waterSurface->CreateVboForCudaInterop();
-	m_floor->SetVbo(m_waterSurface->GetVbo());
+    m_floor->SetVbo(m_waterSurface->GetVbo());
 }
 
 void GraphicsManager::SetUpShaders()
@@ -365,7 +365,7 @@ void GraphicsManager::RunCuda()
 
     float4* dptr;
     float4* dptrNormal;
-	ObstDefinition* dObsts;
+    ObstDefinition* dObsts;
 
     gpuErrchk(cudaGraphicsResourceSetMapFlags(vbo_resource, cudaGraphicsRegisterFlagsWriteDiscard));
     gpuErrchk(cudaGraphicsResourceSetMapFlags(normalResource, cudaGraphicsRegisterFlagsWriteDiscard));
@@ -486,20 +486,20 @@ void GraphicsManager::RenderCausticsToTexture()
 void GraphicsManager::Render()
 {
     const float obstHeight = PillarHeightFromDepth(m_waterDepth);
-	const RenderParams& params{ m_topView, m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
-	m_obstMgr->Render(params);
+    const RenderParams& params{ m_topView, m_modelView, m_projection, glm::vec3(m_cameraPosition), m_schema };
+    m_obstMgr->Render(params);
 
     CudaLbm* cudaLbm = GetCudaLbm();
-	m_floor->Render(*cudaLbm->GetDomain(), params);
+    m_floor->Render(*cudaLbm->GetDomain(), params);
 
-	if (m_drawFloorWireframe)
-		m_floor->RenderCausticsMesh(*cudaLbm->GetDomain(), params);
+    if (m_drawFloorWireframe)
+        m_floor->RenderCausticsMesh(*cudaLbm->GetDomain(), params);
 
     m_waterSurface->Render(m_contourVar, *cudaLbm->GetDomain(),
         params, m_drawFloorWireframe, m_viewSize, obstHeight, m_obstMgr->ObstCount(), m_floor->CausticsTex());
 
-	if (m_lightProbeEnabled)
-		m_floor->RenderCausticsBeams(*cudaLbm->GetDomain(), params);
+    if (m_lightProbeEnabled)
+        m_floor->RenderCausticsBeams(*cudaLbm->GetDomain(), params);
 }
 
 bool GraphicsManager::ShouldRefractSurface()
@@ -520,8 +520,8 @@ glm::vec4 GraphicsManager::GetCameraPosition()
 //! Hits against water surface and floor
 Point<float> GraphicsManager::GetModelSpaceCoordFromScreenPos(const Point<int>& p_screenPos, boost::optional<const float> p_modelSpaceZPos)
 {
-	const glm::vec3 modelPoint = m_obstMgr->GetSurfaceOrFloorIntersect(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
-	return Point<float>(modelPoint.x, modelPoint.y);
+    const glm::vec3 modelPoint = m_obstMgr->GetSurfaceOrFloorIntersect(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+    return Point<float>(modelPoint.x, modelPoint.y);
 }
 
 void GraphicsManager::Pan(const Point<int>& p_posDiff)
@@ -553,72 +553,72 @@ void GraphicsManager::Zoom(const int dir, const float mag)
 
 bool GraphicsManager::TryStartMoveSelectedObstructions(const Point<int>& p_screenPos)
 {
-	return m_obstMgr->TryStartMoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+    return m_obstMgr->TryStartMoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
 }
 
 void GraphicsManager::MoveSelectedObstructions(const Point<int>& p_screenPos)
 {
-	m_obstMgr->MoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
-	m_obstTouched = true;
+    m_obstMgr->MoveSelectedObsts(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+    m_obstTouched = true;
 }
 
 void GraphicsManager::AddObstruction(const Point<float>& p_modelSpacePos)
 {
     const ObstDefinition obst = { m_currentObstShape, p_modelSpacePos.X, p_modelSpacePos.Y, m_currentObstSize, 0, 0, 0, State::NORMAL };
-	m_obstMgr->CreateObst(obst);
-	m_obstTouched = true;
+    m_obstMgr->CreateObst(obst);
+    m_obstTouched = true;
 }
 
 void GraphicsManager::PreSelectObstruction(const Point<int>& p_screenPos)
 {
-	m_obstMgr->ClearPreSelection();
-	m_obstMgr->AddObstructionToPreSelection(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+    m_obstMgr->ClearPreSelection();
+    m_obstMgr->AddObstructionToPreSelection(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
 }
 
 void GraphicsManager::AddPreSelectionToSelection()
 {
-	m_obstMgr->AddPreSelectionToSelection();
+    m_obstMgr->AddPreSelectionToSelection();
 }
 
 void GraphicsManager::RemovePreSelectionFromSelection()
 {
-	m_obstMgr->RemovePreSelectionFromSelection();
+    m_obstMgr->RemovePreSelectionFromSelection();
 }
 
 void GraphicsManager::TogglePreSelection()
 {
-	m_obstMgr->TogglePreSelectionInSelection();
+    m_obstMgr->TogglePreSelectionInSelection();
 }
 
 void GraphicsManager::DeleteSelectedObstructions()
 {
-	m_obstMgr->DeleteSelectedObsts();
-	m_obstTouched = true;
+    m_obstMgr->DeleteSelectedObsts();
+    m_obstTouched = true;
 }
 
 void GraphicsManager::ClearSelection()
 {
-	m_obstMgr->ClearSelection();
+    m_obstMgr->ClearSelection();
 }
 
 int GraphicsManager::ObstCount()
 {
-	return m_obstMgr->ObstCount();
+    return m_obstMgr->ObstCount();
 }
 
 int GraphicsManager::SelectedObstCount()
 {
-	return m_obstMgr->SelectedObstCount();
+    return m_obstMgr->SelectedObstCount();
 }
 
 int GraphicsManager::PreSelectedObstCount()
 {
-	return m_obstMgr->PreSelectedObstCount();
+    return m_obstMgr->PreSelectedObstCount();
 }
 
 boost::optional<const Info::ObstInfo> GraphicsManager::ObstInfo(const Point<int>& p_screenPos)
 {
-	return m_obstMgr->ObstInfo(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
+    return m_obstMgr->ObstInfo(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize });
 }
 
 void GraphicsManager::SetRayTracingPausedState(const bool state)
@@ -640,11 +640,11 @@ void GraphicsManager::UpdateGraphicsInputs()
         m_cameraPosition = GetCameraPosition();
     }
 
-	if (!GetCudaLbm()->IsPaused() && m_obstTouched)
-	{
-		GetCudaLbm()->UpdateDeviceImage(*m_obstMgr);
-		m_obstTouched = false;
-	}
+    if (!GetCudaLbm()->IsPaused() && m_obstTouched)
+    {
+        GetCudaLbm()->UpdateDeviceImage(*m_obstMgr);
+        m_obstTouched = false;
+    }
 }
 
 void GraphicsManager::UpdateDomainDimensions()
@@ -670,6 +670,6 @@ std::map<TimerKey, Stopwatch>& GraphicsManager::GetTimers()
 
 void GraphicsManager::ProbeLightPaths(const Point<int>& p_screenPos)
 {
-	const glm::vec3 point = GetFloorCoordFromScreenPos(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize }, -1.f, m_waterDepth);
-	m_floor->SetProbeRegion(Floor::ProbeRegion{ Point<float>(point.x, point.y), Rect<float>(0.1,0.1) });
+    const glm::vec3 point = GetFloorCoordFromScreenPos(HitParams{ p_screenPos, m_modelView, m_projection, m_viewSize }, -1.f, m_waterDepth);
+    m_floor->SetProbeRegion(Floor::ProbeRegion{ Point<float>(point.x, point.y), Rect<float>(0.1,0.1) });
 }

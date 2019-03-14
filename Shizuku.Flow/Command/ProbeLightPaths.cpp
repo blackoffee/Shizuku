@@ -13,7 +13,7 @@ ProbeLightPaths::ProbeLightPaths(Flow& p_flow) : Command(p_flow)
 
 void ProbeLightPaths::Start(boost::any const p_param)
 {
-	m_state = Active;
+    m_state = Active;
 }
 
 void ProbeLightPaths::Track(boost::any const p_param)
@@ -22,8 +22,8 @@ void ProbeLightPaths::Track(boost::any const p_param)
     {
         if (m_state == Active)
         {
-			const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
-			m_flow->Graphics()->ProbeLightPaths(pos.Position);
+            const ScreenPointParameter& pos = boost::any_cast<ScreenPointParameter>(p_param);
+            m_flow->Graphics()->ProbeLightPaths(pos.Position);
         }
 
     }

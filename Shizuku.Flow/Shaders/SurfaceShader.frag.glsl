@@ -103,7 +103,7 @@ bool RayIntersectsWithBox(vec3 rayOrigin, vec3 rayDir, Obstruction obst, float b
         normal = vec3(0,yComp,0);
     }
 
-	dist = max(max(tMin.x, tMin.y), tMin.z);
+    dist = max(max(tMin.x, tMin.y), tMin.z);
     return true;
 }
 
@@ -141,11 +141,11 @@ void main()
     if (posInModel.x > 1.f)
         discard;
 
-	vec3 eyeRayInModel;
-	if (topViewMode)
-		eyeRayInModel = vec3(0,0,-1);
-	else
-		eyeRayInModel = posInModel.xyz - cameraPos;
+    vec3 eyeRayInModel;
+    if (topViewMode)
+        eyeRayInModel = vec3(0,0,-1);
+    else
+        eyeRayInModel = posInModel.xyz - cameraPos;
 
     const vec3 refractedRay = RefractRay(eyeRayInModel, fNormal);
     const vec3 reflectedRay = ReflectRay(eyeRayInModel, fNormal);
@@ -162,34 +162,34 @@ void main()
     const vec3 envColor = vec3(0.8);
     color.xyz = mix(color.xyz, envColor, reflectedRayIntensity);
 
-	float closest = 1e30;
-	vec3 normal;
-	bool hit = false;
-	int closestObstIdx;
-	for (int i = 0; i < obstCount; ++i)
-	{
-		float dist;
-		vec3 n;
-		if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight, n, dist))
-		{
-			hit = true;
-			if (dist < closest)
-			{
-				closest = dist;
-				normal = n;
-				closestObstIdx = i;
-			}
-		}
-	}
+    float closest = 1e30;
+    vec3 normal;
+    bool hit = false;
+    int closestObstIdx;
+    for (int i = 0; i < obstCount; ++i)
+    {
+        float dist;
+        vec3 n;
+        if (RayIntersectsWithBox(posInModel.xyz, refractedRay, obsts[i], obstHeight, n, dist))
+        {
+            hit = true;
+            if (dist < closest)
+            {
+                closest = dist;
+                normal = n;
+                closestObstIdx = i;
+            }
+        }
+    }
 
-	if (hit)
-	{
-		const vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), normal);
-		if (obsts[closestObstIdx].state == 0)
-			color.xyz = lightFactor * obstColor.xyz;
-		else if (obsts[closestObstIdx].state == 1)
-			color.xyz = lightFactor * obstColorHighlight.xyz;
-	}
+    if (hit)
+    {
+        const vec3 lightFactor = PhongLighting(posInModel.xyz, normalize(eyeRayInModel), normal);
+        if (obsts[closestObstIdx].state == 0)
+            color.xyz = lightFactor * obstColor.xyz;
+        else if (obsts[closestObstIdx].state == 1)
+            color.xyz = lightFactor * obstColorHighlight.xyz;
+    }
 
     if (color.a == 0.f)
         discard;

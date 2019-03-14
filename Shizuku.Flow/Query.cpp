@@ -43,20 +43,20 @@ Types::Point<float> Query::ProbeModelSpaceCoord(const Types::Point<int>& p_scree
 
 int Query::ObstructionCount()
 {
-	return m_flow->Graphics()->ObstCount();
+    return m_flow->Graphics()->ObstCount();
 }
 
 int Query::SelectedObstructionCount()
 {
-	return m_flow->Graphics()->SelectedObstCount();
+    return m_flow->Graphics()->SelectedObstCount();
 }
 
 int Query::PreSelectedObstructionCount()
 {
-	return m_flow->Graphics()->PreSelectedObstCount();
+    return m_flow->Graphics()->PreSelectedObstCount();
 }
 
 boost::optional<const Info::ObstInfo> Query::ObstInfo(const Types::Point<int>& p_screenPoint)
 {
-	return m_flow->Graphics()->ObstInfo(p_screenPoint);
+    return m_flow->Graphics()->ObstInfo(p_screenPoint);
 }

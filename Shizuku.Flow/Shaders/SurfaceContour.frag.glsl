@@ -65,6 +65,6 @@ void main()
     const float r0 = (nu - 1.f)*(nu - 1.f) / ((nu + 1.f)*(nu + 1.f));
     const float reflectedRayIntensity = r0 + (1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - cosTheta)*(1.f - r0);
     
-	const vec3 envColor = vec3(0.8);
+    const vec3 envColor = vec3(0.8);
     color.xyz = mix(fColor.xyz, envColor, reflectedRayIntensity);
 }

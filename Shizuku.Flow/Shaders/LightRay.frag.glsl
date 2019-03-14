@@ -5,5 +5,5 @@ uniform vec4 MeshColor = vec4(0, 0.6, 0, 1);
 
 void main()
 {
-	color = MeshColor;
+    color = MeshColor;
 }

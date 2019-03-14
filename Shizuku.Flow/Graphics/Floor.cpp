@@ -16,32 +16,32 @@ using namespace Shizuku::Flow;
 
 Floor::Floor(std::shared_ptr<Ogl> p_ogl)
 {
-	m_ogl = p_ogl;
-	m_initialized = false;
-	m_floorShader = std::make_shared<ShaderProgram>();
-	m_causticsShader = std::make_shared<ShaderProgram>();
-	m_lightRayShader = std::make_shared<ShaderProgram>();
-	m_beamPathShader = std::make_shared<ShaderProgram>();
+    m_ogl = p_ogl;
+    m_initialized = false;
+    m_floorShader = std::make_shared<ShaderProgram>();
+    m_causticsShader = std::make_shared<ShaderProgram>();
+    m_lightRayShader = std::make_shared<ShaderProgram>();
+    m_beamPathShader = std::make_shared<ShaderProgram>();
 }
 
 void Floor::SetVbo(std::shared_ptr<Ogl::Buffer> p_vbo)
 {
-	m_vbo = p_vbo;
+    m_vbo = p_vbo;
 }
 
 void Floor::Initialize()
 {
-	CompileShaders();
-	PrepareIndices();
-	PrepareVaos();
-	PrepareTextures();
+    CompileShaders();
+    PrepareIndices();
+    PrepareVaos();
+    PrepareTextures();
     cudaGraphicsGLRegisterImage(&m_cudaFloorLightTextureResource, m_causticsTex, GL_TEXTURE_2D, cudaGraphicsMapFlagsReadOnly);
-	m_initialized = true;
+    m_initialized = true;
 }
 
 bool Floor::IsInitialized()
 {
-	return m_initialized;
+    return m_initialized;
 }
 
 void Floor::CompileShaders()
@@ -125,23 +125,23 @@ void Floor::PrepareTextures()
 
 GLuint Floor::CausticsTex()
 {
-	return m_causticsTex;
+    return m_causticsTex;
 }
 
 cudaGraphicsResource * Shizuku::Flow::Floor::CudaFloorLightTextureResource()
 {
-	return m_cudaFloorLightTextureResource;
+    return m_cudaFloorLightTextureResource;
 }
 
 void Floor::SetProbeRegion(const ProbeRegion& p_region)
 {
-	m_region = p_region;
+    m_region = p_region;
 }
 
 void Floor::PrepareIndices()
 {
-	const int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
-	const int numberOfNodes = MAX_XDIM * MAX_YDIM;
+    const int numberOfElements = (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    const int numberOfNodes = MAX_XDIM * MAX_YDIM;
     GLuint* elementIndices = new GLuint[numberOfElements * 3 * 2];
     for (int j = 0; j < MAX_YDIM-1; j++){
         for (int i = 0; i < MAX_XDIM-1; i++){
@@ -177,7 +177,7 @@ void Floor::PrepareIndices()
         }
     }
 
-	GLuint* lightPathIndices = new GLuint[numberOfNodes * 2];
+    GLuint* lightPathIndices = new GLuint[numberOfNodes * 2];
     for (int j = 0; j < MAX_YDIM; j++){
         for (int i = 0; i < MAX_XDIM; i++){
             //going clockwise, since y orientation will be flipped when rendered
@@ -186,27 +186,27 @@ void Floor::PrepareIndices()
         }
     }
 
-	GLuint* beamPathIndices = new GLuint[2 * 2 * 3 * numberOfElements];
-	for (int j = 0; j < MAX_YDIM - 1; j++) {
-		for (int i = 0; i < MAX_XDIM - 1; ++i)
-		{
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 0] = i + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 1] = (i+1) + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 2] = i + (j+1) * MAX_XDIM;
+    GLuint* beamPathIndices = new GLuint[2 * 2 * 3 * numberOfElements];
+    for (int j = 0; j < MAX_YDIM - 1; j++) {
+        for (int i = 0; i < MAX_XDIM - 1; ++i)
+        {
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 0] = i + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 1] = (i+1) + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 2] = i + (j+1) * MAX_XDIM;
 
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 3] = numberOfNodes + i + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 4] = numberOfNodes + (i+1) + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 5] = numberOfNodes + i + (j+1) * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 3] = numberOfNodes + i + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 4] = numberOfNodes + (i+1) + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 5] = numberOfNodes + i + (j+1) * MAX_XDIM;
 
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 6] = (i+1) + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 7] = (i+1) + (j+1) * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 8] = i + (j+1) * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 6] = (i+1) + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 7] = (i+1) + (j+1) * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 8] = i + (j+1) * MAX_XDIM;
 
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 9]  = numberOfNodes + (i+1) + j * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 10] = numberOfNodes + (i+1) + (j+1) * MAX_XDIM;
-			beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 11] = numberOfNodes + i + (j+1) * MAX_XDIM;
-		}
-	}
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 9]  = numberOfNodes + (i+1) + j * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 10] = numberOfNodes + (i+1) + (j+1) * MAX_XDIM;
+            beamPathIndices[j*(MAX_XDIM - 1) * 12 + i * 12 + 11] = numberOfNodes + i + (j+1) * MAX_XDIM;
+        }
+    }
 
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, elementIndices, numberOfElements * 3 * 2, "DeformedFloor_indices", GL_DYNAMIC_DRAW);
     free(elementIndices);
@@ -214,7 +214,7 @@ void Floor::PrepareIndices()
     free(elemEdgeIndices);
     m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, lightPathIndices, numberOfNodes * 2, "lightPaths_indices", GL_DYNAMIC_DRAW);
     free(lightPathIndices);
-	m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, beamPathIndices, 2 * 2 * 3 * numberOfElements, "beamPaths_indices", GL_DYNAMIC_DRAW);
+    m_ogl->CreateBuffer(GL_ELEMENT_ARRAY_BUFFER, beamPathIndices, 2 * 2 * 3 * numberOfElements, "beamPaths_indices", GL_DYNAMIC_DRAW);
     free(beamPathIndices);
 }
 
@@ -299,7 +299,7 @@ void Floor::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
     std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloor");
     surface->Bind();
 
-	glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, m_floorFbo);
     glBindTexture(GL_TEXTURE_2D, m_floorTex);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -315,10 +315,10 @@ void Floor::RenderCausticsToTexture(Domain &domain, const Rect<int>& p_viewSize)
     //Draw floor
     const int xDimVisible = domain.GetXDimVisible();
     const int yDimVisible = domain.GetYDimVisible();
-	const int offsetToFloorIndices = 0;// 3 * 2 * (MAX_XDIM - 1)*(MAX_YDIM - 1);
+    const int offsetToFloorIndices = 0;// 3 * 2 * (MAX_XDIM - 1)*(MAX_YDIM - 1);
 
-	glDrawElements(GL_TRIANGLES, 3 * (2 * (MAX_XDIM - 1))*(yDimVisible-1), GL_UNSIGNED_INT,
-		BUFFER_OFFSET(sizeof(GLuint)*(offsetToFloorIndices)));
+    glDrawElements(GL_TRIANGLES, 3 * (2 * (MAX_XDIM - 1))*(yDimVisible-1), GL_UNSIGNED_INT,
+        BUFFER_OFFSET(sizeof(GLuint)*(offsetToFloorIndices)));
 
     m_causticsShader->Unset();
 
@@ -352,41 +352,41 @@ void Floor::Render(Domain &p_domain, const RenderParams& p_params)
 
 void Floor::RenderCausticsMesh(Domain &p_domain, const RenderParams& p_params)
 {
-	m_lightRayShader->Use();
-	m_lightRayShader->SetUniform("modelMatrix", p_params.ModelView);
-	m_lightRayShader->SetUniform("projectionMatrix", p_params.Projection);
-	m_lightRayShader->SetUniform("Filter", false);
-	std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloorEdges");
-	surface->Bind();
+    m_lightRayShader->Use();
+    m_lightRayShader->SetUniform("modelMatrix", p_params.ModelView);
+    m_lightRayShader->SetUniform("projectionMatrix", p_params.Projection);
+    m_lightRayShader->SetUniform("Filter", false);
+    std::shared_ptr<Ogl::Vao> surface = m_ogl->GetVao("DeformedFloorEdges");
+    surface->Bind();
 
-	const int xDimVisible = p_domain.GetXDimVisible();
-	const int yDimVisible = p_domain.GetYDimVisible();
-	for (int i = 0; i < yDimVisible - 1; ++i)
-	{
-		glDrawElements(GL_LINES, (xDimVisible - 1) * 12, GL_UNSIGNED_INT,
-			BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM - 1)*i * 12));
-	}
+    const int xDimVisible = p_domain.GetXDimVisible();
+    const int yDimVisible = p_domain.GetYDimVisible();
+    for (int i = 0; i < yDimVisible - 1; ++i)
+    {
+        glDrawElements(GL_LINES, (xDimVisible - 1) * 12, GL_UNSIGNED_INT,
+            BUFFER_OFFSET(sizeof(GLuint)*(MAX_XDIM - 1)*i * 12));
+    }
 
-	surface->Unbind();
-	m_lightRayShader->Unset();
+    surface->Unbind();
+    m_lightRayShader->Unset();
 }
 
 void Floor::RenderCausticsBeams(Domain &p_domain, const RenderParams& p_params)
 {
-	//glDisable(GL_DEPTH_TEST);
-	m_beamPathShader->Use();
-	std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("BeamPaths");
-	paths->Bind();
+    //glDisable(GL_DEPTH_TEST);
+    m_beamPathShader->Use();
+    std::shared_ptr<Ogl::Vao> paths = m_ogl->GetVao("BeamPaths");
+    paths->Bind();
 
-	m_beamPathShader->SetUniform("modelMatrix", p_params.ModelView);
-	m_beamPathShader->SetUniform("projectionMatrix", p_params.Projection);
-	m_beamPathShader->SetUniform("Filter", true);
-	m_beamPathShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
+    m_beamPathShader->SetUniform("modelMatrix", p_params.ModelView);
+    m_beamPathShader->SetUniform("projectionMatrix", p_params.Projection);
+    m_beamPathShader->SetUniform("Filter", true);
+    m_beamPathShader->SetUniform("Target", glm::vec2(m_region.Pos.X, m_region.Pos.Y));
 
-	glDrawElements(GL_TRIANGLES_ADJACENCY, 2 * 2 * 3 * (MAX_XDIM - 1)*(MAX_YDIM - 1), GL_UNSIGNED_INT, (GLvoid*)0);
+    glDrawElements(GL_TRIANGLES_ADJACENCY, 2 * 2 * 3 * (MAX_XDIM - 1)*(MAX_YDIM - 1), GL_UNSIGNED_INT, (GLvoid*)0);
 
-	paths->Unbind();
-	m_beamPathShader->Unset();
+    paths->Unbind();
+    m_beamPathShader->Unset();
 
-	//glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
 }

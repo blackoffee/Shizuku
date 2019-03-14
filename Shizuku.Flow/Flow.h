@@ -22,7 +22,7 @@ namespace Shizuku { namespace Flow{
 
         void Update();
 
-		void SetUpFrame();
+        void SetUpFrame();
 
         void Draw3D();
 

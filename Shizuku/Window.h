@@ -18,11 +18,11 @@ namespace Shizuku{
             class AddObstruction;
             class RemoveObstruction;
             class MoveObstruction;
-			class PreSelectObstruction;
-			class AddPreSelectionToSelection;
-			class DeleteSelectedObstructions;
-			class TogglePreSelection;
-			class ClearSelection;
+            class PreSelectObstruction;
+            class AddPreSelectionToSelection;
+            class DeleteSelectedObstructions;
+            class TogglePreSelection;
+            class ClearSelection;
             class PauseSimulation; 
             class PauseRayTracing;
             class RestartSimulation;
@@ -34,9 +34,9 @@ namespace Shizuku{
             class SetInletVelocity;
             class SetWaterDepth;
             class SetFloorWireframeVisibility;
-			class SetLightProbeVisibility;
-			class SetToTopView;
-			class ProbeLightPaths;
+            class SetLightProbeVisibility;
+            class SetToTopView;
+            class ProbeLightPaths;
             enum ContourMode;
             enum SurfaceShadingMode;
         }
@@ -56,11 +56,11 @@ namespace Shizuku{ namespace Presentation{
         std::shared_ptr<Rotate> m_rotate;
         std::shared_ptr<AddObstruction> m_addObstruction;
         std::shared_ptr<MoveObstruction> m_moveObstruction;
-		std::shared_ptr<PreSelectObstruction> m_preSelectObst;
-		std::shared_ptr<AddPreSelectionToSelection> m_addPreSelectionToSelection;
-		std::shared_ptr<TogglePreSelection> m_togglePreSelection;
-		std::shared_ptr<DeleteSelectedObstructions> m_deleteSelectedObstructions;
-		std::shared_ptr<ClearSelection> m_clearSelection;
+        std::shared_ptr<PreSelectObstruction> m_preSelectObst;
+        std::shared_ptr<AddPreSelectionToSelection> m_addPreSelectionToSelection;
+        std::shared_ptr<TogglePreSelection> m_togglePreSelection;
+        std::shared_ptr<DeleteSelectedObstructions> m_deleteSelectedObstructions;
+        std::shared_ptr<ClearSelection> m_clearSelection;
         std::shared_ptr<PauseSimulation> m_pauseSimulation;
         std::shared_ptr<PauseRayTracing> m_pauseRayTracing;
         std::shared_ptr<RestartSimulation> m_restartSimulation;
@@ -92,7 +92,7 @@ namespace Shizuku{ namespace Presentation{
         bool m_rayTracingPaused;
         bool m_floorWireframeVisible;
         bool m_lightProbeEnabled;
-		bool m_topViewMode;
+        bool m_topViewMode;
         bool m_diagEnabled;
         bool m_debug;
 
@@ -100,7 +100,7 @@ namespace Shizuku{ namespace Presentation{
 
         bool m_firstUIDraw;
 
-		bool m_imguiHandlingMouseEvent;
+        bool m_imguiHandlingMouseEvent;
 
         std::shared_ptr<Shizuku::Flow::Flow> m_flow;
     public:

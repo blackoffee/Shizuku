@@ -12,58 +12,58 @@ namespace {
         return p_depth + 0.3f;
     }
 
-	//TODO this is used in many places
-	void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
-	{
-		glm::mat4 mvp = p_params.Projection*p_params.Modelview;
-		glm::mat4 mvpInv = glm::inverse(mvp);
-		glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
-		glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
-		glm::vec4 r1 = mvpInv * v1;
-		glm::vec4 r2 = mvpInv * v2;
-		p_rayOrigin.x = r1.x / r1.w;
-		p_rayOrigin.y = r1.y / r1.w;
-		p_rayOrigin.z = r1.z / r1.w;
-		p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
-		p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
-		p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
-		float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
-		p_rayDir.x /= mag;
-		p_rayDir.y /= mag;
-		p_rayDir.z /= mag;
-	}
+    //TODO this is used in many places
+    void GetMouseRay(glm::vec3 &p_rayOrigin, glm::vec3 &p_rayDir, const HitParams& p_params)
+    {
+        glm::mat4 mvp = p_params.Projection*p_params.Modelview;
+        glm::mat4 mvpInv = glm::inverse(mvp);
+        glm::vec4 v1 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 0.0f*2.f - 1.f, 1.0f };
+        glm::vec4 v2 = { (float)p_params.ScreenPos.X / (p_params.ViewSize.Width)*2.f - 1.f, (float)p_params.ScreenPos.Y / (p_params.ViewSize.Height)*2.f - 1.f, 1.0f*2.f - 1.f, 1.0f };
+        glm::vec4 r1 = mvpInv * v1;
+        glm::vec4 r2 = mvpInv * v2;
+        p_rayOrigin.x = r1.x / r1.w;
+        p_rayOrigin.y = r1.y / r1.w;
+        p_rayOrigin.z = r1.z / r1.w;
+        p_rayDir.x = r2.x / r2.w - p_rayOrigin.x;
+        p_rayDir.y = r2.y / r2.w - p_rayOrigin.y;
+        p_rayDir.z = r2.z / r2.w - p_rayOrigin.z;
+        float mag = sqrt(p_rayDir.x*p_rayDir.x + p_rayDir.y*p_rayDir.y + p_rayDir.z*p_rayDir.z);
+        p_rayDir.x /= mag;
+        p_rayDir.y /= mag;
+        p_rayDir.z /= mag;
+    }
 
-	//! Hits against water surface and floor
-	glm::vec3 GetModelSpaceCoordFromScreenPos(const HitParams& p_params, const boost::optional<float> p_modelSpaceZPos, const float p_waterDepth)
-	{
-		glm::vec3 rayOrigin, rayDir;
-		GetMouseRay(rayOrigin, rayDir, p_params);
+    //! Hits against water surface and floor
+    glm::vec3 GetModelSpaceCoordFromScreenPos(const HitParams& p_params, const boost::optional<float> p_modelSpaceZPos, const float p_waterDepth)
+    {
+        glm::vec3 rayOrigin, rayDir;
+        GetMouseRay(rayOrigin, rayDir, p_params);
 
-		float t;
-		if (p_modelSpaceZPos.is_initialized())
-		{
-			const float z = p_modelSpaceZPos.value();
-			t = (z - rayOrigin.z) / rayDir.z;
-			return rayOrigin + t * rayDir;
-		}
-		else
-		{
-			const float t1 = (-1.f - rayOrigin.z) / rayDir.z;
-			const float t2 = (-1.f + p_waterDepth - rayOrigin.z) / rayDir.z;
-			t = std::min(t1, t2);
-			glm::vec3 res = rayOrigin + t * rayDir;
+        float t;
+        if (p_modelSpaceZPos.is_initialized())
+        {
+            const float z = p_modelSpaceZPos.value();
+            t = (z - rayOrigin.z) / rayDir.z;
+            return rayOrigin + t * rayDir;
+        }
+        else
+        {
+            const float t1 = (-1.f - rayOrigin.z) / rayDir.z;
+            const float t2 = (-1.f + p_waterDepth - rayOrigin.z) / rayDir.z;
+            t = std::min(t1, t2);
+            glm::vec3 res = rayOrigin + t * rayDir;
 
-			if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
-			{
-				return res;
-			}
-			else
-			{
-				t = std::max(t1, t2);
-				return rayOrigin + t * rayDir;
-			}
-		}
-	}
+            if (res.x <= 1.f && res.y <= 1.f && res.x >= -1.f && res.y >= -1.f)
+            {
+                return res;
+            }
+            else
+            {
+                t = std::max(t1, t2);
+                return rayOrigin + t * rayDir;
+            }
+        }
+    }
 }
 
 ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
@@ -71,7 +71,7 @@ ObstManager::ObstManager(std::shared_ptr<Ogl> p_ogl)
     m_ogl = p_ogl;
     m_obsts = std::make_shared<std::set<std::shared_ptr<Obst>>>();
     m_obstData = new ObstDefinition[MAXOBSTS];
-	m_selection = std::set<std::shared_ptr<Obst>>();
+    m_selection = std::set<std::shared_ptr<Obst>>();
 }
 
 void ObstManager::Initialize()
@@ -83,214 +83,214 @@ void ObstManager::Initialize()
 
     m_ogl->CreateBuffer(GL_SHADER_STORAGE_BUFFER, m_obstData, MAXOBSTS, "managed_obsts", GL_STATIC_DRAW);
 
-	std::shared_ptr<Ogl::Buffer> obstSsbo = m_ogl->GetBuffer("managed_obsts");
+    std::shared_ptr<Ogl::Buffer> obstSsbo = m_ogl->GetBuffer("managed_obsts");
     cudaGraphicsGLRegisterBuffer(&m_cudaObstsResource, obstSsbo->GetId(), cudaGraphicsMapFlagsReadOnly);
 }
 
 cudaGraphicsResource* ObstManager::GetCudaObstsResource()
 {
-	return m_cudaObstsResource;
+    return m_cudaObstsResource;
 }
 
 int ObstManager::ObstCount()
 {
-	return m_obsts->size();
+    return m_obsts->size();
 }
 
 int ObstManager::SelectedObstCount()
 {
-	return m_selection.size();
+    return m_selection.size();
 }
 
 int ObstManager::PreSelectedObstCount()
 {
-	return m_preSelection.size();
+    return m_preSelection.size();
 }
 
 boost::optional<const Info::ObstInfo> ObstManager::ObstInfo(const HitParams& p_params)
 {
-	float dist = std::numeric_limits<float>::max();
-	std::shared_ptr<Obst> closest;
-	bool hit(false);
+    float dist = std::numeric_limits<float>::max();
+    std::shared_ptr<Obst> closest;
+    bool hit(false);
     for (const auto& obst : *m_obsts)
     {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-				closest = obst;
-			}
-		}
+        HitResult result = obst->Hit(p_params);
+        if (result.Hit)
+        {
+            assert(result.Dist.is_initialized());
+            hit = true;
+            if (result.Dist < dist)
+            {
+                dist = result.Dist.value();
+                closest = obst;
+            }
+        }
     }
 
-	if (hit)
-	{
-		return Info::ObstInfo{
-			m_selection.find(closest) != m_selection.end(),
-			m_preSelection.find(closest) != m_preSelection.end(),
-			Point<float>(closest->Def().x, closest->Def().y),
-			Rect<float>(closest->Def().r1, closest->Def().r2)
-		};
-	}
+    if (hit)
+    {
+        return Info::ObstInfo{
+            m_selection.find(closest) != m_selection.end(),
+            m_preSelection.find(closest) != m_preSelection.end(),
+            Point<float>(closest->Def().x, closest->Def().y),
+            Rect<float>(closest->Def().r1, closest->Def().r2)
+        };
+    }
 
-	return boost::none;
+    return boost::none;
 }
 
 void ObstManager::SetWaterHeight(const float p_height)
 {
-	m_waterHeight = p_height;
-	const float pillarHeight = PillarHeightFromDepth(p_height);
-	for (auto& obst : *m_obsts)
-	{
-		obst->SetHeight(pillarHeight);
-	}
+    m_waterHeight = p_height;
+    const float pillarHeight = PillarHeightFromDepth(p_height);
+    for (auto& obst : *m_obsts)
+    {
+        obst->SetHeight(pillarHeight);
+    }
 }
 
 void ObstManager::CreateObst(const ObstDefinition& p_obst)
 {
     m_obsts->insert(std::make_shared<Obst>(m_ogl, p_obst, PillarHeightFromDepth(m_waterHeight)));
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::DoClearSelection()
 {
-	for (const auto& obst : m_selection)
-	{
-		obst->SetHighlight(false);
-	}
+    for (const auto& obst : m_selection)
+    {
+        obst->SetHighlight(false);
+    }
 
-	m_selection.clear();
+    m_selection.clear();
 }
 
 void ObstManager::ClearSelection()
 {
-	DoClearSelection();
+    DoClearSelection();
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::AddObstructionToPreSelection(const HitParams& p_params)
 {
-	float dist = std::numeric_limits<float>::max();
-	std::shared_ptr<Obst> closest;
-	bool hit(false);
+    float dist = std::numeric_limits<float>::max();
+    std::shared_ptr<Obst> closest;
+    bool hit(false);
     for (const auto& obst : *m_obsts)
     {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-				closest = obst;
-			}
-		}
+        HitResult result = obst->Hit(p_params);
+        if (result.Hit)
+        {
+            assert(result.Dist.is_initialized());
+            hit = true;
+            if (result.Dist < dist)
+            {
+                dist = result.Dist.value();
+                closest = obst;
+            }
+        }
     }
 
-	if (hit)
-	{
-		m_preSelection.insert(closest);
-		closest->SetHighlight(true);
-	}
+    if (hit)
+    {
+        m_preSelection.insert(closest);
+        closest->SetHighlight(true);
+    }
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::ClearPreSelection()
 {
-	DoClearPreSelection();
+    DoClearPreSelection();
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::DoClearPreSelection()
 {
-	for (const auto& obst : m_selection)
-	{
-		obst->SetHighlight(false);
-	}
+    for (const auto& obst : m_selection)
+    {
+        obst->SetHighlight(false);
+    }
 
-	m_preSelection.clear();
+    m_preSelection.clear();
 }
 
 void ObstManager::RemoveObstructionFromPreSelection(const HitParams& p_params)
 {
-	float dist = std::numeric_limits<float>::max();
-	std::shared_ptr<Obst> closest;
-	bool hit(false);
+    float dist = std::numeric_limits<float>::max();
+    std::shared_ptr<Obst> closest;
+    bool hit(false);
     for (const auto& obst : m_selection)
     {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-				closest = obst;
-			}
-		}
+        HitResult result = obst->Hit(p_params);
+        if (result.Hit)
+        {
+            assert(result.Dist.is_initialized());
+            hit = true;
+            if (result.Dist < dist)
+            {
+                dist = result.Dist.value();
+                closest = obst;
+            }
+        }
     }
 
-	if (hit)
-	{
-		m_preSelection.erase(closest);
-		closest->SetHighlight(false);
-	}
+    if (hit)
+    {
+        m_preSelection.erase(closest);
+        closest->SetHighlight(false);
+    }
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::AddPreSelectionToSelection()
 {
-	for (const auto& obst : m_preSelection)
-	{
-		m_selection.insert(obst);
-	}
+    for (const auto& obst : m_preSelection)
+    {
+        m_selection.insert(obst);
+    }
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::RemovePreSelectionFromSelection()
 {
-	for (const auto& obst : m_preSelection)
-	{
-		m_selection.erase(obst);
-	}
+    for (const auto& obst : m_preSelection)
+    {
+        m_selection.erase(obst);
+    }
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 void ObstManager::TogglePreSelectionInSelection()
 {
-	for (const auto& obst : m_preSelection)
-	{
-		if (m_selection.find(obst) == m_selection.end())
-		{
-			m_selection.insert(obst);
-		}
-		else
-		{
-			m_selection.erase(obst);
-		}
-	}
+    for (const auto& obst : m_preSelection)
+    {
+        if (m_selection.find(obst) == m_selection.end())
+        {
+            m_selection.insert(obst);
+        }
+        else
+        {
+            m_selection.erase(obst);
+        }
+    }
 }
 
 void ObstManager::RefreshObstStates()
 {
-	for (const auto& obst : *m_obsts)
-		obst->SetHighlight(false);
-	for (const auto& obst : m_selection)
-		obst->SetHighlight(true);
-	for (const auto& obst : m_preSelection)
-		obst->SetHighlight(true);
+    for (const auto& obst : *m_obsts)
+        obst->SetHighlight(false);
+    for (const auto& obst : m_selection)
+        obst->SetHighlight(true);
+    for (const auto& obst : m_preSelection)
+        obst->SetHighlight(true);
 
     int i = 0;
     for (auto& obst : *m_obsts)
@@ -306,93 +306,93 @@ void ObstManager::RefreshObstStates()
 
 void ObstManager::DeleteSelectedObsts()
 {
-	for (const auto& obst : m_selection)
-	{
-		m_obsts->erase(obst);
-	}
+    for (const auto& obst : m_selection)
+    {
+        m_obsts->erase(obst);
+    }
 
-	DoClearSelection();
+    DoClearSelection();
 
-	RefreshObstStates();
+    RefreshObstStates();
 }
 
 bool ObstManager::TryStartMoveSelectedObsts(const HitParams& p_params)
 {
-	float dist = std::numeric_limits<float>::max();
-	bool hit(false);
+    float dist = std::numeric_limits<float>::max();
+    bool hit(false);
     for (const auto& obst : m_selection)
     {
-		HitResult result = obst->Hit(p_params);
-		if (result.Hit)
-		{
-			assert(result.Dist.is_initialized());
-			hit = true;
-			if (result.Dist < dist)
-			{
-				dist = result.Dist.value();
-			}
-		}
+        HitResult result = obst->Hit(p_params);
+        if (result.Hit)
+        {
+            assert(result.Dist.is_initialized());
+            hit = true;
+            if (result.Dist < dist)
+            {
+                dist = result.Dist.value();
+            }
+        }
     }
 
-	if (hit)
-	{
-		glm::vec3 rayOrigin;
-		glm::vec3 rayDir;
-		GetMouseRay(rayOrigin, rayDir, p_params);
-		m_moveOrigin = rayOrigin + dist * rayDir;
-	}
-	else
-	{
-		m_moveOrigin = boost::none;
-	}
+    if (hit)
+    {
+        glm::vec3 rayOrigin;
+        glm::vec3 rayDir;
+        GetMouseRay(rayOrigin, rayDir, p_params);
+        m_moveOrigin = rayOrigin + dist * rayDir;
+    }
+    else
+    {
+        m_moveOrigin = boost::none;
+    }
 
-	return hit;
+    return hit;
 }
 
 void ObstManager::MoveSelectedObsts(const HitParams& p_dest)
 {
-	assert(m_moveOrigin.has_value());
-	const glm::vec3 destModelCoord = GetModelSpaceCoordFromScreenPos(p_dest, m_moveOrigin.value().z, m_waterHeight);
-	const glm::vec3 trans = destModelCoord - m_moveOrigin.value();
+    assert(m_moveOrigin.has_value());
+    const glm::vec3 destModelCoord = GetModelSpaceCoordFromScreenPos(p_dest, m_moveOrigin.value().z, m_waterHeight);
+    const glm::vec3 trans = destModelCoord - m_moveOrigin.value();
 
-	//need to get transform instead
-	for (const auto& obst : m_selection)
-	{
-		ObstDefinition def = obst->Def();
-		def.x += trans.x;
-		def.y += trans.y;
-		obst->SetDef(def);
-	}
+    //need to get transform instead
+    for (const auto& obst : m_selection)
+    {
+        ObstDefinition def = obst->Def();
+        def.x += trans.x;
+        def.y += trans.y;
+        obst->SetDef(def);
+    }
 
-	m_moveOrigin = destModelCoord;
+    m_moveOrigin = destModelCoord;
 }
 
 std::weak_ptr<std::set<std::shared_ptr<Obst>>> ObstManager::Obsts()
 {
-	return m_obsts;
+    return m_obsts;
 }
 
 void ObstManager::Render(const RenderParams& p_params)
 {
     for (const auto& obst : *m_obsts)
     {
-		obst->Render(p_params);
+        obst->Render(p_params);
     }
 }
 
 glm::vec3 ObstManager::GetSurfaceOrFloorIntersect(const HitParams& p_params)
 {
-	return GetModelSpaceCoordFromScreenPos(p_params, boost::none, m_waterHeight);
+    return GetModelSpaceCoordFromScreenPos(p_params, boost::none, m_waterHeight);
 }
 
 bool ObstManager::IsInsideObstruction(const Point<float>& p_modelCoord)
 {
-	const float tolerance = 0.f;
-	for (const auto obst : *m_obsts)
-	{
-		if (obst->Hit(p_modelCoord).Hit)
-			return true;
-	}
+    const float tolerance = 0.f;
+    for (const auto obst : *m_obsts)
+    {
+        if (obst->Hit(p_modelCoord).Hit)
+            return true;
+    }
 
-	return false;
+    return false;
 }

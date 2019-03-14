@@ -12,6 +12,6 @@ DeleteSelectedObstructions::DeleteSelectedObstructions(Flow& p_flow) : Command(p
 
 void DeleteSelectedObstructions::Start(boost::any const p_param)
 {
-	GraphicsManager* graphicsManager= m_flow->Graphics();
-	graphicsManager->DeleteSelectedObstructions();
+    GraphicsManager* graphicsManager= m_flow->Graphics();
+    graphicsManager->DeleteSelectedObstructions();
 }

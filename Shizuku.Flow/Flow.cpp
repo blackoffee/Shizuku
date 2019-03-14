@@ -41,7 +41,7 @@ void Flow::Initialize()
 
 void Flow::SetUpFrame()
 {
-	m_impl->Graphics()->SetUpFrame();
+    m_impl->Graphics()->SetUpFrame();
 }
 
 void Flow::Update()

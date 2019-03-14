@@ -11,7 +11,7 @@
 using namespace Shizuku::Flow;
 
 /*----------------------------------------------------------------------------------------
- *	Device functions
+ *    Device functions
  */
 
 __global__ void UpdateObstructions(ObstDefinition* obstructions, const int obstNumber,
@@ -28,8 +28,8 @@ __global__ void UpdateObstructions(ObstDefinition* obstructions, const int obstN
 
 __device__ bool IsInsideObst(const float2& p_coord, const ObstDefinition& p_obst, const float p_tol)
 {
-	const float r1 = p_obst.r1;
-	return abs(p_coord.x - p_obst.x) < r1 + p_tol && abs(p_coord.y - p_obst.y) < r1 + p_tol;
+    const float r1 = p_obst.r1;
+    return abs(p_coord.x - p_obst.x) < r1 + p_tol && abs(p_coord.y - p_obst.y) < r1 + p_tol;
 }
 
 __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrigin, const float3 rayDest,
@@ -116,22 +116,22 @@ __device__ bool GetCoordFromRayHitOnObst(float3 &intersect, const float3 rayOrig
     return hit;
 }
 
-__device__	float ScaledLength(const int p_l, const int p_maxDim)
+__device__    float ScaledLength(const int p_l, const int p_maxDim)
 {
     return (float)p_l / (p_maxDim - 1) * 2.f;
 }
 
-__device__	float ScaledCoord(const int p_x, const int p_maxDim)
+__device__    float ScaledCoord(const int p_x, const int p_maxDim)
 {
     return (float)p_x / (p_maxDim - 1) * 2.f - 1.f;
 }
 
-__device__	int IntCoord(const float p_x, const int p_maxDim)
+__device__    int IntCoord(const float p_x, const int p_maxDim)
 {
     return (p_x + 1.f)*0.5f*(p_maxDim - 1);
 }
 
-__device__	float2 ScaledCoords(int p_x, int p_y, const int p_maxDim)
+__device__    float2 ScaledCoords(int p_x, int p_y, const int p_maxDim)
 {
     return make_float2(
         ScaledCoord(p_x, p_maxDim),
@@ -295,21 +295,21 @@ __global__ void UpdateSurfaceNormals(float4* vbo, float4* p_normals, Domain simD
     {
         n.y = 0.f;
     }
-	else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
+    else if (x > 0 && x < (xDimVisible - 1) && y > 0 && y < (yDimVisible - 1))
     {
-		const int im = p_image[(x + 1) + y * MAX_XDIM] + p_image[(x - 1) + y * MAX_XDIM] +
-			p_image[x + (y + 1)*MAX_XDIM] + p_image[x + (y - 1)*MAX_XDIM] + p_image[x + y * MAX_XDIM];
+        const int im = p_image[(x + 1) + y * MAX_XDIM] + p_image[(x - 1) + y * MAX_XDIM] +
+            p_image[x + (y + 1)*MAX_XDIM] + p_image[x + (y - 1)*MAX_XDIM] + p_image[x + y * MAX_XDIM];
 
-		if (im == 0)
-		{
-			slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
-        	    (2.f*cellSize);
-        	slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
-        	    (2.f*cellSize);
-        	n.x = -slope_x*2.f*cellSize*2.f*cellSize;
-        	n.y = -slope_y*2.f*cellSize*2.f*cellSize;
-        	n.z = 2.f*cellSize*2.f*cellSize;
-		}
+        if (im == 0)
+        {
+            slope_x = (vbo[(x + 1) + y*MAX_XDIM].z - vbo[(x - 1) + y*MAX_XDIM].z) /
+                (2.f*cellSize);
+            slope_y = (vbo[(x)+(y + 1)*MAX_XDIM].z - vbo[(x)+(y - 1)*MAX_XDIM].z) /
+                (2.f*cellSize);
+            n.x = -slope_x*2.f*cellSize*2.f*cellSize;
+            n.y = -slope_y*2.f*cellSize*2.f*cellSize;
+            n.z = 2.f*cellSize*2.f*cellSize;
+        }
     }
     Normalize(n);
     p_normals[j] = make_float4(n.x, n.y, n.z, 0.f);
@@ -402,8 +402,8 @@ __device__ float2 ComputePositionOfLightOnFloor(float4* vbo, float4* p_normals, 
 
     const float2 coords = ScaledCoords(x, y, xDimVisible);
 
-	if (skip)
-		return coords;
+    if (skip)
+        return coords;
 
     const float3 n = make_float3(p_normals[j].x, p_normals[j].y, p_normals[j].z);
 
@@ -437,24 +437,24 @@ __global__ void DeformFloorMeshUsingCausticRay(float4* vbo, float4* p_normals, f
     const int xDimVisible = simDomain.GetXDimVisible();
     const int yDimVisible = simDomain.GetYDimVisible();
 
-	ObstDefinition obst = obstructions[0];
-	
-	const float2 coords = ScaledCoords(x, y, simDomain.GetXDim());
-	const float tol = ScaledLength(1, simDomain.GetXDim());
+    ObstDefinition obst = obstructions[0];
+    
+    const float2 coords = ScaledCoords(x, y, simDomain.GetXDim());
+    const float tol = ScaledLength(1, simDomain.GetXDim());
 
     if (x < xDimVisible && y < yDimVisible)
     {
-		for (int i = 0; i < p_obstCount; ++i)
-		{
-			if (!IsInsideObst(coords, obstructions[i], tol))
-			{
-				const int im = p_image[x + y * MAX_XDIM];
-				const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, p_normals, incidentLight,
-					x, y, simDomain, waterDepth, im != 0);
-				vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
-				vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
-			}
-		}
+        for (int i = 0; i < p_obstCount; ++i)
+        {
+            if (!IsInsideObst(coords, obstructions[i], tol))
+            {
+                const int im = p_image[x + y * MAX_XDIM];
+                const float2 lightPositionOnFloor = ComputePositionOfLightOnFloor(vbo, p_normals, incidentLight,
+                    x, y, simDomain, waterDepth, im != 0);
+                vbo[j + MAX_XDIM*MAX_YDIM].x = lightPositionOnFloor.x;
+                vbo[j + MAX_XDIM*MAX_YDIM].y = lightPositionOnFloor.y;
+            }
+        }
     }
 }
 
@@ -469,12 +469,12 @@ __global__ void ComputeFloorLightIntensitiesFromMeshDeformation(float4* vbo, flo
     //const int j = x + y*MAX_XDIM;//index on padded mem (pitch in elements)
     if (x < xDimVisible-2 && y < yDimVisible-2)
     {
-		const int im = p_image[x + y * MAX_XDIM]
-			+ p_image[(x + 1) + y * MAX_XDIM]
-			+ p_image[(x + 1) + (y + 1)*MAX_XDIM]
-			+ p_image[x + (y + 1)*MAX_XDIM];
+        const int im = p_image[x + y * MAX_XDIM]
+            + p_image[(x + 1) + y * MAX_XDIM]
+            + p_image[(x + 1) + (y + 1)*MAX_XDIM]
+            + p_image[x + (y + 1)*MAX_XDIM];
 
-		if (im == 0)
+        if (im == 0)
         {
             const int offset = MAX_XDIM*MAX_YDIM;
             const float2 nw = make_float2(vbo[(x)+(y + 1)*MAX_XDIM + offset].x, vbo[(x)+(y + 1)*MAX_XDIM + offset].y);

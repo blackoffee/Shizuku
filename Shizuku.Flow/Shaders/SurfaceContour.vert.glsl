@@ -37,7 +37,7 @@ void main()
 {
     posInModel = vec4(position, 1.f);
     gl_Position = projectionMatrix*modelMatrix*posInModel;
-	fColor = unpackColor(color);
+    fColor = unpackColor(color);
 
     fNormal = normal;
     fWaterDepth = position.z+1.f;

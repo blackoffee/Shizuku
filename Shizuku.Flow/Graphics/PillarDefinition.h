@@ -19,6 +19,6 @@ namespace Shizuku { namespace Flow{
         Types::Box<float>& Size();
         void SetPosition(const Types::Point<float>& p_pos);
         void SetSize(const Types::Box<float>& p_size);
-		void SetHeight(const float p_height);
+        void SetHeight(const float p_height);
     };
 } }

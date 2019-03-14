@@ -61,7 +61,7 @@ float* CudaLbm::GetFloorTemp()
 
 int* CudaLbm::GetFloorHit()
 {
-	return m_FloorHit_d;
+    return m_FloorHit_d;
 }
 
 ObstDefinition* CudaLbm::GetDeviceObst()
@@ -195,7 +195,7 @@ void CudaLbm::InitializeDeviceMemory()
         m_obst_h[i].x = 0;
         m_obst_h[i].y = -1000;
         m_obst_h[i].state = State::SELECTED;
-    }	
+    }    
 
     memsize_inputs = sizeof(m_obst_h);
     gpuErrchk(cudaMemcpy(m_obst_d, m_obst_h, memsize_inputs, cudaMemcpyHostToDevice));
@@ -225,7 +225,7 @@ void CudaLbm::UpdateDeviceImage(ObstManager& p_obstMgr)
         m_Im_h[i] = ImageFcn(x, y);
         const int xDimVisible = GetDomain()->GetXDimVisible();
         const Point<float> modelCoord = ModelSpacePosFromSimPos(Point<int>(x, y), xDimVisible);
-		if (p_obstMgr.IsInsideObstruction(modelCoord))
+        if (p_obstMgr.IsInsideObstruction(modelCoord))
             m_Im_h[i] = 1;
     }
     size_t memsize_int = domainSize*sizeof(int);

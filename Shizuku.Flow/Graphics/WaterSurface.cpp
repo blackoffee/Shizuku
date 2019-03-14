@@ -56,7 +56,7 @@ cudaGraphicsResource* WaterSurface::GetCudaEnvTextureResource()
 
 std::shared_ptr<Ogl::Buffer> WaterSurface::GetVbo()
 {
-	return m_vbo;
+    return m_vbo;
 }
 
 void WaterSurface::CreateVboForCudaInterop()
@@ -70,7 +70,7 @@ void WaterSurface::CreateVboForCudaInterop()
     cudaGraphicsGLRegisterBuffer(&m_cudaNormalResource, normals->GetId(), cudaGraphicsMapFlagsWriteDiscard);
     CreateElementArrayBuffer();
 
-	m_vbo = posColor;
+    m_vbo = posColor;
 }
 
 void WaterSurface::CreateElementArrayBuffer()
@@ -501,7 +501,7 @@ void WaterSurface::UpdateLbmInputs(const float u, const float omega)
 
 void WaterSurface::Render(const ContourVariable p_contour , Domain &p_domain, const RenderParams& p_params,
         const bool p_drawFloorWireframe, const Rect<int>& p_viewSize, const float p_obstHeight, const int obstCount,
-		GLuint p_causticsTex)
+        GLuint p_causticsTex)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -515,10 +515,10 @@ void WaterSurface::Render(const ContourVariable p_contour , Domain &p_domain, co
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-	if (p_contour == ContourVariable::WATER_RENDERING)
-		RenderSurface(p_domain, p_params, p_viewSize, p_obstHeight, obstCount, p_causticsTex);
-	else
-		RenderSurfaceContour(p_contour, p_domain, p_params);
+    if (p_contour == ContourVariable::WATER_RENDERING)
+        RenderSurface(p_domain, p_params, p_viewSize, p_obstHeight, obstCount, p_causticsTex);
+    else
+        RenderSurfaceContour(p_contour, p_domain, p_params);
 
 
     if (offscreenRender)
@@ -542,60 +542,60 @@ void WaterSurface::Render(const ContourVariable p_contour , Domain &p_domain, co
 }
 
 void WaterSurface::RenderSurface(Domain &domain, const RenderParams& p_params, const Rect<int>& p_viewSize,
-	const float p_obstHeight, const int p_obstCount, GLuint p_causticsTex)
+    const float p_obstHeight, const int p_obstCount, GLuint p_causticsTex)
 {
-	glDepthMask(GL_FALSE);
-	glActiveTexture(GL_TEXTURE0);
-	m_surfaceRayTrace->Use();
-	m_surfaceRayTrace->SetUniform("modelMatrix", p_params.ModelView);
-	m_surfaceRayTrace->SetUniform("projectionMatrix", p_params.Projection);
-	m_surfaceRayTrace->SetUniform("topViewMode", p_params.TopViewMode);
-	m_surfaceRayTrace->SetUniform("cameraPos", p_params.Camera);
-	m_surfaceRayTrace->SetUniform("obstHeight", p_obstHeight);
-	m_surfaceRayTrace->SetUniform("obstCount", p_obstCount);
-	m_surfaceRayTrace->SetUniform("obstColor", p_params.Schema.Obst.Value());
-	m_surfaceRayTrace->SetUniform("obstColorHighlight", p_params.Schema.ObstHighlight.Value());
-	m_surfaceRayTrace->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
-	
-	std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
-	surface->Bind();
-	glBindTexture(GL_TEXTURE_2D, p_causticsTex);
-	
-	std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("managed_obsts");
-	Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
-	
-	const int yDimVisible = domain.GetYDimVisible();
-	glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-	surface->Unbind();
-	
-	glBindTexture(GL_TEXTURE_2D, 0);
-	Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
-	m_surfaceRayTrace->Unset();   
-	glDepthMask(GL_TRUE);
+    glDepthMask(GL_FALSE);
+    glActiveTexture(GL_TEXTURE0);
+    m_surfaceRayTrace->Use();
+    m_surfaceRayTrace->SetUniform("modelMatrix", p_params.ModelView);
+    m_surfaceRayTrace->SetUniform("projectionMatrix", p_params.Projection);
+    m_surfaceRayTrace->SetUniform("topViewMode", p_params.TopViewMode);
+    m_surfaceRayTrace->SetUniform("cameraPos", p_params.Camera);
+    m_surfaceRayTrace->SetUniform("obstHeight", p_obstHeight);
+    m_surfaceRayTrace->SetUniform("obstCount", p_obstCount);
+    m_surfaceRayTrace->SetUniform("obstColor", p_params.Schema.Obst.Value());
+    m_surfaceRayTrace->SetUniform("obstColorHighlight", p_params.Schema.ObstHighlight.Value());
+    m_surfaceRayTrace->SetUniform("viewSize", glm::vec2((float)p_viewSize.Width, (float)p_viewSize.Height));
+    
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+    surface->Bind();
+    glBindTexture(GL_TEXTURE_2D, p_causticsTex);
+    
+    std::shared_ptr<Ogl::Buffer> obstSsbo = Ogl->GetBuffer("managed_obsts");
+    Ogl->BindSSBO(0, *obstSsbo, GL_SHADER_STORAGE_BUFFER);
+    
+    const int yDimVisible = domain.GetYDimVisible();
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+    surface->Unbind();
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    Ogl->UnbindBO(GL_SHADER_STORAGE_BUFFER);
+    m_surfaceRayTrace->Unset();   
+    glDepthMask(GL_TRUE);
 
 #ifdef DRAW_CAMERA
-	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
+    RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
 #endif
 }
 
 void WaterSurface::RenderSurfaceContour(const ContourVariable p_contour, Domain &domain, const RenderParams& p_params)
 {
-	m_surfaceContour->Use();
-	m_surfaceContour->SetUniform("modelMatrix", p_params.ModelView);
-	m_surfaceContour->SetUniform("projectionMatrix", p_params.Projection);
-	m_surfaceContour->SetUniform("cameraPos", p_params.Camera);
-	
-	std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
-	surface->Bind();
-	
-	const int yDimVisible = domain.GetYDimVisible();
-	glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
-	surface->Unbind();
-	
-	m_surfaceContour->Unset();   
+    m_surfaceContour->Use();
+    m_surfaceContour->SetUniform("modelMatrix", p_params.ModelView);
+    m_surfaceContour->SetUniform("projectionMatrix", p_params.Projection);
+    m_surfaceContour->SetUniform("cameraPos", p_params.Camera);
+    
+    std::shared_ptr<Ogl::Vao> surface = Ogl->GetVao("surface");
+    surface->Bind();
+    
+    const int yDimVisible = domain.GetYDimVisible();
+    glDrawElements(GL_TRIANGLES, (MAX_XDIM - 1)*(yDimVisible - 1)*3*2 , GL_UNSIGNED_INT, (GLvoid*)0);
+    surface->Unbind();
+    
+    m_surfaceContour->Unset();   
 
 #ifdef DRAW_CAMERA
-	RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
+    RenderCameraPos(p_shadingMode, domain, modelMatrix, projectionMatrix, p_cameraPos, p_viewSize, obstHeight);
 #endif
 }
 
