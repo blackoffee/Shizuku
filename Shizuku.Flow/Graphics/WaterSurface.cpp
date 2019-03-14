@@ -4,7 +4,6 @@
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
 #include "Domain.h"
-#include "helper_cuda.h"
 #include <SOIL/SOIL.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLEW/glew.h>
@@ -65,7 +64,6 @@ void WaterSurface::CreateVboForCudaInterop()
     unsigned int solutionMemorySize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     unsigned int floorSize = MAX_XDIM*MAX_YDIM * 4 * sizeof(float);
     const unsigned int size = solutionMemorySize + floorSize;
-    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
     std::shared_ptr<Ogl::Buffer> posColor = Ogl->CreateBuffer<float>(GL_ARRAY_BUFFER, 0, size, "surface", GL_DYNAMIC_DRAW);
     cudaGraphicsGLRegisterBuffer(&m_cudaPosColorResource, posColor->GetId(), cudaGraphicsMapFlagsWriteDiscard);
     std::shared_ptr<Ogl::Buffer> normals = Ogl->CreateBuffer<float>(GL_ARRAY_BUFFER, 0, size, "surface_normals", GL_DYNAMIC_DRAW);

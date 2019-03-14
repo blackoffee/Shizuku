@@ -16,6 +16,8 @@
 #include "Shizuku.Core/Types/Box.h"
 #include "Shizuku.Core/Types/Point.h"
 
+#include "helper_cuda.h"
+
 #include <GLEW/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -304,6 +306,8 @@ void GraphicsManager::SetUpShaders()
 
 void GraphicsManager::SetUpCuda()
 {
+    cudaGLSetGLDevice(gpuGetMaxGflopsDeviceId());
+
     CudaLbm* cudaLbm = GetCudaLbm();
     cudaLbm->AllocateDeviceMemory();
     cudaLbm->InitializeDeviceMemory();

@@ -3,7 +3,6 @@
 #include "Shizuku.Core/Types/Point.h"
 #include "Shizuku.Core/Rect.h"
 
-#include <glm/glm.hpp>
 #include <boost/optional.hpp>
 
 using namespace Shizuku::Core;
