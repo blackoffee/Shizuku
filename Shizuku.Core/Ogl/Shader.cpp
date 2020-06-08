@@ -13,11 +13,14 @@ namespace Shizuku{
             std::string vertexCode;
             std::ifstream vShaderFile;
             // ensures ifstream objects can throw exceptions:
-            vShaderFile.exceptions(std::ifstream::badbit);
+            vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             try
             {
                 // Open files
                 vShaderFile.open(filePath);
+                if (!vShaderFile.is_open())
+                    throw std::runtime_error("Failed to open file.");
+
                 std::stringstream vShaderStream;
                 // Read file's buffer contents into streams
                 vShaderStream << vShaderFile.rdbuf();
@@ -26,9 +29,14 @@ namespace Shizuku{
                 // Convert stream into string
                 vertexCode = vShaderStream.str();
             }
+			catch (std::system_error ex)
+			{
+				std::cout<< ex.code().message();
+
+			}
             catch (std::ifstream::failure e)
             {
-                std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+                std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: " << e.what() << std::endl;
             }
             const GLchar* vShaderCode = vertexCode.c_str();
             // 2. Compile shaders

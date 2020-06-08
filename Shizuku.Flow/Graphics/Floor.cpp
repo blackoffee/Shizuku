@@ -3,7 +3,7 @@
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "common.h"
 
-#include <SOIL/SOIL.h>
+#include <soil.h>
 #include "cuda_runtime.h"
 #include <GLEW/glew.h>
 #include "cuda_gl_interop.h"  // needs GLEW

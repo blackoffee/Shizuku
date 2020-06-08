@@ -358,6 +358,7 @@
     <None Include="Shaders\BeamPath.frag.glsl" />
     <None Include="Shaders\BeamPath.geom.glsl" />
     <None Include="Shaders\BeamPath.vert.glsl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Command">

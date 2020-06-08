@@ -4,7 +4,7 @@
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "CudaLbm.h"
 #include "Domain.h"
-#include <SOIL/SOIL.h>
+#include <soil.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLEW/glew.h>
 #include <string>

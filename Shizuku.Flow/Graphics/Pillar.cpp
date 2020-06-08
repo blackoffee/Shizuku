@@ -3,6 +3,8 @@
 #include "Shizuku.Core/Ogl/Ogl.h"
 #include "Shizuku.Core/Ogl/Shader.h"
 #include "Shizuku.Core/Types/Point3D.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace Shizuku::Core;
 using namespace Shizuku::Flow;
